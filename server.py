@@ -22,7 +22,7 @@ KEY_PATH = os.path.join(BASE_DIR, 'test0417-493608-dce82b8c6901.json')
 participants_cache = []
 last_cache_update = 0
 cache_lock = threading.Lock()
-CACHE_TTL = 300  # 快取存活時間（秒）
+CACHE_TTL = 30  # 快取存活時間（秒）
 
 DEFAULT_CONFIG = {
     "show_meal_options": True,
