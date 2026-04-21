@@ -151,8 +151,16 @@ def search_phone():
 @app.route('/api/search/name')
 def search_name():
     refresh_cache()
-    name = request.args.get('name', '').strip()
-    results = [p for p in participants_cache if p['name'] == name]
+    # 去掉使用者輸入的所有空格
+    query_name = request.args.get('name', '').strip().replace(" ", "").replace("　", "")
+    
+    results = []
+    for p in participants_cache:
+        # 去掉試算表內姓名資料的所有空格後比對
+        sheet_name = str(p.get('name', '')).replace(" ", "").replace("　", "")
+        if sheet_name == query_name:
+            results.append(p)
+            
     return jsonify({"success": True, "data": results})
 
 @app.route('/api/search/email')
