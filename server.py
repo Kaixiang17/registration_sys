@@ -133,8 +133,19 @@ def get_participants():
 @app.route('/api/search/phone')
 def search_phone():
     refresh_cache()
-    phone = request.args.get('phone', '').strip()
-    results = [p for p in participants_cache if p['phone'] == phone]
+    # 取得搜尋號碼，只留下數字 (去掉橫線、空格)
+    query_phone = ''.join(filter(str.isdigit, request.args.get('phone', '').strip()))
+    
+    if not query_phone:
+        return jsonify({"success": True, "data": []})
+
+    results = []
+    for p in participants_cache:
+        # 將試算表內的電話也只留下數字進行比對
+        sheet_phone = ''.join(filter(str.isdigit, str(p.get('phone', ''))))
+        if sheet_phone == query_phone:
+            results.append(p)
+            
     return jsonify({"success": True, "data": results})
 
 @app.route('/api/search/name')
