@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>活動報到系統</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg: #f8f7f4;
+            --card-bg: #ffffff;
+            --text: #1a1a1a;
+            --text-muted: #666666;
+            --border: #e2e0db;
+            --success: #16a34a;
+            --error: #dc2626;
+            --orange: #ea580c;
+            --green: #15803d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "PingFang TC", "Heiti TC", "Microsoft JhengHei", sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        header {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .header-link:hover { color: var(--primary); }
+
+        .header-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        main {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 3rem 1rem;
+        }
+
+        .state-hidden {
+            display: none !important;
+        }
+
+        /* Mode Selection */
+        .mode-selection-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            max-width: 800px;
+            margin: 0 auto 3rem;
+        }
+
+        .mode-card {
+            background: white;
+            border: 2px solid #e2e0db;
+            border-radius: 1rem;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .mode-card:hover {
+            border-color: #4f46e5;
+            transform: translateY(-5px);
+            box-shadow: 0 12px 20px rgba(79, 70, 229, 0.1);
+        }
+
+        .mode-icon { font-size: 3.5rem; margin-bottom: 1.5rem; display: block; }
+        .mode-title { font-size: 1.5rem; font-weight: 700; color: #1a1a1a; margin-bottom: 0.75rem; }
+        .mode-desc { color: #666; font-size: 1rem; line-height: 1.5; }
+
+        /* Lists & Items */
+        .group-list, .meal-list {
+            margin-top: 1.5rem;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e2e0db;
+            border-radius: 0.5rem;
+            background: white;
+        }
+
+        .group-item, .meal-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid #f0eeea;
+            transition: background 0.2s;
+        }
+
+        .group-item:last-child, .meal-item:last-child { border-bottom: none; }
+        .group-item:hover { background: #f9fafb; }
+
+        .group-checkbox { width: 1.25rem; height: 1.25rem; margin-right: 1rem; cursor: pointer; }
+        .group-item-info, .meal-item-info { flex: 1; }
+        .group-item-name, .meal-item-name { font-weight: 600; color: #1a1a1a; }
+        .group-item-status { font-size: 0.75rem; margin-left: 0.5rem; padding: 0.1rem 0.4rem; border-radius: 1rem; }
+        .status-registered { background: #e0e7ff; color: #4338ca; }
+        .status-checked { background: #dcfce7; color: #15803d; }
+
+        /* Meal Selection Buttons in List */
+        .meal-btn-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .meal-mini-btn {
+            padding: 0.4rem 0.8rem;
+            border: 1px solid var(--border);
+            border-radius: 0.4rem;
+            font-size: 0.8125rem;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .meal-mini-btn.selected {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* General UI */
+        .section-title { font-size: 2.25rem; font-weight: 800; text-align: center; margin-bottom: 0.5rem; }
+        .section-subtitle { text-align: center; color: var(--text-muted); margin-bottom: 3rem; }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 2rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .card-header { display: flex; justify-content: space-between; align-items: center; }
+        .card-icon { font-size: 2rem; }
+        .card-chevron { color: var(--border); font-size: 1.5rem; }
+        .card-title { font-size: 1.25rem; font-weight: 700; }
+        .card-description { color: var(--text-muted); font-size: 0.875rem; }
+
+        .verification-container { max-width: 500px; margin: 0 auto; }
+        .back-button {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-muted);
+            background: none;
+            border: none;
+            font-size: 0.9375rem;
+            cursor: pointer;
+            margin-bottom: 1.5rem;
+        }
+        .back-button:hover { color: var(--text); }
+
+        .form-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 2.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .form-title { font-size: 1.5rem; font-weight: 700; }
+        .form-description { color: var(--text-muted); margin-bottom: 2rem; }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .button {
+            width: 100%;
+            padding: 0.875rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .button-primary { background-color: var(--primary); color: white; }
+        .button-primary:hover { background-color: var(--primary-hover); }
+        .button-primary:disabled { background-color: #9ca3af; cursor: not-allowed; }
+
+        /* Success State Table */
+        .success-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.875rem;
+        }
+        .success-table th, .success-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        .success-table th { color: var(--text-muted); font-weight: 600; }
+
+        .api-status { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: var(--text-muted); }
+        .api-status-dot { width: 8px; height: 8px; border-radius: 50%; background-color: #9ca3af; }
+        .api-status-dot.connected { background-color: var(--success); }
+        .api-status-dot.error { background-color: var(--error); }
+        .api-status-dot.loading { background-color: #f59e0b; animation: pulse 1.5s infinite; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+        .success-card { text-align: center; padding: 3rem 2rem; }
+        .success-icon {
+            width: 80px; height: 80px; background: #dcfce7; color: #16a34a;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 2.5rem; margin: 0 auto 1.5rem;
+        }
+        .success-title { font-size: 1.75rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .success-desc { color: var(--text-muted); margin-bottom: 2rem; }
+
+        .company-item {
+            background: white; border: 1px solid var(--border); border-radius: 0.75rem;
+            padding: 1.25rem; display: flex; justify-content: space-between; align-items: center;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .company-item:hover { border-color: var(--primary); background-color: rgba(79, 70, 229, 0.05); transform: translateX(5px); }
+        .company-name { font-weight: 700; font-size: 1.1rem; }
+        .company-count { font-size: 0.875rem; color: var(--text-muted); background: #f3f4f6; padding: 0.2rem 0.6rem; border-radius: 1rem; }
+
+        /* Meal Selection Styles */
+        .meal-options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .meal-option {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.25rem;
+            border: 2px solid var(--border);
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .meal-option:hover {
+            border-color: var(--primary);
+            background-color: rgba(79, 70, 229, 0.05);
+        }
+
+        .meal-option.selected {
+            border-color: var(--primary);
+            background-color: rgba(79, 70, 229, 0.1);
+        }
+
+        .meal-emoji { font-size: 1.5rem; }
+        .meal-label { font-weight: 600; font-size: 1.1rem; }
+
+        @media (max-width: 640px) {
+            .mode-selection-grid { grid-template-columns: 1fr; }
+            .meal-btn-group { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <div class="header-link" onclick="resetApp()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                首頁
+            </div>
+            <div class="header-title">活動報到系統</div>
+            <div class="api-status">
+                <div id="api-status-dot" class="api-status-dot"></div>
+                <span id="api-status-text">正在連線至雲端...</span>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- 模式選擇 -->
+        <div id="modeState">
+            <h1 class="section-title">歡迎參加活動</h1>
+            <p class="section-subtitle">請選擇您的報到方式</p>
+            <div class="mode-selection-grid">
+                <div class="mode-card" onclick="setCheckInMode('individual')">
+                    <span class="mode-icon">👤</span>
+                    <h2 class="mode-title">個人報到</h2>
+                    <p class="mode-desc">適合個人或少數同行者，使用電話、姓名或 Email 驗證。</p>
+                </div>
+                <div class="mode-card" onclick="setCheckInMode('group')">
+                    <span class="mode-icon">🏢</span>
+                    <h2 class="mode-title">公司團體報到</h2>
+                    <p class="mode-desc">適合公司行號，可一次為多位同仁辦理報到手續。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 個人報到：選擇方式 -->
+        <div id="selectionState" class="state-hidden">
+            <button class="back-button" onclick="setAppState('mode')">返回</button>
+            <h1 class="section-title">個人報到</h1>
+            <p class="section-subtitle">請選擇驗證身份的方式</p>
+            <div class="cards-grid">
+                <div class="card" onclick="selectMethod('phone')">
+                    <div class="card-header"><span class="card-icon">📱</span><span class="card-chevron">›</span></div>
+                    <h3 class="card-title">電話驗證</h3>
+                    <p class="card-description">輸入報名時填寫的行動電話</p>
+                </div>
+                <div class="card" onclick="selectMethod('name')">
+                    <div class="card-header"><span class="card-icon">👤</span><span class="card-chevron">›</span></div>
+                    <h3 class="card-title">姓名驗證</h3>
+                    <p class="card-description">輸入您的真實姓名</p>
+                </div>
+                <div class="card" onclick="selectMethod('email')">
+                    <div class="card-header"><span class="card-icon">✉️</span><span class="card-chevron">›</span></div>
+                    <h3 class="card-title">Email 驗證</h3>
+                    <p class="card-description">輸入報名時填寫的電子郵件</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 團體報到：搜尋公司 -->
+        <div id="groupSearchState" class="state-hidden">
+            <div class="verification-container">
+                <button class="back-button" onclick="setAppState('mode')">返回</button>
+                <div class="form-card">
+                    <div class="form-header"><span class="card-icon">🏢</span><h2 class="form-title">公司團體報到</h2></div>
+                    <p class="form-description">請輸入您的公司名稱關鍵字進行搜尋</p>
+                    <input type="text" id="companyInput" placeholder="例如：科技創新" onkeyup="handleCompanyKeyUp(event)">
+                    <div id="companyError" class="state-hidden" style="color: var(--error); font-size: 0.875rem; margin-top: 0.5rem;">⚠️ <span id="companyErrorMsg"></span></div>
+                    <button id="companyBtn" class="button button-primary" style="margin-top: 1.5rem;" onclick="handleCompanySearch()">搜尋公司</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 團體報到：選擇公司 -->
+        <div id="companySelectionState" class="state-hidden">
+            <button class="back-button" onclick="setAppState('group_search')">返回搜尋</button>
+            <h1 class="section-title">請選擇您的公司</h1>
+            <div id="companyList" class="company-list"></div>
+        </div>
+
+        <!-- 團體報到：人員名單 -->
+        <div id="groupListState" class="state-hidden">
+            <div class="verification-container" style="max-width: 600px;">
+                <button class="back-button" onclick="handleGroupListBack()">返回</button>
+                <div class="form-card">
+                    <div class="form-header"><span class="card-icon">👥</span><h2 class="form-title" id="groupCompanyName">公司人員名單</h2></div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <label class="select-all-label"><input type="checkbox" id="selectAll" class="group-checkbox" onchange="toggleSelectAll(this.checked)">全選未報到者</label>
+                        <span id="selectedCount" style="font-size: 0.875rem; font-weight: 600; color: var(--primary);">已選擇 0 人</span>
+                    </div>
+                    <div id="groupList" class="group-list"></div>
+                    <button id="groupNextBtn" class="button button-primary" style="margin-top: 2rem;" disabled onclick="proceedToGroupMeal()">下一步：個別餐食選擇</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 團體報到：個別餐食選擇 -->
+        <div id="groupMealState" class="state-hidden">
+            <div class="verification-container" style="max-width: 650px;">
+                <button class="back-button" onclick="setAppState('group_list')">返回名單</button>
+                <div class="form-card">
+                    <div class="form-header"><span class="card-icon">🍱</span><h2 class="form-title">團體餐食設定</h2></div>
+                    <p class="form-description">請為每位同仁選擇餐點</p>
+                    <div id="groupMealList" class="meal-list"></div>
+                    <button id="groupCheckInBtn" class="button button-primary" style="margin-top: 2rem;" onclick="handleFinalCheckIn()">確認全員報到</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 個人報到：驗證表單 -->
+        <div id="verificationState" class="state-hidden">
+            <div class="verification-container">
+                <button class="back-button" onclick="setAppState('selection')">返回</button>
+                <div id="phoneForm" class="form-card state-hidden">
+                    <div class="form-header"><span class="card-icon">📱</span><h2 class="form-title">電話驗證</h2></div>
+                    <input type="text" id="phoneInput" placeholder="例如：0912345678" onkeyup="handleKeyUp(event, 'phone')">
+                    <div id="phoneError" class="state-hidden" style="color: var(--error); font-size: 0.875rem; margin-top: 0.5rem;">⚠️ <span id="phoneErrorMsg"></span></div>
+                    <button id="phoneBtn" class="button button-primary" style="margin-top: 1.5rem;" onclick="handlePhoneVerification()">驗證</button>
+                </div>
+                <div id="nameForm" class="form-card state-hidden">
+                    <div class="form-header"><span class="card-icon">👤</span><h2 class="form-title">姓名驗證</h2></div>
+                    <input type="text" id="nameInput" placeholder="例如：王小明" onkeyup="handleKeyUp(event, 'name')">
+                    <div id="nameError" class="state-hidden" style="color: var(--error); font-size: 0.875rem; margin-top: 0.5rem;">⚠️ <span id="nameErrorMsg"></span></div>
+                    <button id="nameBtn" class="button button-primary" style="margin-top: 1.5rem;" onclick="handleNameVerification()">驗證</button>
+                </div>
+                <div id="emailForm" class="form-card state-hidden">
+                    <div class="form-header"><span class="card-icon">✉️</span><h2 class="form-title">Email 驗證</h2></div>
+                    <input type="text" id="emailInput" placeholder="例如：example@mail.com" onkeyup="handleKeyUp(event, 'email')">
+                    <div id="emailError" class="state-hidden" style="color: var(--error); font-size: 0.875rem; margin-top: 0.5rem;">⚠️ <span id="emailErrorMsg"></span></div>
+                    <button id="emailBtn" class="button button-primary" style="margin-top: 1.5rem;" onclick="handleEmailVerification()">驗證</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 個人報到：餐食選擇 -->
+        <div id="mealState" class="state-hidden">
+            <div class="verification-container">
+                <button class="back-button" onclick="setAppState('verification')">返回</button>
+                <div class="form-card">
+                    <div class="form-header"><span class="card-icon">🍱</span><h2 class="form-title">餐食選擇</h2></div>
+                    <div class="meal-options">
+                        <div id="meal-meat" class="meal-option" onclick="selectIndividualMeal('葷食')"><span class="meal-emoji">🍖</span><span class="meal-label">葷食</span></div>
+                        <div id="meal-veggie" class="meal-option" onclick="selectIndividualMeal('素食')"><span class="meal-emoji">🥗</span><span class="meal-label">素食</span></div>
+                        <div id="meal-none" class="meal-option" onclick="selectIndividualMeal('不須用餐')"><span class="meal-emoji">❌</span><span class="meal-label">不須用餐</span></div>
+                    </div>
+                    <button id="checkInBtn" class="button button-primary" disabled onclick="handleFinalCheckIn()">確認報到</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 重複資料選擇 -->
+        <div id="duplicateState" class="state-hidden">
+            <div class="verification-container">
+                <button class="back-button" onclick="setAppState('verification')">返回</button>
+                <div class="form-card">
+                    <div class="form-header"><span class="card-icon">🔍</span><h2 class="form-title">找到多筆資料</h2></div>
+                    <div id="duplicateList" class="duplicate-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 查無資料 -->
+        <div id="notFoundState" class="state-hidden">
+            <div class="verification-container">
+                <div class="form-card" style="text-align: center;">
+                    <div class="success-icon" style="background: #fee2e2; color: #dc2626;">❓</div>
+                    <h2 class="success-title">查無報名資料</h2>
+                    <button class="button button-primary" onclick="resetApp()">返回首頁</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 報到成功 -->
+        <div id="successState" class="state-hidden">
+            <div class="verification-container" style="max-width: 600px;">
+                <div class="form-card success-card">
+                    <div class="success-icon">✓</div>
+                    <h2 class="success-title">報到成功！</h2>
+                    <p class="success-desc">歡迎參加本次活動，資料已同步至雲端。</p>
+                    <div id="successContent" style="text-align: left;"></div>
+                    <button class="button button-primary" style="margin-top: 2rem;" onclick="resetApp()">完成</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        let appState = 'mode';
+        let checkInMode = 'individual';
+        let selectedMethod = null;
+        let selectedParticipant = null;
+        let duplicateParticipants = [];
+        let selectedGroupParticipants = []; 
+        let groupMealSelections = {}; 
+        let selectedMealChoice = null;
+        let systemConfig = null;
+        let matchedCompanies = [];
+        let finalResults = [];
+
+        async function checkApiStatus() {
+            const dot = document.getElementById('api-status-dot');
+            const text = document.getElementById('api-status-text');
+            try {
+                const res = await fetch(`${API_BASE}/config`);
+                if (res.ok) {
+                    systemConfig = await res.json();
+                    dot.className = 'api-status-dot connected';
+                    text.textContent = '已連線至雲端';
+                }
+            } catch (e) {
+                dot.className = 'api-status-dot error';
+                text.textContent = '連線失敗';
+            }
+        }
+
+        function setAppState(state) { appState = state; updateUI(); }
+        function setCheckInMode(mode) { checkInMode = mode; setAppState(mode === 'individual' ? 'selection' : 'group_search'); }
+        function selectMethod(method) { selectedMethod = method; setAppState('verification'); }
+
+        function updateUI() {
+            const states = ['modeState', 'selectionState', 'verificationState', 'mealState', 'duplicateState',
+                           'notFoundState', 'successState', 'groupSearchState', 'companySelectionState', 'groupListState', 'groupMealState'];
+            states.forEach(id => document.getElementById(id)?.classList.add('state-hidden'));
+            
+            if (appState === 'verification') {
+                document.getElementById('verificationState').classList.remove('state-hidden');
+                ['phoneForm', 'nameForm', 'emailForm'].forEach(id => document.getElementById(id).classList.add('state-hidden'));
+                document.getElementById(selectedMethod + 'Form').classList.remove('state-hidden');
+            } else {
+                const stateMap = {
+                    mode: 'modeState', selection: 'selectionState', group_search: 'groupSearchState',
+                    company_selection: 'companySelectionState', group_list: 'groupListState',
+                    group_meal: 'groupMealState', meal: 'mealState', duplicate: 'duplicateState',
+                    not_found: 'notFoundState', success: 'successState'
+                };
+                document.getElementById(stateMap[appState])?.classList.remove('state-hidden');
+            }
+        }
+
+        async function handleCompanySearch() {
+            const company = document.getElementById('companyInput').value.trim();
+            if (!company) return;
+            try {
+                const res = await fetch(`${API_BASE}/search/company?company=${encodeURIComponent(company)}`);
+                const json = await res.json();
+                const participants = json.data || [];
+                if (participants.length === 0) setAppState('not_found');
+                else {
+                    const groups = {};
+                    participants.forEach(p => { if (!groups[p.company]) groups[p.company] = []; groups[p.company].push(p); });
+                    matchedCompanies = Object.keys(groups).map(name => ({ name, participants: groups[name] }));
+                    if (matchedCompanies.length === 1) selectCompany(0);
+                    else { renderCompanySelection(); setAppState('company_selection'); }
+                }
+            } catch (e) { alert('搜尋失敗'); }
+        }
+
+        function renderCompanySelection() {
+            const list = document.getElementById('companyList');
+            list.innerHTML = '';
+            matchedCompanies.forEach((c, i) => {
+                const item = document.createElement('div');
+                item.className = 'company-item';
+                item.onclick = () => selectCompany(i);
+                item.innerHTML = `<span class="company-name">${c.name}</span><span class="company-count">${c.participants.length} 人</span>`;
+                list.appendChild(item);
+            });
+        }
+
+        function selectCompany(i) {
+            const c = matchedCompanies[i];
+            duplicateParticipants = c.participants;
+            document.getElementById('groupCompanyName').textContent = c.name;
+            renderGroupList();
+            setAppState('group_list');
+        }
+
+        function renderGroupList() {
+            const list = document.getElementById('groupList');
+            list.innerHTML = '';
+            selectedGroupParticipants = [];
+            document.getElementById('selectedCount').textContent = '已選擇 0 人';
+            document.getElementById('groupNextBtn').disabled = true;
+            duplicateParticipants.forEach(p => {
+                const isCheckedIn = p.status === 'checked_in';
+                const item = document.createElement('div');
+                item.className = 'group-item';
+                // 使用姓名作為輔助識別
+                item.innerHTML = `
+                    <input type="checkbox" class="group-checkbox" data-id="${p.id}" data-name="${p.name}" ${isCheckedIn ? 'disabled' : ''} onchange="toggleParticipantSelection('${p.id}', '${p.name}', this.checked)">
+                    <div class="group-item-info">
+                        <span class="group-item-name">${p.name}</span>
+                        <span class="group-item-status ${isCheckedIn ? 'status-checked' : 'status-registered'}">${isCheckedIn ? '已報到' : '未報到'}</span>
+                    </div>`;
+                list.appendChild(item);
+            });
+        }
+
+        function toggleParticipantSelection(id, name, checked) {
+            const p = duplicateParticipants.find(x => x.id === id && x.name === name);
+            if (checked) {
+                if (!selectedGroupParticipants.find(x => x.id === id && x.name === name)) selectedGroupParticipants.push(p);
+            } else {
+                selectedGroupParticipants = selectedGroupParticipants.filter(x => !(x.id === id && x.name === name));
+            }
+            document.getElementById('selectedCount').textContent = `已選擇 ${selectedGroupParticipants.length} 人`;
+            document.getElementById('groupNextBtn').disabled = selectedGroupParticipants.length === 0;
+        }
+
+        function toggleSelectAll(checked) {
+            const checkboxes = document.querySelectorAll('.group-checkbox:not(:disabled)');
+            selectedGroupParticipants = [];
+            checkboxes.forEach(cb => {
+                cb.checked = checked;
+                const id = cb.getAttribute('data-id');
+                const name = cb.getAttribute('data-name');
+                if (checked) {
+                    const p = duplicateParticipants.find(x => x.id === id && x.name === name);
+                    if (p) selectedGroupParticipants.push(p);
+                }
+            });
+            document.getElementById('selectedCount').textContent = `已選擇 ${selectedGroupParticipants.length} 人`;
+            document.getElementById('groupNextBtn').disabled = selectedGroupParticipants.length === 0;
+        }
+
+        function proceedToGroupMeal() {
+            if (systemConfig?.show_meal_options) {
+                renderGroupMealList();
+                setAppState('group_meal');
+            } else {
+                groupMealSelections = {};
+                selectedGroupParticipants.forEach(p => groupMealSelections[p.id + '_' + p.name] = '');
+                handleFinalCheckIn();
+            }
+        }
+
+        function renderGroupMealList() {
+            const list = document.getElementById('groupMealList');
+            list.innerHTML = '';
+            groupMealSelections = {};
+            selectedGroupParticipants.forEach(p => {
+                const key = p.id + '_' + p.name;
+                groupMealSelections[key] = '葷食'; 
+                const item = document.createElement('div');
+                item.className = 'meal-item';
+                item.innerHTML = `
+                    <div class="meal-item-info"><span class="meal-item-name">${p.name}</span></div>
+                    <div class="meal-btn-group">
+                        <button class="meal-mini-btn selected" onclick="setGroupMeal('${key}', '葷食', this)">葷食</button>
+                        <button class="meal-mini-btn" onclick="setGroupMeal('${key}', '素食', this)">素食</button>
+                        <button class="meal-mini-btn" onclick="setGroupMeal('${key}', '不須用餐', this)">不須</button>
+                    </div>`;
+                list.appendChild(item);
+            });
+        }
+
+        function setGroupMeal(key, meal, btn) {
+            groupMealSelections[key] = meal;
+            btn.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+        }
+
+        function selectIndividualMeal(meal) {
+            selectedMealChoice = meal;
+            ['meal-meat', 'meal-veggie', 'meal-none'].forEach(id => document.getElementById(id).classList.remove('selected'));
+            document.getElementById('meal-' + (meal === '葷食' ? 'meat' : meal === '素食' ? 'veggie' : 'none')).classList.add('selected');
+            document.getElementById('checkInBtn').disabled = false;
+        }
+
+        async function handleFinalCheckIn() {
+            try {
+                let res;
+                if (checkInMode === 'individual') {
+                    res = await fetch(`${API_BASE}/checkin/${selectedParticipant.id}`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ meal: selectedMealChoice, name: selectedParticipant.name })
+                    });
+                } else {
+                    const selections = selectedGroupParticipants.map(p => ({ 
+                        id: p.id, 
+                        name: p.name,
+                        meal: groupMealSelections[p.id + '_' + p.name] 
+                    }));
+                    res = await fetch(`${API_BASE}/checkin/batch`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ selections })
+                    });
+                }
+                const json = await res.json();
+                if (json.success) {
+                    finalResults = Array.isArray(json.data) ? json.data : [json.data];
+                    renderSuccessContent();
+                    setAppState('success');
+                } else {
+                    alert('報到失敗：' + (json.error || '未知錯誤'));
+                }
+            } catch (e) { 
+                console.error(e);
+                alert('報到失敗，請檢查網路連線'); 
+            }
+        }
+
+        function renderSuccessContent() {
+            const div = document.getElementById('successContent');
+            if (checkInMode === 'individual') {
+                const p = finalResults[0];
+                div.innerHTML = `
+                    <div style="background:#f9fafb; padding:1.5rem; border-radius:0.75rem; border:1px solid var(--border);">
+                        <p><b>姓名：</b>${p.name}</p><p><b>公司：</b>${p.company}</p>
+                        <p><b>餐食：</b>${p.meal || '今日不提供'}</p><p><b>時間：</b>${p.checkedInAt}</p>
+                    </div>`;
+            } else {
+                let rows = finalResults.map(p => `<tr><td>${p.name}</td><td>${p.meal || '未選擇'}</td></tr>`).join('');
+                div.innerHTML = `
+                    <p style="margin-bottom:1rem;"><b>公司：</b>${finalResults[0].company}</p>
+                    <div style="max-height:300px; overflow-y:auto; border:1px solid var(--border); border-radius:0.5rem;">
+                        <table class="success-table"><thead><tr><th>姓名</th><th>餐食</th></tr></thead><tbody>${rows}</tbody></table>
+                    </div>`;
+            }
+        }
+
+        function resetApp() {
+            appState = 'mode'; selectedParticipant = null; selectedGroupParticipants = [];
+            selectedMealChoice = null; groupMealSelections = {};
+            document.querySelectorAll('input').forEach(i => i.value = '');
+            updateUI();
+        }
+
+        function handleGroupListBack() { if (matchedCompanies.length > 1) setAppState('company_selection'); else setAppState('group_search'); }
+        function handleKeyUp(e, m) { if (e.key === 'Enter') { if (m === 'phone') handlePhoneVerification(); else if (m === 'name') handleNameVerification(); else handleEmailVerification(); } }
+        function handleCompanyKeyUp(e) { if (e.key === 'Enter') handleCompanySearch(); }
+
+        async function handlePhoneVerification() {
+            const v = document.getElementById('phoneInput').value.trim();
+            const res = await fetch(`${API_BASE}/search/phone?phone=${v}`);
+            const json = await res.json();
+            handleSearchResults(json.data);
+        }
+        async function handleNameVerification() {
+            const v = document.getElementById('nameInput').value.trim();
+            const res = await fetch(`${API_BASE}/search/name?name=${v}`);
+            const json = await res.json();
+            handleSearchResults(json.data);
+        }
+        async function handleEmailVerification() {
+            const v = document.getElementById('emailInput').value.trim();
+            const res = await fetch(`${API_BASE}/search/email?email=${v}`);
+            const json = await res.json();
+            handleSearchResults(json.data);
+        }
+        function handleSearchResults(data) {
+            if (!data || data.length === 0) setAppState('not_found');
+            else if (data.length === 1) { 
+                selectedParticipant = data[0]; 
+                if (systemConfig?.show_meal_options) setAppState('meal'); 
+                else { selectedMealChoice = ''; handleFinalCheckIn(); }
+            }
+            else { 
+                duplicateParticipants = data; 
+                renderDuplicateList();
+                setAppState('duplicate'); 
+            }
+        }
+
+        function renderDuplicateList() {
+            const list = document.getElementById('duplicateList');
+            list.innerHTML = '';
+            duplicateParticipants.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'company-item';
+                item.style.marginBottom = '0.5rem';
+                item.onclick = () => {
+                    selectedParticipant = p;
+                    if (systemConfig?.show_meal_options) setAppState('meal');
+                    else { selectedMealChoice = ''; handleFinalCheckIn(); }
+                };
+                item.innerHTML = `
+                    <div>
+                        <div class="company-name">${p.name}</div>
+                        <div style="font-size: 0.875rem; color: var(--text-muted);">${p.company} | ${p.phone || p.email}</div>
+                    </div>
+                    <span class="company-count">選擇</span>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        window.onload = () => { checkApiStatus(); updateUI(); };
+    </script>
+</body>
+</html>

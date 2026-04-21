@@ -1,0 +1,16 @@
+{
+    "show_meal_options": true,
+    "google_sheet_name": "活動報到名單",
+    "excel_columns": {
+        "id": 1,
+        "name": 6,
+        "phone": 8,
+        "company": 3,
+        "email": 9,
+        "qrCode": 6,
+        "registeredAt": 7,
+        "checkedInAt": 14,
+        "status": 15,
+        "meal": 16
+    }
+}
