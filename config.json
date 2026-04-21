@@ -7,10 +7,10 @@
         "phone": 8,
         "company": 3,
         "email": 9,
-        "qrCode": 6,
-        "registeredAt": 7,
-        "checkedInAt": 14,
-        "status": 15,
-        "meal": 16
+        "qrCode": 4,
+        "registeredAt": 5,
+        "checkedInAt": 13,
+        "status": 14,
+        "meal": 15
     }
 }
