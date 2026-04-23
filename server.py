@@ -1,4 +1,4 @@
-import os
+import oss
 import json
 import time
 import threading
@@ -133,25 +133,30 @@ def get_participants():
 @app.route('/api/search/phone')
 def search_phone():
     refresh_cache()
-    # 搜尋時自動去掉所有橫線與空格
+    # 1. 取得使用者輸入的電話，只留下數字
     query_phone = ''.join(filter(str.isdigit, request.args.get('phone', '').strip()))
+    
+    if not query_phone:
+        return jsonify({"success": True, "data": []})
+
     results = []
     for p in participants_cache:
-        # 試算表的號碼也只留數字再比對
+        # 2. 將試算表抓到的電話也只留下數字進行比對
         sheet_phone = ''.join(filter(str.isdigit, str(p.get('phone', ''))))
         if sheet_phone == query_phone:
             results.append(p)
+            
     return jsonify({"success": True, "data": results})
 
 @app.route('/api/search/name')
 def search_name():
     refresh_cache()
-    # 去掉使用者輸入的所有空格
+    # 搜尋姓名時自動去掉空格
     query_name = request.args.get('name', '').strip().replace(" ", "").replace("　", "")
     
     results = []
     for p in participants_cache:
-        # 去掉試算表內姓名資料的所有空格後比對
+        # 試算表的姓名也去掉空格比對
         sheet_name = str(p.get('name', '')).replace(" ", "").replace("　", "")
         if sheet_name == query_name:
             results.append(p)
