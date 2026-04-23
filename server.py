@@ -65,9 +65,17 @@ def refresh_cache(force=False):
     with cache_lock:
         try:
             print(f"[{datetime.now().strftime('%H:%M:%S')}] 正在同步資料...")
-            sheet = get_worksheet()
-            all_values = sheet.get_all_values()
-            if not all_values: return
+sheet = get_worksheet()
+all_values = sheet.get_all_values()
+
+print("==== DEBUG START ====")
+print("抓到總列數:", len(all_values))
+print("前3列:", all_values[:3])
+print("==== DEBUG END ====")
+
+if not all_values:
+    print("❌ 沒抓到任何資料（很可能是權限問題）")
+    return
             config = load_config()
             cols = config['excel_columns']
             header_row_idx = 0
