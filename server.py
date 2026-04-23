@@ -150,35 +150,54 @@ def search_company():
     result = [p for p in participants_cache if q in p["company"]]
     return jsonify({"success": True, "data": result})
 
-# --- 重點：個人報到 API ---
+# --- 個人報到 API ---
 @app.route('/api/checkin/<participant_id>', methods=['POST'])
 def checkin(participant_id):
     try:
         data = request.json
         meal = data.get("meal", "")
+        participant_name = data.get("name", "未知姓名")
         
         sheet = get_worksheet()
         config = load_config()
         cols = config["excel_columns"]
 
+        # 1. 尋找該 ID 所在的列
         cell = sheet.find(participant_id)
-        if not cell: return jsonify({"success": False, "error": "找不到 ID"}), 404
+        if not cell: 
+            return jsonify({"success": False, "error": "找不到報名資料"}), 404
 
+        row_idx = cell.row
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        sheet.update_cell(cell.row, cols["checkedInAt"], now_str)
-        sheet.update_cell(cell.row, cols["status"], "checked_in")
-        if meal: sheet.update_cell(cell.row, cols["meal"], meal)
 
+        # 2. 依照截圖欄位寫入資料
+        # 第 8 欄：報到時間
+        sheet.update_cell(row_idx, cols["checkedInAt"], now_str)
+        # 第 9 欄：狀態
+        sheet.update_cell(row_idx, cols["status"], "已報到")
+        # 第 10 欄：餐食選擇
+        if meal:
+            sheet.update_cell(row_idx, cols["meal"], meal)
+
+        # 3. 強制更新快取
         refresh_cache(True)
-        # 回傳給前端需要的成功格式
+
+        # 4. 回傳成功訊息給前端顯示
         return jsonify({
             "success": True, 
-            "data": {"name": data.get("name"), "company": "更新中", "meal": meal, "checkedInAt": now_str}
+            "data": {
+                "name": participant_name,
+                "company": "驗證成功",
+                "meal": meal,
+                "checkedInAt": now_str,
+                "status": "已報到"
+            }
         })
     except Exception as e:
+        print("CHECKIN ERROR:", e)
         return jsonify({"success": False, "error": str(e)}), 500
 
-# --- 重點：團體報到 API ---
+# --- 團體報到 API ---
 @app.route('/api/checkin/batch', methods=['POST'])
 def checkin_batch():
     try:
@@ -192,14 +211,23 @@ def checkin_batch():
         for item in selections:
             cell = sheet.find(item["id"])
             if cell:
-                sheet.update_cell(cell.row, cols["checkedInAt"], now_str)
-                sheet.update_cell(cell.row, cols["status"], "checked_in")
-                if item["meal"]: sheet.update_cell(cell.row, cols["meal"], item["meal"])
-                results.append({"name": item["name"], "meal": item["meal"], "company": "團體報到"})
+                row_idx = cell.row
+                sheet.update_cell(row_idx, cols["checkedInAt"], now_str)
+                sheet.update_cell(row_idx, cols["status"], "已報到")
+                if item["meal"]:
+                    sheet.update_cell(row_idx, cols["meal"], item["meal"])
+                
+                results.append({
+                    "name": item["name"], 
+                    "meal": item["meal"], 
+                    "company": "團體報到成功",
+                    "checkedInAt": now_str
+                })
 
         refresh_cache(True)
         return jsonify({"success": True, "data": results})
     except Exception as e:
+        print("BATCH CHECKIN ERROR:", e)
         return jsonify({"success": False, "error": str(e)}), 500
 
 # =========================
