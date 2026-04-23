@@ -6,14 +6,14 @@ from datetime import datetime
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+from google.oauth2.service_account import Credentials
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
 
-# =============================================
-# 基本設定
-# =============================================
+# =========================
+# 設定
+# =========================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_PATH = os.path.join(BASE_DIR, 'config.json')
 
@@ -26,16 +26,8 @@ DEFAULT_CONFIG = {
     "show_meal_options": True,
     "google_sheet_name": "活動報到名單",
     "excel_columns": {
-        "id": 1,
-        "name": 2,
-        "phone": 3,
-        "company": 4,
-        "email": 5,
-        "qrCode": 6,
-        "registeredAt": 7,
-        "checkedInAt": 8,
-        "status": 9,
-        "meal": 10
+        "id": 1, "name": 2, "phone": 3, "company": 4, "email": 5,
+        "qrCode": 6, "registeredAt": 7, "checkedInAt": 8, "status": 9, "meal": 10
     }
 }
 
@@ -49,12 +41,12 @@ def load_config():
     return DEFAULT_CONFIG
 
 
-# =============================================
-# Google Sheets Auth（已修正）
-# =============================================
+# =========================
+# GOOGLE SHEETS（修正版）
+# =========================
 def get_gspread_client():
     scope = [
-        "https://spreadsheets.google.com/feeds",
+        "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive"
     ]
 
@@ -62,22 +54,23 @@ def get_gspread_client():
         "type": "service_account",
         "client_email": os.environ["GOOGLE_CLIENT_EMAIL"],
         "private_key": os.environ["GOOGLE_PRIVATE_KEY"].replace("\\n", "\n"),
+        "token_uri": "https://oauth2.googleapis.com/token"
     }
 
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+    creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
     return gspread.authorize(creds)
 
 
 def get_worksheet():
     config = load_config()
     client = get_gspread_client()
-    spreadsheet = client.open(config['google_sheet_name'])
-    return spreadsheet.get_worksheet(0)
+    sheet = client.open(config["google_sheet_name"])
+    return sheet.get_worksheet(0)
 
 
-# =============================================
-# 快取同步（穩定版）
-# =============================================
+# =========================
+# CACHE
+# =========================
 def refresh_cache(force=False):
     global participants_cache, last_cache_update
 
@@ -87,129 +80,100 @@ def refresh_cache(force=False):
 
     with cache_lock:
         try:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] 同步資料...")
-
             sheet = get_worksheet()
             all_values = sheet.get_all_values()
 
             if not all_values:
-                print("❌ Google Sheet 沒資料")
                 return
 
             config = load_config()
-            cols = config['excel_columns']
-
-            # 找 header
-            header_row_idx = 0
-            for i, row in enumerate(all_values):
-                if any("姓名" in str(cell) for cell in row):
-                    header_row_idx = i
-                    break
-
-            rows = all_values[header_row_idx + 1:]
+            cols = config["excel_columns"]
 
             new_cache = []
-            last_values = {k: "" for k in cols.keys()}
 
-            for row in rows:
-                def get_val(col):
-                    idx = col - 1
-                    return str(row[idx]).strip() if idx < len(row) else ""
+            for row in all_values[1:]:
+                def get(col):
+                    i = col - 1
+                    return row[i].strip() if i < len(row) else ""
 
-                current = {}
-                for key, col in cols.items():
-                    val = get_val(col)
+                p = {
+                    "id": get(cols["id"]),
+                    "name": get(cols["name"]),
+                    "phone": get(cols["phone"]),
+                    "company": get(cols["company"]),
+                    "email": get(cols["email"]),
+                    "qrCode": get(cols["qrCode"]),
+                    "registeredAt": get(cols["registeredAt"]),
+                    "checkedInAt": get(cols["checkedInAt"]),
+                    "status": get(cols["status"]) or "registered",
+                    "meal": get(cols["meal"])
+                }
 
-                    if not val and key not in ['checkedInAt', 'status', 'meal', 'registeredAt']:
-                        val = last_values[key]
-                    else:
-                        last_values[key] = val
-
-                    current[key] = val
-
-                if current.get('name'):
-                    new_cache.append({
-                        "id": current['id'],
-                        "name": current['name'],
-                        "phone": current['phone'],
-                        "company": current['company'],
-                        "email": current['email'],
-                        "qrCode": current['qrCode'],
-                        "registeredAt": current['registeredAt'],
-                        "checkedInAt": current['checkedInAt'] or None,
-                        "status": current['status'] or 'registered',
-                        "meal": current['meal']
-                    })
+                if p["name"]:
+                    new_cache.append(p)
 
             participants_cache = new_cache
             last_cache_update = now
 
-            print(f"✅ 同步完成：{len(participants_cache)} 筆")
-
         except Exception as e:
-            print(f"❌ 同步失敗: {e}")
+            print("SYNC ERROR:", e)
 
 
 def background_sync():
     while True:
         time.sleep(CACHE_TTL)
-        refresh_cache(force=True)
+        refresh_cache(True)
 
 
-# =============================================
+# =========================
 # API
-# =============================================
+# =========================
 @app.route('/')
 def index():
     return send_from_directory('.', '活動報到系統.html')
 
 
-@app.route('/api/config')
-def get_config():
-    return jsonify(load_config())
-
-
 @app.route('/api/participants')
-def get_participants():
+def participants():
     refresh_cache()
     return jsonify({"success": True, "data": participants_cache})
-
-
-@app.route('/api/search/phone')
-def search_phone():
-    refresh_cache()
-    query = ''.join(filter(str.isdigit, request.args.get('phone', '')))
-
-    results = []
-    for p in participants_cache:
-        phone = ''.join(filter(str.isdigit, str(p.get('phone', ''))))
-        if phone == query:
-            results.append(p)
-
-    return jsonify({"success": True, "data": results})
 
 
 @app.route('/api/search/name')
 def search_name():
     refresh_cache()
-    query = request.args.get('name', '').replace(" ", "").replace("　", "")
+    q = request.args.get("name", "").replace(" ", "").replace("　", "")
+    result = []
 
-    results = []
     for p in participants_cache:
-        name = str(p.get('name', '')).replace(" ", "").replace("　", "")
-        if name == query:
-            results.append(p)
+        name = p["name"].replace(" ", "").replace("　", "")
+        if name == q:
+            result.append(p)
 
-    return jsonify({"success": True, "data": results})
+    return jsonify({"success": True, "data": result})
 
 
-# =============================================
-# 啟動
-# =============================================
+@app.route('/api/search/phone')
+def search_phone():
+    refresh_cache()
+    q = ''.join(filter(str.isdigit, request.args.get("phone", "")))
+    result = []
+
+    for p in participants_cache:
+        phone = ''.join(filter(str.isdigit, p["phone"]))
+        if phone == q:
+            result.append(p)
+
+    return jsonify({"success": True, "data": result})
+
+
+# =========================
+# START
+# =========================
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
 
-    refresh_cache(force=True)
+    refresh_cache(True)
     threading.Thread(target=background_sync, daemon=True).start()
 
-    app.run(host='0.0.0.0', port=port)
+    app.run(host="0.0.0.0", port=port)
