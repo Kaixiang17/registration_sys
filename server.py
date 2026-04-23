@@ -40,9 +40,8 @@ def load_config():
             return DEFAULT_CONFIG
     return DEFAULT_CONFIG
 
-
 # =========================
-# GOOGLE SHEETS（修正版）
+# GOOGLE SHEETS（使用 Secret File 確保金鑰不損壞）
 # =========================
 def get_gspread_client():
     scope = [
@@ -50,14 +49,23 @@ def get_gspread_client():
         "https://www.googleapis.com/auth/drive"
     ]
 
-    creds_dict = {
-        "type": "service_account",
-        "client_email": os.environ["GOOGLE_CLIENT_EMAIL"],
-        "private_key": os.environ["GOOGLE_PRIVATE_KEY"].replace("\\n", "\n"),
-        "token_uri": "https://oauth2.googleapis.com/token"
-    }
+    # Render 的 Secret File 固定路徑
+    RENDER_SECRET_FILE = "/etc/secrets/google-creds.json"
+    # 本地測試用的路徑（請改成你電腦上那個 JSON 的檔名）
+    LOCAL_SECRET_FILE = os.path.join(BASE_DIR, "test0417-493608-dce82b8c6901.json")
 
-    creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
+    # 自動判斷環境：如果有 Secret File 就用它，沒有就用本地檔案
+    if os.path.exists(RENDER_SECRET_FILE):
+        json_path = RENDER_SECRET_FILE
+    elif os.path.exists(LOCAL_SECRET_FILE):
+        json_path = LOCAL_SECRET_FILE
+    else:
+        # 如果兩者都找不到，噴出錯誤提示
+        raise FileNotFoundError(f"找不到金鑰檔案！請檢查 Render Secret Files 設定。")
+
+    # 使用 from_service_account_file 直接讀取檔案
+    # 這樣就不需要手動處理 os.environ 或 .replace("\\n", "\n")
+    creds = Credentials.from_service_account_file(json_path, scopes=scope)
     return gspread.authorize(creds)
 
 
@@ -177,3 +185,8 @@ if __name__ == '__main__':
     threading.Thread(target=background_sync, daemon=True).start()
 
     app.run(host="0.0.0.0", port=port)
+
+@app.route('/api/config')
+def get_api_config():
+    # 這裡回傳前端需要的設定，或者簡單回傳成功即可
+    return jsonify({"success": True, "show_meal_options": True})
