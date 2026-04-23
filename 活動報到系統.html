@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>活動報到系統</title>
     <style>
-        :root { --primary: #4f46e5; --bg: #f8f7f4; --border: #e2e0db; --success: #16a34a; }
+        :root { --primary: #4f46e5; --bg: #f8f7f4; --border: #e2e0db; --success: #16a34a; --text-muted: #666666;}
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "PingFang TC", sans-serif; }
         body { background-color: var(--bg); color: #1a1a1a; line-height: 1.6; }
         header { background: white; border-bottom: 1px solid var(--border); padding: 1rem 0; position: sticky; top: 0; z-index: 100; }
@@ -17,21 +17,33 @@
         .mode-card:hover { border-color: var(--primary); transform: translateY(-5px); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .form-card { background: white; border: 1px solid var(--border); border-radius: 1rem; padding: 2.5rem; text-align: center; max-width: 500px; margin: 0 auto; }
         input[type="text"] { width: 100%; padding: 0.875rem 1rem; border: 1px solid var(--border); border-radius: 0.5rem; margin-bottom: 1rem; font-size: 1rem; }
-        .button { width: 100%; padding: 0.875rem; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; background: var(--primary); color: white; font-size: 1rem; }
+        .button { width: 100%; padding: 0.875rem; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; background: var(--primary); color: white; font-size: 1rem; transition: background 0.2s;}
+        .button:hover { background: #4338ca; }
         .button:disabled { background: #9ca3af; cursor: not-allowed; }
         .meal-option { display: flex; align-items: center; gap: 1rem; padding: 1.25rem; border: 2px solid var(--border); border-radius: 0.75rem; cursor: pointer; margin-bottom: 1rem; }
         .meal-option.selected { border-color: var(--primary); background: rgba(79, 70, 229, 0.05); }
         .group-list { margin-top: 1rem; max-height: 300px; overflow-y: auto; border: 1px solid var(--border); border-radius: 0.5rem; text-align: left; }
         .group-item { display: flex; align-items: center; padding: 0.8rem; border-bottom: 1px solid #eee; }
-        .api-status { font-size: 0.75rem; color: var(--text-muted); }
+        
+        /* 成功資訊方塊樣式 */
+        .info-box {
+            text-align: left; 
+            background: #f9fafb; 
+            padding: 1.5rem; 
+            border-radius: 0.75rem; 
+            border: 1px solid var(--border); 
+            font-size: 1.05rem; 
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+        }
     </style>
 </head>
 <body>
     <header>
         <div class="header-container">
-            <div onclick="location.reload()" style="cursor:pointer">🏠 首頁</div>
-            <div>活動報到系統</div>
-            <div id="status" class="api-status">連線中...</div>
+            <div onclick="location.reload()" style="cursor:pointer; color:var(--text-muted)">🏠 首頁</div>
+            <div style="font-weight: 700;">活動報到系統</div>
+            <div id="status" style="font-size: 0.8rem; color: var(--text-muted);">連線中...</div>
         </div>
     </header>
 
@@ -47,6 +59,8 @@
 
         <div id="actionState" class="state-hidden">
             <div class="form-card">
+                <button onclick="setAppState('mode')" style="float:left; background:none; border:none; color:gray; cursor:pointer">← 返回</button>
+                <div style="clear:both;"></div>
                 <h2 id="actionTitle" style="margin-bottom:1.5rem;">驗證</h2>
                 <input type="text" id="actionInput" placeholder="請輸入資訊">
                 <button class="button" onclick="handleAction()">下一步</button>
@@ -55,6 +69,8 @@
 
         <div id="companySelectionState" class="state-hidden">
             <div class="form-card">
+                <button onclick="setAppState('action')" style="float:left; background:none; border:none; color:gray; cursor:pointer">← 返回</button>
+                <div style="clear:both;"></div>
                 <h2 style="margin-bottom:1rem;">請選擇所屬公司</h2>
                 <div id="companyList" style="display:grid; gap:0.5rem; text-align:left;"></div>
             </div>
@@ -62,6 +78,8 @@
 
         <div id="groupListState" class="state-hidden">
             <div class="form-card">
+                <button onclick="setAppState('action')" style="float:left; background:none; border:none; color:gray; cursor:pointer">← 返回</button>
+                <div style="clear:both;"></div>
                 <h2 id="groupName" style="margin-bottom:1rem;">公司人員名單</h2>
                 <div id="groupList" class="group-list"></div>
                 <button class="button" style="margin-top:1.5rem;" onclick="proceedToMeal()">下一步</button>
@@ -70,6 +88,8 @@
 
         <div id="mealState" class="state-hidden">
             <div class="form-card">
+                <button onclick="setAppState(checkMode==='individual'?'action':'groupList')" style="float:left; background:none; border:none; color:gray; cursor:pointer">← 返回</button>
+                <div style="clear:both;"></div>
                 <h2>🍱 餐食選擇</h2>
                 <div style="margin-top: 1.5rem;">
                     <div class="meal-option" id="m-葷食" onclick="selectMeal('葷食')">🍖 葷食</div>
@@ -82,10 +102,13 @@
 
         <div id="successState" class="state-hidden">
             <div class="form-card">
-                <h1 style="color:green; font-size:3rem; margin-bottom:1rem;">✓</h1>
-                <h2>報到成功！</h2>
-                <p style="margin:1rem 0; color:var(--text-muted);">資料已同步至雲端。<br><strong style="color:var(--primary);">1.5 秒後自動跳轉商品頁面...</strong></p>
-                <button class="button" style="background:var(--primary)" onclick="location.href='/商品頁面.html'">🛍️ 立即前往商品頁</button>
+                <div style="color:#16a34a; font-size:4rem; line-height: 1;">✓</div>
+                <h2 style="margin-bottom:1.5rem;">報到成功！</h2>
+                
+                <div id="successInfo" class="info-box"></div>
+                
+                <p style="color:var(--text-muted); margin-bottom: 1rem;">資料已同步至雲端。<br><strong style="color:var(--primary);">2 秒後自動跳轉商品頁面...</strong></p>
+                <button class="button" onclick="location.href='/商品頁面.html'">🛍️ 立即前往商品頁</button>
             </div>
         </div>
     </main>
@@ -105,6 +128,7 @@
         function setMode(m) {
             checkMode = m;
             document.getElementById('actionTitle').textContent = m === 'individual' ? '請輸入姓名' : '請輸入公司名稱';
+            document.getElementById('actionInput').value = '';
             setAppState('action');
         }
 
@@ -120,7 +144,6 @@
                         selectedUser = json.data[0]; 
                         setAppState('meal'); 
                     } else { 
-                        // 處理團體公司分組
                         const groups = {}; 
                         json.data.forEach(p => { if(!groups[p.company]) groups[p.company] = []; groups[p.company].push(p); });
                         matchedCompanies = Object.keys(groups).map(name => ({ name, participants: groups[name] }));
@@ -169,8 +192,9 @@
         }
 
         async function submitCheckin() {
-            document.getElementById('finalBtn').disabled = true;
-            document.getElementById('finalBtn').textContent = '處理中...';
+            const btn = document.getElementById('finalBtn');
+            btn.disabled = true;
+            btn.textContent = '處理中...';
             
             const isIndiv = checkMode === 'individual';
             const url = isIndiv ? `${API_BASE}/checkin/${selectedUser.id}` : `${API_BASE}/checkin/batch`;
@@ -178,18 +202,42 @@
             
             try {
                 const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-                if (res.ok) {
+                const json = await res.json();
+                
+                if (json.success) {
+                    // 根據報到模式渲染成功資訊方塊
+                    const infoBox = document.getElementById('successInfo');
+                    const p = isIndiv ? json.data : json.data[0];
+                    
+                    if (isIndiv) {
+                        infoBox.innerHTML = `
+                            <b>姓名：</b>${p.name}<br>
+                            <b>公司：</b>${p.company || '無'}<br>
+                            <b>餐食：</b>${p.meal}<br>
+                            <b>時間：</b>${p.checkedInAt}
+                        `;
+                    } else {
+                        // 團體報到顯示公司與人數
+                        infoBox.innerHTML = `
+                            <b>公司：</b>${p.company || '無'}<br>
+                            <b>已報到人數：</b>${json.data.length} 人<br>
+                            <b>時間：</b>${p.checkedInAt}
+                        `;
+                    }
+                    
                     setAppState('success');
-                    setTimeout(() => location.href = '/商品頁面.html', 1500);
+                    
+                    // 延長至 2 秒後自動跳轉，讓使用者有時間看清楚資訊
+                    setTimeout(() => location.href = '/商品頁面.html', 2000);
                 } else {
                     alert('報到失敗，請重試');
-                    document.getElementById('finalBtn').disabled = false;
-                    document.getElementById('finalBtn').textContent = '確認報到';
+                    btn.disabled = false;
+                    btn.textContent = '確認報到';
                 }
             } catch (e) {
                 alert('網路錯誤');
-                document.getElementById('finalBtn').disabled = false;
-                document.getElementById('finalBtn').textContent = '確認報到';
+                btn.disabled = false;
+                btn.textContent = '確認報到';
             }
         }
 
@@ -197,13 +245,11 @@
             try {
                 const res = await fetch(`${API_BASE}/config`);
                 if (res.ok) {
-                    document.getElementById('status').textContent = '🟢 已連線雲端';
-                    document.getElementById('status').style.color = 'green';
+                    const st = document.getElementById('status');
+                    st.textContent = '🟢 已連線雲端';
+                    st.style.color = '#16a34a';
                 }
-            } catch(e) {
-                document.getElementById('status').textContent = '🔴 連線失敗';
-                document.getElementById('status').style.color = 'red';
-            }
+            } catch(e) {}
         };
     </script>
 </body>
