@@ -111,11 +111,12 @@ if not all_values:
                     "meal": current_p_data['meal']
                 }
                 if p['name']: new_cache.append(p)
-            participants_cache = new_cache
-            last_cache_update = now
-            print(f"同步完成：{len(participants_cache)} 筆。")
-        except Exception as e:
-            print(f"同步失敗: {e}")
+        participants_cache = new_cache
+        last_cache_update = now
+        print(f"同步完成：{len(participants_cache)} 筆。")
+
+    except Exception as e:
+        print(f"同步失敗: {e}")
 
 def background_sync():
     while True:
