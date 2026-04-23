@@ -80,12 +80,12 @@
             display: none !important;
         }
 
-        /* Mode Selection */
+        /* Mode Selection 調整為自適應 3 欄 */
         .mode-selection-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 2rem;
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto 3rem;
         }
 
@@ -93,7 +93,7 @@
             background: white;
             border: 2px solid #e2e0db;
             border-radius: 1rem;
-            padding: 2.5rem 2rem;
+            padding: 2.5rem 1.5rem;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -108,7 +108,7 @@
 
         .mode-icon { font-size: 3.5rem; margin-bottom: 1.5rem; display: block; }
         .mode-title { font-size: 1.5rem; font-weight: 700; color: #1a1a1a; margin-bottom: 0.75rem; }
-        .mode-desc { color: #666; font-size: 1rem; line-height: 1.5; }
+        .mode-desc { color: #666; font-size: 0.95rem; line-height: 1.5; }
 
         /* Lists & Items */
         .group-list, .meal-list {
@@ -272,7 +272,7 @@
             font-size: 2.5rem; margin: 0 auto 1.5rem;
         }
         .success-title { font-size: 1.75rem; font-weight: 800; margin-bottom: 0.5rem; }
-        .success-desc { color: var(--text-muted); margin-bottom: 2rem; }
+        .success-desc { color: var(--text-muted); margin-bottom: 2rem; line-height: 1.8; }
 
         .company-item {
             background: white; border: 1px solid var(--border); border-radius: 0.75rem;
@@ -340,10 +340,9 @@
     </header>
 
     <main>
-        <!-- 模式選擇 -->
         <div id="modeState">
             <h1 class="section-title">歡迎參加活動</h1>
-            <p class="section-subtitle">請選擇您的報到方式</p>
+            <p class="section-subtitle">請選擇您的需求項目</p>
             <div class="mode-selection-grid">
                 <div class="mode-card" onclick="setCheckInMode('individual')">
                     <span class="mode-icon">👤</span>
@@ -355,10 +354,14 @@
                     <h2 class="mode-title">公司團體報到</h2>
                     <p class="mode-desc">適合公司行號，可一次為多位同仁辦理報到手續。</p>
                 </div>
+                <div class="mode-card" onclick="goToProducts()">
+                    <span class="mode-icon">🛍️</span>
+                    <h2 class="mode-title">活動商品專區</h2>
+                    <p class="mode-desc">瀏覽及選購本次活動精選商品。</p>
+                </div>
             </div>
         </div>
 
-        <!-- 個人報到：選擇方式 -->
         <div id="selectionState" class="state-hidden">
             <button class="back-button" onclick="setAppState('mode')">返回</button>
             <h1 class="section-title">個人報到</h1>
@@ -382,7 +385,6 @@
             </div>
         </div>
 
-        <!-- 團體報到：搜尋公司 -->
         <div id="groupSearchState" class="state-hidden">
             <div class="verification-container">
                 <button class="back-button" onclick="setAppState('mode')">返回</button>
@@ -396,14 +398,12 @@
             </div>
         </div>
 
-        <!-- 團體報到：選擇公司 -->
         <div id="companySelectionState" class="state-hidden">
             <button class="back-button" onclick="setAppState('group_search')">返回搜尋</button>
             <h1 class="section-title">請選擇您的公司</h1>
             <div id="companyList" class="company-list"></div>
         </div>
 
-        <!-- 團體報到：人員名單 -->
         <div id="groupListState" class="state-hidden">
             <div class="verification-container" style="max-width: 600px;">
                 <button class="back-button" onclick="handleGroupListBack()">返回</button>
@@ -419,7 +419,6 @@
             </div>
         </div>
 
-        <!-- 團體報到：個別餐食選擇 -->
         <div id="groupMealState" class="state-hidden">
             <div class="verification-container" style="max-width: 650px;">
                 <button class="back-button" onclick="setAppState('group_list')">返回名單</button>
@@ -428,11 +427,11 @@
                     <p class="form-description">請為每位同仁選擇餐點</p>
                     <div id="groupMealList" class="meal-list"></div>
                     <button id="groupCheckInBtn" class="button button-primary" style="margin-top: 2rem;" onclick="handleFinalCheckIn()">確認全員報到</button>
+                    
                 </div>
             </div>
         </div>
 
-        <!-- 個人報到：驗證表單 -->
         <div id="verificationState" class="state-hidden">
             <div class="verification-container">
                 <button class="back-button" onclick="setAppState('selection')">返回</button>
@@ -457,7 +456,6 @@
             </div>
         </div>
 
-        <!-- 個人報到：餐食選擇 -->
         <div id="mealState" class="state-hidden">
             <div class="verification-container">
                 <button class="back-button" onclick="setAppState('verification')">返回</button>
@@ -473,7 +471,6 @@
             </div>
         </div>
 
-        <!-- 重複資料選擇 -->
         <div id="duplicateState" class="state-hidden">
             <div class="verification-container">
                 <button class="back-button" onclick="setAppState('verification')">返回</button>
@@ -484,7 +481,6 @@
             </div>
         </div>
 
-        <!-- 查無資料 -->
         <div id="notFoundState" class="state-hidden">
             <div class="verification-container">
                 <div class="form-card" style="text-align: center;">
@@ -495,22 +491,27 @@
             </div>
         </div>
 
-        <!-- 報到成功 -->
         <div id="successState" class="state-hidden">
             <div class="verification-container" style="max-width: 600px;">
                 <div class="form-card success-card">
                     <div class="success-icon">✓</div>
                     <h2 class="success-title">報到成功！</h2>
-                    <p class="success-desc">歡迎參加本次活動，資料已同步至雲端。</p>
+                    <p class="success-desc">歡迎參加本次活動，資料已同步至雲端。<br><span style="color:var(--primary); font-weight:bold;">即將自動跳轉至商品頁面...</span></p>
                     <div id="successContent" style="text-align: left;"></div>
-                    <button class="button button-primary" style="margin-top: 2rem;" onclick="resetApp()">完成</button>
+                    <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                        <button class="button button-primary" onclick="goToProducts()" style="display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+                            🛍️ 立即前往商品頁面
+                        </button>
+                        <button class="button" style="background:white;border:1px solid var(--border);color:var(--text-muted);" onclick="resetApp()">返回報到系統</button>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 
     <script>
-        const API_BASE = '/api';
+        // 修正：指向相對路徑 API，以適應 Render 部署
+        const API_BASE = '/api'; 
         let appState = 'mode';
         let checkInMode = 'individual';
         let selectedMethod = null;
@@ -590,228 +591,3 @@
                 item.onclick = () => selectCompany(i);
                 item.innerHTML = `<span class="company-name">${c.name}</span><span class="company-count">${c.participants.length} 人</span>`;
                 list.appendChild(item);
-            });
-        }
-
-        function selectCompany(i) {
-            const c = matchedCompanies[i];
-            duplicateParticipants = c.participants;
-            document.getElementById('groupCompanyName').textContent = c.name;
-            renderGroupList();
-            setAppState('group_list');
-        }
-
-        function renderGroupList() {
-            const list = document.getElementById('groupList');
-            list.innerHTML = '';
-            selectedGroupParticipants = [];
-            document.getElementById('selectedCount').textContent = '已選擇 0 人';
-            document.getElementById('groupNextBtn').disabled = true;
-            duplicateParticipants.forEach(p => {
-                const isCheckedIn = p.status === 'checked_in';
-                const item = document.createElement('div');
-                item.className = 'group-item';
-                // 使用姓名作為輔助識別
-                item.innerHTML = `
-                    <input type="checkbox" class="group-checkbox" data-id="${p.id}" data-name="${p.name}" ${isCheckedIn ? 'disabled' : ''} onchange="toggleParticipantSelection('${p.id}', '${p.name}', this.checked)">
-                    <div class="group-item-info">
-                        <span class="group-item-name">${p.name}</span>
-                        <span class="group-item-status ${isCheckedIn ? 'status-checked' : 'status-registered'}">${isCheckedIn ? '已報到' : '未報到'}</span>
-                    </div>`;
-                list.appendChild(item);
-            });
-        }
-
-        function toggleParticipantSelection(id, name, checked) {
-            const p = duplicateParticipants.find(x => x.id === id && x.name === name);
-            if (checked) {
-                if (!selectedGroupParticipants.find(x => x.id === id && x.name === name)) selectedGroupParticipants.push(p);
-            } else {
-                selectedGroupParticipants = selectedGroupParticipants.filter(x => !(x.id === id && x.name === name));
-            }
-            document.getElementById('selectedCount').textContent = `已選擇 ${selectedGroupParticipants.length} 人`;
-            document.getElementById('groupNextBtn').disabled = selectedGroupParticipants.length === 0;
-        }
-
-        function toggleSelectAll(checked) {
-            const checkboxes = document.querySelectorAll('.group-checkbox:not(:disabled)');
-            selectedGroupParticipants = [];
-            checkboxes.forEach(cb => {
-                cb.checked = checked;
-                const id = cb.getAttribute('data-id');
-                const name = cb.getAttribute('data-name');
-                if (checked) {
-                    const p = duplicateParticipants.find(x => x.id === id && x.name === name);
-                    if (p) selectedGroupParticipants.push(p);
-                }
-            });
-            document.getElementById('selectedCount').textContent = `已選擇 ${selectedGroupParticipants.length} 人`;
-            document.getElementById('groupNextBtn').disabled = selectedGroupParticipants.length === 0;
-        }
-
-        function proceedToGroupMeal() {
-            if (systemConfig?.show_meal_options) {
-                renderGroupMealList();
-                setAppState('group_meal');
-            } else {
-                groupMealSelections = {};
-                selectedGroupParticipants.forEach(p => groupMealSelections[p.id + '_' + p.name] = '');
-                handleFinalCheckIn();
-            }
-        }
-
-        function renderGroupMealList() {
-            const list = document.getElementById('groupMealList');
-            list.innerHTML = '';
-            groupMealSelections = {};
-            selectedGroupParticipants.forEach(p => {
-                const key = p.id + '_' + p.name;
-                groupMealSelections[key] = '葷食'; 
-                const item = document.createElement('div');
-                item.className = 'meal-item';
-                item.innerHTML = `
-                    <div class="meal-item-info"><span class="meal-item-name">${p.name}</span></div>
-                    <div class="meal-btn-group">
-                        <button class="meal-mini-btn selected" onclick="setGroupMeal('${key}', '葷食', this)">葷食</button>
-                        <button class="meal-mini-btn" onclick="setGroupMeal('${key}', '素食', this)">素食</button>
-                        <button class="meal-mini-btn" onclick="setGroupMeal('${key}', '不須用餐', this)">不須</button>
-                    </div>`;
-                list.appendChild(item);
-            });
-        }
-
-        function setGroupMeal(key, meal, btn) {
-            groupMealSelections[key] = meal;
-            btn.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
-            btn.classList.add('selected');
-        }
-
-        function selectIndividualMeal(meal) {
-            selectedMealChoice = meal;
-            ['meal-meat', 'meal-veggie', 'meal-none'].forEach(id => document.getElementById(id).classList.remove('selected'));
-            document.getElementById('meal-' + (meal === '葷食' ? 'meat' : meal === '素食' ? 'veggie' : 'none')).classList.add('selected');
-            document.getElementById('checkInBtn').disabled = false;
-        }
-
-        async function handleFinalCheckIn() {
-            try {
-                let res;
-                if (checkInMode === 'individual') {
-                    res = await fetch(`${API_BASE}/checkin/${selectedParticipant.id}`, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ meal: selectedMealChoice, name: selectedParticipant.name })
-                    });
-                } else {
-                    const selections = selectedGroupParticipants.map(p => ({ 
-                        id: p.id, 
-                        name: p.name,
-                        meal: groupMealSelections[p.id + '_' + p.name] 
-                    }));
-                    res = await fetch(`${API_BASE}/checkin/batch`, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ selections })
-                    });
-                }
-                const json = await res.json();
-                if (json.success) {
-                    finalResults = Array.isArray(json.data) ? json.data : [json.data];
-                    renderSuccessContent();
-                    setAppState('success');
-                } else {
-                    alert('報到失敗：' + (json.error || '未知錯誤'));
-                }
-            } catch (e) { 
-                console.error(e);
-                alert('報到失敗，請檢查網路連線'); 
-            }
-        }
-
-        function renderSuccessContent() {
-            const div = document.getElementById('successContent');
-            if (checkInMode === 'individual') {
-                const p = finalResults[0];
-                div.innerHTML = `
-                    <div style="background:#f9fafb; padding:1.5rem; border-radius:0.75rem; border:1px solid var(--border);">
-                        <p><b>姓名：</b>${p.name}</p><p><b>公司：</b>${p.company}</p>
-                        <p><b>餐食：</b>${p.meal || '今日不提供'}</p><p><b>時間：</b>${p.checkedInAt}</p>
-                    </div>`;
-            } else {
-                let rows = finalResults.map(p => `<tr><td>${p.name}</td><td>${p.meal || '未選擇'}</td></tr>`).join('');
-                div.innerHTML = `
-                    <p style="margin-bottom:1rem;"><b>公司：</b>${finalResults[0].company}</p>
-                    <div style="max-height:300px; overflow-y:auto; border:1px solid var(--border); border-radius:0.5rem;">
-                        <table class="success-table"><thead><tr><th>姓名</th><th>餐食</th></tr></thead><tbody>${rows}</tbody></table>
-                    </div>`;
-            }
-        }
-
-        function resetApp() {
-            appState = 'mode'; selectedParticipant = null; selectedGroupParticipants = [];
-            selectedMealChoice = null; groupMealSelections = {};
-            document.querySelectorAll('input').forEach(i => i.value = '');
-            updateUI();
-        }
-
-        function handleGroupListBack() { if (matchedCompanies.length > 1) setAppState('company_selection'); else setAppState('group_search'); }
-        function handleKeyUp(e, m) { if (e.key === 'Enter') { if (m === 'phone') handlePhoneVerification(); else if (m === 'name') handleNameVerification(); else handleEmailVerification(); } }
-        function handleCompanyKeyUp(e) { if (e.key === 'Enter') handleCompanySearch(); }
-
-        async function handlePhoneVerification() {
-            const v = document.getElementById('phoneInput').value.trim();
-            const res = await fetch(`${API_BASE}/search/phone?phone=${v}`);
-            const json = await res.json();
-            handleSearchResults(json.data);
-        }
-        async function handleNameVerification() {
-            const v = document.getElementById('nameInput').value.trim();
-            const res = await fetch(`${API_BASE}/search/name?name=${v}`);
-            const json = await res.json();
-            handleSearchResults(json.data);
-        }
-        async function handleEmailVerification() {
-            const v = document.getElementById('emailInput').value.trim();
-            const res = await fetch(`${API_BASE}/search/email?email=${v}`);
-            const json = await res.json();
-            handleSearchResults(json.data);
-        }
-        function handleSearchResults(data) {
-            if (!data || data.length === 0) setAppState('not_found');
-            else if (data.length === 1) { 
-                selectedParticipant = data[0]; 
-                if (systemConfig?.show_meal_options) setAppState('meal'); 
-                else { selectedMealChoice = ''; handleFinalCheckIn(); }
-            }
-            else { 
-                duplicateParticipants = data; 
-                renderDuplicateList();
-                setAppState('duplicate'); 
-            }
-        }
-
-        function renderDuplicateList() {
-            const list = document.getElementById('duplicateList');
-            list.innerHTML = '';
-            duplicateParticipants.forEach(p => {
-                const item = document.createElement('div');
-                item.className = 'company-item';
-                item.style.marginBottom = '0.5rem';
-                item.onclick = () => {
-                    selectedParticipant = p;
-                    if (systemConfig?.show_meal_options) setAppState('meal');
-                    else { selectedMealChoice = ''; handleFinalCheckIn(); }
-                };
-                item.innerHTML = `
-                    <div>
-                        <div class="company-name">${p.name}</div>
-                        <div style="font-size: 0.875rem; color: var(--text-muted);">${p.company} | ${p.phone || p.email}</div>
-                    </div>
-                    <span class="company-count">選擇</span>
-                `;
-                list.appendChild(item);
-            });
-        }
-
-        window.onload = () => { checkApiStatus(); updateUI(); };
-    </script>
-</body>
-</html>
