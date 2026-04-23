@@ -1,202 +1,143 @@
-import os
-import json
-import time
-import threading
-from datetime import datetime, timedelta
-from flask import Flask, request, jsonify, send_from_directory
-from flask_cors import CORS
-import gspread
-from google.oauth2.service_account import Credentials
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>活動報到系統</title>
+    <style>
+        :root { --primary: #4f46e5; --primary-hover: #4338ca; --bg: #f8f7f4; --card-bg: #ffffff; --text: #1a1a1a; --text-muted: #666666; --border: #e2e0db; --success: #16a34a; --error: #dc2626; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "PingFang TC", sans-serif; }
+        body { background-color: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; }
+        header { background: white; border-bottom: 1px solid var(--border); padding: 1rem 0; position: sticky; top: 0; z-index: 100; }
+        .header-container { max-width: 1000px; margin: 0 auto; padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+        .header-title { font-size: 1.25rem; font-weight: 700; }
+        main { max-width: 1000px; margin: 0 auto; padding: 3rem 1rem; }
+        .state-hidden { display: none !important; }
+        .mode-selection-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; max-width: 950px; margin: 0 auto 3rem; }
+        .mode-card { background: white; border: 2px solid #e2e0db; border-radius: 1rem; padding: 2.5rem 1.5rem; text-align: center; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); }
+        .mode-card:hover { border-color: var(--primary); transform: translateY(-5px); box-shadow: 0 12px 20px rgba(79, 70, 229, 0.1); }
+        .mode-icon { font-size: 3.5rem; margin-bottom: 1.5rem; display: block; }
+        .form-card { background: white; border: 1px solid var(--border); border-radius: 1rem; padding: 2.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); text-align: center; }
+        input[type="text"] { width: 100%; padding: 0.875rem 1rem; border: 1px solid var(--border); border-radius: 0.5rem; font-size: 1rem; margin-bottom: 1rem; }
+        .button { width: 100%; padding: 0.875rem; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .button-primary { background-color: var(--primary); color: white; }
+        .meal-option { display: flex; align-items: center; gap: 1rem; padding: 1.25rem; border: 2px solid var(--border); border-radius: 0.75rem; cursor: pointer; margin-bottom: 1rem; }
+        .meal-option.selected { border-color: var(--primary); background: rgba(79, 70, 229, 0.05); }
+        .api-status { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; }
+        .api-status-dot { width: 8px; height: 8px; border-radius: 50%; background-color: #9ca3af; }
+        .api-status-dot.connected { background-color: var(--success); }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <div onclick="location.reload()" style="cursor:pointer">🏠 首頁</div>
+            <div class="header-title">活動報到系統</div>
+            <div class="api-status">
+                <div id="api-status-dot" class="api-status-dot"></div>
+                <span id="api-status-text">連線中...</span>
+            </div>
+        </div>
+    </header>
 
-app = Flask(__name__, static_folder='.', static_url_path='')
-CORS(app)
+    <main>
+        <div id="modeState">
+            <h1 style="text-align:center; margin-bottom: 3rem;">歡迎參加活動</h1>
+            <div class="mode-selection-grid">
+                <div class="mode-card" onclick="setMode('individual')">
+                    <span class="mode-icon">👤</span><h2>個人報到</h2>
+                </div>
+                <div class="mode-card" onclick="setMode('group')">
+                    <span class="mode-icon">🏢</span><h2>公司團體報到</h2>
+                </div>
+                <div class="mode-card" onclick="location.href='/商品頁面.html'">
+                    <span class="mode-icon">🛍️</span><h2>活動商品專區</h2>
+                </div>
+            </div>
+        </div>
 
-# =============================================
-# 系統設定與全域變數
-# =============================================
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CONFIG_PATH = os.path.join(BASE_DIR, 'config.json')
+        <div id="actionState" class="state-hidden">
+            <div class="form-card" style="max-width:500px; margin:0 auto;">
+                <button onclick="setAppState('mode')" style="float:left; background:none; border:none; color:gray; cursor:pointer">← 返回</button>
+                <h2 id="actionTitle" style="margin-bottom:1.5rem;">驗證</h2>
+                <input type="text" id="actionInput" placeholder="請輸入資訊">
+                <button class="button button-primary" onclick="handleAction()">下一步</button>
+            </div>
+        </div>
 
-# 支援 Render 雲端與本地端金鑰
-RENDER_KEY = "/etc/secrets/google-creds.json"
-LOCAL_KEY = os.path.join(BASE_DIR, 'test0417-493608-dce82b8c6901.json')
+        <div id="mealState" class="state-hidden">
+            <div class="form-card" style="max-width:500px; margin:0 auto;">
+                <h2>🍱 餐食選擇</h2>
+                <div class="meal-option" id="m-葷食" onclick="selectMeal('葷食')">🍖 葷食</div>
+                <div class="meal-option" id="m-素食" onclick="selectMeal('素食')">🥗 素食</div>
+                <button id="finalBtn" class="button button-primary" disabled onclick="submitCheckin()">確認報到</button>
+            </div>
+        </div>
 
-# 快取相關變數
-participants_cache = []
-last_cache_update = 0
-cache_lock = threading.Lock()
-CACHE_TTL = 300  # 快取存活時間（秒）
+        <div id="successState" class="state-hidden">
+            <div class="form-card" style="max-width:500px; margin:0 auto;">
+                <div style="font-size:3rem; color:green">✓</div>
+                <h2>報到成功！</h2>
+                <p style="margin:1rem 0">資料已同步。<strong>1.5 秒後自動跳轉商品頁面...</strong></p>
+                <button class="button button-primary" onclick="location.href='/商品頁面.html'">🛍️ 立即前往商品頁</button>
+            </div>
+        </div>
+    </main>
 
-def load_config():
-    """載入設定檔"""
-    if os.path.exists(CONFIG_PATH):
-        try:
-            with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except:
-            return {}
-    return {}
+    <script>
+        const API_BASE = '/api';
+        let checkMode = '', selectedUser = null, selectedMeal = '';
 
-# =============================================
-# Google Sheets 核心邏輯
-# =============================================
-def get_gspread_client():
-    """取得 Google Sheets 客戶端，自動判斷金鑰路徑"""
-    scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-    json_path = RENDER_KEY if os.path.exists(RENDER_KEY) else LOCAL_KEY
-    creds = Credentials.from_service_account_file(json_path, scopes=scope)
-    return gspread.authorize(creds)
+        function setAppState(state) {
+            ['mode', 'action', 'meal', 'success'].forEach(s => document.getElementById(s+'State').classList.add('state-hidden'));
+            document.getElementById(state+'State').classList.remove('state-hidden');
+        }
 
-def get_worksheet():
-    """取得目標工作表"""
-    config = load_config()
-    client = get_gspread_client()
-    # 根據 config 中的名稱開啟試算表並讀取第一個分頁
-    return client.open(config.get('google_sheet_name', '活動報到名單')).get_worksheet(0)
+        function setMode(m) {
+            checkMode = m;
+            document.getElementById('actionTitle').textContent = m === 'individual' ? '請輸入姓名或手機' : '請輸入公司名稱';
+            setAppState('action');
+        }
 
-def async_update_sheet(updates):
-    """背景非同步寫入函式：大幅提高回傳效率的關鍵"""
-    try:
-        sheet = get_worksheet()
-        sheet.batch_update(updates)
-        print(f"[{datetime.utcnow() + timedelta(hours=8)}] 背景寫入 Google Sheet 成功")
-    except Exception as e:
-        print(f"背景寫入失敗: {e}")
+        async function handleAction() {
+            const val = document.getElementById('actionInput').value.trim();
+            const res = await fetch(`${API_BASE}/search/${checkMode === 'individual' ? 'name' : 'company'}?${checkMode === 'individual' ? 'name' : 'company'}=${val}`);
+            const json = await res.json();
+            if (json.data && json.data.length > 0) {
+                selectedUser = json.data[0];
+                setAppState('meal');
+            } else alert('查無資料');
+        }
 
-def refresh_cache(force=False):
-    """更新記憶體快取，包含處理合併儲存格與向下填充邏輯"""
-    global participants_cache, last_cache_update
-    if not force and (time.time() - last_cache_update < CACHE_TTL) and participants_cache:
-        return
-    with cache_lock:
-        try:
-            sheet = get_worksheet()
-            all_values = sheet.get_all_values()
-            if not all_values: return
-            
-            config = load_config()
-            cols = config.get('excel_columns', {})
-            new_cache = []
-            last_company = ""
-            
-            # 從第 4 行開始讀取 (索引 3)，跳過標題
-            for i, row in enumerate(all_values[3:]):
-                def g(col_idx):
-                    return row[col_idx-1].strip() if col_idx-1 < len(row) else ""
-                
-                # 處理合併的公司名稱欄位（向下填充）
-                comp = g(cols.get('company', 3))
-                if comp: last_company = comp
-                
-                name = g(cols.get('name', 6))
-                if not name: continue
-                
-                new_cache.append({
-                    "id": name, # 以姓名為唯一標識
-                    "name": name,
-                    "phone": g(cols.get('phone', 8)),
-                    "company": last_company,
-                    "email": g(cols.get('email', 9)),
-                    "status": g(cols.get('status', 15)),
-                    "meal": g(cols.get('meal', 16)),
-                    "checkedInAt": g(cols.get('checkedInAt', 14)),
-                    "_row": i + 4 # 記住行號，報到時直接定位
-                })
-            participants_cache = new_cache
-            last_cache_update = time.time()
-            print(f"快取更新完成，共 {len(new_cache)} 筆資料")
-        except Exception as e:
-            print(f"同步資料失敗: {e}")
+        function selectMeal(m) {
+            selectedMeal = m;
+            document.querySelectorAll('.meal-option').forEach(el => el.classList.remove('selected'));
+            document.getElementById('m-'+m).classList.add('selected');
+            document.getElementById('finalBtn').disabled = false;
+        }
 
-def background_sync():
-    """定時背景同步"""
-    while True:
-        time.sleep(CACHE_TTL)
-        refresh_cache(force=True)
+        async function submitCheckin() {
+            const res = await fetch(`${API_BASE}/checkin/${selectedUser.id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ meal: selectedMeal, name: selectedUser.name })
+            });
+            if (res.ok) {
+                setAppState('success');
+                setTimeout(() => location.href = '/商品頁面.html', 1500);
+            }
+        }
 
-# =============================================
-# API 路由
-# =============================================
-@app.route('/')
-def index():
-    return send_from_directory('.', '活動報到系統.html')
-
-@app.route('/商品頁面.html')
-def products_page():
-    return send_from_directory('.', '商品頁面.html')
-
-@app.route('/api/config')
-def get_config():
-    return jsonify(load_config())
-
-@app.route('/api/search/<method>')
-def search(method):
-    """通用搜尋 API"""
-    refresh_cache()
-    q = request.args.get(method, "").replace(" ", "")
-    if method == 'phone': 
-        q = ''.join(filter(str.isdigit, q))
-        return jsonify({"success": True, "data": [p for p in participants_cache if ''.join(filter(str.isdigit, p["phone"])) == q]})
-    return jsonify({"success": True, "data": [p for p in participants_cache if q.lower() in p.get(method, "").lower()]})
-
-@app.route('/api/checkin/<pid>', methods=['POST'])
-def checkin(pid):
-    """個人報到：秒級回傳，時區修正，背景寫入"""
-    data = request.json
-    # 強制設定為台灣時間 UTC+8
-    now_tw = (datetime.utcnow() + timedelta(hours=8)).strftime('%Y/%m/%d %H:%M:%S')
-    
-    p = next((x for x in participants_cache if x['id'] == pid), None)
-    if not p: return jsonify({"success": False, "error": "找不到參加者"}), 404
-
-    meal = data.get('meal', '未選擇')
-    
-    # 1. 立即更新本地記憶體快取
-    p['status'] = 'checked_in'
-    p['meal'] = meal
-    p['checkedInAt'] = now_tw
-    
-    # 2. 準備背景寫入指令 (精確對應 N, O, P 欄位)
-    cols = load_config().get('excel_columns', {})
-    updates = [
-        {'range': gspread.utils.rowcol_to_a1(p['_row'], cols['checkedInAt']), 'values': [[now_tw]]},
-        {'range': gspread.utils.rowcol_to_a1(p['_row'], cols['status']), 'values': [['checked_in']]},
-        {'range': gspread.utils.rowcol_to_a1(p['_row'], cols['meal']), 'values': [[meal]]}
-    ]
-    # 使用 Thread 將寫入動作丟到背景執行
-    threading.Thread(target=async_update_sheet, args=(updates,)).start()
-    
-    return jsonify({"success": True, "data": p})
-
-@app.route('/api/checkin/batch', methods=['POST'])
-def batch_checkin():
-    """批次報到：支援多人同時處理"""
-    data = request.json
-    now_tw = (datetime.utcnow() + timedelta(hours=8)).strftime('%Y/%m/%d %H:%M:%S')
-    cols = load_config().get('excel_columns', {})
-    results, all_updates = [], []
-    
-    for item in data.get('selections', []):
-        p = next((x for x in participants_cache if x['id'] == item['id']), None)
-        if p:
-            meal = item.get('meal', '葷食')
-            p['status'], p['meal'], p['checkedInAt'] = 'checked_in', meal, now_tw
-            results.append(p)
-            # 加入批次更新清單
-            all_updates.extend([
-                {'range': gspread.utils.rowcol_to_a1(p['_row'], cols['checkedInAt']), 'values': [[now_tw]]},
-                {'range': gspread.utils.rowcol_to_a1(p['_row'], cols['status']), 'values': [['checked_in']]},
-                {'range': gspread.utils.rowcol_to_a1(p['_row'], cols['meal']), 'values': [[meal]]}
-            ])
-    
-    if all_updates:
-        threading.Thread(target=async_update_sheet, args=(all_updates,)).start()
-    
-    return jsonify({"success": True, "data": results})
-
-if __name__ == '__main__':
-    print("活動報到系統啟動中...")
-    refresh_cache(force=True)
-    threading.Thread(target=background_sync, daemon=True).start()
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+        async function init() {
+            try {
+                const res = await fetch(`${API_BASE}/config`);
+                if (res.ok) {
+                    document.getElementById('api-status-dot').classList.add('connected');
+                    document.getElementById('api-status-text').textContent = '已連線至雲端';
+                }
+            } catch (e) {}
+        }
+        window.onload = init;
+    </script>
+</body>
+</html>
