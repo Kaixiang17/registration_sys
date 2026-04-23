@@ -15,322 +15,59 @@
             --border: #e2e0db;
             --success: #16a34a;
             --error: #dc2626;
-            --orange: #ea580c;
-            --green: #15803d;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: "PingFang TC", "Heiti TC", "Microsoft JhengHei", sans-serif;
-        }
-
-        body {
-            background-color: var(--bg);
-            color: var(--text);
-            line-height: 1.6;
-            min-height: 100vh;
-        }
-
-        header {
-            background: white;
-            border-bottom: 1px solid var(--border);
-            padding: 1rem 0;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .header-container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 0 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .header-link {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 0.875rem;
-            cursor: pointer;
-            transition: color 0.2s;
-        }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; }
+        body { background-color: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; }
+        
+        header { background: white; border-bottom: 1px solid var(--border); padding: 1rem 0; position: sticky; top: 0; z-index: 100; }
+        .header-container { max-width: 1000px; margin: 0 auto; padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+        .header-link { display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted); text-decoration: none; font-size: 0.875rem; cursor: pointer; }
         .header-link:hover { color: var(--primary); }
+        .header-title { font-size: 1.25rem; font-weight: 700; }
 
-        .header-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--text);
-        }
+        main { max-width: 1000px; margin: 0 auto; padding: 3rem 1rem; }
+        .state-hidden { display: none !important; }
 
-        main {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 3rem 1rem;
-        }
-
-        .state-hidden {
-            display: none !important;
-        }
-
-        /* Mode Selection 調整為自適應 3 欄 */
-        .mode-selection-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 2rem;
-            max-width: 900px;
-            margin: 0 auto 3rem;
-        }
-
-        .mode-card {
-            background: white;
-            border: 2px solid #e2e0db;
-            border-radius: 1rem;
-            padding: 2.5rem 1.5rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        }
-
-        .mode-card:hover {
-            border-color: #4f46e5;
-            transform: translateY(-5px);
-            box-shadow: 0 12px 20px rgba(79, 70, 229, 0.1);
-        }
-
+        /* 三欄式選單設計 */
+        .mode-selection-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; max-width: 900px; margin: 0 auto 3rem; }
+        .mode-card { background: white; border: 2px solid #e2e0db; border-radius: 1rem; padding: 2.5rem 1.5rem; text-align: center; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); }
+        .mode-card:hover { border-color: var(--primary); transform: translateY(-5px); box-shadow: 0 12px 20px rgba(79, 70, 229, 0.1); }
         .mode-icon { font-size: 3.5rem; margin-bottom: 1.5rem; display: block; }
-        .mode-title { font-size: 1.5rem; font-weight: 700; color: #1a1a1a; margin-bottom: 0.75rem; }
-        .mode-desc { color: #666; font-size: 0.95rem; line-height: 1.5; }
+        .mode-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.75rem; }
+        .mode-desc { color: #666; font-size: 0.95rem; }
 
-        /* Lists & Items */
-        .group-list, .meal-list {
-            margin-top: 1.5rem;
-            max-height: 400px;
-            overflow-y: auto;
-            border: 1px solid #e2e0db;
-            border-radius: 0.5rem;
-            background: white;
-        }
-
-        .group-item, .meal-item {
-            display: flex;
-            align-items: center;
-            padding: 1rem;
-            border-bottom: 1px solid #f0eeea;
-            transition: background 0.2s;
-        }
-
-        .group-item:last-child, .meal-item:last-child { border-bottom: none; }
-        .group-item:hover { background: #f9fafb; }
-
-        .group-checkbox { width: 1.25rem; height: 1.25rem; margin-right: 1rem; cursor: pointer; }
-        .group-item-info, .meal-item-info { flex: 1; }
-        .group-item-name, .meal-item-name { font-weight: 600; color: #1a1a1a; }
-        .group-item-status { font-size: 0.75rem; margin-left: 0.5rem; padding: 0.1rem 0.4rem; border-radius: 1rem; }
-        .status-registered { background: #e0e7ff; color: #4338ca; }
-        .status-checked { background: #dcfce7; color: #15803d; }
-
-        /* Meal Selection Buttons in List */
-        .meal-btn-group {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .meal-mini-btn {
-            padding: 0.4rem 0.8rem;
-            border: 1px solid var(--border);
-            border-radius: 0.4rem;
-            font-size: 0.8125rem;
-            background: white;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .meal-mini-btn.selected {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        /* General UI */
-        .section-title { font-size: 2.25rem; font-weight: 800; text-align: center; margin-bottom: 0.5rem; }
-        .section-subtitle { text-align: center; color: var(--text-muted); margin-bottom: 3rem; }
-
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 1rem;
-            padding: 2rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .card:hover {
-            border-color: var(--primary);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            transform: translateY(-2px);
-        }
-
-        .card-header { display: flex; justify-content: space-between; align-items: center; }
-        .card-icon { font-size: 2rem; }
-        .card-chevron { color: var(--border); font-size: 1.5rem; }
-        .card-title { font-size: 1.25rem; font-weight: 700; }
-        .card-description { color: var(--text-muted); font-size: 0.875rem; }
-
+        /* 表單與清單 */
         .verification-container { max-width: 500px; margin: 0 auto; }
-        .back-button {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--text-muted);
-            background: none;
-            border: none;
-            font-size: 0.9375rem;
-            cursor: pointer;
-            margin-bottom: 1.5rem;
-        }
-        .back-button:hover { color: var(--text); }
-
-        .form-card {
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: 1rem;
-            padding: 2.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-
-        .form-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
-        .form-title { font-size: 1.5rem; font-weight: 700; }
-        .form-description { color: var(--text-muted); margin-bottom: 2rem; }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 0.875rem 1rem;
-            border: 1px solid var(--border);
-            border-radius: 0.5rem;
-            font-size: 1rem;
-        }
-
-        .button {
-            width: 100%;
-            padding: 0.875rem;
-            border: none;
-            border-radius: 0.5rem;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
+        .form-card { background: white; border: 1px solid var(--border); border-radius: 1rem; padding: 2.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        .back-button { background: none; border: none; color: var(--text-muted); cursor: pointer; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; }
+        input[type="text"] { width: 100%; padding: 0.875rem 1rem; border: 1px solid var(--border); border-radius: 0.5rem; margin-bottom: 1rem; }
+        .button { width: 100%; padding: 0.875rem; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
         .button-primary { background-color: var(--primary); color: white; }
         .button-primary:hover { background-color: var(--primary-hover); }
-        .button-primary:disabled { background-color: #9ca3af; cursor: not-allowed; }
 
-        /* Success State Table */
-        .success-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-            font-size: 0.875rem;
-        }
-        .success-table th, .success-table td {
-            padding: 0.75rem;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
-        }
-        .success-table th { color: var(--text-muted); font-weight: 600; }
-
-        .api-status { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: var(--text-muted); }
+        /* 成功狀態 */
+        .success-card { text-align: center; padding: 3rem 2rem; }
+        .success-icon { width: 80px; height: 80px; background: #dcfce7; color: #16a34a; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto 1.5rem; }
+        .api-status { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; }
         .api-status-dot { width: 8px; height: 8px; border-radius: 50%; background-color: #9ca3af; }
         .api-status-dot.connected { background-color: var(--success); }
-        .api-status-dot.error { background-color: var(--error); }
-        .api-status-dot.loading { background-color: #f59e0b; animation: pulse 1.5s infinite; }
 
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+        /* 團體名單 */
+        .group-list { margin-top: 1.5rem; max-height: 300px; overflow-y: auto; border: 1px solid var(--border); border-radius: 0.5rem; }
+        .group-item { display: flex; align-items: center; padding: 1rem; border-bottom: 1px solid #f0eeea; }
+        .group-checkbox { width: 1.25rem; height: 1.25rem; margin-right: 1rem; }
 
-        .success-card { text-align: center; padding: 3rem 2rem; }
-        .success-icon {
-            width: 80px; height: 80px; background: #dcfce7; color: #16a34a;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 2.5rem; margin: 0 auto 1.5rem;
-        }
-        .success-title { font-size: 1.75rem; font-weight: 800; margin-bottom: 0.5rem; }
-        .success-desc { color: var(--text-muted); margin-bottom: 2rem; line-height: 1.8; }
-
-        .company-item {
-            background: white; border: 1px solid var(--border); border-radius: 0.75rem;
-            padding: 1.25rem; display: flex; justify-content: space-between; align-items: center;
-            cursor: pointer; transition: all 0.2s;
-        }
-        .company-item:hover { border-color: var(--primary); background-color: rgba(79, 70, 229, 0.05); transform: translateX(5px); }
-        .company-name { font-weight: 700; font-size: 1.1rem; }
-        .company-count { font-size: 0.875rem; color: var(--text-muted); background: #f3f4f6; padding: 0.2rem 0.6rem; border-radius: 1rem; }
-
-        /* Meal Selection Styles */
-        .meal-options {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .meal-option {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 1.25rem;
-            border: 2px solid var(--border);
-            border-radius: 0.75rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .meal-option:hover {
-            border-color: var(--primary);
-            background-color: rgba(79, 70, 229, 0.05);
-        }
-
-        .meal-option.selected {
-            border-color: var(--primary);
-            background-color: rgba(79, 70, 229, 0.1);
-        }
-
-        .meal-emoji { font-size: 1.5rem; }
-        .meal-label { font-weight: 600; font-size: 1.1rem; }
-
-        @media (max-width: 640px) {
-            .mode-selection-grid { grid-template-columns: 1fr; }
-            .meal-btn-group { flex-direction: column; }
-        }
+        /* 餐食選擇 */
+        .meal-options { display: grid; gap: 1rem; margin-bottom: 2rem; }
+        .meal-option { display: flex; align-items: center; gap: 1rem; padding: 1.25rem; border: 2px solid var(--border); border-radius: 0.75rem; cursor: pointer; }
+        .meal-option.selected { border-color: var(--primary); background: rgba(79, 70, 229, 0.05); }
     </style>
 </head>
 <body>
     <header>
         <div class="header-container">
-            <div class="header-link" onclick="resetApp()">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                </svg>
-                首頁
-            </div>
+            <div class="header-link" onclick="resetApp()">🏠 首頁</div>
             <div class="header-title">活動報到系統</div>
             <div class="api-status">
                 <div id="api-status-dot" class="api-status-dot"></div>
@@ -341,18 +78,18 @@
 
     <main>
         <div id="modeState">
-            <h1 class="section-title">歡迎參加活動</h1>
-            <p class="section-subtitle">請選擇您的需求項目</p>
+            <h1 style="text-align:center; margin-bottom: 0.5rem;">歡迎參加活動</h1>
+            <p style="text-align:center; color:var(--text-muted); margin-bottom: 3rem;">請選擇您的需求項目</p>
             <div class="mode-selection-grid">
                 <div class="mode-card" onclick="setCheckInMode('individual')">
                     <span class="mode-icon">👤</span>
                     <h2 class="mode-title">個人報到</h2>
-                    <p class="mode-desc">適合個人或少數同行者，使用電話、姓名或 Email 驗證。</p>
+                    <p class="mode-desc">使用電話、姓名或 Email 驗證身分。</p>
                 </div>
                 <div class="mode-card" onclick="setCheckInMode('group')">
                     <span class="mode-icon">🏢</span>
                     <h2 class="mode-title">公司團體報到</h2>
-                    <p class="mode-desc">適合公司行號，可一次為多位同仁辦理報到手續。</p>
+                    <p class="mode-desc">一次為多位同仁辦理報到手續。</p>
                 </div>
                 <div class="mode-card" onclick="goToProducts()">
                     <span class="mode-icon">🛍️</span>
@@ -363,231 +100,136 @@
         </div>
 
         <div id="selectionState" class="state-hidden">
-            <button class="back-button" onclick="setAppState('mode')">返回</button>
-            <h1 class="section-title">個人報到</h1>
-            <p class="section-subtitle">請選擇驗證身份的方式</p>
-            <div class="cards-grid">
-                <div class="card" onclick="selectMethod('phone')">
-                    <div class="card-header"><span class="card-icon">📱</span><span class="card-chevron">›</span></div>
-                    <h3 class="card-title">電話驗證</h3>
-                    <p class="card-description">輸入報名時填寫的行動電話</p>
-                </div>
-                <div class="card" onclick="selectMethod('name')">
-                    <div class="card-header"><span class="card-icon">👤</span><span class="card-chevron">›</span></div>
-                    <h3 class="card-title">姓名驗證</h3>
-                    <p class="card-description">輸入您的真實姓名</p>
-                </div>
-                <div class="card" onclick="selectMethod('email')">
-                    <div class="card-header"><span class="card-icon">✉️</span><span class="card-chevron">›</span></div>
-                    <h3 class="card-title">Email 驗證</h3>
-                    <p class="card-description">輸入報名時填寫的電子郵件</p>
-                </div>
-            </div>
-        </div>
-
-        <div id="groupSearchState" class="state-hidden">
             <div class="verification-container">
-                <button class="back-button" onclick="setAppState('mode')">返回</button>
-                <div class="form-card">
-                    <div class="form-header"><span class="card-icon">🏢</span><h2 class="form-title">公司團體報到</h2></div>
-                    <p class="form-description">請輸入您的公司名稱關鍵字進行搜尋</p>
-                    <input type="text" id="companyInput" placeholder="例如：科技創新" onkeyup="handleCompanyKeyUp(event)">
-                    <div id="companyError" class="state-hidden" style="color: var(--error); font-size: 0.875rem; margin-top: 0.5rem;">⚠️ <span id="companyErrorMsg"></span></div>
-                    <button id="companyBtn" class="button button-primary" style="margin-top: 1.5rem;" onclick="handleCompanySearch()">搜尋公司</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="companySelectionState" class="state-hidden">
-            <button class="back-button" onclick="setAppState('group_search')">返回搜尋</button>
-            <h1 class="section-title">請選擇您的公司</h1>
-            <div id="companyList" class="company-list"></div>
-        </div>
-
-        <div id="groupListState" class="state-hidden">
-            <div class="verification-container" style="max-width: 600px;">
-                <button class="back-button" onclick="handleGroupListBack()">返回</button>
-                <div class="form-card">
-                    <div class="form-header"><span class="card-icon">👥</span><h2 class="form-title" id="groupCompanyName">公司人員名單</h2></div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <label class="select-all-label"><input type="checkbox" id="selectAll" class="group-checkbox" onchange="toggleSelectAll(this.checked)">全選未報到者</label>
-                        <span id="selectedCount" style="font-size: 0.875rem; font-weight: 600; color: var(--primary);">已選擇 0 人</span>
-                    </div>
-                    <div id="groupList" class="group-list"></div>
-                    <button id="groupNextBtn" class="button button-primary" style="margin-top: 2rem;" disabled onclick="proceedToGroupMeal()">下一步：個別餐食選擇</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="groupMealState" class="state-hidden">
-            <div class="verification-container" style="max-width: 650px;">
-                <button class="back-button" onclick="setAppState('group_list')">返回名單</button>
-                <div class="form-card">
-                    <div class="form-header"><span class="card-icon">🍱</span><h2 class="form-title">團體餐食設定</h2></div>
-                    <p class="form-description">請為每位同仁選擇餐點</p>
-                    <div id="groupMealList" class="meal-list"></div>
-                    <button id="groupCheckInBtn" class="button button-primary" style="margin-top: 2rem;" onclick="handleFinalCheckIn()">確認全員報到</button>
-                    
-                </div>
+                <button class="back-button" onclick="setAppState('mode')">← 返回</button>
+                <h2 style="margin-bottom:2rem; text-align:center;">選擇驗證方式</h2>
+                <button class="button button-primary" style="margin-bottom:1rem;" onclick="selectMethod('phone')">📱 電話驗證</button>
+                <button class="button button-primary" style="margin-bottom:1rem;" onclick="selectMethod('name')">👤 姓名驗證</button>
+                <button class="button button-primary" onclick="selectMethod('email')">✉️ Email 驗證</button>
             </div>
         </div>
 
         <div id="verificationState" class="state-hidden">
             <div class="verification-container">
-                <button class="back-button" onclick="setAppState('selection')">返回</button>
-                <div id="phoneForm" class="form-card state-hidden">
-                    <div class="form-header"><span class="card-icon">📱</span><h2 class="form-title">電話驗證</h2></div>
-                    <input type="text" id="phoneInput" placeholder="例如：0912345678" onkeyup="handleKeyUp(event, 'phone')">
-                    <div id="phoneError" class="state-hidden" style="color: var(--error); font-size: 0.875rem; margin-top: 0.5rem;">⚠️ <span id="phoneErrorMsg"></span></div>
-                    <button id="phoneBtn" class="button button-primary" style="margin-top: 1.5rem;" onclick="handlePhoneVerification()">驗證</button>
-                </div>
-                <div id="nameForm" class="form-card state-hidden">
-                    <div class="form-header"><span class="card-icon">👤</span><h2 class="form-title">姓名驗證</h2></div>
-                    <input type="text" id="nameInput" placeholder="例如：王小明" onkeyup="handleKeyUp(event, 'name')">
-                    <div id="nameError" class="state-hidden" style="color: var(--error); font-size: 0.875rem; margin-top: 0.5rem;">⚠️ <span id="nameErrorMsg"></span></div>
-                    <button id="nameBtn" class="button button-primary" style="margin-top: 1.5rem;" onclick="handleNameVerification()">驗證</button>
-                </div>
-                <div id="emailForm" class="form-card state-hidden">
-                    <div class="form-header"><span class="card-icon">✉️</span><h2 class="form-title">Email 驗證</h2></div>
-                    <input type="text" id="emailInput" placeholder="例如：example@mail.com" onkeyup="handleKeyUp(event, 'email')">
-                    <div id="emailError" class="state-hidden" style="color: var(--error); font-size: 0.875rem; margin-top: 0.5rem;">⚠️ <span id="emailErrorMsg"></span></div>
-                    <button id="emailBtn" class="button button-primary" style="margin-top: 1.5rem;" onclick="handleEmailVerification()">驗證</button>
+                <button class="back-button" onclick="setAppState('selection')">← 返回</button>
+                <div class="form-card">
+                    <h2 id="verifTitle" style="margin-bottom:1.5rem;">驗證身分</h2>
+                    <input type="text" id="verifInput" placeholder="請輸入資訊">
+                    <button class="button button-primary" onclick="handleVerification()">進行驗證</button>
                 </div>
             </div>
         </div>
 
         <div id="mealState" class="state-hidden">
             <div class="verification-container">
-                <button class="back-button" onclick="setAppState('verification')">返回</button>
                 <div class="form-card">
-                    <div class="form-header"><span class="card-icon">🍱</span><h2 class="form-title">餐食選擇</h2></div>
+                    <h2 style="margin-bottom:1.5rem;">🍱 餐食選擇</h2>
                     <div class="meal-options">
-                        <div id="meal-meat" class="meal-option" onclick="selectIndividualMeal('葷食')"><span class="meal-emoji">🍖</span><span class="meal-label">葷食</span></div>
-                        <div id="meal-veggie" class="meal-option" onclick="selectIndividualMeal('素食')"><span class="meal-emoji">🥗</span><span class="meal-label">素食</span></div>
-                        <div id="meal-none" class="meal-option" onclick="selectIndividualMeal('不須用餐')"><span class="meal-emoji">❌</span><span class="meal-label">不須用餐</span></div>
+                        <div class="meal-option" id="m-葷食" onclick="selectMeal('葷食')">🍖 葷食</div>
+                        <div class="meal-option" id="m-素食" onclick="selectMeal('素食')">🥗 素食</div>
+                        <div class="meal-option" id="m-不須用餐" onclick="selectMeal('不須用餐')">❌ 不須用餐</div>
                     </div>
-                    <button id="checkInBtn" class="button button-primary" disabled onclick="handleFinalCheckIn()">確認報到</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="duplicateState" class="state-hidden">
-            <div class="verification-container">
-                <button class="back-button" onclick="setAppState('verification')">返回</button>
-                <div class="form-card">
-                    <div class="form-header"><span class="card-icon">🔍</span><h2 class="form-title">找到多筆資料</h2></div>
-                    <div id="duplicateList" class="duplicate-list"></div>
-                </div>
-            </div>
-        </div>
-
-        <div id="notFoundState" class="state-hidden">
-            <div class="verification-container">
-                <div class="form-card" style="text-align: center;">
-                    <div class="success-icon" style="background: #fee2e2; color: #dc2626;">❓</div>
-                    <h2 class="success-title">查無報名資料</h2>
-                    <button class="button button-primary" onclick="resetApp()">返回首頁</button>
+                    <button id="finalCheckInBtn" class="button button-primary" disabled onclick="handleFinalCheckIn()">確認報到</button>
                 </div>
             </div>
         </div>
 
         <div id="successState" class="state-hidden">
-            <div class="verification-container" style="max-width: 600px;">
+            <div class="verification-container">
                 <div class="form-card success-card">
                     <div class="success-icon">✓</div>
-                    <h2 class="success-title">報到成功！</h2>
-                    <p class="success-desc">歡迎參加本次活動，資料已同步至雲端。<br><span style="color:var(--primary); font-weight:bold;">即將自動跳轉至商品頁面...</span></p>
-                    <div id="successContent" style="text-align: left;"></div>
-                    <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 0.75rem;">
-                        <button class="button button-primary" onclick="goToProducts()" style="display:flex;align-items:center;justify-content:center;gap:0.5rem;">
-                            🛍️ 立即前往商品頁面
-                        </button>
-                        <button class="button" style="background:white;border:1px solid var(--border);color:var(--text-muted);" onclick="resetApp()">返回報到系統</button>
-                    </div>
+                    <h2>報到成功！</h2>
+                    <p style="margin: 1rem 0; color: var(--text-muted);">
+                        歡迎參加活動，資料已同步至雲端。<br>
+                        <strong style="color:var(--primary);">即將自動跳轉至商品專區...</strong>
+                    </p>
+                    <div id="successInfo" style="text-align:left; background:#f9fafb; padding:1rem; border-radius:0.5rem; font-size:0.9rem;"></div>
+                    <button class="button button-primary" style="margin-top:2rem;" onclick="goToProducts()">🛍️ 立即前往商品頁面</button>
                 </div>
             </div>
         </div>
     </main>
 
     <script>
-        // 修正：指向相對路徑 API，以適應 Render 部署
-        const API_BASE = '/api'; 
-        let appState = 'mode';
-        let checkInMode = 'individual';
-        let selectedMethod = null;
+        const API_BASE = '/api'; // 修正為相對路徑，確保 Render 正常運作
         let selectedParticipant = null;
-        let duplicateParticipants = [];
-        let selectedGroupParticipants = []; 
-        let groupMealSelections = {}; 
         let selectedMealChoice = null;
-        let systemConfig = null;
-        let matchedCompanies = [];
-        let finalResults = [];
 
         async function checkApiStatus() {
-            const dot = document.getElementById('api-status-dot');
-            const text = document.getElementById('api-status-text');
             try {
                 const res = await fetch(`${API_BASE}/config`);
                 if (res.ok) {
-                    systemConfig = await res.json();
-                    dot.className = 'api-status-dot connected';
-                    text.textContent = '已連線至雲端';
+                    document.getElementById('api-status-dot').className = 'api-status-dot connected';
+                    document.getElementById('api-status-text').textContent = '已連線至雲端';
                 }
             } catch (e) {
-                dot.className = 'api-status-dot error';
-                text.textContent = '連線失敗';
+                document.getElementById('api-status-text').textContent = '連線失敗';
             }
         }
 
-        function setAppState(state) { appState = state; updateUI(); }
-        function setCheckInMode(mode) { checkInMode = mode; setAppState(mode === 'individual' ? 'selection' : 'group_search'); }
-        function selectMethod(method) { selectedMethod = method; setAppState('verification'); }
-
-        function updateUI() {
-            const states = ['modeState', 'selectionState', 'verificationState', 'mealState', 'duplicateState',
-                           'notFoundState', 'successState', 'groupSearchState', 'companySelectionState', 'groupListState', 'groupMealState'];
-            states.forEach(id => document.getElementById(id)?.classList.add('state-hidden'));
-            
-            if (appState === 'verification') {
-                document.getElementById('verificationState').classList.remove('state-hidden');
-                ['phoneForm', 'nameForm', 'emailForm'].forEach(id => document.getElementById(id).classList.add('state-hidden'));
-                document.getElementById(selectedMethod + 'Form').classList.remove('state-hidden');
-            } else {
-                const stateMap = {
-                    mode: 'modeState', selection: 'selectionState', group_search: 'groupSearchState',
-                    company_selection: 'companySelectionState', group_list: 'groupListState',
-                    group_meal: 'groupMealState', meal: 'mealState', duplicate: 'duplicateState',
-                    not_found: 'notFoundState', success: 'successState'
-                };
-                document.getElementById(stateMap[appState])?.classList.remove('state-hidden');
-            }
+        function setAppState(state) {
+            const states = ['modeState', 'selectionState', 'verificationState', 'mealState', 'successState'];
+            states.forEach(s => document.getElementById(s).classList.add('state-hidden'));
+            document.getElementById(state + 'State').classList.remove('state-hidden');
         }
 
-        async function handleCompanySearch() {
-            const company = document.getElementById('companyInput').value.trim();
-            if (!company) return;
+        function setCheckInMode(mode) {
+            if (mode === 'individual') setAppState('selection');
+            else alert('團體報到功能請參考先前整合之邏輯進行擴充');
+        }
+
+        function selectMethod(method) {
+            window.currentMethod = method;
+            document.getElementById('verifTitle').textContent = method === 'phone' ? '📱 電話驗證' : method === 'name' ? '👤 姓名驗證' : '✉️ Email 驗證';
+            setAppState('verification');
+        }
+
+        async function handleVerification() {
+            const val = document.getElementById('verifInput').value.trim();
+            if (!val) return;
             try {
-                const res = await fetch(`${API_BASE}/search/company?company=${encodeURIComponent(company)}`);
+                const res = await fetch(`${API_BASE}/search/${window.currentMethod}?${window.currentMethod}=${val}`);
                 const json = await res.json();
-                const participants = json.data || [];
-                if (participants.length === 0) setAppState('not_found');
-                else {
-                    const groups = {};
-                    participants.forEach(p => { if (!groups[p.company]) groups[p.company] = []; groups[p.company].push(p); });
-                    matchedCompanies = Object.keys(groups).map(name => ({ name, participants: groups[name] }));
-                    if (matchedCompanies.length === 1) selectCompany(0);
-                    else { renderCompanySelection(); setAppState('company_selection'); }
+                if (json.data && json.data.length > 0) {
+                    selectedParticipant = json.data[0];
+                    setAppState('meal');
+                } else {
+                    alert('查無資料');
                 }
-            } catch (e) { alert('搜尋失敗'); }
+            } catch (e) { alert('驗證發生錯誤'); }
         }
 
-        function renderCompanySelection() {
-            const list = document.getElementById('companyList');
-            list.innerHTML = '';
-            matchedCompanies.forEach((c, i) => {
-                const item = document.createElement('div');
-                item.className = 'company-item';
-                item.onclick = () => selectCompany(i);
-                item.innerHTML = `<span class="company-name">${c.name}</span><span class="company-count">${c.participants.length} 人</span>`;
-                list.appendChild(item);
+        function selectMeal(meal) {
+            selectedMealChoice = meal;
+            document.querySelectorAll('.meal-option').forEach(el => el.classList.remove('selected'));
+            document.getElementById('m-' + meal).classList.add('selected');
+            document.getElementById('finalCheckInBtn').disabled = false;
+        }
+
+        async function handleFinalCheckIn() {
+            try {
+                const res = await fetch(`${API_BASE}/checkin/${selectedParticipant.id}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ meal: selectedMealChoice, name: selectedParticipant.name })
+                });
+                const json = await res.json();
+                if (json.success) {
+                    document.getElementById('successInfo').innerHTML = `
+                        <b>姓名：</b>${json.data.name}<br>
+                        <b>公司：</b>${json.data.company}<br>
+                        <b>時間：</b>${json.data.checkedInAt}
+                    `;
+                    setAppState('success');
+                    // 🚀 重點：1.5 秒後自動跳轉
+                    setTimeout(goToProducts, 1500);
+                }
+            } catch (e) { alert('報到失敗，請檢查網路'); }
+        }
+
+        function goToProducts() { window.location.href = '/商品頁面.html'; }
+        function resetApp() { location.reload(); }
+        window.onload = checkApiStatus;
+    </script>
+</body>
+</html>
