@@ -41,33 +41,20 @@ def load_config():
     return DEFAULT_CONFIG
 
 # =========================
-# GOOGLE SHEETS（使用 Secret File 確保金鑰不損壞）
+# GOOGLE SHEETS
 # =========================
 def get_gspread_client():
-    scope = [
-        "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/drive"
-    ]
-
-    # Render 的 Secret File 固定路徑
+    scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
     RENDER_SECRET_FILE = "/etc/secrets/google-creds.json"
-    # 本地測試用的路徑（請改成你電腦上那個 JSON 的檔名）
     LOCAL_SECRET_FILE = os.path.join(BASE_DIR, "test0417-493608-dce82b8c6901.json")
 
-    # 自動判斷環境：如果有 Secret File 就用它，沒有就用本地檔案
     if os.path.exists(RENDER_SECRET_FILE):
         json_path = RENDER_SECRET_FILE
-    elif os.path.exists(LOCAL_SECRET_FILE):
-        json_path = LOCAL_SECRET_FILE
     else:
-        # 如果兩者都找不到，噴出錯誤提示
-        raise FileNotFoundError(f"找不到金鑰檔案！請檢查 Render Secret Files 設定。")
+        json_path = LOCAL_SECRET_FILE
 
-    # 使用 from_service_account_file 直接讀取檔案
-    # 這樣就不需要手動處理 os.environ 或 .replace("\\n", "\n")
     creds = Credentials.from_service_account_file(json_path, scopes=scope)
     return gspread.authorize(creds)
-
 
 def get_worksheet():
     config = load_config()
@@ -75,13 +62,11 @@ def get_worksheet():
     sheet = client.open(config["google_sheet_name"])
     return sheet.get_worksheet(0)
 
-
 # =========================
-# CACHE
+# CACHE 邏輯
 # =========================
 def refresh_cache(force=False):
     global participants_cache, last_cache_update
-
     now = time.time()
     if not force and (now - last_cache_update < CACHE_TTL) and participants_cache:
         return
@@ -90,20 +75,17 @@ def refresh_cache(force=False):
         try:
             sheet = get_worksheet()
             all_values = sheet.get_all_values()
-
-            if not all_values:
-                return
+            if not all_values: return
 
             config = load_config()
             cols = config["excel_columns"]
-
             new_cache = []
 
             for row in all_values[1:]:
                 def get(col):
                     i = col - 1
                     return row[i].strip() if i < len(row) else ""
-
+                
                 p = {
                     "id": get(cols["id"]),
                     "name": get(cols["name"]),
@@ -116,77 +98,115 @@ def refresh_cache(force=False):
                     "status": get(cols["status"]) or "registered",
                     "meal": get(cols["meal"])
                 }
-
-                if p["name"]:
-                    new_cache.append(p)
+                if p["name"]: new_cache.append(p)
 
             participants_cache = new_cache
             last_cache_update = now
-
         except Exception as e:
             print("SYNC ERROR:", e)
-
 
 def background_sync():
     while True:
         time.sleep(CACHE_TTL)
         refresh_cache(True)
 
+# =========================
+# API 路由區
+# =========================
 
-# =========================
-# API
-# =========================
 @app.route('/')
 def index():
     return send_from_directory('.', '活動報到系統.html')
 
-
-@app.route('/api/participants')
-def participants():
-    refresh_cache()
-    return jsonify({"success": True, "data": participants_cache})
-
+@app.route('/api/config')
+def get_api_config():
+    return jsonify({"success": True, "show_meal_options": True})
 
 @app.route('/api/search/name')
 def search_name():
     refresh_cache()
     q = request.args.get("name", "").replace(" ", "").replace("　", "")
-    result = []
-
-    for p in participants_cache:
-        name = p["name"].replace(" ", "").replace("　", "")
-        if name == q:
-            result.append(p)
-
+    result = [p for p in participants_cache if p["name"].replace(" ", "") == q]
     return jsonify({"success": True, "data": result})
-
 
 @app.route('/api/search/phone')
 def search_phone():
     refresh_cache()
     q = ''.join(filter(str.isdigit, request.args.get("phone", "")))
-    result = []
-
-    for p in participants_cache:
-        phone = ''.join(filter(str.isdigit, p["phone"]))
-        if phone == q:
-            result.append(p)
-
+    result = [p for p in participants_cache if ''.join(filter(str.isdigit, p["phone"])) == q]
     return jsonify({"success": True, "data": result})
 
+@app.route('/api/search/email')
+def search_email():
+    refresh_cache()
+    q = request.args.get("email", "").strip().lower()
+    result = [p for p in participants_cache if p["email"].strip().lower() == q]
+    return jsonify({"success": True, "data": result})
+
+@app.route('/api/search/company')
+def search_company():
+    refresh_cache()
+    q = request.args.get("company", "").strip()
+    result = [p for p in participants_cache if q in p["company"]]
+    return jsonify({"success": True, "data": result})
+
+# --- 重點：個人報到 API ---
+@app.route('/api/checkin/<participant_id>', methods=['POST'])
+def checkin(participant_id):
+    try:
+        data = request.json
+        meal = data.get("meal", "")
+        
+        sheet = get_worksheet()
+        config = load_config()
+        cols = config["excel_columns"]
+
+        cell = sheet.find(participant_id)
+        if not cell: return jsonify({"success": False, "error": "找不到 ID"}), 404
+
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        sheet.update_cell(cell.row, cols["checkedInAt"], now_str)
+        sheet.update_cell(cell.row, cols["status"], "checked_in")
+        if meal: sheet.update_cell(cell.row, cols["meal"], meal)
+
+        refresh_cache(True)
+        # 回傳給前端需要的成功格式
+        return jsonify({
+            "success": True, 
+            "data": {"name": data.get("name"), "company": "更新中", "meal": meal, "checkedInAt": now_str}
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+# --- 重點：團體報到 API ---
+@app.route('/api/checkin/batch', methods=['POST'])
+def checkin_batch():
+    try:
+        selections = request.json.get("selections", [])
+        sheet = get_worksheet()
+        config = load_config()
+        cols = config["excel_columns"]
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        results = []
+        for item in selections:
+            cell = sheet.find(item["id"])
+            if cell:
+                sheet.update_cell(cell.row, cols["checkedInAt"], now_str)
+                sheet.update_cell(cell.row, cols["status"], "checked_in")
+                if item["meal"]: sheet.update_cell(cell.row, cols["meal"], item["meal"])
+                results.append({"name": item["name"], "meal": item["meal"], "company": "團體報到"})
+
+        refresh_cache(True)
+        return jsonify({"success": True, "data": results})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 # =========================
-# START
+# 啟動伺服器
 # =========================
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-
+    port = int(os.environ.get("PORT", 10000))
     refresh_cache(True)
     threading.Thread(target=background_sync, daemon=True).start()
-
     app.run(host="0.0.0.0", port=port)
-
-@app.route('/api/config')
-def get_api_config():
-    # 這裡回傳前端需要的設定，或者簡單回傳成功即可
-    return jsonify({"success": True, "show_meal_options": True})
