@@ -16,7 +16,6 @@ CORS(app)
 # =============================================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_PATH = os.path.join(BASE_DIR, 'config.json')
-KEY_PATH = os.path.join(BASE_DIR, 'test0417-493608-dce82b8c6901.json')
 
 participants_cache = []
 last_cache_update = 0
@@ -27,8 +26,16 @@ DEFAULT_CONFIG = {
     "show_meal_options": True,
     "google_sheet_name": "活動報到名單",
     "excel_columns": {
-        "id": 1, "name": 2, "phone": 3, "company": 4, "email": 5,
-        "qrCode": 6, "registeredAt": 7, "checkedInAt": 8, "status": 9, "meal": 10
+        "id": 1,
+        "name": 2,
+        "phone": 3,
+        "company": 4,
+        "email": 5,
+        "qrCode": 6,
+        "registeredAt": 7,
+        "checkedInAt": 8,
+        "status": 9,
+        "meal": 10
     }
 }
 
@@ -41,16 +48,25 @@ def load_config():
             return DEFAULT_CONFIG
     return DEFAULT_CONFIG
 
+
 # =============================================
-# Google Sheets
+# Google Sheets Auth（已修正）
 # =============================================
 def get_gspread_client():
     scope = [
         "https://spreadsheets.google.com/feeds",
         "https://www.googleapis.com/auth/drive"
     ]
-    creds = ServiceAccountCredentials.from_json_keyfile_name(KEY_PATH, scope)
+
+    creds_dict = {
+        "type": "service_account",
+        "client_email": os.environ["GOOGLE_CLIENT_EMAIL"],
+        "private_key": os.environ["GOOGLE_PRIVATE_KEY"].replace("\\n", "\n"),
+    }
+
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
     return gspread.authorize(creds)
+
 
 def get_worksheet():
     config = load_config()
@@ -58,8 +74,9 @@ def get_worksheet():
     spreadsheet = client.open(config['google_sheet_name'])
     return spreadsheet.get_worksheet(0)
 
+
 # =============================================
-# 快取同步（已修好）
+# 快取同步（穩定版）
 # =============================================
 def refresh_cache(force=False):
     global participants_cache, last_cache_update
@@ -70,19 +87,13 @@ def refresh_cache(force=False):
 
     with cache_lock:
         try:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] 正在同步資料...")
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] 同步資料...")
 
             sheet = get_worksheet()
             all_values = sheet.get_all_values()
 
-            # 🔍 DEBUG
-            print("==== DEBUG START ====")
-            print("總列數:", len(all_values))
-            print("前3列:", all_values[:3])
-            print("==== DEBUG END ====")
-
             if not all_values:
-                print("❌ 沒抓到資料（可能權限問題）")
+                print("❌ Google Sheet 沒資料")
                 return
 
             config = load_config()
@@ -116,21 +127,19 @@ def refresh_cache(force=False):
 
                     current[key] = val
 
-                p = {
-                    "id": current['id'],
-                    "name": current['name'],
-                    "phone": current['phone'],
-                    "company": current['company'],
-                    "email": current['email'],
-                    "qrCode": current['qrCode'],
-                    "registeredAt": current['registeredAt'],
-                    "checkedInAt": current['checkedInAt'] or None,
-                    "status": current['status'] or 'registered',
-                    "meal": current['meal']
-                }
-
-                if p['name']:
-                    new_cache.append(p)
+                if current.get('name'):
+                    new_cache.append({
+                        "id": current['id'],
+                        "name": current['name'],
+                        "phone": current['phone'],
+                        "company": current['company'],
+                        "email": current['email'],
+                        "qrCode": current['qrCode'],
+                        "registeredAt": current['registeredAt'],
+                        "checkedInAt": current['checkedInAt'] or None,
+                        "status": current['status'] or 'registered',
+                        "meal": current['meal']
+                    })
 
             participants_cache = new_cache
             last_cache_update = now
@@ -140,10 +149,12 @@ def refresh_cache(force=False):
         except Exception as e:
             print(f"❌ 同步失敗: {e}")
 
+
 def background_sync():
     while True:
         time.sleep(CACHE_TTL)
         refresh_cache(force=True)
+
 
 # =============================================
 # API
@@ -152,17 +163,24 @@ def background_sync():
 def index():
     return send_from_directory('.', '活動報到系統.html')
 
+
+@app.route('/api/config')
+def get_config():
+    return jsonify(load_config())
+
+
 @app.route('/api/participants')
 def get_participants():
     refresh_cache()
     return jsonify({"success": True, "data": participants_cache})
 
+
 @app.route('/api/search/phone')
 def search_phone():
     refresh_cache()
     query = ''.join(filter(str.isdigit, request.args.get('phone', '')))
-    results = []
 
+    results = []
     for p in participants_cache:
         phone = ''.join(filter(str.isdigit, str(p.get('phone', ''))))
         if phone == query:
@@ -170,18 +188,20 @@ def search_phone():
 
     return jsonify({"success": True, "data": results})
 
+
 @app.route('/api/search/name')
 def search_name():
     refresh_cache()
     query = request.args.get('name', '').replace(" ", "").replace("　", "")
-    results = []
 
+    results = []
     for p in participants_cache:
         name = str(p.get('name', '')).replace(" ", "").replace("　", "")
         if name == query:
             results.append(p)
 
     return jsonify({"success": True, "data": results})
+
 
 # =============================================
 # 啟動
