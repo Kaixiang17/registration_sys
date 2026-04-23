@@ -21,53 +21,52 @@
         body { background-color: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; }
         header { background: white; border-bottom: 1px solid var(--border); padding: 1rem 0; position: sticky; top: 0; z-index: 100; }
         .header-container { max-width: 1000px; margin: 0 auto; padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; }
-        .header-link { display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted); text-decoration: none; font-size: 0.875rem; cursor: pointer; transition: color 0.2s; }
-        .header-link:hover { color: var(--primary); }
-        .header-title { font-size: 1.25rem; font-weight: 700; color: var(--text); }
-
+        .header-title { font-size: 1.25rem; font-weight: 700; }
         main { max-width: 1000px; margin: 0 auto; padding: 3rem 1rem; }
         .state-hidden { display: none !important; }
 
-        /* 自適應 3 欄選單設計 */
+        /* 模式選擇網格 */
         .mode-selection-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; max-width: 950px; margin: 0 auto 3rem; }
         .mode-card { background: white; border: 2px solid #e2e0db; border-radius: 1rem; padding: 2.5rem 1.5rem; text-align: center; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); }
         .mode-card:hover { border-color: var(--primary); transform: translateY(-5px); box-shadow: 0 12px 20px rgba(79, 70, 229, 0.1); }
         .mode-icon { font-size: 3.5rem; margin-bottom: 1.5rem; display: block; }
-        .mode-title { font-size: 1.5rem; font-weight: 700; color: #1a1a1a; margin-bottom: 0.75rem; }
-        .mode-desc { color: #666; font-size: 0.95rem; line-height: 1.5; }
+        .mode-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.75rem; }
+        .mode-desc { color: #666; font-size: 0.95rem; }
 
-        /* 表單、清單與按鈕通用樣式 */
+        /* 卡片與表單樣式 */
         .verification-container { max-width: 600px; margin: 0 auto; }
-        .form-card { background: white; border: 1px solid var(--border); border-radius: 1rem; padding: 2.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        .back-button { display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted); background: none; border: none; font-size: 0.9375rem; cursor: pointer; margin-bottom: 1.5rem; }
-        .back-button:hover { color: var(--text); }
-        input[type="text"] { width: 100%; padding: 0.875rem 1rem; border: 1px solid var(--border); border-radius: 0.5rem; font-size: 1rem; margin-bottom: 1rem; }
-        .button { width: 100%; padding: 0.875rem; border: none; border-radius: 0.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .form-card { background: white; border: 1px solid var(--border); border-radius: 1rem; padding: 2.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        .back-button { background: none; border: none; color: var(--text-muted); cursor: pointer; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; }
+        input[type="text"] { width: 100%; padding: 0.875rem 1rem; border: 1px solid var(--border); border-radius: 0.5rem; margin-bottom: 1rem; font-size: 1rem; }
+        .button { width: 100%; padding: 0.875rem; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 1rem; }
         .button-primary { background-color: var(--primary); color: white; }
         .button-primary:hover { background-color: var(--primary-hover); }
         .button-primary:disabled { background-color: #9ca3af; cursor: not-allowed; }
 
-        /* 成功視窗 */
-        .success-card { text-align: center; padding: 3rem 2rem; }
-        .success-icon { width: 80px; height: 80px; background: #dcfce7; color: #16a34a; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto 1.5rem; }
-        .api-status { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; }
-        .api-status-dot { width: 8px; height: 8px; border-radius: 50%; background-color: #9ca3af; }
-        .api-status-dot.connected { background-color: var(--success); }
-
+        /* 列表樣式 */
         .group-list, .meal-list { margin-top: 1.5rem; max-height: 350px; overflow-y: auto; border: 1px solid var(--border); border-radius: 0.5rem; }
         .group-item, .meal-item { display: flex; align-items: center; padding: 1rem; border-bottom: 1px solid #f0eeea; }
         .group-checkbox { width: 1.25rem; height: 1.25rem; margin-right: 1rem; }
+        
         .meal-mini-btn { padding: 0.4rem 0.8rem; border: 1px solid var(--border); border-radius: 0.4rem; font-size: 0.8125rem; background: white; cursor: pointer; margin-right: 0.5rem; }
-        .meal-mini-btn.selected { background: var(--primary); color: white; }
+        .meal-mini-btn.selected { background: var(--primary); color: white; border-color: var(--primary); }
+
         .meal-options { display: grid; gap: 1rem; margin-bottom: 2rem; }
         .meal-option { display: flex; align-items: center; gap: 1rem; padding: 1.25rem; border: 2px solid var(--border); border-radius: 0.75rem; cursor: pointer; }
         .meal-option.selected { border-color: var(--primary); background: rgba(79, 70, 229, 0.05); }
+
+        /* 狀態顯示 */
+        .api-status { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: var(--text-muted); }
+        .api-status-dot { width: 8px; height: 8px; border-radius: 50%; background-color: #9ca3af; }
+        .api-status-dot.connected { background-color: var(--success); }
+        .success-card { text-align: center; padding: 3rem 2rem; }
+        .success-icon { width: 80px; height: 80px; background: #dcfce7; color: #16a34a; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto 1.5rem; }
     </style>
 </head>
 <body>
     <header>
         <div class="header-container">
-            <div class="header-link" onclick="resetApp()">🏠 首頁</div>
+            <div onclick="location.reload()" style="cursor:pointer; color:var(--text-muted)">🏠 首頁</div>
             <div class="header-title">活動報到系統</div>
             <div class="api-status">
                 <div id="api-status-dot" class="api-status-dot"></div>
@@ -102,10 +101,11 @@
         <div id="selectionState" class="state-hidden">
             <div class="verification-container">
                 <button class="back-button" onclick="setAppState('mode')">← 返回</button>
-                <div class="cards-grid">
-                    <div class="card" onclick="selectMethod('phone')" style="border: 1px solid var(--border); padding: 1.5rem; border-radius: 1rem; margin-bottom: 1rem; cursor: pointer;">📱 電話驗證</div>
-                    <div class="card" onclick="selectMethod('name')" style="border: 1px solid var(--border); padding: 1.5rem; border-radius: 1rem; margin-bottom: 1rem; cursor: pointer;">👤 姓名驗證</div>
-                    <div class="card" onclick="selectMethod('email')" style="border: 1px solid var(--border); padding: 1.5rem; border-radius: 1rem; cursor: pointer;">✉️ Email 驗證</div>
+                <h2 style="margin-bottom:2rem; text-align:center;">選擇驗證方式</h2>
+                <div style="display:grid; gap:1rem;">
+                    <button class="button button-primary" onclick="selectMethod('phone')">📱 電話驗證</button>
+                    <button class="button button-primary" onclick="selectMethod('name')">👤 姓名驗證</button>
+                    <button class="button button-primary" onclick="selectMethod('email')">✉️ Email 驗證</button>
                 </div>
             </div>
         </div>
@@ -116,7 +116,7 @@
                 <div class="form-card">
                     <h2 id="verifTitle" style="margin-bottom:1.5rem;">驗證身分</h2>
                     <input type="text" id="verifInput" placeholder="請輸入資訊">
-                    <button class="button button-primary" onclick="handleVerification()">進行驗證</button>
+                    <button class="button button-primary" onclick="handleVerification()">下一步</button>
                 </div>
             </div>
         </div>
@@ -125,9 +125,9 @@
             <div class="verification-container">
                 <button class="back-button" onclick="setAppState('mode')">← 返回</button>
                 <div class="form-card">
-                    <h2>🏢 公司搜尋</h2>
-                    <p style="color:var(--text-muted); margin-bottom:1rem;">輸入公司名稱關鍵字</p>
-                    <input type="text" id="companyInput" placeholder="例如：科技創新">
+                    <h2>🏢 搜尋您的公司</h2>
+                    <p style="color:var(--text-muted); margin-bottom:1rem;">請輸入公司名稱關鍵字</p>
+                    <input type="text" id="companyInput" placeholder="例如：千陽號">
                     <button class="button button-primary" onclick="handleCompanySearch()">搜尋</button>
                 </div>
             </div>
@@ -135,9 +135,9 @@
 
         <div id="companySelectionState" class="state-hidden">
             <div class="verification-container">
-                <button class="back-button" onclick="setAppState('group_search')">← 返回</button>
+                <button class="back-button" onclick="setAppState('group_search')">← 返回搜尋</button>
                 <h2>請選擇所屬公司</h2>
-                <div id="companyList" style="margin-top:1.5rem;"></div>
+                <div id="companyList" style="margin-top:1.5rem; display:grid; gap:0.5rem;"></div>
             </div>
         </div>
 
@@ -145,13 +145,13 @@
             <div class="verification-container">
                 <button class="back-button" onclick="setAppState('group_search')">← 返回</button>
                 <div class="form-card">
-                    <h2 id="groupCompanyName">名單</h2>
-                    <div style="margin: 1rem 0; display:flex; justify-content: space-between;">
-                        <label><input type="checkbox" onchange="toggleSelectAll(this.checked)"> 全選未報到</label>
-                        <span id="selectedCount">已選 0 人</span>
+                    <h2 id="groupCompanyName" style="margin-bottom:1rem;">人員名單</h2>
+                    <div style="display:flex; justify-content: space-between; margin-bottom: 1rem;">
+                        <label><input type="checkbox" onchange="toggleSelectAll(this.checked)"> 全選未報到者</label>
+                        <span id="selectedCount" style="color:var(--primary); font-weight:600;">已選 0 人</span>
                     </div>
                     <div id="groupList" class="group-list"></div>
-                    <button id="groupNextBtn" class="button button-primary" style="margin-top:1.5rem;" disabled onclick="proceedToGroupMeal()">下一步：餐食選擇</button>
+                    <button id="groupNextBtn" class="button button-primary" style="margin-top:1.5rem;" disabled onclick="proceedToGroupMeal()">下一步：個別餐食選擇</button>
                 </div>
             </div>
         </div>
@@ -169,8 +169,9 @@
 
         <div id="mealState" class="state-hidden">
             <div class="verification-container">
+                <button class="back-button" onclick="setAppState('verification')">← 返回</button>
                 <div class="form-card">
-                    <h2>🍱 餐食選擇</h2>
+                    <h2 style="margin-bottom:1.5rem;">🍱 您的餐食選擇</h2>
                     <div class="meal-options">
                         <div class="meal-option" id="m-葷食" onclick="selectMeal('葷食')">🍖 葷食</div>
                         <div class="meal-option" id="m-素食" onclick="selectMeal('素食')">🥗 素食</div>
@@ -199,7 +200,13 @@
 
     <script>
         const API_BASE = '/api'; 
-        let currentMethod = '', selectedParticipant = null, matchedCompanies = [], selectedGroupParticipants = [], groupMealSelections = {}, selectedMealChoice = null;
+        let checkInMode = 'individual';
+        let currentMethod = '';
+        let selectedParticipant = null;
+        let matchedCompanies = [];
+        let selectedGroupParticipants = [];
+        let groupMealSelections = {};
+        let selectedMealChoice = null;
 
         async function checkApiStatus() {
             try {
@@ -217,81 +224,45 @@
             document.getElementById(state + 'State').classList.remove('state-hidden');
         }
 
-        function setCheckInMode(mode) { window.checkInMode = mode; setAppState(mode === 'individual' ? 'selection' : 'group_search'); }
-        function selectMethod(method) { currentMethod = method; document.getElementById('verifTitle').textContent = method === 'phone' ? '📱 電話驗證' : method === 'name' ? '👤 姓名驗證' : '✉️ Email 驗證'; setAppState('verification'); }
+        function setCheckInMode(mode) { 
+            checkInMode = mode; 
+            setAppState(mode === 'individual' ? 'selection' : 'group_search'); 
+        }
+
+        function selectMethod(method) { 
+            currentMethod = method; 
+            document.getElementById('verifTitle').textContent = method === 'phone' ? '📱 電話驗證' : method === 'name' ? '👤 姓名驗證' : '✉️ Email 驗證'; 
+            setAppState('verification'); 
+        }
+
+        function goToProducts() { window.location.href = '/商品頁面.html'; }
 
         async function handleVerification() {
             const val = document.getElementById('verifInput').value.trim();
             if (!val) return;
-            const res = await fetch(`${API_BASE}/search/${currentMethod}?${currentMethod}=${val}`);
-            const json = await res.json();
-            if (json.data && json.data.length > 0) { selectedParticipant = json.data[0]; setAppState('meal'); }
-            else alert('查無資料');
+            try {
+                const res = await fetch(`${API_BASE}/search/${currentMethod}?${currentMethod}=${val}`);
+                const json = await res.json();
+                if (json.data && json.data.length > 0) { 
+                    selectedParticipant = json.data[0]; 
+                    setAppState('meal'); 
+                } else alert('查無資料');
+            } catch(e) { alert('伺服器連線錯誤'); }
         }
 
         async function handleCompanySearch() {
             const val = document.getElementById('companyInput').value.trim();
-            const res = await fetch(`${API_BASE}/search/company?company=${val}`);
-            const json = await res.json();
-            if (json.data.length === 0) return alert('找不到公司');
-            const groups = {}; json.data.forEach(p => { if(!groups[p.company]) groups[p.company] = []; groups[p.company].push(p); });
-            matchedCompanies = Object.keys(groups).map(name => ({ name, participants: groups[name] }));
-            if (matchedCompanies.length === 1) selectCompany(0);
-            else {
-                document.getElementById('companyList').innerHTML = matchedCompanies.map((c, i) => `<div onclick="selectCompany(${i})" style="border:1px solid var(--border); padding:1rem; border-radius:0.5rem; margin-bottom:0.5rem; cursor:pointer;">${c.name} (${c.participants.length} 人)</div>`).join('');
-                setAppState('company_selection');
-            }
-        }
-
-        function selectCompany(i) {
-            const c = matchedCompanies[i]; window.duplicateParticipants = c.participants;
-            document.getElementById('groupCompanyName').textContent = c.name;
-            document.getElementById('groupList').innerHTML = c.participants.map(p => {
-                const isCheck = p.status === 'checked_in';
-                return `<div class="group-item"><input type="checkbox" class="group-cb" data-id="${p.id}" ${isCheck?'disabled':''} onchange="updateGroupSel()"> ${p.name} <span style="font-size:0.7rem; color:${isCheck?'green':'gray'}">${isCheck?'(已報到)':'(未報到)'}</span></div>`;
-            }).join('');
-            setAppState('group_list');
-        }
-
-        function updateGroupSel() {
-            const cbs = document.querySelectorAll('.group-cb:checked');
-            document.getElementById('selectedCount').textContent = `已選 ${cbs.length} 人`;
-            document.getElementById('groupNextBtn').disabled = cbs.length === 0;
-        }
-
-        function toggleSelectAll(checked) { document.querySelectorAll('.group-cb:not(:disabled)').forEach(cb => {cb.checked = checked;}); updateGroupSel(); }
-
-        function proceedToGroupMeal() {
-            selectedGroupParticipants = Array.from(document.querySelectorAll('.group-cb:checked')).map(cb => window.duplicateParticipants.find(p => p.id === cb.dataset.id));
-            document.getElementById('groupMealList').innerHTML = selectedGroupParticipants.map(p => {
-                groupMealSelections[p.id] = '葷食';
-                return `<div class="meal-item"><span style="flex:1">${p.name}</span><button class="meal-mini-btn selected" onclick="setGM('${p.id}','葷食',this)">葷</button><button class="meal-mini-btn" onclick="setGM('${p.id}','素食',this)">素</button></div>`;
-            }).join('');
-            setAppState('group_meal');
-        }
-
-        function setGM(id, m, btn) { groupMealSelections[id] = m; btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('selected')); btn.classList.add('selected'); }
-
-        function selectMeal(m) { selectedMealChoice = m; document.querySelectorAll('.meal-option').forEach(el=>el.classList.remove('selected')); document.getElementById('m-'+m).classList.add('selected'); document.getElementById('finalCheckInBtn').disabled = false; }
-
-        async function handleFinalCheckIn() {
-            const isIndiv = window.checkInMode === 'individual';
-            const url = isIndiv ? `${API_BASE}/checkin/${selectedParticipant.id}` : `${API_BASE}/checkin/batch`;
-            const body = isIndiv ? { meal: selectedMealChoice, name: selectedParticipant.name } : { selections: selectedGroupParticipants.map(p => ({ id: p.id, name: p.name, meal: groupMealSelections[p.id] })) };
-            
-            const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-            const json = await res.json();
-            if (json.success) {
-                const p = isIndiv ? json.data : json.data[0];
-                document.getElementById('successInfo').innerHTML = `<b>姓名：</b>${p.name}<br><b>公司：</b>${p.company}<br><b>時間：</b>${p.checkedInAt}`;
-                setAppState('success');
-                setTimeout(goToProducts, 1500);
-            } else alert('報到失敗');
-        }
-
-        function goToProducts() { window.location.href = '/商品頁面.html'; }
-        function resetApp() { location.reload(); }
-        window.onload = checkApiStatus;
-    </script>
-</body>
-</html>
+            if(!val) return;
+            try {
+                const res = await fetch(`${API_BASE}/search/company?company=${val}`);
+                const json = await res.json();
+                if (json.data.length === 0) return alert('找不到符合的公司');
+                
+                const groups = {}; 
+                json.data.forEach(p => { if(!groups[p.company]) groups[p.company] = []; groups[p.company].push(p); });
+                matchedCompanies = Object.keys(groups).map(name => ({ name, participants: groups[name] }));
+                
+                if (matchedCompanies.length === 1) selectCompany(0);
+                else {
+                    document.getElementById('companyList').innerHTML = matchedCompanies.map((c, i) => 
+                        `<div onclick="selectCompany(${i})" style="border:1px solid var(--border); padding:1rem
