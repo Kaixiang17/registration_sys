@@ -1,58 +1,410 @@
-<button class="tab-btn" data-tab="dashboard">📊 艦橋戰情室</button>
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧方舟 - 艦橋管理中心</title>
+    <link rel="stylesheet" href="smart-ark-theme.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { line-height: 1.6; min-height: 100vh; }
+        
+        /* 頂部導航 */
+        header { padding: 1rem 0; position: sticky; top: 0; z-index: 100; }
+        .header-container { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+        .header-actions { display: flex; gap: 1rem; align-items: center; }
+        
+        .btn-link { color: var(--text-dark); text-decoration: none; font-size: 0.9rem; padding: 0.5rem 1rem; border: 1px solid transparent; transition: all 0.2s; }
+        .btn-link:hover { border-color: var(--text-dark); background: rgba(0,229,255,0.1); }
 
-<div id="dashboard" class="tab-content panel-border">
-    <div class="welcome-banner" style="background: linear-gradient(135deg, #0077ff 0%, #003366 100%);">
-        <div class="welcome-title neon-text" id="stat-activity-name">正在讀取任務...</div>
-        <div class="welcome-subtitle">同步時間：<span id="stat-last-sync">--:--:--</span></div>
-    </div>
+        /* 主容器 */
+        main { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
 
-    <div class="settings-grid" style="margin-top: 1.5rem;">
-        <div class="setting-card cyber-card">
-            <div class="setting-label neon-text">🛰️ 登艦進度 (報到率)</div>
-            <div class="setting-value" id="stat-rate" style="font-size: 2.5rem; color: #0077ff;">0%</div>
-            <div class="cyber-progress">
-                <div id="stat-progress-bar" class="cyber-progress-bar" style="width: 0%"></div>
+        /* 標籤頁 */
+        .tabs { display: flex; gap: 0.5rem; margin-bottom: 2rem; border-bottom: 1px solid var(--accent-gray); }
+        .tab-btn { padding: 1rem 1.5rem; background: none; border: none; border-bottom: 3px solid transparent; font-size: 1rem; font-weight: 600; color: #a0a0a0; cursor: pointer; transition: all 0.2s; }
+        .tab-btn:hover { color: #fff; background: rgba(255,255,255,0.05); }
+        .tab-btn.active { color: var(--text-dark); border-bottom-color: var(--text-dark); text-shadow: 0 0 8px var(--text-glow); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* 表單與卡片細節排版 */
+        .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-dark); }
+        .form-group { margin-bottom: 1.25rem; }
+        label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: #fff; font-size: 0.95rem; }
+        textarea { width: 100%; resize: vertical; min-height: 80px; padding: 0.875rem 1rem; }
+        .form-hint { font-size: 0.85rem; color: #888; margin-top: 0.25rem; }
+
+        /* 商品列表 */
+        .products-list { display: grid; gap: 1rem; margin-bottom: 1.5rem; }
+        .product-item { padding: 1.25rem; display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: start; }
+        .product-info { display: grid; gap: 0.5rem; }
+        .product-name { font-weight: 700; font-size: 1rem; }
+        .product-field { font-size: 0.9rem; color: #aaa; }
+        .product-actions { display: flex; gap: 0.5rem; }
+
+        /* 訊息提示 */
+        .alert { padding: 1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem; border: 1px solid var(--text-dark); background: rgba(0,229,255,0.1); color: #fff; }
+        .alert-success { border-color: #16a34a; background: rgba(22,163,74,0.2); }
+        .alert-danger { border-color: #dc2626; background: rgba(220,38,38,0.2); }
+
+        /* 模態框 (彈窗) */
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .modal.active { display: flex; }
+        .modal-content { max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; padding: 2rem; }
+        .modal-header { font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--text-dark); }
+        .modal-footer { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; }
+
+        /* 設定網格 */
+        .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+        .setting-card { padding: 1.25rem; }
+        .setting-label { font-weight: 600; margin-bottom: 0.75rem; color: #fff; }
+        .setting-value { font-size: 0.95rem; color: #aaa; word-break: break-all; }
+
+        /* 切換開關 */
+        .toggle { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+        .toggle-switch { position: relative; width: 50px; height: 28px; background: rgba(255,255,255,0.2); border-radius: 14px; cursor: pointer; transition: background 0.3s; border: 1px solid var(--accent-gray); }
+        .toggle-switch.active { background: #16a34a; border-color: #16a34a; }
+        .toggle-switch::after { content: ''; position: absolute; width: 24px; height: 24px; background: white; border-radius: 50%; top: 1px; left: 2px; transition: left 0.3s; }
+        .toggle-switch.active::after { left: 22px; }
+
+        /* 飲食標籤 */
+        .meal-tag { display: inline-flex; align-items: center; background: rgba(0,229,255,0.2); color: var(--text-dark); padding: 0.5rem 1rem; border-radius: 2rem; margin: 0.25rem; border: 1px solid var(--text-dark); }
+        .remove-meal { margin-left: 0.5rem; cursor: pointer; color: #dc2626; font-weight: bold; }
+    </style>
+</head>
+<body class="circuit-background">
+    <div class="ark-background"></div>
+    
+    <header class="panel-border" style="border-top:none; border-left:none; border-right:none;">
+        <div class="header-container">
+            <div class="header-title neon-text">⚙️ 艦橋管理中心</div>
+            <div class="header-actions">
+                <a class="btn-link" href="/">📋 報到首頁</a>
+                <a class="btn-link" href="/products">🛍️ 補給頁面</a>
             </div>
-            <p id="stat-count" style="margin-top: 0.5rem; font-size: 0.8rem;"></p>
+        </div>
+    </header>
+
+    <main>
+        <div id="messageContainer"></div>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="dashboard">📊 戰情儀表板</button>
+            <button class="tab-btn" data-tab="products">🛍️ 補給品管理</button>
+            <button class="tab-btn" data-tab="system">⚙️ 方舟系統設定</button>
         </div>
 
-        <div class="setting-card cyber-card">
-            <div class="setting-label neon-text">🍱 補給品需求 (餐食)</div>
-            <div id="stat-meals-list" style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <div id="dashboard" class="tab-content active panel-border" style="padding: 2rem;">
+            <div style="background: rgba(0,229,255,0.1); padding: 1.5rem; border-left: 4px solid var(--text-dark); margin-bottom: 1.5rem;">
+                <div class="neon-text" id="stat-activity-name" style="font-size: 1.5rem; margin-bottom: 0.5rem;">正在讀取任務...</div>
+                <div style="color: #aaa;">衛星同步時間：<span id="stat-last-sync">--:--:--</span></div>
+            </div>
+
+            <div class="settings-grid">
+                <div class="setting-card cyber-card">
+                    <div class="setting-label neon-text">🛰️ 登艦進度 (報到率)</div>
+                    <div class="setting-value" id="stat-rate" style="font-size: 3rem; color: var(--text-dark); font-family: 'Michroma';">0%</div>
+                    <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); margin-top: 1rem; border: 1px solid var(--accent-gray);">
+                        <div id="stat-progress-bar" style="height: 100%; background: var(--text-dark); width: 0%; box-shadow: 0 0 10px var(--text-glow);"></div>
+                    </div>
+                    <p id="stat-count" style="margin-top: 0.5rem; font-size: 0.9rem; color: #ccc;"></p>
                 </div>
+
+                <div class="setting-card cyber-card">
+                    <div class="setting-label neon-text">🍱 補給品需求 (已登艦)</div>
+                    <div id="stat-meals-list" style="display: flex; flex-direction: column; gap: 0.8rem; margin-top: 1rem;">
+                        <div style="color: #888;">讀取數據中...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="products" class="tab-content panel-border" style="padding: 2rem;">
+            <div class="card-title">📦 商品列表</div>
+            <div id="productsList" class="products-list"></div>
+            <button class="cyber-button" onclick="openAddProductModal()"><span>➕ 新增補給品</span></button>
+        </div>
+
+        <div id="system" class="tab-content panel-border" style="padding: 2rem;">
+            <div class="cyber-card" style="padding: 1.5rem; margin-bottom: 1.5rem;">
+                <div class="card-title">🔧 基本設定</div>
+                <div class="form-group">
+                    <label>Google Sheet 名稱</label>
+                    <input type="text" class="cyber-input" id="googleSheetName" placeholder="例：活動報到名單">
+                    <div class="form-hint">請確保名稱與實際檔案相符</div>
+                </div>
+                <div class="form-group">
+                    <div class="toggle">
+                        <div style="color: #fff; font-weight: bold;">啟用餐點選項</div>
+                        <div class="toggle-switch" id="mealToggle" onclick="toggleMealOption()"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cyber-card" style="padding: 1.5rem; margin-bottom: 1.5rem;">
+                <div class="card-title">🍱 飲食供應清單設定</div>
+                <div class="form-group">
+                    <div id="mealOptionsDisplay" style="margin-bottom: 1rem;"></div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" class="cyber-input" id="newMealInput" style="margin-bottom: 0;" placeholder="輸入新選項 (如: 海鮮素)">
+                        <button class="cyber-button" onclick="addMealOption()" style="white-space: nowrap; padding: 0.5rem 1rem;"><span>添加</span></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cyber-card" style="padding: 1.5rem;">
+                <div class="card-title">📋 Excel 欄位對應</div>
+                <div id="excelColumnsContainer"></div>
+                <button class="cyber-button" onclick="saveSystemSettings()" style="margin-top: 1rem; width: 100%;"><span>💾 儲存所有設定</span></button>
+            </div>
+        </div>
+    </main>
+
+    <div id="productModal" class="modal">
+        <div class="modal-content panel-border">
+            <div class="modal-header neon-text" id="modalTitle">新增補給品</div>
+            <div class="form-group">
+                <label>名稱 *</label>
+                <input type="text" class="cyber-input" id="productName">
+            </div>
+            <div class="form-group">
+                <label>圖片網址</label>
+                <input type="url" class="cyber-input" id="productImage" placeholder="https://...">
+            </div>
+            <div class="form-group">
+                <label>簡介</label>
+                <textarea id="productDescription" class="cyber-input"></textarea>
+            </div>
+            <div class="form-group">
+                <label>外部連結</label>
+                <input type="url" class="cyber-input" id="productLink" placeholder="https://...">
+            </div>
+            <div class="modal-footer">
+                <button class="cyber-button" style="border-color:#888; color:#aaa;" onclick="closeProductModal()"><span>取消</span></button>
+                <button class="cyber-button" onclick="saveProduct()"><span id="saveButtonText">儲存</span></button>
+            </div>
         </div>
     </div>
 
-    <div class="card cyber-card" style="margin-top: 1.5rem;">
-        <div class="card-title neon-text">📅 艦隊任務流程表</div>
-        <div id="mission-timeline" style="border-left: 2px dashed #0077ff; margin-left: 10px; padding-left: 20px;">
-            <p style="color: #0077ff;">● 09:00 - 開啟艙門 (報到開始)</p>
-            <p>● 10:30 - 方舟啟航 (開幕致詞)</p>
-            <p>● 12:00 - 能量補給 (午餐時間)</p>
+    <div id="deleteModal" class="modal">
+        <div class="modal-content panel-border">
+            <div class="modal-header" style="color: #dc2626;">⚠️ 確認刪除</div>
+            <p>確定要移除補給品「<strong id="deleteProductName" class="neon-text"></strong>」嗎？</p>
+            <div class="modal-footer">
+                <button class="cyber-button" style="border-color:#888; color:#aaa;" onclick="closeDeleteModal()"><span>取消</span></button>
+                <button class="cyber-button" style="border-color:#dc2626; color:#dc2626;" onclick="confirmDelete()"><span>確認刪除</span></button>
+            </div>
         </div>
     </div>
-</div>
 
-<script>
-    // 定期抓取儀表板數據
-    async function updateDashboard() {
-        const res = await fetch(`${API_BASE}/dashboard_stats`);
-        const json = await res.json();
-        if (json.success) {
-            document.getElementById('stat-activity-name').textContent = json.activity_name;
-            document.getElementById('stat-rate').textContent = json.stats.rate;
-            document.getElementById('stat-progress-bar').style.width = json.stats.rate;
-            document.getElementById('stat-count').textContent = `已登艦：${json.stats.checked_in} / 總人數：${json.stats.total}`;
-            document.getElementById('stat-last-sync').textContent = json.last_sync;
+    <script>
+        const API_BASE = '/api';
+        let currentConfig = null;
+        let editingProductId = null;
+        let deleteProductId = null;
 
-            // 渲染餐食
-            const mealList = document.getElementById('stat-meals-list');
-            mealList.innerHTML = Object.entries(json.stats.meals).map(([name, count]) => `
-                <div style="display:flex; justify-content:space-between; border-bottom:1px solid #ddd;">
-                    <span>${name}</span><span class="neon-text">${count} 人</span>
+        async function init() {
+            await loadConfig();
+            setupTabButtons();
+            
+            // 【關鍵修復】：網頁一打開就立刻抓取一次儀表板數據！
+            updateDashboard(); 
+            setInterval(updateDashboard, 30000); // 之後每 30 秒更新一次
+        }
+
+        // ==================== 儀表板數據 ====================
+        async function updateDashboard() {
+            try {
+                const res = await fetch(`${API_BASE}/dashboard_stats`);
+                const json = await res.json();
+                if (json.success) {
+                    document.getElementById('stat-activity-name').textContent = json.activity_name;
+                    document.getElementById('stat-rate').textContent = json.stats.rate;
+                    document.getElementById('stat-progress-bar').style.width = json.stats.rate;
+                    document.getElementById('stat-count').textContent = `已登艦：${json.stats.checked_in} / 總人數：${json.stats.total}`;
+                    document.getElementById('stat-last-sync').textContent = json.last_sync;
+
+                    const mealList = document.getElementById('stat-meals-list');
+                    if (Object.keys(json.stats.meals).length === 0) {
+                        mealList.innerHTML = '<div style="color: #888;">尚未有登艦紀錄</div>';
+                    } else {
+                        mealList.innerHTML = Object.entries(json.stats.meals).map(([name, count]) => `
+                            <div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:0.5rem;">
+                                <span>${name}</span><span class="neon-text">${count} 人</span>
+                            </div>
+                        `).join('');
+                    }
+                }
+            } catch (e) {
+                console.error("無法取得儀表板數據", e);
+                document.getElementById('stat-activity-name').textContent = "衛星連線失敗";
+            }
+        }
+
+        // ==================== 頁籤邏輯 ====================
+        function setupTabButtons() {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+                    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+                    document.getElementById(btn.getAttribute('data-tab')).classList.add('active');
+                    btn.classList.add('active');
+                });
+            });
+        }
+
+        // ==================== 基礎與商品邏輯 ====================
+        async function loadConfig() {
+            try {
+                const res = await fetch(`${API_BASE}/config`);
+                currentConfig = await res.json();
+                renderProducts();
+                renderSystemSettings();
+            } catch (e) { showMessage('無法載入設定', 'danger'); }
+        }
+
+        async function saveConfig() {
+            try {
+                const res = await fetch(`${API_BASE}/config`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(currentConfig)
+                });
+                const data = await res.json();
+                if (data.success) { currentConfig = data.data; return true; }
+                return false;
+            } catch (e) { return false; }
+        }
+
+        function renderProducts() {
+            const container = document.getElementById('productsList');
+            const products = currentConfig.products || [];
+            if (products.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding:2rem; color:#888;">尚無商品資料</div>`;
+                return;
+            }
+            container.innerHTML = products.map((p, idx) => `
+                <div class="cyber-card product-item">
+                    <div class="product-info">
+                        <div class="product-name neon-text">${escapeHtml(p.name)}</div>
+                        <div class="product-field">📸 圖片: ${p.image ? '已設定' : '未設定'} | 🔗 連結: ${p.link ? '已設定' : '未設定'}</div>
+                    </div>
+                    <div class="product-actions">
+                        <button class="cyber-button" style="padding:0.3rem 0.8rem; font-size:0.8rem;" onclick="editProduct(${idx})"><span>編輯</span></button>
+                        <button class="cyber-button" style="padding:0.3rem 0.8rem; font-size:0.8rem; border-color:#dc2626; color:#dc2626;" onclick="openDeleteModal(${idx})"><span>刪除</span></button>
+                    </div>
                 </div>
             `).join('');
         }
-    }
-    setInterval(updateDashboard, 30000); // 每 30 秒自動更新一次
-</script>
+
+        // 系統與飲食設定
+        function renderSystemSettings() {
+            document.getElementById('googleSheetName').value = currentConfig.google_sheet_name || '';
+            const mealToggle = document.getElementById('mealToggle');
+            if (currentConfig.show_meal_options) mealToggle.classList.add('active');
+            else mealToggle.classList.remove('active');
+
+            const mealContainer = document.getElementById('mealOptionsDisplay');
+            const options = currentConfig.meal_types || ['葷食', '素食', '不須用餐'];
+            mealContainer.innerHTML = options.map((m, i) => `
+                <span class="meal-tag">${m} <span class="remove-meal" onclick="removeMealOption(${i})">×</span></span>
+            `).join('');
+
+            renderExcelColumns();
+        }
+
+        function toggleMealOption() {
+            currentConfig.show_meal_options = !currentConfig.show_meal_options;
+            renderSystemSettings();
+        }
+
+        function addMealOption() {
+            const input = document.getElementById('newMealInput');
+            const val = input.value.trim();
+            if (!val) return;
+            if (!currentConfig.meal_types) currentConfig.meal_types = ['葷食', '素食', '不須用餐'];
+            currentConfig.meal_types.push(val);
+            input.value = '';
+            renderSystemSettings();
+        }
+
+        function removeMealOption(index) {
+            currentConfig.meal_types.splice(index, 1);
+            renderSystemSettings();
+        }
+
+        function renderExcelColumns() {
+            const container = document.getElementById('excelColumnsContainer');
+            const cols = currentConfig.excel_columns || {};
+            const columnNames = { id: '編號', name: '姓名', phone: '電話', company: '公司', checkedInAt: '報到時間', status: '狀態', meal: '餐食' };
+            container.innerHTML = Object.entries(columnNames).map(([key, label]) => `
+                <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; align-items:center;">
+                    <label style="margin:0;">${label}</label>
+                    <input type="number" class="cyber-input" style="width:100px; margin:0; padding:0.3rem;" value="${cols[key] || ''}" onchange="updateExcelColumn('${key}', this.value)">
+                </div>
+            `).join('');
+        }
+
+        function updateExcelColumn(key, value) {
+            if (!currentConfig.excel_columns) currentConfig.excel_columns = {};
+            currentConfig.excel_columns[key] = parseInt(value) || 0;
+        }
+
+        async function saveSystemSettings() {
+            currentConfig.google_sheet_name = document.getElementById('googleSheetName').value.trim();
+            if (await saveConfig()) showMessage('設定已成功儲存至衛星', 'success');
+        }
+
+        // 商品表單操作
+        function openAddProductModal() {
+            editingProductId = null;
+            document.getElementById('modalTitle').textContent = '新增補給品';
+            document.getElementById('saveButtonText').textContent = '新增';
+            ['productName', 'productImage', 'productDescription', 'productLink'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('productModal').classList.add('active');
+        }
+
+        function editProduct(idx) {
+            const product = currentConfig.products[idx];
+            editingProductId = idx;
+            document.getElementById('modalTitle').textContent = '編輯補給品';
+            document.getElementById('saveButtonText').textContent = '更新';
+            document.getElementById('productName').value = product.name || '';
+            document.getElementById('productImage').value = product.image || '';
+            document.getElementById('productDescription').value = product.description || '';
+            document.getElementById('productLink').value = product.link || '';
+            document.getElementById('productModal').classList.add('active');
+        }
+
+        async function saveProduct() {
+            const name = document.getElementById('productName').value.trim();
+            if (!name) return alert('請輸入名稱');
+            const product = {
+                id: editingProductId !== null ? currentConfig.products[editingProductId].id : 'p' + Date.now(),
+                name,
+                image: document.getElementById('productImage').value.trim(),
+                description: document.getElementById('productDescription').value.trim(),
+                link: document.getElementById('productLink').value.trim()
+            };
+            if (editingProductId !== null) currentConfig.products[editingProductId] = product;
+            else { if (!currentConfig.products) currentConfig.products = []; currentConfig.products.push(product); }
+            if (await saveConfig()) { renderProducts(); closeProductModal(); }
+        }
+
+        function openDeleteModal(idx) { deleteProductId = idx; document.getElementById('deleteProductName').textContent = currentConfig.products[idx].name; document.getElementById('deleteModal').classList.add('active'); }
+        function closeProductModal() { document.getElementById('productModal').classList.remove('active'); }
+        function closeDeleteModal() { document.getElementById('deleteModal').classList.remove('active'); }
+        async function confirmDelete() {
+            if (deleteProductId !== null) { currentConfig.products.splice(deleteProductId, 1); if (await saveConfig()) { renderProducts(); closeDeleteModal(); } }
+        }
+
+        function showMessage(text, type = 'info') {
+            document.getElementById('messageContainer').innerHTML = `<div class="alert alert-${type}">${text}</div>`;
+            setTimeout(() => document.getElementById('messageContainer').innerHTML = '', 3000);
+        }
+        function escapeHtml(str) { return str ? String(str).replace(/[&<>"']/g, m => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'}[m])) : ''; }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
