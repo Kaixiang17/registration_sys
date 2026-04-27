@@ -1,0 +1,172 @@
+/* ============================================
+   智慧方舟 (Smart Ark) - 科技艦隊強化版
+   ============================================ */
+
+/* 引入 Google Fonts：Stick (科技銳利中文), Michroma (科幻英文) */
+@import url('https://fonts.googleapis.com/css2?family=Michroma&family=Noto+Sans+TC:wght@900&family=Stick&display=swap');
+
+:root {
+    --primary-silver: #b8b8b8;      /* 艦艇銀 */
+    --accent-gray: #8a8a8a;         /* 強化深灰 */
+    --light-gray: #e8e8e8;          /* 輕鋁灰 */
+    --bg-light: #d1d1d1;            /* 背景灰 */
+    --panel-bg: rgba(229, 229, 229, 0.9); 
+    --text-dark: #0077ff;           /* 電漿藍 */
+    --text-glow: rgba(0, 119, 255, 0.6);
+    --metal-highlight: #ffffff;     
+    --metal-shadow: #5a5a5a;
+    
+    /* 艦隊專用字體 */
+    --font-main: 'Michroma', 'Stick', 'Noto Sans TC', sans-serif;
+}
+
+/* 全域字體設定 */
+body {
+    font-family: var(--font-main);
+}
+
+/* --- 動畫系統 --- */
+@keyframes text-flicker {
+    0% { opacity: 1; text-shadow: 0 0 8px var(--text-glow); }
+    97% { opacity: 1; }
+    98% { opacity: 0.6; }
+    99% { opacity: 1; }
+    100% { opacity: 1; }
+}
+
+@keyframes hud-scan {
+    0% { background-position: 0 -100%; }
+    100% { background-position: 0 100%; }
+}
+
+/* --- 背景系統 --- */
+.circuit-background {
+    background-color: var(--bg-light);
+    background-image: 
+        linear-gradient(rgba(168, 168, 168, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(168, 168, 168, 0.1) 1px, transparent 1px);
+    background-size: 30px 30px;
+    position: relative;
+}
+
+/* --- 科技感標題 (科技艦隊感核心) --- */
+.neon-text {
+    font-family: var(--font-main);
+    color: var(--text-dark);
+    text-shadow: 0 0 10px var(--text-glow);
+    letter-spacing: 3px;
+    font-weight: 700;
+    text-transform: uppercase;
+    transform: skewX(-10deg); /* 傾斜視覺 */
+    display: inline-block;
+    animation: text-flicker 4s infinite;
+}
+
+/* --- 艦隊面板 (強化 HUD 邊角) --- */
+.panel-border {
+    position: relative;
+    border: 1px solid var(--accent-gray);
+    background: linear-gradient(135deg, 
+        rgba(232, 232, 232, 0.98) 0%, 
+        rgba(210, 210, 210, 0.98) 100%);
+    box-shadow: 
+        0 0 20px rgba(0, 0, 0, 0.1),
+        inset 0 0 15px rgba(255, 255, 255, 0.5);
+    clip-path: polygon(0 0, 95% 0, 100% 5%, 100% 100%, 5% 100%, 0 95%); /* 切角效果 */
+}
+
+/* 面板角落括號裝飾 */
+.panel-border::after {
+    content: '';
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 15px;
+    height: 15px;
+    border-top: 3px solid var(--text-dark);
+    border-right: 3px solid var(--text-dark);
+    pointer-events: none;
+}
+
+/* --- 科幻按鈕 --- */
+.cyber-button {
+    font-family: var(--font-main);
+    position: relative;
+    background: var(--light-gray);
+    color: var(--text-dark);
+    border: 1px solid var(--text-dark);
+    padding: 0.8rem 2rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    overflow: hidden;
+    transition: 0.3s;
+    transform: skewX(-15deg); /* 按鈕傾斜 */
+    box-shadow: -4px 4px 0px var(--text-dark);
+}
+
+.cyber-button span {
+    display: inline-block;
+    transform: skewX(15deg); /* 將文字轉正，保持按鈕傾斜 */
+}
+
+.cyber-button:hover {
+    background: var(--text-dark);
+    color: white;
+    box-shadow: 0 0 15px var(--text-glow);
+    transform: skewX(-15deg) translateY(-2px);
+}
+
+/* --- 卡片系統 (艦隊清單感) --- */
+.cyber-card {
+    background: rgba(220, 220, 220, 0.9);
+    border-left: 5px solid var(--text-dark);
+    border-radius: 0;
+    transition: 0.4s;
+}
+
+.cyber-card:hover {
+    background: rgba(255, 255, 255, 0.95);
+    border-left: 10px solid var(--text-dark);
+    padding-left: 2rem;
+}
+
+/* --- 輸入框強化 --- */
+.cyber-input {
+    font-family: var(--font-main);
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid var(--accent-gray);
+    border-bottom: 3px solid var(--accent-gray);
+    color: #1a1a1a;
+    transition: 0.3s;
+}
+
+.cyber-input:focus {
+    border-bottom-color: var(--text-dark);
+    background: white;
+    box-shadow: 0 5px 10px rgba(0, 119, 255, 0.1);
+}
+
+/* --- 分割線 (電子脈衝感) --- */
+.cyber-divider {
+    height: 1px;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        var(--text-dark) 50%, 
+        transparent 100%);
+    opacity: 0.5;
+    margin: 2rem 0;
+}
+
+/* --- 響應式微調 --- */
+@media (max-width: 768px) {
+    .neon-text {
+        font-size: 1.5rem;
+        letter-spacing: 1px;
+    }
+    .cyber-button {
+        transform: skewX(0deg); /* 手機版取消傾斜避免溢出 */
+    }
+    .cyber-button span {
+        transform: skewX(0deg);
+    }
+}
