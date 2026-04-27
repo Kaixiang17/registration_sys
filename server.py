@@ -86,6 +86,33 @@ def search(method):
         return jsonify({"success": True, "data": [p for p in participants_cache if ''.join(filter(str.isdigit, p["phone"])) == q]})
     return jsonify({"success": True, "data": [p for p in participants_cache if q.lower() in p.get(method, "").lower()]})
 
+@app.route('/api/dashboard_stats')
+def get_dashboard_stats():
+    refresh_cache() # 確保數據是最新的
+    config = load_config() # 讀取設定檔
+    
+    total_guests = len(participants_cache) # 總人數
+    checked_in_list = [p for p in participants_cache if p['status'] == 'checked_in'] # 已報到名單
+    checked_in_count = len(checked_in_list)
+    
+    # 計算餐食統計 (對應團體與個人報到)
+    meal_stats = {}
+    for p in checked_in_list:
+        m = p.get('meal') or "未選擇"
+        meal_stats[m] = meal_stats.get(m, 0) + 1
+        
+    return jsonify({
+        "success": True,
+        "activity_name": config.get('google_sheet_name', '未命名任務'), # 活動名稱
+        "stats": {
+            "total": total_guests,
+            "checked_in": checked_in_count,
+            "rate": f"{(checked_in_count / total_guests * 100):.1f}%" if total_guests > 0 else "0%", # 報到率
+            "meals": meal_stats # 葷素統計
+        },
+        "last_sync": datetime.now().strftime('%H:%M:%S')
+    })
+
 @app.route('/api/checkin/<pid>', methods=['POST'])
 def checkin(pid):
     data = request.json
