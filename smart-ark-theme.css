@@ -1,183 +1,127 @@
 /* ============================================
-   智慧方舟 (Smart Ark) - 科技艦隊強化版 (完美透視版)
+   智慧方舟 (Smart Ark) - 暗黑科技透視版 (Glassmorphism)
    ============================================ */
 
-/* 引入 Google Fonts：Stick (科技銳利中文), Michroma (科幻英文) */
 @import url('https://fonts.googleapis.com/css2?family=Michroma&family=Noto+Sans+TC:wght@900&family=Stick&display=swap');
 
 :root {
-    --primary-silver: #b8b8b8;      
-    --accent-gray: #8a8a8a;         
-    --light-gray: #e8e8e8;          
-    --text-dark: #00e5ff;           /* 改為高亮電漿冰藍色，配深色背景更明顯 */
+    --text-dark: #00e5ff;           /* 高亮電漿冰藍色 */
     --text-glow: rgba(0, 229, 255, 0.6);
-    --metal-highlight: #ffffff;     
-    
-    /* 艦隊專用字體 */
+    --accent-gray: rgba(0, 229, 255, 0.3); /* 邊框改為微亮藍色 */
     --font-main: 'Michroma', 'Stick', 'Noto Sans TC', sans-serif;
 }
 
-/* 全域字體設定 */
 body {
     font-family: var(--font-main);
-    color: #e0e0e0; /* 整體文字改為淺色，適應深色背景 */
+    color: #e0e0e0; /* 預設文字改為淺色 */
 }
 
-/* --- 動畫系統 --- */
-@keyframes text-flicker {
-    0% { opacity: 1; text-shadow: 0 0 8px var(--text-glow); }
-    97% { opacity: 1; }
-    98% { opacity: 0.6; }
-    99% { opacity: 1; }
-    100% { opacity: 1; }
-}
-
-/* --- 關鍵修復 1：背景底層圖片 --- */
-/* 這裡把背景圖片加回來，並讓它固定在最底層 */
+/* --- 核心修復：背景圖片層 --- */
 .ark-background {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-image: url('background-ark.jpg'); /* 你的 GitHub 圖片 */
+    background-image: url('background-ark.png'); /* 確認使用 png */
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
-    z-index: -1; 
-    filter: brightness(0.6) contrast(1.2); /* 稍微調暗背景，讓前方介面更清楚 */
+    z-index: -1;
+    filter: brightness(0.35) contrast(1.2); /* 調暗背景，讓前方科技面板發光 */
 }
 
-/* --- 關鍵修復 2：電路板網格透視 --- */
+/* --- 核心修復：透明電路板紋理 --- */
 .circuit-background {
-    /* 必須是透明的，才不會擋住底層的 jpg 圖片 */
-    background-color: transparent; 
+    background-color: transparent !important; /* 絕對不能有底色，否則會遮住背景圖 */
     background-image: 
-        linear-gradient(rgba(0, 229, 255, 0.15) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 229, 255, 0.15) 1px, transparent 1px);
+        linear-gradient(rgba(0, 229, 255, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 229, 255, 0.1) 1px, transparent 1px);
     background-size: 40px 40px;
     position: relative;
     min-height: 100vh;
 }
 
-/* --- 科技感標題 --- */
+/* --- 霓虹發光標題 --- */
 .neon-text {
     font-family: var(--font-main);
     color: var(--text-dark);
-    text-shadow: 0 0 10px var(--text-glow);
-    letter-spacing: 3px;
+    text-shadow: 0 0 12px var(--text-glow);
+    letter-spacing: 2px;
     font-weight: 700;
-    transform: skewX(-10deg);
     display: inline-block;
-    animation: text-flicker 4s infinite;
 }
 
-/* --- 關鍵修復 3：艦隊面板毛玻璃化 (配深色背景) --- */
-.panel-border {
-    position: relative;
-    border: 1px solid var(--text-dark);
-    /* 半透明深色背景 + 毛玻璃模糊效果 */
-    background: rgba(10, 20, 35, 0.75); 
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    box-shadow: 
-        0 0 20px rgba(0, 0, 0, 0.5),
-        inset 0 0 20px rgba(0, 229, 255, 0.2);
-    clip-path: polygon(0 0, 95% 0, 100% 5%, 100% 100%, 5% 100%, 0 95%);
+/* --- 毛玻璃面板 (第一張圖的質感核心) --- */
+.panel-border, .cyber-card {
+    background: rgba(10, 20, 35, 0.65) !important; /* 半透明深藍底色 */
+    backdrop-filter: blur(10px); /* 毛玻璃模糊效果 */
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--accent-gray) !important;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(0, 229, 255, 0.1);
     color: #ffffff;
 }
 
-.panel-border::after {
-    content: '';
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    width: 15px;
-    height: 15px;
-    border-top: 3px solid var(--text-dark);
-    border-right: 3px solid var(--text-dark);
-    pointer-events: none;
-}
-
-/* --- 卡片系統 (艦隊清單感) --- */
 .cyber-card {
-    background: rgba(15, 25, 40, 0.8);
-    border: 1px solid rgba(0, 229, 255, 0.3);
-    border-left: 5px solid var(--text-dark);
-    border-radius: 0;
-    transition: 0.4s;
-    color: #e0e0e0;
-    backdrop-filter: blur(5px);
+    border-left: 4px solid var(--text-dark) !important;
+    border-radius: 0.5rem !important;
+    transition: 0.3s;
 }
 
 .cyber-card:hover {
-    background: rgba(20, 40, 70, 0.9);
-    border-left: 10px solid var(--text-dark);
-    box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
-    padding-left: 2rem;
+    background: rgba(15, 30, 50, 0.8) !important;
+    border-left: 8px solid var(--text-dark) !important;
+    box-shadow: 0 0 20px rgba(0, 229, 255, 0.2);
+    transform: translateY(-3px);
 }
 
 /* --- 科幻按鈕 --- */
 .cyber-button {
-    font-family: var(--font-main);
-    position: relative;
-    background: rgba(0, 229, 255, 0.1);
-    color: var(--text-dark);
-    border: 1px solid var(--text-dark);
-    padding: 0.8rem 2rem;
-    font-size: 1rem;
-    font-weight: bold;
-    cursor: pointer;
-    overflow: hidden;
+    background: rgba(0, 229, 255, 0.1) !important;
+    color: var(--text-dark) !important;
+    border: 1px solid var(--text-dark) !important;
     transition: 0.3s;
-    transform: skewX(-15deg);
-    box-shadow: -4px 4px 0px rgba(0, 229, 255, 0.3);
-}
-
-.cyber-button span {
-    display: inline-block;
-    transform: skewX(15deg);
+    text-shadow: 0 0 5px rgba(0, 229, 255, 0.5);
 }
 
 .cyber-button:hover {
-    background: var(--text-dark);
-    color: #000;
-    box-shadow: 0 0 20px var(--text-glow);
-    transform: skewX(-15deg) translateY(-2px);
+    background: var(--text-dark) !important;
+    color: #000 !important;
+    box-shadow: 0 0 15px var(--text-glow);
 }
 
-/* --- 輸入框強化 (深色模式) --- */
+.cyber-button:disabled {
+    background: rgba(255,255,255,0.1) !important;
+    border-color: #555 !important;
+    color: #777 !important;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+/* --- 暗黑輸入框 --- */
 .cyber-input {
-    font-family: var(--font-main);
-    background: rgba(0, 0, 0, 0.5);
-    border: 1px solid var(--accent-gray);
-    border-bottom: 3px solid var(--text-dark);
-    color: #00e5ff;
-    transition: 0.3s;
-    padding: 0.875rem 1rem;
-    width: 100%;
+    background: rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid var(--accent-gray) !important;
+    border-bottom: 3px solid var(--text-dark) !important;
+    color: #00e5ff !important;
 }
 
 .cyber-input:focus {
     outline: none;
-    background: rgba(0, 20, 40, 0.8);
+    background: rgba(0, 20, 40, 0.6) !important;
     box-shadow: 0 5px 15px rgba(0, 229, 255, 0.2);
 }
 
-.cyber-input::placeholder {
-    color: rgba(255, 255, 255, 0.4);
-}
+.cyber-input::placeholder { color: rgba(255, 255, 255, 0.3); }
 
-/* --- 響應式微調 --- */
-@media (max-width: 768px) {
-    .neon-text {
-        font-size: 1.5rem;
-        letter-spacing: 1px;
-    }
-    .cyber-button {
-        transform: skewX(0deg); 
-    }
-    .cyber-button span {
-        transform: skewX(0deg);
-    }
+/* --- 餐食選項與名單微調 --- */
+.meal-option, .group-item {
+    background: rgba(0, 0, 0, 0.3);
+    border-color: var(--accent-gray) !important;
+    color: #e0e0e0;
+}
+.meal-option.selected {
+    background: rgba(0, 229, 255, 0.2);
+    border-color: var(--text-dark) !important;
+    box-shadow: inset 0 0 10px rgba(0, 229, 255, 0.3);
 }
