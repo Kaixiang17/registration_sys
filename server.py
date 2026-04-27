@@ -19,7 +19,7 @@ LOCAL_KEY = os.path.join(BASE_DIR, 'test0417-493608-dce82b8c6901.json')
 participants_cache = []
 last_cache_update = 0
 cache_lock = threading.Lock()
-CACHE_TTL = 300 
+CACHE_TTL = 200
 
 def load_config():
     if os.path.exists(CONFIG_PATH):
