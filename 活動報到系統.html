@@ -6,7 +6,7 @@
     <title>智慧方舟 - 活動報到系統</title>
     <link rel="stylesheet" href="smart-ark-theme.css">
     <style>
-        /* 保留你完美的原始排版，絕不跑版 */
+        /* 基礎排版 */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "PingFang TC", "Michroma", "Stick", sans-serif; }
         body { line-height: 1.6; }
         
@@ -15,24 +15,52 @@
         main { max-width: 1000px; margin: 0 auto; padding: 3rem 1rem; }
         .state-hidden { display: none !important; }
         
-        /* 核心排版 1：三個選項並排 */
         .mode-selection-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; }
         .mode-card { padding: 2.5rem 1.5rem; text-align: center; cursor: pointer; transition: all 0.3s ease; border-radius: 1rem; }
         
-        /* 核心排版 2：所有表單置中且限制寬度 */
         .form-card { max-width: 500px; margin: 0 auto; padding: 2.5rem; text-align: center; border-radius: 1rem; }
+        .form-card-large { max-width: 650px; margin: 0 auto; padding: 2.5rem; text-align: center; border-radius: 1rem; }
         
-        /* 列表與細節排版 */
         .group-list { margin-top: 1rem; max-height: 300px; overflow-y: auto; text-align: left; border-radius: 0.5rem; padding: 0.5rem; background: rgba(255,255,255,0.8); }
         .group-item { display: flex; align-items: center; padding: 0.8rem; border-bottom: 1px solid rgba(168,168,168,0.3); }
-        
-        .meal-option { display: flex; align-items: center; gap: 1rem; padding: 1.25rem; border: 2px solid var(--accent-gray); border-radius: 0.75rem; cursor: pointer; margin-bottom: 1rem; background: rgba(255,255,255,0.7); }
-        .meal-option.selected { border-color: var(--text-dark); background: rgba(0, 119, 255, 0.1); }
         
         .info-box { text-align: left; background: rgba(255,255,255,0.9); padding: 1.5rem; border-radius: 0.75rem; font-size: 1.05rem; line-height: 1.8; margin-bottom: 1.5rem; border: 1px solid var(--accent-gray); }
         
         .cyber-input { width: 100%; margin-bottom: 1.5rem; }
         .cyber-button { width: 100%; margin-top: 0.5rem; }
+
+        /* 動態餐點卡片樣式 */
+        .user-meal-card {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+        .meal-btn-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        .meal-btn {
+            padding: 0.6rem;
+            text-align: center;
+            border: 1px solid var(--accent-gray);
+            border-radius: 0.3rem;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 0.9rem;
+            background: rgba(0,0,0,0.6);
+            color: #ccc;
+        }
+        .meal-btn.selected {
+            border-color: var(--text-dark);
+            background: rgba(0, 229, 255, 0.2);
+            color: #fff;
+            box-shadow: inset 0 0 10px rgba(0,229,255,0.2);
+        }
     </style>
 </head>
 <body class="circuit-background">
@@ -56,17 +84,14 @@
                 <div class="mode-card cyber-card cyber-hover" onclick="setMode('individual')">
                     <span style="font-size:4rem; display:block; margin-bottom:1rem;">👤</span>
                     <h2 class="neon-text" style="margin-bottom:0.5rem;">個人報到</h2>
-                    <p style="color:var(--text-muted); font-size:0.9rem;">使用電話、姓名或 Email 驗證身分。</p>
                 </div>
                 <div class="mode-card cyber-card cyber-hover" onclick="setMode('group')">
                     <span style="font-size:4rem; display:block; margin-bottom:1rem;">🏢</span>
                     <h2 class="neon-text" style="margin-bottom:0.5rem;">公司團體報到</h2>
-                    <p style="color:var(--text-muted); font-size:0.9rem;">一次為多位同仁辦理報到手續。</p>
                 </div>
                 <div class="mode-card cyber-card cyber-hover" onclick="showProducts()">
                     <span style="font-size:4rem; display:block; margin-bottom:1rem;">🛍️</span>
                     <h2 class="neon-text" style="margin-bottom:0.5rem;">活動商品專區</h2>
-                    <p style="color:var(--text-muted); font-size:0.9rem;">瀏覽及選購本次活動精選商品。</p>
                 </div>
             </div>
         </div>
@@ -96,21 +121,21 @@
                 <div style="clear:both;"></div>
                 <h2 id="groupName" class="neon-text" style="margin-bottom:1rem; display:block;">公司人員名單</h2>
                 <div id="groupList" class="group-list panel-border"></div>
-                <button class="button cyber-button" style="margin-top:1.5rem;" onclick="proceedToMeal()">下一步</button>
+                <button class="button cyber-button" style="margin-top:1.5rem;" onclick="proceedToMeal()">下一步：補給配置</button>
             </div>
         </div>
 
         <div id="mealState" class="state-hidden">
-            <div class="form-card cyber-card">
+            <div class="form-card-large cyber-card">
                 <button onclick="setAppState(checkMode==='individual'?'action':'groupList')" style="float:left; background:none; border:none; color:gray; cursor:pointer">← 返回</button>
                 <div style="clear:both;"></div>
-                <h2 class="neon-text" style="margin-bottom:1.5rem; display:block;">🍱 餐食選擇</h2>
-                <div>
-                    <div class="meal-option cyber-hover" id="m-葷食" onclick="selectMeal('葷食')">🍖 葷食</div>
-                    <div class="meal-option cyber-hover" id="m-素食" onclick="selectMeal('素食')">🥗 素食</div>
-                    <div class="meal-option cyber-hover" id="m-不須用餐" onclick="selectMeal('不須用餐')">❌ 不須用餐</div>
-                </div>
-                <button id="finalBtn" class="button cyber-button" disabled style="margin-top: 1rem;" onclick="submitCheckin()">確認報到</button>
+                <h2 class="neon-text" style="margin-bottom:1.5rem; display:block;">🍱 配置人員能量補給</h2>
+                
+                <div style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1rem; text-align:left;">已為全員預設選項，您可點擊修改特定人員的配置。</div>
+                
+                <div id="mealOptionsContainer" style="max-height:400px; overflow-y:auto; padding-right:10px;"></div>
+
+                <button id="finalBtn" class="button cyber-button" style="margin-top: 1.5rem;" onclick="submitCheckin()">確認登艦並傳送數據</button>
             </div>
         </div>
 
@@ -137,10 +162,13 @@
 
     <script>
         const API_BASE = '/api';
-        let checkMode = '', selectedUser = null, matchedCompanies = [], selectedGroup = [], selectedMeal = '';
-        let jumpTimer = null; // 處理倒數計時的變數
+        let checkMode = '', selectedUser = null, matchedCompanies = [], selectedGroup = [];
+        let jumpTimer = null; 
+        
+        // 新增：儲存每個人對應的餐點選擇
+        let groupMealSelections = {}; 
+        let systemConfigData = null;
 
-        // ★ 關鍵修復：這裡加上了 'product' 狀態，這樣畫面切換才不會重疊
         function setAppState(s) {
             ['mode', 'action', 'companySelection', 'groupList', 'meal', 'success', 'product'].forEach(x => {
                 const el = document.getElementById(x+'State');
@@ -167,15 +195,15 @@
                 if (json.data.length > 0) {
                     if (checkMode === 'individual') { 
                         selectedUser = json.data[0]; 
+                        renderMealSelectionUI(); // 進入個人餐食
                         setAppState('meal'); 
                     } else { 
                         const groups = {}; 
                         json.data.forEach(p => { if(!groups[p.company]) groups[p.company] = []; groups[p.company].push(p); });
                         matchedCompanies = Object.keys(groups).map(name => ({ name, participants: groups[name] }));
                         
-                        if (matchedCompanies.length === 1) {
-                            selectCompany(0);
-                        } else {
+                        if (matchedCompanies.length === 1) { selectCompany(0); } 
+                        else {
                             document.getElementById('companyList').innerHTML = matchedCompanies.map((c, i) => 
                                 `<div class="cyber-hover panel-border" onclick="selectCompany(${i})" style="padding:1rem; border-radius:0.5rem; cursor:pointer; background:rgba(255,255,255,0.8);">
                                     <b>${c.name}</b> <span style="color:var(--text-muted);">(${c.participants.length} 人)</span>
@@ -202,28 +230,84 @@
             setAppState('groupList');
         }
 
+        // ==========================================
+        // ★ 核心升級：動態生成每人獨立的餐點選項介面
+        // ==========================================
         function proceedToMeal() {
             const ids = Array.from(document.querySelectorAll('.u-cb:checked')).map(cb => cb.value);
             selectedGroup = window.tempGroupData.filter(u => ids.includes(u.id));
             if (selectedGroup.length === 0) return alert('請至少勾選一位尚未報到的同仁');
+            
+            renderMealSelectionUI(); // 進入團體餐食
             setAppState('meal');
         }
 
-        function selectMeal(m) {
-            selectedMeal = m;
-            document.querySelectorAll('.meal-option').forEach(el => el.classList.remove('selected'));
-            document.getElementById('m-'+m).classList.add('selected');
+        function renderMealSelectionUI() {
+            const container = document.getElementById('mealOptionsContainer');
+            container.innerHTML = '';
+            groupMealSelections = {}; // 清空選擇
+
+            // 從雲端設定抓取選項，若無則預設
+            const mealTypes = (systemConfigData && systemConfigData.meal_types) ? systemConfigData.meal_types : ['葷食', '素食', '不須用餐'];
+            const targets = checkMode === 'individual' ? [selectedUser] : selectedGroup;
+
+            targets.forEach(user => {
+                // 自動幫所有人預設為陣列中的第一個選項 (通常是葷食)
+                groupMealSelections[user.id] = mealTypes[0];
+
+                const userCard = document.createElement('div');
+                userCard.className = 'user-meal-card';
+
+                let html = `<div style="font-weight:bold; color:var(--text-dark);">${user.name}</div>
+                            <div class="meal-btn-group">`;
+
+                mealTypes.forEach((m, idx) => {
+                    const isSelectedClass = idx === 0 ? 'selected' : '';
+                    html += `<div class="meal-btn user-${user.id}-btn ${isSelectedClass}" data-meal="${m}" onclick="selectUserMeal('${user.id}', '${m}')">${m}</div>`;
+                });
+
+                html += `</div>`;
+                userCard.innerHTML = html;
+                container.appendChild(userCard);
+            });
+
             document.getElementById('finalBtn').disabled = false;
         }
 
+        // 點擊變更某人的餐點
+        function selectUserMeal(userId, mealName) {
+            groupMealSelections[userId] = mealName;
+            
+            // UI 狀態切換
+            document.querySelectorAll(`.user-${userId}-btn`).forEach(btn => btn.classList.remove('selected'));
+            document.querySelector(`.user-${userId}-btn[data-meal="${mealName}"]`).classList.add('selected');
+        }
+
+        // ==========================================
+        // 提交報到 (組合每個人的選擇送出)
+        // ==========================================
         async function submitCheckin() {
             const btn = document.getElementById('finalBtn');
             btn.disabled = true;
-            btn.textContent = '處理中...';
+            btn.textContent = '傳輸數據中...';
             
             const isIndiv = checkMode === 'individual';
             const url = isIndiv ? `${API_BASE}/checkin/${selectedUser.id}` : `${API_BASE}/checkin/batch`;
-            const body = isIndiv ? { meal: selectedMeal, name: selectedUser.name } : { selections: selectedGroup.map(u => ({ id: u.id, name: u.name, meal: selectedMeal })) };
+            
+            let body;
+            if (isIndiv) {
+                // 個人報到：取他對應的 id
+                body = { meal: groupMealSelections[selectedUser.id], name: selectedUser.name };
+            } else {
+                // 團體報到：組合 selections 陣列
+                body = { 
+                    selections: selectedGroup.map(u => ({ 
+                        id: u.id, 
+                        name: u.name, 
+                        meal: groupMealSelections[u.id] 
+                    })) 
+                };
+            }
             
             try {
                 const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -235,55 +319,57 @@
                     
                     if (isIndiv) {
                         infoBox.innerHTML = `
-                            <b style="color:var(--text-dark);">姓名：</b>${p.name}<br>
-                            <b style="color:var(--text-dark);">公司：</b>${p.company || '無'}<br>
-                            <b style="color:var(--text-dark);">餐食：</b>${p.meal}<br>
+                            <b style="color:var(--text-dark);">登艦人員：</b>${p.name}<br>
+                            <b style="color:var(--text-dark);">所屬艦隊：</b>${p.company || '無'}<br>
+                            <b style="color:var(--text-dark);">補給配置：</b>${groupMealSelections[selectedUser.id]}<br>
                             <b style="color:var(--text-dark);">時間：</b>${p.checkedInAt}
                         `;
                     } else {
+                        // 計算團體的總餐食統計
+                        let mealCounts = {};
+                        selectedGroup.forEach(u => {
+                            let m = groupMealSelections[u.id];
+                            mealCounts[m] = (mealCounts[m] || 0) + 1;
+                        });
+                        let mealSummary = Object.entries(mealCounts).map(([m, c]) => `${m}: ${c}人`).join(' / ');
+
                         infoBox.innerHTML = `
-                            <b style="color:var(--text-dark);">公司：</b>${p.company || '無'}<br>
+                            <b style="color:var(--text-dark);">所屬艦隊：</b>${p.company || '無'}<br>
                             <b style="color:var(--text-dark);">已報到人數：</b>${json.data.length} 人<br>
-                            <b style="color:var(--text-dark);">餐食：</b>${selectedMeal}<br>
+                            <b style="color:var(--text-dark);">補給總覽：</b>${mealSummary}<br>
                             <b style="color:var(--text-dark);">時間：</b>${p.checkedInAt}
                         `;
                     }
                     
                     setAppState('success');
                     
-                    // ★ 關鍵修復：處理 10 秒倒數計時與跳轉商品區
                     let timeLeft = 10;
                     document.getElementById('timerDisplay').textContent = timeLeft;
-                    if(jumpTimer) clearInterval(jumpTimer); // 清除舊的計時器
+                    if(jumpTimer) clearInterval(jumpTimer); 
                     
                     jumpTimer = setInterval(() => {
                         timeLeft--;
                         document.getElementById('timerDisplay').textContent = timeLeft;
                         if(timeLeft <= 0) {
                             clearInterval(jumpTimer);
-                            // 確保人還在成功頁面才自動跳轉
-                            if(!document.getElementById('successState').classList.contains('state-hidden')) {
-                                showProducts(); 
-                            }
+                            if(!document.getElementById('successState').classList.contains('state-hidden')) { showProducts(); }
                         }
                     }, 1000);
 
                 } else {
                     alert('報到失敗，請重試');
                     btn.disabled = false;
-                    btn.textContent = '確認報到';
+                    btn.textContent = '確認登艦並傳送數據';
                 }
             } catch (e) {
                 alert('網路錯誤');
                 btn.disabled = false;
-                btn.textContent = '確認報到';
+                btn.textContent = '確認登艦並傳送數據';
             }
         }
 
-        // ★ 關鍵修復：補回完全缺少的抓取商品並顯示的函式
         async function showProducts() {
-            if(jumpTimer) clearInterval(jumpTimer); // 點擊進入時停止倒數
-            
+            if(jumpTimer) clearInterval(jumpTimer); 
             setAppState('product');
             const grid = document.getElementById('productsGrid');
             grid.innerHTML = '<div class="neon-text" style="display:block; margin-top:2rem;">正在同步衛星物資清單...</div>';
@@ -307,15 +393,14 @@
                         </div>
                     </div>
                 `).join('');
-            } catch(e) { 
-                grid.innerHTML = '<div class="neon-text" style="color:#dc2626; margin-top:2rem;">連線失敗，無法取得物資清單。</div>'; 
-            }
+            } catch(e) { grid.innerHTML = '<div class="neon-text" style="color:#dc2626; margin-top:2rem;">連線失敗，無法取得物資清單。</div>'; }
         }
 
         window.onload = async () => {
             try {
                 const res = await fetch(`${API_BASE}/config`);
                 if (res.ok) {
+                    systemConfigData = await res.json();
                     const st = document.getElementById('status');
                     st.textContent = '🟢 已連線雲端';
                     st.style.color = '#16a34a';
