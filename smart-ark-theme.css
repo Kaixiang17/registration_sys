@@ -1,20 +1,17 @@
 /* ============================================
-   智慧方舟 (Smart Ark) - 科技艦隊強化版
+   智慧方舟 (Smart Ark) - 科技艦隊強化版 (完美透視版)
    ============================================ */
 
 /* 引入 Google Fonts：Stick (科技銳利中文), Michroma (科幻英文) */
 @import url('https://fonts.googleapis.com/css2?family=Michroma&family=Noto+Sans+TC:wght@900&family=Stick&display=swap');
 
 :root {
-    --primary-silver: #b8b8b8;      /* 艦艇銀 */
-    --accent-gray: #8a8a8a;         /* 強化深灰 */
-    --light-gray: #e8e8e8;          /* 輕鋁灰 */
-    --bg-light: #d1d1d1;            /* 背景灰 */
-    --panel-bg: rgba(229, 229, 229, 0.9); 
-    --text-dark: #0077ff;           /* 電漿藍 */
-    --text-glow: rgba(0, 119, 255, 0.6);
+    --primary-silver: #b8b8b8;      
+    --accent-gray: #8a8a8a;         
+    --light-gray: #e8e8e8;          
+    --text-dark: #00e5ff;           /* 改為高亮電漿冰藍色，配深色背景更明顯 */
+    --text-glow: rgba(0, 229, 255, 0.6);
     --metal-highlight: #ffffff;     
-    --metal-shadow: #5a5a5a;
     
     /* 艦隊專用字體 */
     --font-main: 'Michroma', 'Stick', 'Noto Sans TC', sans-serif;
@@ -23,6 +20,7 @@
 /* 全域字體設定 */
 body {
     font-family: var(--font-main);
+    color: #e0e0e0; /* 整體文字改為淺色，適應深色背景 */
 }
 
 /* --- 動畫系統 --- */
@@ -34,48 +32,61 @@ body {
     100% { opacity: 1; }
 }
 
-@keyframes hud-scan {
-    0% { background-position: 0 -100%; }
-    100% { background-position: 0 100%; }
+/* --- 關鍵修復 1：背景底層圖片 --- */
+/* 這裡把背景圖片加回來，並讓它固定在最底層 */
+.ark-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('background-ark.jpg'); /* 你的 GitHub 圖片 */
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    z-index: -1; 
+    filter: brightness(0.6) contrast(1.2); /* 稍微調暗背景，讓前方介面更清楚 */
 }
 
-/* --- 背景系統 --- */
+/* --- 關鍵修復 2：電路板網格透視 --- */
 .circuit-background {
-    background-color: var(--bg-light);
+    /* 必須是透明的，才不會擋住底層的 jpg 圖片 */
+    background-color: transparent; 
     background-image: 
-        linear-gradient(rgba(168, 168, 168, 0.1) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(168, 168, 168, 0.1) 1px, transparent 1px);
-    background-size: 30px 30px;
+        linear-gradient(rgba(0, 229, 255, 0.15) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 229, 255, 0.15) 1px, transparent 1px);
+    background-size: 40px 40px;
     position: relative;
+    min-height: 100vh;
 }
 
-/* --- 科技感標題 (科技艦隊感核心) --- */
+/* --- 科技感標題 --- */
 .neon-text {
     font-family: var(--font-main);
     color: var(--text-dark);
     text-shadow: 0 0 10px var(--text-glow);
     letter-spacing: 3px;
     font-weight: 700;
-    text-transform: uppercase;
-    transform: skewX(-10deg); /* 傾斜視覺 */
+    transform: skewX(-10deg);
     display: inline-block;
     animation: text-flicker 4s infinite;
 }
 
-/* --- 艦隊面板 (強化 HUD 邊角) --- */
+/* --- 關鍵修復 3：艦隊面板毛玻璃化 (配深色背景) --- */
 .panel-border {
     position: relative;
-    border: 1px solid var(--accent-gray);
-    background: linear-gradient(135deg, 
-        rgba(232, 232, 232, 0.98) 0%, 
-        rgba(210, 210, 210, 0.98) 100%);
+    border: 1px solid var(--text-dark);
+    /* 半透明深色背景 + 毛玻璃模糊效果 */
+    background: rgba(10, 20, 35, 0.75); 
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     box-shadow: 
-        0 0 20px rgba(0, 0, 0, 0.1),
-        inset 0 0 15px rgba(255, 255, 255, 0.5);
-    clip-path: polygon(0 0, 95% 0, 100% 5%, 100% 100%, 5% 100%, 0 95%); /* 切角效果 */
+        0 0 20px rgba(0, 0, 0, 0.5),
+        inset 0 0 20px rgba(0, 229, 255, 0.2);
+    clip-path: polygon(0 0, 95% 0, 100% 5%, 100% 100%, 5% 100%, 0 95%);
+    color: #ffffff;
 }
 
-/* 面板角落括號裝飾 */
 .panel-border::after {
     content: '';
     position: absolute;
@@ -88,73 +99,73 @@ body {
     pointer-events: none;
 }
 
+/* --- 卡片系統 (艦隊清單感) --- */
+.cyber-card {
+    background: rgba(15, 25, 40, 0.8);
+    border: 1px solid rgba(0, 229, 255, 0.3);
+    border-left: 5px solid var(--text-dark);
+    border-radius: 0;
+    transition: 0.4s;
+    color: #e0e0e0;
+    backdrop-filter: blur(5px);
+}
+
+.cyber-card:hover {
+    background: rgba(20, 40, 70, 0.9);
+    border-left: 10px solid var(--text-dark);
+    box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
+    padding-left: 2rem;
+}
+
 /* --- 科幻按鈕 --- */
 .cyber-button {
     font-family: var(--font-main);
     position: relative;
-    background: var(--light-gray);
+    background: rgba(0, 229, 255, 0.1);
     color: var(--text-dark);
     border: 1px solid var(--text-dark);
     padding: 0.8rem 2rem;
-    font-size: 0.9rem;
+    font-size: 1rem;
+    font-weight: bold;
     cursor: pointer;
     overflow: hidden;
     transition: 0.3s;
-    transform: skewX(-15deg); /* 按鈕傾斜 */
-    box-shadow: -4px 4px 0px var(--text-dark);
+    transform: skewX(-15deg);
+    box-shadow: -4px 4px 0px rgba(0, 229, 255, 0.3);
 }
 
 .cyber-button span {
     display: inline-block;
-    transform: skewX(15deg); /* 將文字轉正，保持按鈕傾斜 */
+    transform: skewX(15deg);
 }
 
 .cyber-button:hover {
     background: var(--text-dark);
-    color: white;
-    box-shadow: 0 0 15px var(--text-glow);
+    color: #000;
+    box-shadow: 0 0 20px var(--text-glow);
     transform: skewX(-15deg) translateY(-2px);
 }
 
-/* --- 卡片系統 (艦隊清單感) --- */
-.cyber-card {
-    background: rgba(220, 220, 220, 0.9);
-    border-left: 5px solid var(--text-dark);
-    border-radius: 0;
-    transition: 0.4s;
-}
-
-.cyber-card:hover {
-    background: rgba(255, 255, 255, 0.95);
-    border-left: 10px solid var(--text-dark);
-    padding-left: 2rem;
-}
-
-/* --- 輸入框強化 --- */
+/* --- 輸入框強化 (深色模式) --- */
 .cyber-input {
     font-family: var(--font-main);
-    background: rgba(255, 255, 255, 0.7);
+    background: rgba(0, 0, 0, 0.5);
     border: 1px solid var(--accent-gray);
-    border-bottom: 3px solid var(--accent-gray);
-    color: #1a1a1a;
+    border-bottom: 3px solid var(--text-dark);
+    color: #00e5ff;
     transition: 0.3s;
+    padding: 0.875rem 1rem;
+    width: 100%;
 }
 
 .cyber-input:focus {
-    border-bottom-color: var(--text-dark);
-    background: white;
-    box-shadow: 0 5px 10px rgba(0, 119, 255, 0.1);
+    outline: none;
+    background: rgba(0, 20, 40, 0.8);
+    box-shadow: 0 5px 15px rgba(0, 229, 255, 0.2);
 }
 
-/* --- 分割線 (電子脈衝感) --- */
-.cyber-divider {
-    height: 1px;
-    background: linear-gradient(90deg, 
-        transparent 0%, 
-        var(--text-dark) 50%, 
-        transparent 100%);
-    opacity: 0.5;
-    margin: 2rem 0;
+.cyber-input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
 }
 
 /* --- 響應式微調 --- */
@@ -164,7 +175,7 @@ body {
         letter-spacing: 1px;
     }
     .cyber-button {
-        transform: skewX(0deg); /* 手機版取消傾斜避免溢出 */
+        transform: skewX(0deg); 
     }
     .cyber-button span {
         transform: skewX(0deg);
