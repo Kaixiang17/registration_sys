@@ -15,7 +15,7 @@
         main { max-width: 1000px; margin: 0 auto; padding: 3rem 1rem; }
         .state-hidden { display: none !important; }
         
-        /* 核心排版 1：三個選項並排 (第二張圖的排列) */
+        /* 核心排版 1：三個選項並排 */
         .mode-selection-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; }
         .mode-card { padding: 2.5rem 1.5rem; text-align: center; cursor: pointer; transition: all 0.3s ease; border-radius: 1rem; }
         
@@ -31,7 +31,6 @@
         
         .info-box { text-align: left; background: rgba(255,255,255,0.9); padding: 1.5rem; border-radius: 0.75rem; font-size: 1.05rem; line-height: 1.8; margin-bottom: 1.5rem; border: 1px solid var(--accent-gray); }
         
-        /* 調整按鈕與輸入框的間距 */
         .cyber-input { width: 100%; margin-bottom: 1.5rem; }
         .cyber-button { width: 100%; margin-top: 0.5rem; }
     </style>
@@ -119,26 +118,36 @@
             <div class="form-card cyber-card">
                 <div style="color:var(--text-dark); font-size:4.5rem; line-height: 1; text-shadow: 0 0 15px rgba(0,119,255,0.4);">✓</div>
                 <h2 class="neon-text" style="margin-bottom:1.5rem; display:block;">報到成功！</h2>
-                
                 <div id="successInfo" class="info-box panel-border"></div>
                 
-                <p style="color:var(--text-muted); margin-bottom: 1.5rem;">資料已同步至雲端。<br><strong style="color:var(--text-dark);">10 秒後自動跳轉商品頁面...</strong></p>
+                <p style="color:var(--text-muted); margin-bottom: 1.5rem;">資料已同步至雲端。<br><strong style="color:var(--text-dark);"><span id="timerDisplay">10</span> 秒後自動跳轉商品頁面...</strong></p>
                 <button class="button cyber-button" onclick="showProducts()">🛍️ 立即前往商品頁</button>
             </div>
         </div>
+
+        <div id="productState" class="state-hidden">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
+                <h1 class="neon-text" style="display:block;">🛍️ 方舟補給專區</h1>
+                <button class="button cyber-button" style="width:auto; margin-top:0;" onclick="setAppState('mode')">← 返回大廳</button>
+            </div>
+            <div id="productsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2rem;"></div>
+        </div>
+
     </main>
 
     <script>
-        // 完全保留你原本一階段一階段的純淨 JS 邏輯
         const API_BASE = '/api';
         let checkMode = '', selectedUser = null, matchedCompanies = [], selectedGroup = [], selectedMeal = '';
+        let jumpTimer = null; // 處理倒數計時的變數
 
+        // ★ 關鍵修復：這裡加上了 'product' 狀態，這樣畫面切換才不會重疊
         function setAppState(s) {
-            ['mode', 'action', 'companySelection', 'groupList', 'meal', 'success'].forEach(x => {
+            ['mode', 'action', 'companySelection', 'groupList', 'meal', 'success', 'product'].forEach(x => {
                 const el = document.getElementById(x+'State');
                 if(el) el.classList.add('state-hidden');
             });
             document.getElementById(s+'State').classList.remove('state-hidden');
+            window.scrollTo(0,0);
         }
 
         function setMode(m) {
@@ -241,7 +250,24 @@
                     }
                     
                     setAppState('success');
-                    setTimeout(() => location.href = '/商品頁面.html', 2000);
+                    
+                    // ★ 關鍵修復：處理 10 秒倒數計時與跳轉商品區
+                    let timeLeft = 10;
+                    document.getElementById('timerDisplay').textContent = timeLeft;
+                    if(jumpTimer) clearInterval(jumpTimer); // 清除舊的計時器
+                    
+                    jumpTimer = setInterval(() => {
+                        timeLeft--;
+                        document.getElementById('timerDisplay').textContent = timeLeft;
+                        if(timeLeft <= 0) {
+                            clearInterval(jumpTimer);
+                            // 確保人還在成功頁面才自動跳轉
+                            if(!document.getElementById('successState').classList.contains('state-hidden')) {
+                                showProducts(); 
+                            }
+                        }
+                    }, 1000);
+
                 } else {
                     alert('報到失敗，請重試');
                     btn.disabled = false;
@@ -251,6 +277,38 @@
                 alert('網路錯誤');
                 btn.disabled = false;
                 btn.textContent = '確認報到';
+            }
+        }
+
+        // ★ 關鍵修復：補回完全缺少的抓取商品並顯示的函式
+        async function showProducts() {
+            if(jumpTimer) clearInterval(jumpTimer); // 點擊進入時停止倒數
+            
+            setAppState('product');
+            const grid = document.getElementById('productsGrid');
+            grid.innerHTML = '<div class="neon-text" style="display:block; margin-top:2rem;">正在同步衛星物資清單...</div>';
+            
+            try {
+                const res = await fetch(`${API_BASE}/config`);
+                const config = await res.json();
+                
+                if (!config.products || config.products.length === 0) {
+                    grid.innerHTML = '<div style="color:var(--text-muted); margin-top:2rem;">目前無補給品資料</div>';
+                    return;
+                }
+
+                grid.innerHTML = config.products.map(p => `
+                    <div class="cyber-card panel-border" style="padding:0; overflow:hidden; border-radius:1rem; border-left:none;">
+                        ${p.image ? `<img src="${p.image}" style="width:100%; height:200px; object-fit:contain; background:rgba(0,0,0,0.3); border-bottom:1px solid var(--accent-gray);">` : `<div style="height:200px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.3); color:var(--text-muted);">無影像資料</div>`}
+                        <div style="padding:1.5rem;">
+                            <h3 class="neon-text" style="font-size:1.2rem; margin-bottom:0.5rem; display:block;">${p.name}</h3>
+                            <p style="color:var(--text-muted); font-size:0.9rem; height:4rem; overflow:hidden; margin-bottom:1.5rem;">${p.description || ''}</p>
+                            ${p.link ? `<a href="${p.link}" target="_blank" class="button cyber-button" style="display:block; text-align:center; text-decoration:none;">查看規格</a>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } catch(e) { 
+                grid.innerHTML = '<div class="neon-text" style="color:#dc2626; margin-top:2rem;">連線失敗，無法取得物資清單。</div>'; 
             }
         }
 
