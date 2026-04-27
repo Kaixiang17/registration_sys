@@ -74,6 +74,11 @@ def index(): return send_from_directory('.', '活動報到系統.html')
 @app.route('/商品頁面.html')
 def products_page(): return send_from_directory('.', '商品頁面.html')
 
+# 加上這三行，Render 才能讀取到你的管理後台！
+@app.route('/admin')
+def admin_page(): 
+    return send_from_directory('.', 'admin.html')
+
 @app.route('/api/config')
 def get_config(): return jsonify(load_config())
 
