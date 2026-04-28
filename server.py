@@ -1,7 +1,4 @@
-import os
-import json
-import time
-import threading
+import os, json, time, threading
 from datetime import datetime, timedelta
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
@@ -19,15 +16,14 @@ LOCAL_KEY = os.path.join(BASE_DIR, 'test0417-493608-dce82b8c6901.json')
 participants_cache = []
 last_cache_update = 0
 cache_lock = threading.Lock()
-CACHE_TTL = 200
+CACHE_TTL = 300
 
 def load_config():
     if os.path.exists(CONFIG_PATH):
         try:
-            with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
-                return json.load(f)
+            with open(CONFIG_PATH, 'r', encoding='utf-8') as f: return json.load(f)
         except: return {}
-    return {}
+    return {"google_sheet_name": "活動報到名單", "excel_columns": {}}
 
 def get_gspread_client():
     scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
@@ -40,39 +36,34 @@ def get_worksheet():
 
 def async_update_sheet(updates):
     try: get_worksheet().batch_update(updates)
-    except Exception as e: print(f"背景寫入失敗: {e}")
+    except Exception as e: print(f"背景同步失敗: {e}")
 
 def refresh_cache(force=False):
     global participants_cache, last_cache_update
-    if not force and (time.time() - last_cache_update < CACHE_TTL) and participants_cache:
-        return
+    if not force and (time.time() - last_cache_update < CACHE_TTL) and participants_cache: return
     with cache_lock:
         try:
             all_values = get_worksheet().get_all_values()
             cols = load_config().get('excel_columns', {})
             new_cache, last_company = [], ""
             for i, row in enumerate(all_values[3:]):
-                def g(c): return row[c-1].strip() if c-1 < len(row) else ""
-                # 處理合併的公司欄位
+                def g(c): return row[c-1].strip() if c and c-1 < len(row) else ""
                 comp = g(cols.get('company', 3))
                 if comp: last_company = comp
                 name = g(cols.get('name', 6))
                 if not name: continue
                 new_cache.append({
-                    "id": name, "name": name, "phone": g(cols.get('phone', 8)),
+                    "id": f"{name}_{i}", "name": name, "phone": g(cols.get('phone', 8)),
                     "company": last_company, "email": g(cols.get('email', 9)),
                     "status": g(cols.get('status', 15)), "meal": g(cols.get('meal', 16)),
-                    "_row": i + 4 
+                    "checkedInAt": g(cols.get('checkedInAt', 14)), "_row": i + 4 
                 })
             participants_cache = new_cache
             last_cache_update = time.time()
-        except Exception as e: print(f"同步失敗: {e}")
+        except Exception as e: print(f"緩存刷新失敗: {e}")
 
 @app.route('/')
 def index(): return send_from_directory('.', '活動報到系統.html')
-
-@app.route('/products')
-def products_page(): return send_from_directory('.', '商品頁面.html')
 
 @app.route('/admin')
 def admin_page(): return send_from_directory('.', 'admin.html')
@@ -80,57 +71,38 @@ def admin_page(): return send_from_directory('.', 'admin.html')
 @app.route('/api/config')
 def get_config(): return jsonify(load_config())
 
+@app.route('/api/dashboard_stats')
+def get_dashboard_stats():
+    refresh_cache()
+    total = len(participants_cache)
+    checked_in_list = [p for p in participants_cache if p['status'] in ['checked_in', '已報到']]
+    
+    logs = []
+    meal_stats = {}
+    for p in checked_in_list:
+        meal_stats[p['meal']] = meal_stats.get(p['meal'], 0) + 1
+        logs.append({"name": p['name'], "time": p['checkedInAt'], "company": p['company'], "meal": p['meal']})
+    
+    logs.sort(key=lambda x: x['time'], reverse=True) # 最近的排前面
+
+    return jsonify({
+        "success": True,
+        "stats": {
+            "total": total, # 應到
+            "checked_in": len(checked_in_list), # 已到
+            "not_checked_in": total - len(checked_in_list), # 未到
+            "meals": meal_stats,
+            "logs": logs[:20] # 顯示前20筆
+        }
+    })
+
 @app.route('/api/search/<method>')
 def search(method):
     refresh_cache()
-    q = request.args.get(method, "").strip()
-    
-    # 支援「姓名、電話、Email」三合一綜合搜尋
+    q = request.args.get(method, "").strip().lower()
     if method == 'keyword':
-        q_lower = q.lower().replace(" ", "")
-        matched = []
-        for p in participants_cache:
-            # 濾出電話中的純數字來比對
-            phone_clean = ''.join(filter(str.isdigit, p.get('phone', '')))
-            q_phone_clean = ''.join(filter(str.isdigit, q))
-            
-            # 同時比對姓名、信箱、或電話 (只要中一個就抓出來)
-            if q_lower in p.get('name', '').lower().replace(" ", "") or \
-               q_lower in p.get('email', '').lower() or \
-               (q_phone_clean and q_phone_clean in phone_clean):
-                matched.append(p)
-        return jsonify({"success": True, "data": matched})
-
-    # 原有的公司搜尋邏輯保留
-    q = q.replace(" ", "")
-    return jsonify({"success": True, "data": [p for p in participants_cache if q.lower() in p.get(method, "").lower()]})
-
-@app.route('/api/dashboard_stats')
-def get_dashboard_stats():
-    refresh_cache() # 確保數據是最新的
-    config = load_config() # 讀取設定檔
-    
-    total_guests = len(participants_cache) # 總人數
-    checked_in_list = [p for p in participants_cache if p['status'] == 'checked_in'] # 已報到名單
-    checked_in_count = len(checked_in_list)
-    
-    # 計算餐食統計 (對應團體與個人報到)
-    meal_stats = {}
-    for p in checked_in_list:
-        m = p.get('meal') or "未選擇"
-        meal_stats[m] = meal_stats.get(m, 0) + 1
-        
-    return jsonify({
-        "success": True,
-        "activity_name": config.get('google_sheet_name', '未命名任務'), # 活動名稱
-        "stats": {
-            "total": total_guests,
-            "checked_in": checked_in_count,
-            "rate": f"{(checked_in_count / total_guests * 100):.1f}%" if total_guests > 0 else "0%", # 報到率
-            "meals": meal_stats # 葷素統計
-        },
-        "last_sync": datetime.now().strftime('%H:%M:%S')
-    })
+        return jsonify({"success": True, "data": [p for p in participants_cache if q in p['name'].lower() or q in p['phone'] or q in p['email'].lower()]})
+    return jsonify({"success": True, "data": [p for p in participants_cache if q in p.get(method, "").lower()]})
 
 @app.route('/api/checkin/<pid>', methods=['POST'])
 def checkin(pid):
@@ -139,38 +111,20 @@ def checkin(pid):
     p = next((x for x in participants_cache if x['id'] == pid), None)
     if not p: return jsonify({"success": False}), 404
     
+    # ★ 關鍵：重複報到檢查
+    if p['status'] in ['checked_in', '已報到']:
+        return jsonify({"success": False, "error": "already_done", "data": p})
+
     meal = data.get('meal', '未選擇')
-    p['status'], p['meal'], p['checkedInAt'] = 'checked_in', meal, now_tw
     cols = load_config().get('excel_columns', {})
-    
-    # 精準寫入 14(N), 15(O), 16(P) 欄位
     updates = [
         {'range': gspread.utils.rowcol_to_a1(p['_row'], cols.get('checkedInAt', 14)), 'values': [[now_tw]]},
         {'range': gspread.utils.rowcol_to_a1(p['_row'], cols.get('status', 15)), 'values': [['checked_in']]},
         {'range': gspread.utils.rowcol_to_a1(p['_row'], cols.get('meal', 16)), 'values': [[meal]]}
     ]
     threading.Thread(target=async_update_sheet, args=(updates,)).start()
+    p.update({"status": "checked_in", "meal": meal, "checkedInAt": now_tw})
     return jsonify({"success": True, "data": p})
-
-@app.route('/api/checkin/batch', methods=['POST'])
-def batch():
-    data = request.json
-    now_tw = (datetime.utcnow() + timedelta(hours=8)).strftime('%Y/%m/%d %H:%M:%S')
-    cols = load_config().get('excel_columns', {})
-    results, all_updates = [], []
-    for item in data.get('selections', []):
-        p = next((x for x in participants_cache if x['id'] == item['id']), None)
-        if p:
-            meal = item.get('meal', '葷食')
-            p['status'], p['meal'], p['checkedInAt'] = 'checked_in', meal, now_tw
-            results.append(p)
-            all_updates.extend([
-                {'range': gspread.utils.rowcol_to_a1(p['_row'], cols.get('checkedInAt', 14)), 'values': [[now_tw]]},
-                {'range': gspread.utils.rowcol_to_a1(p['_row'], cols.get('status', 15)), 'values': [['checked_in']]},
-                {'range': gspread.utils.rowcol_to_a1(p['_row'], cols.get('meal', 16)), 'values': [[meal]]}
-            ])
-    if all_updates: threading.Thread(target=async_update_sheet, args=(all_updates,)).start()
-    return jsonify({"success": True, "data": results})
 
 if __name__ == '__main__':
     refresh_cache(True)
