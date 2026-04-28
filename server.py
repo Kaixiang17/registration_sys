@@ -96,12 +96,12 @@ def search(method):
     refresh_cache()
     q = request.args.get(method, "").strip().lower()
     
+    # 支援四種搜尋路徑
     if method == 'name':
         return jsonify({"success": True, "data": [p for p in participants_cache if q in p['name'].lower()]})
     elif method == 'phone':
         q_clean = ''.join(filter(str.isdigit, q))
-        matched = [p for p in participants_cache if q_clean in ''.join(filter(str.isdigit, p.get('phone', '')))] if q_clean else []
-        return jsonify({"success": True, "data": matched})
+        return jsonify({"success": True, "data": [p for p in participants_cache if q_clean in ''.join(filter(str.isdigit, p.get('phone', '')))]})
     elif method == 'email':
         return jsonify({"success": True, "data": [p for p in participants_cache if q in p['email'].lower()]})
     elif method == 'company':
