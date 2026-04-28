@@ -6,7 +6,6 @@
     <title>智慧方舟 - 艦隊導航系統</title>
     <link rel="stylesheet" href="smart-ark-theme.css">
     <style>
-        /* 基礎排版優化 */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "PingFang TC", "Michroma", "Stick", sans-serif; }
         body { line-height: 1.6; color: #fff; }
         header { padding: 1.2rem 0; position: sticky; top: 0; z-index: 100; }
@@ -14,41 +13,28 @@
         main { max-width: 1200px; margin: 0 auto; padding: 3rem 1.5rem; }
         .state-hidden { display: none !important; }
 
-        /* ★ 格子大小調整：增加高度與間距，符合操作比例 */
-        .mode-selection-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
-            gap: 2.5rem; 
-            margin-top: 2rem;
-        }
-        .mode-card { 
-            padding: 4rem 2rem; /* 增加內距讓格子更大 */
-            text-align: center; 
-            cursor: pointer; 
-            border-radius: 1.25rem; 
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            min-height: 350px; /* 固定最小高度確保比例統一 */
-        }
+        .mode-selection-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2.5rem; margin-top: 2rem; }
+        .mode-card { padding: 4rem 2rem; text-align: center; cursor: pointer; border-radius: 1.25rem; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 350px; }
         .mode-card h2 { margin: 1.5rem 0 0.8rem 0; font-size: 1.8rem; }
         .mode-card p { color: rgba(255,255,255,0.6); font-size: 1rem; line-height: 1.5; }
         
-        /* 表單置中排版 */
         .form-card { max-width: 550px; margin: 0 auto; padding: 3rem; text-align: center; border-radius: 1.5rem; }
-
-        /* 商品展示 */
         .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2.5rem; margin-top: 2rem; }
         .product-img { width: 100%; height: 220px; object-fit: contain; background: rgba(0,0,0,0.4); border-bottom: 1px solid var(--accent-gray); }
 
-        /* 返回按鈕樣式強化 */
         .btn-back-nav {
             background: none; border: 1px solid var(--accent-gray); color: var(--text-dark);
             padding: 0.5rem 1.2rem; border-radius: 0.5rem; cursor: pointer; font-weight: bold;
             transition: 0.3s; margin-bottom: 1rem; display: inline-flex; align-items: center; gap: 0.5rem;
         }
         .btn-back-nav:hover { border-color: var(--text-dark); background: rgba(0, 229, 255, 0.1); }
+
+        .cyber-input { width: 100%; margin-bottom: 1.5rem; padding: 1.2rem; font-size: 1.2rem; }
+        .cyber-button { width: 100%; margin-top: 0.5rem; padding: 1.2rem; font-size: 1.1rem; }
+        
+        .group-item { padding: 1.5rem; border-bottom: 1px solid rgba(0,229,255,0.2); cursor: pointer; transition: 0.3s; text-align: left; display: flex; justify-content: space-between; align-items: center;}
+        .group-item:hover { background: rgba(0,229,255,0.1); }
+        .info-box { text-align: left; padding: 1.5rem; border-radius: 1rem; margin: 1.5rem 0; background: rgba(0,0,0,0.5); border: 1px solid var(--accent-gray); }
     </style>
 </head>
 <body class="circuit-background">
@@ -68,13 +54,13 @@
             <div class="mode-selection-grid">
                 <div class="mode-card cyber-card cyber-hover" onclick="setMode('individual')">
                     <div style="font-size:5rem;">👤</div>
-                    <h2 class="neon-text">個人報到</h2>
-                    <p>使用電話、姓名或 Email<br>快速驗證身分並完成登艦。</p>
+                    <h2 class="neon-text">個人驗證報到</h2>
+                    <p>使用電話、姓名或 Email<br>快速搜尋並完成登艦。</p>
                 </div>
-                <div class="mode-card cyber-card cyber-hover" onclick="setMode('group')">
+                <div class="mode-card cyber-card cyber-hover" onclick="setMode('company_individual')">
                     <div style="font-size:5rem;">🏢</div>
-                    <h2 class="neon-text">公司團體報到</h2>
-                    <p>針對企業艦隊成員<br>提供批次核對與能量補給配置。</p>
+                    <h2 class="neon-text">公司個人報到</h2>
+                    <p>搜尋公司艦隊名稱<br>瀏覽名單並單選人員登艦。</p>
                 </div>
                 <div class="mode-card cyber-card cyber-hover" onclick="showProducts()">
                     <div style="font-size:5rem;">🛍️</div>
@@ -88,9 +74,9 @@
             <button class="btn-back-nav" onclick="resetToHome()">← 返回主選單</button>
             <div class="form-card cyber-card">
                 <h2 id="actionTitle" class="neon-text" style="margin-bottom: 2rem; font-size: 2rem;">身分驗證</h2>
-                <input type="text" id="actionInput" class="cyber-input" style="font-size: 1.2rem; padding: 1.2rem;" placeholder="請輸入資訊">
-                <p style="color:var(--accent-gray); font-size: 0.9rem; margin-top: 0.8rem; text-align: left;">* 系統將自動比對您的報名資料</p>
-                <button class="cyber-button" style="width:100%; margin-top: 2rem; padding: 1.2rem;" onclick="handleAction()"><span>啟動搜尋</span></button>
+                <input type="text" id="actionInput" class="cyber-input" placeholder="請輸入資訊">
+                <p id="actionHint" style="color:var(--accent-gray); font-size: 0.9rem; margin-top: 0.8rem; text-align: left;">* 系統將自動比對您的報名資料</p>
+                <button class="cyber-button" style="margin-top: 2rem;" onclick="handleAction()"><span>啟動搜尋</span></button>
             </div>
         </div>
 
@@ -105,9 +91,8 @@
         <div id="groupListState" class="state-hidden">
             <button class="btn-back-nav" onclick="setAppState('action')">← 重新搜尋</button>
             <div class="form-card cyber-card" style="max-width: 700px;">
-                <h2 id="groupName" class="neon-text" style="margin-bottom: 1.5rem;">艦隊人員名單</h2>
-                <div id="groupList" class="group-list panel-border" style="background: rgba(0,0,0,0.3);"></div>
-                <button class="cyber-button" style="width:100%; margin-top: 2rem;" onclick="proceedToMeal()"><span>配置全員補給</span></button>
+                <h2 id="groupName" class="neon-text" style="margin-bottom: 1.5rem;">請選擇報到人員</h2>
+                <div id="groupList" class="panel-border" style="background: rgba(0,0,0,0.3); border-radius: 1rem; max-height:450px; overflow-y:auto;"></div>
             </div>
         </div>
 
@@ -116,17 +101,16 @@
             <div class="form-card cyber-card">
                 <h2 class="neon-text" style="margin-bottom:2rem;">🍱 能量補給配置</h2>
                 <div id="mealOptions"></div>
-                <button id="finalBtn" class="cyber-button" disabled style="width:100%; margin-top: 2rem;" onclick="submitCheckin()"><span>確認報到並登艦</span></button>
+                <button id="finalBtn" class="cyber-button" disabled style="margin-top: 2rem; font-size:1.3rem; padding:1.5rem;" onclick="submitCheckin()"><span>確認報到並登艦</span></button>
             </div>
         </div>
 
         <div id="successState" class="state-hidden">
             <div class="form-card cyber-card">
-                <div style="color:var(--text-dark); font-size:6rem; line-height: 1; margin-bottom: 1rem;">✓</div>
-                <h2 class="neon-text" style="margin-bottom:2rem; font-size: 2.5rem;">登艦成功！</h2>
+                <div id="successIcon" style="color:var(--text-dark); font-size:6rem; line-height: 1; margin-bottom: 1rem;">✓</div>
+                <h2 id="successTitle" class="neon-text" style="margin-bottom:1rem; font-size: 2.5rem;">登艦成功！</h2>
                 <div id="successInfo" class="info-box panel-border"></div>
-                <p style="color:#aaa; margin: 1.5rem 0;">同步完成。即將導航至補給專區...</p>
-                <button class="cyber-button" onclick="showProducts()"><span>🛍️ 直接前往補給專區</span></button>
+                <button class="cyber-button" onclick="resetToHome()"><span>🏠 完成並回到首頁</span></button>
             </div>
         </div>
 
@@ -136,7 +120,7 @@
                     <h1 class="neon-text" style="font-size: 2.5rem;">🛍️ 物資補給清單</h1>
                     <p style="color: #888;">方舟任務專屬配置物品</p>
                 </div>
-                <button class="cyber-button" onclick="resetToHome()"><span>← 回首頁</span></button>
+                <button class="cyber-button" style="width:auto;" onclick="resetToHome()"><span>← 回首頁</span></button>
             </div>
             <div id="productsGrid" class="products-grid"></div>
         </div>
@@ -144,12 +128,11 @@
 
     <script>
         const API_BASE = '/api';
-        let checkMode = '', selectedUser = null, matchedCompanies = [], selectedGroup = [], selectedMeal = '', systemConfig = null;
+        let checkMode = '', selectedUser = null, matchedCompanies = [], systemConfig = null;
 
         function setAppState(s) {
             ['mode', 'action', 'companySelection', 'groupList', 'meal', 'success', 'product'].forEach(x => {
-                const el = document.getElementById(x+'State');
-                if(el) el.classList.add('state-hidden');
+                document.getElementById(x+'State').classList.add('state-hidden');
             });
             document.getElementById(s+'State').classList.remove('state-hidden');
             window.scrollTo(0, 0);
@@ -159,9 +142,10 @@
 
         function setMode(m) {
             checkMode = m;
-            document.getElementById('actionTitle').textContent = m === 'individual' ? '個人報到驗證' : '企業艦隊搜尋';
+            document.getElementById('actionTitle').textContent = m === 'individual' ? '個人驗證' : '公司搜尋';
             document.getElementById('actionInput').value = '';
             document.getElementById('actionInput').placeholder = m === 'individual' ? '請輸入姓名或電話' : '請輸入公司關鍵字';
+            document.getElementById('actionHint').textContent = m === 'individual' ? '* 系統將自動比對資料庫' : '* 搜尋艦隊並挑選人員';
             setAppState('action');
         }
 
@@ -169,15 +153,19 @@
             const val = document.getElementById('actionInput').value.trim();
             if(!val) return;
             try {
-                // 改用 keyword 綜合搜尋 (支援姓名/電話/Email)
                 const searchMethod = checkMode === 'individual' ? 'keyword' : 'company';
                 const res = await fetch(`${API_BASE}/search/${searchMethod}?${searchMethod}=${encodeURIComponent(val)}`);
                 const json = await res.json();
+                
                 if (json.data && json.data.length > 0) {
                     if (checkMode === 'individual') { 
-                        selectedUser = json.data[0]; 
-                        renderMealOptions();
-                        setAppState('meal'); 
+                        if(json.data.length === 1) {
+                            selectedUser = json.data[0]; 
+                            renderMealOptions();
+                        } else {
+                            window.tempData = json.data;
+                            renderUserList(json.data, '找到多位符合人員，請選擇');
+                        }
                     } else { 
                         const groups = {}; 
                         json.data.forEach(p => { if(!groups[p.company]) groups[p.company] = []; groups[p.company].push(p); });
@@ -199,42 +187,46 @@
 
         function selectCompany(index) {
             const company = matchedCompanies[index];
-            document.getElementById('groupName').textContent = company.name;
-            document.getElementById('groupList').innerHTML = company.participants.map(u => {
-                const isCheck = u.status === 'checked_in' || u.status === '已報到';
-                return `<div class="group-item">
-                            <input type="checkbox" value="${u.id}" class="u-cb" ${isCheck ? 'disabled' : ''} style="margin-right:20px; transform:scale(1.8); cursor:pointer;"> 
-                            <span style="flex:1; font-weight:bold; font-size:1.1rem;">${u.name}</span>
-                            <span style="font-size:0.9rem; color:${isCheck ? 'var(--text-dark)' : '#666'}">${isCheck ? '🟢 已登艦' : '⚪ 待命'}</span>
-                        </div>`;
-            }).join('');
-            window.tempGroupData = company.participants;
+            window.tempData = company.participants;
+            renderUserList(company.participants, '艦隊人員名單');
+        }
+
+        // 渲染人員清單 (單選模式)
+        function renderUserList(users, title) {
+            document.getElementById('groupName').textContent = title;
+            document.getElementById('groupList').innerHTML = users.map(u => `
+                <div class="group-item" onclick="selectSingleUser('${u.id}')">
+                    <div>
+                        <b style="font-size:1.2rem; color:var(--text-dark);">${u.name}</b>
+                        <div style="font-size:0.9rem; color:#aaa; margin-top:0.3rem;">${u.company || '個人'}</div>
+                    </div>
+                    <span style="font-size:0.95rem; font-weight:bold; color:${u.status === 'checked_in' || u.status === '已報到' ? 'var(--text-dark)' : '#666'}">
+                        ${u.status === 'checked_in' || u.status === '已報到' ? '🟢 已登艦' : '⚪ 待命'}
+                    </span>
+                </div>`).join('');
             setAppState('groupList');
         }
 
-        function proceedToMeal() {
-            const ids = Array.from(document.querySelectorAll('.u-cb:checked')).map(cb => cb.value);
-            selectedGroup = window.tempGroupData.filter(u => ids.includes(u.id));
-            if (selectedGroup.length === 0) return alert('請至少勾選一位尚未報到的成員');
+        function selectSingleUser(id) {
+            selectedUser = window.tempData.find(u => u.id === id);
             renderMealOptions();
-            setAppState('meal');
         }
 
         function renderMealOptions() {
             const options = (systemConfig && systemConfig.meal_types) ? systemConfig.meal_types : ['葷食', '素食', '不須用餐'];
-            const container = document.getElementById('mealOptions');
-            container.innerHTML = options.map(m => `
+            document.getElementById('mealOptions').innerHTML = options.map(m => `
                 <div class="cyber-card cyber-hover panel-border" id="m-${m}" onclick="selectMeal('${m}')" 
                      style="padding:1.5rem; margin-bottom:1.2rem; cursor:pointer; display:flex; align-items:center; gap:1.2rem; background:rgba(0,0,0,0.4);">
-                    <span style="font-size:1.5rem;">🍱</span> <span style="font-weight:bold;">${m}</span>
+                    <span style="font-size:1.5rem;">🍱</span> <span style="font-weight:bold; font-size:1.1rem;">${m}</span>
                 </div>
             `).join('');
-            selectedMeal = '';
+            window.selectedMeal = '';
             document.getElementById('finalBtn').disabled = true;
+            setAppState('meal');
         }
 
         function selectMeal(m) {
-            selectedMeal = m;
+            window.selectedMeal = m;
             document.querySelectorAll('[id^="m-"]').forEach(el => {
                 el.style.borderColor = 'rgba(0, 229, 255, 0.3)';
                 el.style.background = 'rgba(0,0,0,0.4)';
@@ -249,27 +241,44 @@
             const btn = document.getElementById('finalBtn');
             btn.disabled = true;
             btn.innerHTML = '<span>📡 正在同步數據...</span>';
-            const isIndiv = checkMode === 'individual';
-            const url = isIndiv ? `${API_BASE}/checkin/${selectedUser.id}` : `${API_BASE}/checkin/batch`;
-            const body = isIndiv ? { meal: selectedMeal, name: selectedUser.name } : { selections: selectedGroup.map(u => ({ id: u.id, name: u.name, meal: selectedMeal })) };
             
             try {
-                const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                const res = await fetch(`${API_BASE}/checkin/${selectedUser.id}`, { 
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ meal: window.selectedMeal }) 
+                });
                 const json = await res.json();
+                const info = document.getElementById('successInfo');
+                
                 if (json.success) {
-                    const infoBox = document.getElementById('successInfo');
-                    const p = isIndiv ? json.data : json.data[0];
-                    infoBox.innerHTML = isIndiv 
-                        ? `<p><b>登艦人員：</b>${p.name}</p><p><b>艦隊單位：</b>${p.company || '個人'}</p><p><b>能量配置：</b>${p.meal}</p>`
-                        : `<p><b>艦隊單位：</b>${p.company}</p><p><b>登艦人數：</b>${json.data.length} 位成員</p><p><b>全員補給：</b>${selectedMeal}</p>`;
-                    setAppState('success');
-                    // 5秒後跳轉商品頁
-                    setTimeout(() => { if(document.getElementById('successState').offsetParent) showProducts(); }, 5000);
-                } else alert('報到同步失敗');
-            } catch (e) { alert('伺服器連線中斷'); }
+                    document.getElementById('successIcon').textContent = '✓';
+                    document.getElementById('successIcon').style.color = 'var(--text-dark)';
+                    document.getElementById('successTitle').textContent = '登艦成功！';
+                    info.style.borderColor = 'var(--text-dark)';
+                    info.innerHTML = `
+                        <p><b>登艦人員：</b>${json.data.name}</p>
+                        <p><b>艦隊單位：</b>${json.data.company || '無'}</p>
+                        <p><b>能量配置：</b>${json.data.meal}</p>
+                        <p><b>登艦時間：</b>${json.data.checkedInAt}</p>`;
+                } else if (json.error === 'already_done') {
+                    // ★ 重複報到防護畫面
+                    document.getElementById('successIcon').textContent = '⚠️';
+                    document.getElementById('successIcon').style.color = '#ff4d4d';
+                    document.getElementById('successTitle').textContent = '重複登艦紀錄';
+                    info.style.borderColor = '#ff4d4d';
+                    info.innerHTML = `
+                        <div style="color:#ff4d4d; font-weight:bold; border-bottom:1px solid #ff4d4d; margin-bottom:1rem; padding-bottom:0.5rem; font-size:1.1rem;">此探險者先前已完成登艦</div>
+                        <p><b>姓名：</b>${json.data.name}</p>
+                        <p><b>初次登艦：</b>${json.data.checkedInAt}</p>
+                        <p><b>配置補給：</b>${json.data.meal}</p>
+                        <p><b>所屬單位：</b>${json.data.company || '無'}</p>`;
+                } else {
+                    alert('報到同步失敗'); btn.disabled = false; btn.innerHTML = '<span>確認報到並登艦</span>'; return;
+                }
+                setAppState('success');
+            } catch (e) { alert('伺服器連線中斷'); btn.disabled = false; btn.innerHTML = '<span>確認報到並登艦</span>'; }
         }
 
-        // ★ 修改：確保正確顯示後台設定的圖片
         async function showProducts() {
             const grid = document.getElementById('productsGrid');
             grid.innerHTML = '<div class="neon-text" style="font-size:1.5rem;">正在同步補給清單...</div>';
@@ -288,9 +297,7 @@
                             </div>
                         </div>
                     `).join('');
-                } else {
-                    grid.innerHTML = '<div class="neon-text">目前補給庫存為空。</div>';
-                }
+                } else { grid.innerHTML = '<div class="neon-text">目前補給庫存為空。</div>'; }
             } catch(e) { grid.innerHTML = '<div class="neon-text">無法連結補給庫。</div>'; }
         }
 
