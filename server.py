@@ -1,183 +1,126 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智慧方舟 - 報到系統</title>
-    <link rel="stylesheet" href="smart-ark-theme.css">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Michroma", "Stick", sans-serif; }
-        body { color: #fff; line-height: 1.6; }
-        main { max-width: 1200px; margin: 0 auto; padding: 3rem 1.5rem; }
-        .state-hidden { display: none !important; }
-        .mode-selection-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2.5rem; }
-        .mode-card { padding: 4.5rem 2rem; text-align: center; cursor: pointer; border-radius: 1.5rem; min-height: 380px; }
-        .form-card { max-width: 550px; margin: 0 auto; padding: 3rem; text-align: center; border-radius: 1.5rem; }
-        .btn-back-nav { background: none; border: 1px solid var(--accent-gray); color: #888; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; margin-bottom: 1rem; }
-        .group-item { padding: 1.2rem; border-bottom: 1px solid rgba(0,229,255,0.2); cursor: pointer; transition: 0.3s; text-align: left; }
-        .group-item:hover { background: rgba(0,229,255,0.1); }
-        #finalBtn { width: 100%; padding: 1.5rem !important; font-size: 1.4rem !important; }
-        .info-box { text-align: left; padding: 1.5rem; border-radius: 1rem; margin: 1.5rem 0; border: 1px solid var(--text-dark); background: rgba(0,0,0,0.5); }
-    </style>
-</head>
-<body class="circuit-background">
-    <div class="ark-background"></div>
-    <header class="panel-border" style="border-radius:0; background:rgba(10,20,35,0.9); padding:1.2rem;">
-        <div style="max-width:1200px; margin:0 auto; display:flex; justify-content:space-between; align-items:center;">
-            <div onclick="location.reload()" style="cursor:pointer; color:var(--text-dark); font-weight:bold;">🏠 方舟首頁</div>
-            <div class="neon-text" style="font-size:1.4rem;">COMMAND CENTER</div>
-            <div id="status" style="font-size:0.8rem; color:#888;">🛰️ 衛星連線中</div>
-        </div>
-    </header>
+import os, json, time, threading
+from datetime import datetime, timedelta
+from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
+import gspread
+from google.oauth2.service_account import Credentials
 
-    <main>
-        <div id="modeState">
-            <h1 class="neon-text" style="text-align:center; margin-bottom:3.5rem; font-size:2.8rem; display:block;">登艦模組選擇</h1>
-            <div class="mode-selection-grid">
-                <div class="mode-card cyber-card cyber-hover" onclick="setMode('individual')">
-                    <div style="font-size:6rem;">👤</div>
-                    <h2 class="neon-text">個人驗證報到</h2>
-                    <p>輸入電話、姓名或 Email 登艦</p>
-                </div>
-                <div class="mode-card cyber-card cyber-hover" onclick="setMode('company_individual')">
-                    <div style="font-size:6rem;">🏢</div>
-                    <h2 class="neon-text">公司個人報到</h2>
-                    <p>依公司名搜尋並選擇人員</p>
-                </div>
-                <div class="mode-card cyber-card cyber-hover" onclick="showProducts()">
-                    <div style="font-size:6rem;">🛍️</div>
-                    <h2 class="neon-text">補給展示專區</h2>
-                    <p>瀏覽方舟配置物資規格</p>
-                </div>
-            </div>
-        </div>
+app = Flask(__name__, static_folder='.', static_url_path='')
+CORS(app)
 
-        <div id="actionState" class="state-hidden">
-            <button class="btn-back-nav" onclick="setAppState('mode')">← 返回</button>
-            <div class="form-card cyber-card">
-                <h2 id="actionTitle" class="neon-text" style="margin-bottom:2rem;">身分驗證</h2>
-                <input type="text" id="actionInput" class="cyber-input" placeholder="請輸入資訊">
-                <p style="color:#888; font-size:0.9rem; margin-top:1rem; text-align:left;">* 系統將自動比對資料庫</p>
-                <button class="cyber-button" style="width:100%; margin-top:2rem;" onclick="handleAction()"><span>啟動搜尋</span></button>
-            </div>
-        </div>
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CONFIG_PATH = os.path.join(BASE_DIR, 'config.json')
+RENDER_KEY = "/etc/secrets/google-creds.json"
+LOCAL_KEY = os.path.join(BASE_DIR, 'test0417-493608-dce82b8c6901.json')
 
-        <div id="groupListState" class="state-hidden">
-            <button class="btn-back-nav" onclick="setAppState('action')">← 返回</button>
-            <div class="form-card cyber-card" style="max-width:700px;">
-                <h2 id="groupName" class="neon-text" style="margin-bottom:1.5rem;">請選擇報到人員</h2>
-                <div id="groupList" class="panel-border" style="background:rgba(0,0,0,0.3); border-radius:1rem; max-height:400px; overflow-y:auto;"></div>
-            </div>
-        </div>
+participants_cache = []
+last_cache_update = 0
+cache_lock = threading.Lock()
+CACHE_TTL = 300
 
-        <div id="mealState" class="state-hidden">
-            <button class="btn-back-nav" onclick="setAppState('mode')">← 回首頁</button>
-            <div class="form-card cyber-card">
-                <h2 class="neon-text" style="margin-bottom:2rem;">🍱 能量補給配置</h2>
-                <div id="mealOptions"></div>
-                <button id="finalBtn" class="cyber-button" disabled onclick="submitCheckin()"><span>確認登艦</span></button>
-            </div>
-        </div>
+def load_config():
+    if os.path.exists(CONFIG_PATH):
+        try:
+            with open(CONFIG_PATH, 'r', encoding='utf-8') as f: return json.load(f)
+        except: return {}
+    return {"google_sheet_name": "活動報到名單", "excel_columns": {}}
 
-        <div id="successState" class="state-hidden">
-            <div class="form-card cyber-card">
-                <div id="successIcon" style="font-size:6rem; line-height:1;">✓</div>
-                <h2 id="successTitle" class="neon-text" style="margin-bottom:2rem;">登艦成功！</h2>
-                <div id="successInfo" class="info-box panel-border"></div>
-                <button class="cyber-button" onclick="location.reload()"><span>🏠 回到首頁</span></button>
-            </div>
-        </div>
-    </main>
+def get_gspread_client():
+    scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+    json_path = RENDER_KEY if os.path.exists(RENDER_KEY) else LOCAL_KEY
+    return gspread.authorize(Credentials.from_service_account_file(json_path, scopes=scope))
 
-    <script>
-        const API_BASE = '/api';
-        let checkMode = '', selectedUser = null, matchedCompanies = [], systemConfig = null;
+def get_worksheet():
+    config = load_config()
+    return get_gspread_client().open(config.get('google_sheet_name', '活動報到名單')).get_worksheet(0)
 
-        function setAppState(s) {
-            ['mode', 'action', 'groupList', 'meal', 'success'].forEach(x => document.getElementById(x+'State').classList.add('state-hidden'));
-            document.getElementById(s+'State').classList.remove('state-hidden');
-            window.scrollTo(0,0);
-        }
+def async_update_sheet(updates):
+    try: get_worksheet().batch_update(updates)
+    except Exception as e: print(f"背景同步失敗: {e}")
 
-        function setMode(m) {
-            checkMode = m;
-            document.getElementById('actionTitle').textContent = m === 'individual' ? '個人驗證' : '公司搜尋';
-            document.getElementById('actionInput').value = '';
-            document.getElementById('actionInput').placeholder = m === 'individual' ? '姓名 / 電話 / Email' : '公司名稱關鍵字';
-            setAppState('action');
-        }
+def refresh_cache(force=False):
+    global participants_cache, last_cache_update
+    if not force and (time.time() - last_cache_update < CACHE_TTL) and participants_cache: return
+    with cache_lock:
+        try:
+            all_values = get_worksheet().get_all_values()
+            cols = load_config().get('excel_columns', {})
+            new_cache, last_company = [], ""
+            for i, row in enumerate(all_values[3:]):
+                def g(c): return row[c-1].strip() if c and c-1 < len(row) else ""
+                comp = g(cols.get('company', 3))
+                if comp: last_company = comp
+                name = g(cols.get('name', 6))
+                if not name: continue
+                # 使用 姓名+公司 作為 ID 避免重複
+                new_cache.append({
+                    "id": f"{name}_{i}", "name": name, "phone": g(cols.get('phone', 8)),
+                    "company": last_company, "email": g(cols.get('email', 9)),
+                    "status": g(cols.get('status', 15)), "meal": g(cols.get('meal', 16)),
+                    "checkedInAt": g(cols.get('checkedInAt', 14)), "_row": i + 4 
+                })
+            participants_cache = new_cache
+            last_cache_update = time.time()
+        except Exception as e: print(f"同步失敗: {e}")
 
-        async function handleAction() {
-            const val = document.getElementById('actionInput').value.trim();
-            if(!val) return;
-            const method = checkMode === 'individual' ? 'keyword' : 'company';
-            try {
-                const res = await fetch(`${API_BASE}/search/${method}?${method}=${encodeURIComponent(val)}`);
-                const json = await res.json();
-                if (json.data.length > 0) {
-                    if (checkMode === 'individual' && json.data.length === 1) { 
-                        selectedUser = json.data[0]; renderMealUI(); 
-                    } else {
-                        document.getElementById('groupName').textContent = checkMode === 'individual' ? '找到多位人員，請選擇' : '艦隊人員名單';
-                        document.getElementById('groupList').innerHTML = json.data.map(u => `
-                            <div class="group-item" onclick="selectSingleUser('${u.id}', '${u.name}')">
-                                <b style="font-size:1.2rem;">${u.name}</b> <br> <span style="color:#aaa;">${u.company} | ${u.status === 'checked_in' ? '🟢 已登艦' : '⚪ 待命'}</span>
-                            </div>`).join('');
-                        window.tempData = json.data;
-                        setAppState('groupList');
-                    }
-                } else alert('查無資料');
-            } catch(e) { alert('連線異常'); }
-        }
+@app.route('/')
+def index(): return send_from_directory('.', '活動報到系統.html')
 
-        function selectSingleUser(id) {
-            selectedUser = window.tempData.find(u => u.id === id);
-            renderMealUI();
-        }
+@app.route('/admin')
+def admin_page(): return send_from_directory('.', 'admin.html')
 
-        function renderMealUI() {
-            const options = (systemConfig && systemConfig.meal_types) ? systemConfig.meal_types : ['葷食', '素食', '不須用餐'];
-            document.getElementById('mealOptions').innerHTML = options.map(m => `
-                <div class="cyber-card cyber-hover panel-border" style="padding:1.2rem; margin-bottom:1rem; cursor:pointer;" onclick="selectMeal('${m}', this)">${m}</div>`).join('');
-            setAppState('meal');
-        }
+@app.route('/products')
+def products_page(): return send_from_directory('.', '商品頁面.html')
 
-        function selectMeal(m, el) {
-            window.selectedMeal = m;
-            document.querySelectorAll('#mealOptions div').forEach(d => { d.style.borderColor='rgba(0,229,255,0.3)'; d.style.background='rgba(0,0,0,0.4)'; });
-            el.style.borderColor='var(--text-dark)'; el.style.background='rgba(0,229,255,0.15)';
-            document.getElementById('finalBtn').disabled = false;
-        }
+@app.route('/api/config', methods=['GET', 'POST'])
+def handle_config():
+    if request.method == 'POST':
+        with open(CONFIG_PATH, 'w', encoding='utf-8') as f: json.dump(request.json, f, ensure_ascii=False, indent=4)
+        return jsonify({"success": True, "data": request.json})
+    return jsonify(load_config())
 
-        async function submitCheckin() {
-            const btn = document.getElementById('finalBtn');
-            btn.disabled = true; btn.innerHTML = '<span>📡 傳輸中...</span>';
-            try {
-                const res = await fetch(`${API_BASE}/checkin/${selectedUser.id}`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({meal:window.selectedMeal}) });
-                const json = await res.json();
-                const info = document.getElementById('successInfo');
-                
-                if (json.success) {
-                    document.getElementById('successTitle').textContent = '登艦成功！';
-                    document.getElementById('successIcon').textContent = '✓';
-                    document.getElementById('successIcon').style.color = 'var(--text-dark)';
-                    info.innerHTML = `<p><b>登艦人員：</b>${json.data.name}</p><p><b>艦隊單位：</b>${json.data.company}</p><p><b>能量配置：</b>${json.data.meal}</p><p><b>登艦時間：</b>${json.data.checkedInAt}</p>`;
-                } else if (json.error === 'already_done') {
-                    // ★ 關鍵：重複報到顯示
-                    document.getElementById('successTitle').textContent = '重複登艦紀錄';
-                    document.getElementById('successIcon').textContent = '⚠️';
-                    document.getElementById('successIcon').style.color = '#ff4d4d';
-                    info.innerHTML = `<div style="color:#ff4d4d; font-weight:bold; border-bottom:1px solid #ff4d4d; margin-bottom:1rem;">此探險者先前已完成登艦程序</div>
-                        <p><b>姓名：</b>${json.data.name}</p><p><b>初次登艦：</b>${json.data.checkedInAt}</p><p><b>配置補給：</b>${json.data.meal}</p><p><b>所屬單位：</b>${json.data.company}</p>`;
-                }
-                setAppState('success');
-            } catch(e) { alert('同步失敗'); btn.disabled=false; }
-        }
+@app.route('/api/dashboard_stats')
+def get_dashboard_stats():
+    refresh_cache()
+    total = len(participants_cache)
+    checked_in_list = [p for p in participants_cache if p['status'] in ['checked_in', '已報到']]
+    logs = [{"name": p['name'], "time": p['checkedInAt'], "company": p['company'], "meal": p['meal']} for p in checked_in_list]
+    logs.sort(key=lambda x: x['time'], reverse=True)
+    return jsonify({
+        "success": True,
+        "stats": { "total": total, "checked_in": len(checked_in_list), "not_checked_in": total - len(checked_in_list), "logs": logs[:25] }
+    })
 
-        window.onload = async () => {
-            const res = await fetch(`${API_BASE}/config`);
-            if (res.ok) systemConfig = await res.json();
-        };
-    </script>
-</body>
-</html>
+@app.route('/api/search/<method>')
+def search(method):
+    refresh_cache()
+    q = request.args.get(method, "").strip().lower()
+    if method == 'keyword':
+        return jsonify({"success": True, "data": [p for p in participants_cache if q in p['name'].lower() or q in p['phone'] or q in p['email'].lower()]})
+    return jsonify({"success": True, "data": [p for p in participants_cache if q in p.get('company', '').lower()]})
+
+@app.route('/api/checkin/<pid>', methods=['POST'])
+def checkin(pid):
+    data = request.json
+    now_tw = (datetime.utcnow() + timedelta(hours=8)).strftime('%H:%M:%S')
+    p = next((x for x in participants_cache if x['id'] == pid), None)
+    if not p: return jsonify({"success": False}), 404
+    
+    # ★ 重複報到防護
+    if p['status'] in ['checked_in', '已報到']:
+        return jsonify({"success": False, "error": "already_done", "data": p})
+
+    meal = data.get('meal', '未選擇')
+    cols = load_config().get('excel_columns', {})
+    updates = [
+        {'range': gspread.utils.rowcol_to_a1(p['_row'], cols.get('checkedInAt', 14)), 'values': [[now_tw]]},
+        {'range': gspread.utils.rowcol_to_a1(p['_row'], cols.get('status', 15)), 'values': [['checked_in']]},
+        {'range': gspread.utils.rowcol_to_a1(p['_row'], cols.get('meal', 16)), 'values': [[meal]]}
+    ]
+    threading.Thread(target=async_update_sheet, args=(updates,)).start()
+    p.update({"status": "checked_in", "meal": meal, "checkedInAt": now_tw})
+    return jsonify({"success": True, "data": p})
+
+if __name__ == '__main__':
+    refresh_cache(True)
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 10000)))
