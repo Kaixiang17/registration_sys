@@ -183,8 +183,13 @@
 
         function setMode(m) {
             checkMode = m;
-            document.getElementById('actionTitle').textContent = m === 'individual' ? '請輸入姓名' : '請輸入公司名稱';
+            document.getElementById('actionTitle').textContent = m === 'individual' ? '個人報到驗證' : '艦隊搜尋';
             document.getElementById('actionInput').value = '';
+            
+            // 動態切換 placeholder 與 提示文字
+            document.getElementById('actionInput').placeholder = m === 'individual' ? '輸入您的電話 / 姓名 / 信箱' : '輸入公司關鍵字';
+            document.getElementById('actionHint').textContent = m === 'individual' ? '系統將自動比對您的報名資料' : '請輸入完整或部分公司名稱進行搜尋';
+            
             setAppState('action');
         }
 
@@ -192,13 +197,15 @@
             const val = document.getElementById('actionInput').value.trim();
             if(!val) return;
             try {
-                const res = await fetch(`${API_BASE}/search/${checkMode === 'individual' ? 'name' : 'company'}?${checkMode === 'individual' ? 'name' : 'company'}=${val}`);
+                // ★ 關鍵升級：將個人的搜尋方法改為 'keyword'，觸發後端三合一搜尋
+                const searchMethod = checkMode === 'individual' ? 'keyword' : 'company';
+                const res = await fetch(`${API_BASE}/search/${searchMethod}?${searchMethod}=${encodeURIComponent(val)}`);
                 const json = await res.json();
                 
-                if (json.data.length > 0) {
+                if (json.data && json.data.length > 0) {
                     if (checkMode === 'individual') { 
                         selectedUser = json.data[0]; 
-                        renderMealSelectionUI(); // 進入個人餐食
+                        renderMealSelectionUI(); 
                         setAppState('meal'); 
                     } else { 
                         const groups = {}; 
@@ -208,14 +215,14 @@
                         if (matchedCompanies.length === 1) { selectCompany(0); } 
                         else {
                             document.getElementById('companyList').innerHTML = matchedCompanies.map((c, i) => 
-                                `<div class="cyber-hover panel-border" onclick="selectCompany(${i})" style="padding:1rem; border-radius:0.5rem; cursor:pointer; background:rgba(255,255,255,0.8);">
+                                `<div class="cyber-card cyber-hover" onclick="selectCompany(${i})" style="padding:1rem; cursor:pointer; border-left:5px solid var(--text-dark);">
                                     <b>${c.name}</b> <span style="color:var(--text-muted);">(${c.participants.length} 人)</span>
                                 </div>`).join('');
                             setAppState('companySelection');
                         }
                     }
-                } else alert('查無資料，請確認輸入是否正確');
-            } catch(e) { alert('伺服器連線異常'); }
+                } else alert('查無此身分資料，請重新輸入');
+            } catch(e) { alert('伺服器衛星連線異常'); }
         }
 
         function selectCompany(index) {
