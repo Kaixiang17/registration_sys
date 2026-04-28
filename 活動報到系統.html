@@ -13,7 +13,7 @@
         main { max-width: 1200px; margin: 0 auto; padding: 3rem 1.5rem; }
         .state-hidden { display: none !important; }
 
-        /* 首頁雙按鈕網格 */
+        /* 首頁雙按鈕 */
         .home-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 3rem; margin-top: 2rem; }
         .home-card { padding: 5rem 2rem; text-align: center; cursor: pointer; border-radius: 1.5rem; min-height: 400px; display: flex; flex-direction: column; justify-content: center; }
         .home-card h2 { margin: 1.5rem 0 1rem 0; font-size: 2.2rem; }
@@ -78,19 +78,19 @@
                 <div class="verify-grid">
                     <div class="verify-card cyber-card cyber-hover" onclick="setMode('name', '姓名')">
                         <div style="font-size:3.5rem;">📝</div>
-                        <h3 class="neon-text">以姓名報到</h3>
+                        <h3 class="neon-text">姓名報到</h3>
                     </div>
-                    <div class="verify-card cyber-card cyber-hover" onclick="setMode('phone', '手機號碼')">
+                    <div class="verify-card cyber-card cyber-hover" onclick="setMode('phone', '手機')">
                         <div style="font-size:3.5rem;">📱</div>
-                        <h3 class="neon-text">以手機號碼報到</h3>
+                        <h3 class="neon-text">手機號碼報到</h3>
                     </div>
                     <div class="verify-card cyber-card cyber-hover" onclick="setMode('email', 'Email')">
                         <div style="font-size:3.5rem;">✉️</div>
-                        <h3 class="neon-text">以 Email 報到</h3>
+                        <h3 class="neon-text">Email 報到</h3>
                     </div>
-                    <div class="verify-card cyber-card cyber-hover" onclick="setMode('company', '公司名稱')">
+                    <div class="verify-card cyber-card cyber-hover" onclick="setMode('company', '公司')">
                         <div style="font-size:3.5rem;">🏢</div>
-                        <h3 class="neon-text">以公司名稱報到</h3>
+                        <h3 class="neon-text">公司名稱報到</h3>
                     </div>
                 </div>
             </div>
@@ -101,22 +101,22 @@
             <div class="form-card cyber-card">
                 <h2 id="actionTitle" class="neon-text" style="margin-bottom: 2rem; font-size: 2rem;">登機驗證</h2>
                 <input type="text" id="actionInput" class="cyber-input" placeholder="請輸入資訊">
-                <button class="cyber-button" style="margin-top: 1rem;" onclick="handleAction()"><span>啟動搜尋</span></button>
+                <button class="cyber-button" style="width:100%; margin-top: 1rem;" onclick="handleAction()"><span>啟動搜尋</span></button>
             </div>
         </div>
 
         <div id="groupListState" class="state-hidden">
             <button class="btn-back-nav" onclick="setAppState('action')">← 重新搜尋</button>
             <div class="form-card cyber-card" style="max-width: 700px;">
-                <h2 id="groupName" class="neon-text" style="margin-bottom: 1.5rem;">請選擇登機旅客</h2>
+                <h2 id="groupName" class="neon-text" style="margin-bottom: 1.5rem;">請選擇旅客</h2>
                 <div id="groupList" class="panel-border" style="background: rgba(0,0,0,0.3); border-radius: 1rem; max-height:450px; overflow-y:auto;"></div>
             </div>
         </div>
 
         <div id="mealState" class="state-hidden">
-            <button class="btn-back-nav" onclick="setAppState(window.tempData && window.tempData.length > 1 ? 'groupList' : 'action')">← 取消</button>
+            <button class="btn-back-nav" onclick="setAppState(window.tempData && window.tempData.length > 1 ? 'groupList' : 'action')">← 返回</button>
             <div class="form-card cyber-card">
-                <h2 class="neon-text" style="margin-bottom:2rem;">🍽️ 機上餐飲選擇</h2>
+                <h2 class="neon-text" style="margin-bottom:2rem;">🍽️ 機上餐飲偏好</h2>
                 <div id="mealOptions"></div>
                 <button id="finalBtn" class="cyber-button" disabled style="margin-top: 2rem; font-size:1.3rem; padding:1.5rem;" onclick="submitCheckin()"><span>確認並發行登機證</span></button>
             </div>
@@ -159,9 +159,9 @@
 
         function setMode(method, label) {
             searchMethod = method;
-            document.getElementById('actionTitle').textContent = `請輸入您的${label}`;
+            document.getElementById('actionTitle').textContent = `請輸入${label}`;
             document.getElementById('actionInput').value = '';
-            document.getElementById('actionInput').placeholder = `請輸入${label}...`;
+            document.getElementById('actionInput').placeholder = `輸入${label}...`;
             setAppState('action');
         }
 
@@ -171,7 +171,6 @@
             try {
                 const res = await fetch(`${API_BASE}/search/${searchMethod}?${searchMethod}=${encodeURIComponent(val)}`);
                 const json = await res.json();
-                
                 if (json.data && json.data.length > 0) {
                     if (json.data.length === 1 && searchMethod !== 'company') {
                         selectedUser = json.data[0]; 
@@ -180,7 +179,7 @@
                         window.tempData = json.data;
                         renderUserList(json.data, searchMethod === 'company' ? '該公司航班名單' : '找到多位旅客，請選擇');
                     }
-                } else alert('查無此旅客資料，請重新確認');
+                } else alert('查無此旅客資料');
             } catch(e) { alert('系統連線異常'); }
         }
 
@@ -204,15 +203,22 @@
             renderMealOptions();
         }
 
-        // 餐點多樣化 Emoji 配置
+        // ★ 修改後的精簡 Emoji 配置
         const mealEmojis = {
-            '葷食': '🥩', '素食': '🥬', '海鮮': '🦐', '雞肉': '🍗', '牛肉': '🍖', '豬肉': '🥩', '不用餐': '🚫', '不須用餐': '🚫'
+            '葷食': '🍱', 
+            '素食': '🥗', 
+            '不須用餐': '❌'
         };
 
         function renderMealOptions() {
             const options = (systemConfig && systemConfig.meal_types) ? systemConfig.meal_types : ['葷食', '素食', '不須用餐'];
             document.getElementById('mealOptions').innerHTML = options.map(m => {
-                const icon = mealEmojis[m] || '🍽️'; // 若無預設對應，顯示通用餐盤
+                // 如果選項名稱包含關鍵字，就顯示對應圖示，否則顯示餐盤
+                let icon = '🍽️';
+                if (m.includes('葷')) icon = mealEmojis['葷食'];
+                else if (m.includes('素')) icon = mealEmojis['素食'];
+                else if (m.includes('不') || m.includes('否')) icon = mealEmojis['不須用餐'];
+                
                 return `
                 <div class="cyber-card cyber-hover panel-border" id="m-${m}" onclick="selectMeal('${m}')" 
                      style="padding:1.5rem; margin-bottom:1.2rem; cursor:pointer; display:flex; align-items:center; gap:1.2rem; background:rgba(0,0,0,0.4);">
@@ -239,18 +245,15 @@
         async function submitCheckin() {
             const btn = document.getElementById('finalBtn');
             btn.disabled = true; btn.innerHTML = '<span>📡 開立登機證中...</span>';
-            
             try {
                 const res = await fetch(`${API_BASE}/checkin/${selectedUser.id}`, { 
                     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ meal: window.selectedMeal }) 
                 });
                 const json = await res.json();
                 const info = document.getElementById('successInfo');
-                
                 if (json.success) {
                     document.getElementById('successIcon').textContent = '🎫';
                     document.getElementById('successTitle').textContent = '登機手續完成！';
-                    info.style.borderColor = 'var(--text-dark)';
                     info.innerHTML = `
                         <p><b>旅客姓名：</b>${json.data.name}</p>
                         <p><b>所屬單位：</b>${json.data.company || '個人旅客'}</p>
@@ -259,15 +262,14 @@
                 } else if (json.error === 'already_done') {
                     document.getElementById('successIcon').textContent = '⚠️';
                     document.getElementById('successTitle').textContent = '重複劃位紀錄';
-                    info.style.borderColor = '#ff4d4d';
                     info.innerHTML = `
                         <div style="color:#ff4d4d; font-weight:bold; border-bottom:1px solid #ff4d4d; margin-bottom:1rem; padding-bottom:0.5rem; font-size:1.1rem;">此旅客已完成登機手續</div>
                         <p><b>姓名：</b>${json.data.name}</p>
-                        <p><b>初次登機時間：</b>${json.data.checkedInAt}</p>
-                        <p><b>餐飲配置：</b>${json.data.meal}</p>`;
-                } else { alert('連線失敗'); btn.disabled=false; return; }
+                        <p><b>初次劃位：</b>${json.data.checkedInAt}</p>
+                        <p><b>原定餐飲：</b>${json.data.meal}</p>`;
+                }
                 setAppState('success');
-            } catch (e) { alert('伺服器連線中斷'); btn.disabled=false; }
+            } catch (e) { alert('系統中斷'); btn.disabled=false; }
         }
 
         async function showProducts() {
@@ -280,15 +282,15 @@
                 if (config.products && config.products.length > 0) {
                     grid.innerHTML = config.products.map(p => `
                         <div class="cyber-card panel-border" style="padding:0; overflow:hidden; border-radius:1rem;">
-                            ${p.image ? `<img src="${p.image}" class="product-img" onerror="this.src='https://via.placeholder.com/300x200?text=NO+IMAGE'">` : `<div class="product-img" style="display:flex;align-items:center;justify-content:center;color:#555;">[ 無影像資料 ]</div>`}
+                            ${p.image ? `<img src="${p.image}" class="product-img">` : `<div class="product-img" style="display:flex;align-items:center;justify-content:center;color:#555;">無影像</div>`}
                             <div style="padding:1.8rem;">
                                 <h3 class="neon-text" style="font-size:1.3rem; margin-bottom:0.8rem;">${p.name}</h3>
                                 <p style="color:#aaa; font-size:0.95rem; height:4.5rem; overflow:hidden;">${p.description || '暫無說明'}</p>
-                                ${p.link ? `<a href="${p.link}" target="_blank" class="cyber-button" style="display:block;text-align:center;text-decoration:none;margin-top:1.5rem;padding:0.8rem;"><span>預購/了解詳情</span></a>` : ''}
+                                ${p.link ? `<a href="${p.link}" target="_blank" class="cyber-button" style="display:block;text-align:center;text-decoration:none;margin-top:1.5rem;padding:0.8rem;"><span>了解詳情</span></a>` : ''}
                             </div>
                         </div>`).join('');
-                } else { grid.innerHTML = '<div class="neon-text">型錄尚未更新。</div>'; }
-            } catch(e) { grid.innerHTML = '<div class="neon-text">無法連結。</div>'; }
+                } else grid.innerHTML = '<div class="neon-text">型錄尚未更新</div>';
+            } catch(e) { grid.innerHTML = '<div class="neon-text">通訊異常</div>'; }
         }
 
         window.onload = async () => {
@@ -300,7 +302,6 @@
                     document.getElementById('status').style.color = '#00e5ff';
                 }
             } catch(e) {}
-            // 預設顯示雙按鈕首頁
             setAppState('home');
         };
     </script>
