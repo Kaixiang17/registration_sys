@@ -20,12 +20,11 @@
         
         /* 驗證方式四宮格 */
         .verify-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-top: 2rem; }
-        .verify-card { padding: 2rem 1.5rem; text-align: center; cursor: pointer; border-radius: 1rem; display: flex; flex-direction: column; justify-content: center; align-items: center;}
-        .verify-card h3 { margin-top: 1rem; font-size: 1.3rem; }
+        .verify-card { padding: 2.5rem 1.5rem; text-align: center; cursor: pointer; border-radius: 1rem; }
         @media(max-width: 768px) { .verify-grid { grid-template-columns: 1fr; } }
 
         .form-card { max-width: 600px; margin: 0 auto; padding: 3rem; text-align: center; border-radius: 1.5rem; }
-        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2.5rem; margin-top: 2rem; }
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2.5rem; }
         .product-img { width: 100%; height: 220px; object-fit: contain; background: rgba(0,0,0,0.4); border-bottom: 1px solid var(--accent-gray); }
 
         .btn-back-nav {
@@ -61,12 +60,12 @@
                 <div class="home-card cyber-card cyber-hover" onclick="setAppState('methodSelection')">
                     <div style="font-size:6rem;">🎫</div>
                     <h2 class="neon-text">辦理登機報到</h2>
-                    <p style="color:#aaa; font-size:1.1rem;">CHECK-IN</p>
+                    <p style="color:#aaa; font-size:1.1rem;">CHECK-IN SERVICE</p>
                 </div>
                 <div class="home-card cyber-card cyber-hover" onclick="showProducts()">
                     <div style="font-size:6rem;">🛍️</div>
-                    <h2 class="neon-text">免稅商品專區</h2>
-                    <p style="color:#aaa; font-size:1.1rem;">DUTY-FREE SHOP</p>
+                    <h2 class="neon-text">活動商品專區</h2>
+                    <p style="color:#aaa; font-size:1.1rem;">ACTIVITY PRODUCTS</p>
                 </div>
             </div>
         </div>
@@ -74,34 +73,34 @@
         <div id="methodSelectionState" class="state-hidden">
             <button class="btn-back-nav" onclick="resetToHome()">← 返回大廳</button>
             <div style="text-align:center; max-width:800px; margin: 0 auto;">
-                <h2 class="neon-text" style="font-size: 2.2rem; margin-bottom:1rem;">請選擇您的驗證方式</h2>
+                <h2 class="neon-text" style="font-size: 2.2rem; margin-bottom:1rem;">請選擇驗證方式</h2>
                 <div class="verify-grid">
-                    <div class="verify-card cyber-card cyber-hover" onclick="setMode('name', '姓名')">
+                    <div class="verify-card cyber-card cyber-hover" onclick="prepareSearch('name', '姓名')">
                         <div style="font-size:3.5rem;">📝</div>
                         <h3 class="neon-text">姓名報到</h3>
                     </div>
-                    <div class="verify-card cyber-card cyber-hover" onclick="setMode('phone', '手機')">
+                    <div class="verify-card cyber-card cyber-hover" onclick="prepareSearch('phone', '手機')">
                         <div style="font-size:3.5rem;">📱</div>
-                        <h3 class="neon-text">手機號碼報到</h3>
+                        <h3 class="neon-text">手機報到</h3>
                     </div>
-                    <div class="verify-card cyber-card cyber-hover" onclick="setMode('email', 'Email')">
+                    <div class="verify-card cyber-card cyber-hover" onclick="prepareSearch('email', 'Email')">
                         <div style="font-size:3.5rem;">✉️</div>
                         <h3 class="neon-text">Email 報到</h3>
                     </div>
-                    <div class="verify-card cyber-card cyber-hover" onclick="setMode('company', '公司')">
+                    <div class="verify-card cyber-card cyber-hover" onclick="prepareSearch('company', '公司')">
                         <div style="font-size:3.5rem;">🏢</div>
-                        <h3 class="neon-text">公司名稱報到</h3>
+                        <h3 class="neon-text">公司報到</h3>
                     </div>
                 </div>
             </div>
         </div>
 
         <div id="actionState" class="state-hidden">
-            <button class="btn-back-nav" onclick="setAppState('methodSelection')">← 重新選擇驗證方式</button>
+            <button class="btn-back-nav" onclick="setAppState('methodSelection')">← 重新選擇方式</button>
             <div class="form-card cyber-card">
                 <h2 id="actionTitle" class="neon-text" style="margin-bottom: 2rem; font-size: 2rem;">登機驗證</h2>
                 <input type="text" id="actionInput" class="cyber-input" placeholder="請輸入資訊">
-                <button class="cyber-button" style="width:100%; margin-top: 1rem;" onclick="handleAction()"><span>啟動搜尋</span></button>
+                <button class="cyber-button" style="margin-top: 1rem;" onclick="handleAction()"><span>啟動搜尋</span></button>
             </div>
         </div>
 
@@ -114,28 +113,28 @@
         </div>
 
         <div id="mealState" class="state-hidden">
-            <button class="btn-back-nav" onclick="setAppState(window.tempData && window.tempData.length > 1 ? 'groupList' : 'action')">← 返回</button>
+            <button class="btn-back-nav" onclick="resetToHome()">← 取消</button>
             <div class="form-card cyber-card">
                 <h2 class="neon-text" style="margin-bottom:2rem;">🍽️ 機上餐飲偏好</h2>
                 <div id="mealOptions"></div>
-                <button id="finalBtn" class="cyber-button" disabled style="margin-top: 2rem; font-size:1.3rem; padding:1.5rem;" onclick="submitCheckin()"><span>確認並發行登機證</span></button>
+                <button id="finalBtn" class="cyber-button" disabled style="margin-top: 2rem; font-size:1.3rem; padding:1.5rem;" onclick="submitCheckin()"><span>確認並核發登機證</span></button>
             </div>
         </div>
 
         <div id="successState" class="state-hidden">
             <div class="form-card cyber-card">
-                <div id="successIcon" style="color:var(--text-dark); font-size:6rem; line-height: 1; margin-bottom: 1rem;">✈️</div>
-                <h2 id="successTitle" class="neon-text" style="margin-bottom:1rem; font-size: 2.5rem;">登機手續完成！</h2>
+                <div id="successIcon" style="color:var(--text-dark); font-size:6rem; line-height: 1; margin-bottom: 1rem;">🎫</div>
+                <h2 id="successTitle" class="neon-text" style="margin-bottom:1rem; font-size: 2.5rem;">手續完成！</h2>
                 <div id="successInfo" class="info-box panel-border"></div>
-                <button class="cyber-button" onclick="resetToHome()"><span>🏠 完成並回到大廳</span></button>
+                <button class="cyber-button" onclick="resetToHome()"><span>🏠 回到航班大廳</span></button>
             </div>
         </div>
 
         <div id="productState" class="state-hidden">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3rem;">
                 <div>
-                    <h1 class="neon-text" style="font-size: 2.5rem;">🛍️ 免稅商品專區</h1>
-                    <p style="color: #888;">機上預購 / 限量供應</p>
+                    <h1 class="neon-text" style="font-size: 2.5rem;">🛍️ 活動商品專區</h1>
+                    <p style="color: #888;">專屬物資補給清單</p>
                 </div>
                 <button class="cyber-button" style="width:auto;" onclick="resetToHome()"><span>← 回航班大廳</span></button>
             </div>
@@ -157,9 +156,9 @@
 
         function resetToHome() { setAppState('home'); }
 
-        function setMode(method, label) {
+        function prepareSearch(method, label) {
             searchMethod = method;
-            document.getElementById('actionTitle').textContent = `請輸入${label}`;
+            document.getElementById('actionTitle').textContent = `請輸入旅客${label}`;
             document.getElementById('actionInput').value = '';
             document.getElementById('actionInput').placeholder = `輸入${label}...`;
             setAppState('action');
@@ -173,14 +172,13 @@
                 const json = await res.json();
                 if (json.data && json.data.length > 0) {
                     if (json.data.length === 1 && searchMethod !== 'company') {
-                        selectedUser = json.data[0]; 
-                        renderMealOptions();
+                        selectedUser = json.data[0]; renderMealOptions();
                     } else {
                         window.tempData = json.data;
                         renderUserList(json.data, searchMethod === 'company' ? '該公司航班名單' : '找到多位旅客，請選擇');
                     }
-                } else alert('查無此旅客資料');
-            } catch(e) { alert('系統連線異常'); }
+                } else alert('查無旅客資料');
+            } catch(e) { alert('通訊異常'); }
         }
 
         function renderUserList(users, title) {
@@ -203,21 +201,14 @@
             renderMealOptions();
         }
 
-        // ★ 修改後的精簡 Emoji 配置
-        const mealEmojis = {
-            '葷食': '🍱', 
-            '素食': '🥗', 
-            '不須用餐': '❌'
-        };
-
+        // ★ 核心優化：精確對應 Emoji
         function renderMealOptions() {
             const options = (systemConfig && systemConfig.meal_types) ? systemConfig.meal_types : ['葷食', '素食', '不須用餐'];
             document.getElementById('mealOptions').innerHTML = options.map(m => {
-                // 如果選項名稱包含關鍵字，就顯示對應圖示，否則顯示餐盤
                 let icon = '🍽️';
-                if (m.includes('葷')) icon = mealEmojis['葷食'];
-                else if (m.includes('素')) icon = mealEmojis['素食'];
-                else if (m.includes('不') || m.includes('否')) icon = mealEmojis['不須用餐'];
+                if (m.includes('葷')) icon = '🍱';
+                else if (m.includes('素')) icon = '🥗';
+                else if (m.includes('不') || m.includes('❌')) icon = '❌';
                 
                 return `
                 <div class="cyber-card cyber-hover panel-border" id="m-${m}" onclick="selectMeal('${m}')" 
@@ -252,29 +243,19 @@
                 const json = await res.json();
                 const info = document.getElementById('successInfo');
                 if (json.success) {
-                    document.getElementById('successIcon').textContent = '🎫';
-                    document.getElementById('successTitle').textContent = '登機手續完成！';
-                    info.innerHTML = `
-                        <p><b>旅客姓名：</b>${json.data.name}</p>
-                        <p><b>所屬單位：</b>${json.data.company || '個人旅客'}</p>
-                        <p><b>機上餐飲：</b>${json.data.meal}</p>
-                        <p><b>劃位時間：</b>${json.data.checkedInAt}</p>`;
+                    info.innerHTML = `<p><b>旅客姓名：</b>${json.data.name}</p><p><b>所屬單位：</b>${json.data.company || '個人旅客'}</p><p><b>機上餐飲：</b>${json.data.meal}</p><p><b>劃位時間：</b>${json.data.checkedInAt}</p>`;
                 } else if (json.error === 'already_done') {
                     document.getElementById('successIcon').textContent = '⚠️';
-                    document.getElementById('successTitle').textContent = '重複劃位紀錄';
-                    info.innerHTML = `
-                        <div style="color:#ff4d4d; font-weight:bold; border-bottom:1px solid #ff4d4d; margin-bottom:1rem; padding-bottom:0.5rem; font-size:1.1rem;">此旅客已完成登機手續</div>
-                        <p><b>姓名：</b>${json.data.name}</p>
-                        <p><b>初次劃位：</b>${json.data.checkedInAt}</p>
-                        <p><b>原定餐飲：</b>${json.data.meal}</p>`;
+                    document.getElementById('successTitle').textContent = '重複手續紀錄';
+                    info.innerHTML = `<div style="color:#ff4d4d; font-weight:bold; border-bottom:1px solid #ff4d4d; margin-bottom:1rem; padding-bottom:0.5rem;">此旅客已完成登機</div><p><b>姓名：</b>${json.data.name}</p><p><b>初次手續：</b>${json.data.checkedInAt}</p><p><b>餐飲：</b>${json.data.meal}</p>`;
                 }
                 setAppState('success');
-            } catch (e) { alert('系統中斷'); btn.disabled=false; }
+            } catch (e) { alert('通訊中斷'); btn.disabled=false; }
         }
 
         async function showProducts() {
             const grid = document.getElementById('productsGrid');
-            grid.innerHTML = '<div class="neon-text" style="font-size:1.5rem;">讀取免稅型錄中...</div>';
+            grid.innerHTML = '<div class="neon-text" style="font-size:1.5rem;">讀取型錄中...</div>';
             setAppState('product');
             try {
                 const res = await fetch(`${API_BASE}/config`);
@@ -290,7 +271,7 @@
                             </div>
                         </div>`).join('');
                 } else grid.innerHTML = '<div class="neon-text">型錄尚未更新</div>';
-            } catch(e) { grid.innerHTML = '<div class="neon-text">通訊異常</div>'; }
+            } catch(e) { grid.innerHTML = '<div class="neon-text">連線異常</div>'; }
         }
 
         window.onload = async () => {
