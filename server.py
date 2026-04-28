@@ -52,7 +52,6 @@ def refresh_cache(force=False):
                 if comp: last_company = comp
                 name = g(cols.get('name', 6))
                 if not name: continue
-                # 使用 姓名+公司 作為 ID 避免重複
                 new_cache.append({
                     "id": f"{name}_{i}", "name": name, "phone": g(cols.get('phone', 8)),
                     "company": last_company, "email": g(cols.get('email', 9)),
@@ -91,13 +90,24 @@ def get_dashboard_stats():
         "stats": { "total": total, "checked_in": len(checked_in_list), "not_checked_in": total - len(checked_in_list), "logs": logs[:25] }
     })
 
+# ★ 更新的搜尋邏輯：支援四種明確的搜尋方式
 @app.route('/api/search/<method>')
 def search(method):
     refresh_cache()
     q = request.args.get(method, "").strip().lower()
-    if method == 'keyword':
-        return jsonify({"success": True, "data": [p for p in participants_cache if q in p['name'].lower() or q in p['phone'] or q in p['email'].lower()]})
-    return jsonify({"success": True, "data": [p for p in participants_cache if q in p.get('company', '').lower()]})
+    
+    if method == 'name':
+        return jsonify({"success": True, "data": [p for p in participants_cache if q in p['name'].lower()]})
+    elif method == 'phone':
+        q_clean = ''.join(filter(str.isdigit, q))
+        matched = [p for p in participants_cache if q_clean in ''.join(filter(str.isdigit, p.get('phone', '')))] if q_clean else []
+        return jsonify({"success": True, "data": matched})
+    elif method == 'email':
+        return jsonify({"success": True, "data": [p for p in participants_cache if q in p['email'].lower()]})
+    elif method == 'company':
+        return jsonify({"success": True, "data": [p for p in participants_cache if q in p.get('company', '').lower()]})
+        
+    return jsonify({"success": False, "data": []})
 
 @app.route('/api/checkin/<pid>', methods=['POST'])
 def checkin(pid):
@@ -106,7 +116,6 @@ def checkin(pid):
     p = next((x for x in participants_cache if x['id'] == pid), None)
     if not p: return jsonify({"success": False}), 404
     
-    # ★ 重複報到防護
     if p['status'] in ['checked_in', '已報到']:
         return jsonify({"success": False, "error": "already_done", "data": p})
 
