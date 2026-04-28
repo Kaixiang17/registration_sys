@@ -83,10 +83,26 @@ def get_config(): return jsonify(load_config())
 @app.route('/api/search/<method>')
 def search(method):
     refresh_cache()
-    q = request.args.get(method, "").replace(" ", "")
-    if method == 'phone': 
-        q = ''.join(filter(str.isdigit, q))
-        return jsonify({"success": True, "data": [p for p in participants_cache if ''.join(filter(str.isdigit, p["phone"])) == q]})
+    q = request.args.get(method, "").strip()
+    
+    # 支援「姓名、電話、Email」三合一綜合搜尋
+    if method == 'keyword':
+        q_lower = q.lower().replace(" ", "")
+        matched = []
+        for p in participants_cache:
+            # 濾出電話中的純數字來比對
+            phone_clean = ''.join(filter(str.isdigit, p.get('phone', '')))
+            q_phone_clean = ''.join(filter(str.isdigit, q))
+            
+            # 同時比對姓名、信箱、或電話 (只要中一個就抓出來)
+            if q_lower in p.get('name', '').lower().replace(" ", "") or \
+               q_lower in p.get('email', '').lower() or \
+               (q_phone_clean and q_phone_clean in phone_clean):
+                matched.append(p)
+        return jsonify({"success": True, "data": matched})
+
+    # 原有的公司搜尋邏輯保留
+    q = q.replace(" ", "")
     return jsonify({"success": True, "data": [p for p in participants_cache if q.lower() in p.get(method, "").lower()]})
 
 @app.route('/api/dashboard_stats')
