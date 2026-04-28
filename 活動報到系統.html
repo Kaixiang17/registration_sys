@@ -98,11 +98,14 @@
 
         <div id="actionState" class="state-hidden">
             <div class="form-card cyber-card">
-                <button onclick="setAppState('mode')" style="float:left; background:none; border:none; color:gray; cursor:pointer">← 返回</button>
+                <button onclick="resetToHome()" style="float:left; background:none; border:none; color:var(--accent-gray); cursor:pointer; font-weight:bold;">← 取消返回</button>
                 <div style="clear:both;"></div>
-                <h2 id="actionTitle" class="neon-text" style="margin-bottom:1.5rem; display:block;">驗證</h2>
-                <input type="text" id="actionInput" class="cyber-input" placeholder="請輸入資訊">
-                <button class="button cyber-button" onclick="handleAction()">下一步</button>
+                <h2 id="actionTitle" class="neon-text" style="margin: 1.5rem 0;">身分驗證</h2>
+                
+                <input type="text" id="actionInput" class="cyber-input" placeholder="輸入您的電話 / 姓名 / 信箱" style="margin-bottom: 0.5rem;">
+                <p id="actionHint" style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1.5rem; text-align:left;">系統將自動比對您的報名資料</p>
+                
+                <button class="cyber-button" style="width:100%;" onclick="handleAction()"><span>下一步：搜尋數據</span></button>
             </div>
         </div>
 
