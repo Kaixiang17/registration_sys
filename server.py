@@ -11,7 +11,7 @@ CORS(app)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_PATH = os.path.join(BASE_DIR, 'config.json')
 RENDER_KEY = "/etc/secrets/google-creds.json"
-LOCAL_KEY = os.path.join(BASE_DIR, 'test0417-493608-dce82b8c6901.json')
+LOCAL_KEY = os.path.join(BASE_DIR, 'test0417-493608-ec0a369af886.json')
 
 participants_cache = []
 last_cache_update = 0
@@ -56,7 +56,8 @@ def refresh_cache(force=False):
                     "id": f"{name}_{i}", "name": name, "phone": g(cols.get('phone', 8)),
                     "company": last_company, "email": g(cols.get('email', 9)),
                     "status": g(cols.get('status', 15)), "meal": g(cols.get('meal', 16)),
-                    "checkedInAt": g(cols.get('checkedInAt', 14)), "_row": i + 4 
+                    "checkedInAt": g(cols.get('checkedInAt', 14)), "seat": g(cols.get('seat', 13)), 
+                    "table": g(cols.get("seat", 13))[:2] if g(cols.get("seat", 13))[:2].isdigit() else "", "_row": i + 4 
                 })
             participants_cache = new_cache
             last_cache_update = time.time()
@@ -68,9 +69,6 @@ def index(): return send_from_directory('.', '活動報到系統.html')
 @app.route('/admin')
 def admin_page(): return send_from_directory('.', 'admin.html')
 
-@app.route('/products')
-def products_page(): return send_from_directory('.', '商品頁面.html')
-
 @app.route('/api/config', methods=['GET', 'POST'])
 def handle_config():
     if request.method == 'POST':
@@ -78,25 +76,35 @@ def handle_config():
         return jsonify({"success": True, "data": request.json})
     return jsonify(load_config())
 
+# 優化：回傳詳細的桌號統計數據
+def get_table_stats():
+    stats = {}
+    for p in participants_cache:
+        t = p.get("table", "").strip()
+        if not t: continue
+        if t not in stats: stats[t] = {"total": 0, "checked_in": 0}
+        stats[t]["total"] += 1
+        if p["status"] in ["checked_in", "已報到", "替代"]: stats[t]["checked_in"] += 1
+    
+    return {t: {"total": s["total"], "checked_in": s["checked_in"], "rate": round(s["checked_in"]/s["total"]*100, 1)} for t, s in stats.items() if s["total"] > 0}
+
 @app.route('/api/dashboard_stats')
 def get_dashboard_stats():
     refresh_cache()
     total = len(participants_cache)
-    checked_in_list = [p for p in participants_cache if p['status'] in ['checked_in', '已報到']]
+    checked_in_list = [p for p in participants_cache if p['status'] in ['checked_in', '已報到', '替代']]
     logs = [{"name": p['name'], "time": p['checkedInAt'], "company": p['company'], "meal": p['meal']} for p in checked_in_list]
     logs.sort(key=lambda x: x['time'], reverse=True)
     return jsonify({
         "success": True,
-        "stats": { "total": total, "checked_in": len(checked_in_list), "not_checked_in": total - len(checked_in_list), "logs": logs[:25] }
+        "stats": { "total": total, "checked_in": len(checked_in_list), "not_checked_in": total - len(checked_in_list), "logs": logs[:25] , "table_stats": get_table_stats() }
     })
 
-# ★ 更新的搜尋邏輯：支援四種明確的搜尋方式
 @app.route('/api/search/<method>')
 def search(method):
     refresh_cache()
     q = request.args.get(method, "").strip().lower()
     
-    # 支援四種搜尋路徑
     if method == 'name':
         return jsonify({"success": True, "data": [p for p in participants_cache if q in p['name'].lower()]})
     elif method == 'phone':
@@ -105,7 +113,12 @@ def search(method):
     elif method == 'email':
         return jsonify({"success": True, "data": [p for p in participants_cache if q in p['email'].lower()]})
     elif method == 'company':
-        return jsonify({"success": True, "data": [p for p in participants_cache if q in p.get('company', '').lower()]})
+        matched_companies = sorted(list(set(p.get('company', '') for p in participants_cache if q in p.get('company', '').lower() and p.get('company'))))
+        return jsonify({"success": True, "data": matched_companies})
+    elif method == 'company_members':
+        company_name = request.args.get('name', '').strip().lower()
+        members = [p for p in participants_cache if p.get('company', '').lower() == company_name]
+        return jsonify({"success": True, "data": members})
         
     return jsonify({"success": False, "data": []})
 
@@ -116,18 +129,37 @@ def checkin(pid):
     p = next((x for x in participants_cache if x['id'] == pid), None)
     if not p: return jsonify({"success": False}), 404
     
-    if p['status'] in ['checked_in', '已報到']:
+    if p['status'] in ['checked_in', '已報到', '替代']:
         return jsonify({"success": False, "error": "already_done", "data": p})
-
+    
     meal = data.get('meal', '未選擇')
+    is_original = data.get('is_original', True)
+    proxy_info = data.get('proxy_info', {})
+    
     cols = load_config().get('excel_columns', {})
+    status_val = 'checked_in' if is_original else '替代'
+    
     updates = [
-        {'range': gspread.utils.rowcol_to_a1(p['_row'], cols.get('checkedInAt', 14)), 'values': [[now_tw]]},
-        {'range': gspread.utils.rowcol_to_a1(p['_row'], cols.get('status', 15)), 'values': [['checked_in']]},
-        {'range': gspread.utils.rowcol_to_a1(p['_row'], cols.get('meal', 16)), 'values': [[meal]]}
+        {'range': gspread.utils.rowcol_to_a1(p['_row'], int(cols.get('checkedInAt', 14))), 'values': [[now_tw]]},
+        {'range': gspread.utils.rowcol_to_a1(p['_row'], int(cols.get('status', 15))), 'values': [[status_val]]},
+        {'range': gspread.utils.rowcol_to_a1(p['_row'], int(cols.get('meal', 16))), 'values': [[meal]]}
     ]
+    
+    # 修復：安全轉換欄位型別，避免空值引發 Error
+    if not is_original and proxy_info:
+        p_name_col = cols.get('proxyName')
+        p_phone_col = cols.get('proxyPhone')
+        p_email_col = cols.get('proxyEmail')
+        
+        if p_name_col and str(p_name_col).isdigit():
+            updates.append({'range': gspread.utils.rowcol_to_a1(p['_row'], int(p_name_col)), 'values': [[proxy_info.get('name', '')]]})
+        if p_phone_col and str(p_phone_col).isdigit():
+            updates.append({'range': gspread.utils.rowcol_to_a1(p['_row'], int(p_phone_col)), 'values': [[proxy_info.get('phone', '')]]})
+        if p_email_col and str(p_email_col).isdigit():
+            updates.append({'range': gspread.utils.rowcol_to_a1(p['_row'], int(p_email_col)), 'values': [[proxy_info.get('email', '')]]})
+            
     threading.Thread(target=async_update_sheet, args=(updates,)).start()
-    p.update({"status": "checked_in", "meal": meal, "checkedInAt": now_tw})
+    p.update({"status": status_val, "meal": meal, "checkedInAt": now_tw})
     return jsonify({"success": True, "data": p})
 
 if __name__ == '__main__':
