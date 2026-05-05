@@ -76,7 +76,6 @@ def handle_config():
         return jsonify({"success": True, "data": request.json})
     return jsonify(load_config())
 
-# 優化：回傳詳細的桌號統計數據
 def get_table_stats():
     stats = {}
     for p in participants_cache:
@@ -93,7 +92,13 @@ def get_dashboard_stats():
     refresh_cache()
     total = len(participants_cache)
     checked_in_list = [p for p in participants_cache if p['status'] in ['checked_in', '已報到', '替代']]
-    logs = [{"name": p['name'], "time": p['checkedInAt'], "company": p['company'], "meal": p['meal']} for p in checked_in_list]
+    
+    logs = []
+    for p in checked_in_list:
+        # 如果是替代者，在戰情室的名字後方加上標註
+        display_name = f"{p['name']} (替代)" if p['status'] == '替代' else p['name']
+        logs.append({"name": display_name, "time": p['checkedInAt'], "company": p['company'], "meal": p['meal']})
+        
     logs.sort(key=lambda x: x['time'], reverse=True)
     return jsonify({
         "success": True,
@@ -139,24 +144,32 @@ def checkin(pid):
     cols = load_config().get('excel_columns', {})
     status_val = 'checked_in' if is_original else '替代'
     
+    p_name_col = cols.get('proxyName')
+    p_phone_col = cols.get('proxyPhone')
+    p_email_col = cols.get('proxyEmail')
+    
     updates = [
         {'range': gspread.utils.rowcol_to_a1(p['_row'], int(cols.get('checkedInAt', 14))), 'values': [[now_tw]]},
         {'range': gspread.utils.rowcol_to_a1(p['_row'], int(cols.get('status', 15))), 'values': [[status_val]]},
         {'range': gspread.utils.rowcol_to_a1(p['_row'], int(cols.get('meal', 16))), 'values': [[meal]]}
     ]
     
-    # 修復：安全轉換欄位型別，避免空值引發 Error
+    # ★ 關鍵修正：準確寫入替代資訊，或是清空舊的測試資料
     if not is_original and proxy_info:
-        p_name_col = cols.get('proxyName')
-        p_phone_col = cols.get('proxyPhone')
-        p_email_col = cols.get('proxyEmail')
-        
         if p_name_col and str(p_name_col).isdigit():
             updates.append({'range': gspread.utils.rowcol_to_a1(p['_row'], int(p_name_col)), 'values': [[proxy_info.get('name', '')]]})
         if p_phone_col and str(p_phone_col).isdigit():
             updates.append({'range': gspread.utils.rowcol_to_a1(p['_row'], int(p_phone_col)), 'values': [[proxy_info.get('phone', '')]]})
         if p_email_col and str(p_email_col).isdigit():
             updates.append({'range': gspread.utils.rowcol_to_a1(p['_row'], int(p_email_col)), 'values': [[proxy_info.get('email', '')]]})
+    else:
+        # 如果是「本人」報到，強制清空替代者的三個欄位，保持表格乾淨
+        if p_name_col and str(p_name_col).isdigit():
+            updates.append({'range': gspread.utils.rowcol_to_a1(p['_row'], int(p_name_col)), 'values': [['']]})
+        if p_phone_col and str(p_phone_col).isdigit():
+            updates.append({'range': gspread.utils.rowcol_to_a1(p['_row'], int(p_phone_col)), 'values': [['']]})
+        if p_email_col and str(p_email_col).isdigit():
+            updates.append({'range': gspread.utils.rowcol_to_a1(p['_row'], int(p_email_col)), 'values': [['']]})
             
     threading.Thread(target=async_update_sheet, args=(updates,)).start()
     p.update({"status": status_val, "meal": meal, "checkedInAt": now_tw})
