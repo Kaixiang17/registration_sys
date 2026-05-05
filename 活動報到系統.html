@@ -21,6 +21,7 @@
         .cyber-input { width: 100%; margin-bottom: 1.5rem; padding: 1.2rem; font-size: 1.2rem; }
         .cyber-button { width: 100%; margin-top: 0.5rem; padding: 1.2rem; font-size: 1.1rem; }
         .group-item { padding: 1.5rem; border-bottom: 1px solid rgba(0,229,255,0.2); cursor: pointer; transition: 0.3s; text-align: left; display: flex; justify-content: space-between; align-items: center;}
+        .group-item:hover { background: rgba(0,229,255,0.1); }
         .info-box { text-align: left; padding: 1.5rem; border-radius: 1rem; margin: 1.5rem 0; background: rgba(0,0,0,0.5); border: 1px solid var(--accent-gray); }
     </style>
 </head>
@@ -36,7 +37,7 @@
 
     <main>
         <div id="homeState">
-            <h1 class="neon-text" style="text-align:center; margin-bottom: 2rem; font-size: 3rem; display: block;">服務項目</h1>
+            <h1 class="neon-text" style="text-align:center; margin-bottom: 2rem; font-size: 3rem; display: block;">請選擇服務項目</h1>
             <div class="home-grid">
                 <div class="home-card cyber-card cyber-hover" onclick="setAppState('methodSelection')">
                     <div style="font-size:6rem;">🎫</div><h2 class="neon-text">辦理登機報到</h2><p style="color:#aaa;">CHECK-IN SERVICE</p>
@@ -92,7 +93,7 @@
         </div>
 
         <div id="productState" class="state-hidden">
-            <div style="display:flex; justify-content:space-between; margin-bottom:3rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3rem;">
                 <h1 class="neon-text" style="font-size: 2.5rem;">🛍️ 活動商品專區</h1>
                 <button class="cyber-button" style="width:auto;" onclick="resetToHome()"><span>← 回大廳</span></button>
             </div>
@@ -137,7 +138,7 @@
         }
         function renderUserList(u, t) {
             document.getElementById('groupName').textContent = t;
-            document.getElementById('groupList').innerHTML = u.map(x => `<div class="group-item" onclick="selectSingleUser('${x.id}')"><b>${x.name}</b><span>${x.status==='checked_in'?'🟢':'⚪'}</span></div>`).join('');
+            document.getElementById('groupList').innerHTML = u.map(x => `<div class="group-item" onclick="selectSingleUser('${x.id}')"><b>${x.name}</b><span>${x.status==='checked_in'||x.status==='已報到'||x.status==='替代'?'🟢':'⚪'}</span></div>`).join('');
             setAppState('groupList');
         }
         function selectSingleUser(id) { selectedUser = window.tempData.find(x => x.id === id); renderMealOptions(); }
@@ -155,7 +156,7 @@
                     <div id="isNo" class="cyber-card" style="flex:1; padding:1rem; cursor:pointer;" onclick="setIsOriginal(false)">否</div>
                 </div>
                 <div id="proxyForm" style="display:none; text-align:left;">
-                    <input id="pName" placeholder="替代姓名" class="cyber-input"><input id="pPhone" placeholder="替代電話" class="cyber-input">
+                    <input id="pName" placeholder="替代姓名" class="cyber-input"><input id="pPhone" placeholder="替代電話" class="cyber-input"><input id="pEmail" placeholder="替代 Email" class="cyber-input">
                 </div>
             </div>`;
             document.getElementById('mealOptions').innerHTML = mealHtml + proxyHtml;
@@ -168,8 +169,12 @@
         }
 
         async function submitCheckin() {
-            const proxy_info = window.isOriginal ? {} : { name: document.getElementById('pName').value, phone: document.getElementById('pPhone').value };
-            if(!window.isOriginal && !proxy_info.name) return alert("請填寫替代者姓名");
+            const proxy_info = window.isOriginal ? {} : { 
+                name: document.getElementById('pName').value.trim(), 
+                phone: document.getElementById('pPhone').value.trim(),
+                email: document.getElementById('pEmail').value.trim()
+            };
+            if(!window.isOriginal && (!proxy_info.name || !proxy_info.phone)) return alert("請填寫替代者姓名與電話");
             
             try {
                 const res = await fetch(`${API_BASE}/checkin/${selectedUser.id}`, {
@@ -177,7 +182,12 @@
                     body: JSON.stringify({ meal: window.selectedMeal, is_original: window.isOriginal, proxy_info })
                 });
                 const json = await res.json();
-                document.getElementById('successInfo').innerHTML = `<p>旅客：${json.data.name}</p><p>座位：${json.data.seat || "未分配"}</p><p>餐飲：${json.data.meal}</p><p>📸 請截圖保存</p>`;
+                const info = document.getElementById('successInfo');
+                if(json.success) {
+                    info.innerHTML = `<p>旅客：${json.data.name}</p><p>座位：<span style="font-size:1.5rem; color:var(--text-dark);">${json.data.seat || "未分配"}</span></p><p>餐飲：${json.data.meal}</p><p>📸 請截圖保存此登機證</p>`;
+                } else {
+                    info.innerHTML = `<p style="color:#ff4d4d;">此旅客已完成登機</p><p>姓名：${json.data.name}</p><p>原定餐飲：${json.data.meal}</p>`;
+                }
                 setAppState('success');
             } catch(e) { alert('連線中斷'); }
         }
