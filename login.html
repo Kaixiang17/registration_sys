@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧方舟 - 授權中心</title>
+    <link rel="stylesheet" href="smart-ark-theme.css">
+    <style>
+        body { display: flex; align-items: center; justify-content: center; height: 100vh; }
+        .login-card { width: 380px; padding: 3rem; text-align: center; }
+        .cyber-input { margin-bottom: 1.5rem; width: 100%; }
+        .err-msg { color: #ff4d4d; font-size: 0.85rem; margin-bottom: 1rem; display: none; }
+    </style>
+</head>
+<body class="circuit-background">
+    <div class="ark-background"></div>
+    <div class="login-card cyber-card">
+        <h2 class="neon-text" style="margin-bottom: 2rem;">艦橋訪問授權</h2>
+        <div id="err" class="err-msg">身份驗證失敗，請重試</div>
+        <input type="text" id="u" class="cyber-input" placeholder="管理員帳號">
+        <input type="password" id="p" class="cyber-input" placeholder="訪問密鑰">
+        <button class="cyber-button" style="width:100%;" onclick="doLogin()"><span>啟動驗證</span></button>
+    </div>
+    <script>
+        async function doLogin() {
+            const u = document.getElementById('u').value;
+            const p = document.getElementById('p').value;
+            const res = await fetch('/api/login', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: u, password: p })
+            });
+            if (res.ok) { location.href = '/admin'; }
+            else { document.getElementById('err').style.display = 'block'; }
+        }
+    </script>
+</body>
+</html>
