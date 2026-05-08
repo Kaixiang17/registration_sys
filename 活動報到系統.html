@@ -389,7 +389,7 @@
             const btn = document.getElementById('finalBtn');
             btn.disabled = true; btn.innerHTML = '<span>📡 開立登機證中...</span>';
             
-            // 收集替代者資訊
+            // 收集替代者資訊與防呆驗證
             let proxyInfo = {};
             if (window.isOriginal === false) {
                 proxyInfo = {
@@ -398,13 +398,59 @@
                     email: document.getElementById('proxyEmail').value.trim()
                 };
                 
+                // 防呆 1：檢查是否填寫完整
                 if (!proxyInfo.name || !proxyInfo.phone || !proxyInfo.email) {
-                    alert('請填寫完整的替代者資訊');
+                    alert('請填寫完整的替代者資訊 (姓名、電話、Email)');
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>確認並核發登機證</span>';
+                    return;
+                }
+
+                // 防呆 2：檢查電話格式 (09 開頭且剛好 10 位數字)
+                if (!/^09\d{8}$/.test(proxyInfo.phone)) {
+                    alert('電話格式錯誤！請輸入 09 開頭的 10 位數字手機號碼');
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>確認並核發登機證</span>';
+                    return;
+                }
+
+                // 防呆 3：檢查 Gmail 格式 (確保結尾是 @gmail.com)
+                if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(proxyInfo.email)) {
+                    alert('Email 格式錯誤！必須為正確的 @gmail.com 帳號');
                     btn.disabled = false;
                     btn.innerHTML = '<span>確認並核發登機證</span>';
                     return;
                 }
             }
+
+            try {
+                const res = await fetch(`${API_BASE}/checkin/${selectedUser.id}`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ 
+                        meal: window.selectedMeal,
+                        is_original: window.isOriginal,
+                        proxy_info: proxyInfo
+                    }) 
+                });
+                const json = await res.json();
+                const info = document.getElementById('successInfo');
+                if (json.success) {
+                    
+                    const statusText = json.data.status === '替代' ? '<span style="color:#ffa500;">(替代報到)</span>' : '';
+                    info.innerHTML = `<div style="color:#4ade80; font-weight:bold; border-bottom:1px solid #4ade80; margin-bottom:1rem; padding-bottom:0.5rem;">登艦手續完成，歡迎登機</div><p><b>姓名：</b>${json.data.name} ${statusText}</p><p><b>單位：</b>${json.data.company || "個人旅客"}</p><p><b>座位：</b>${json.data.seat || "未分配"}</p><p><b>餐飲：</b>${json.data.meal}</p><p><b>時間：</b>${json.data.checkedInAt}</p>`;
+                } else if (json.error === 'already_done') {
+                    document.getElementById('successIcon').textContent = '⚠️';
+                    document.getElementById('successTitle').textContent = '重複手續紀錄';
+                    info.innerHTML = `<div style="color:#ff4d4d; font-weight:bold; border-bottom:1px solid #ff4d4d; margin-bottom:1rem; padding-bottom:0.5rem;">此旅客已完成登機</div><p><b>姓名：</b>${json.data.name}</p><p><b>座位：</b>${json.data.seat || "未分配"}</p><p><b>初次手續：</b>${json.data.checkedInAt}</p><p><b>餐飲：</b>${json.data.meal}</p>`;
+                }
+                setAppState('success');
+            } catch (e) { 
+                alert('通訊中斷'); 
+                btn.disabled = false;
+                btn.innerHTML = '<span>確認並核發登機證</span>'; 
+            }
+        }
 
             try {
                 const res = await fetch(`${API_BASE}/checkin/${selectedUser.id}`, { 
