@@ -6,7 +6,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 
 app = Flask(__name__, static_folder='.', static_url_path='')
-app.secret_key = "ark_boarding_secure_key_2026" # Session 加密金鑰
+app.secret_key = "rcsa_ark_secure_key_20260508" # 安全加密金鑰
 CORS(app)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -45,7 +45,7 @@ def async_update_sheet(updates):
     try: get_worksheet().batch_update(updates)
     except Exception as e: print(f"背景同步失敗: {e}")
 
-# --- 管理員登入與驗證 ---
+# --- 管理員登入：精準讀取 A2 與 C2 ---
 @app.route('/api/login', methods=['POST'])
 def admin_login():
     data = request.json
@@ -53,11 +53,17 @@ def admin_login():
     ws = get_worksheet("管理員")
     if not ws: return jsonify({"success": False, "message": "尚未建立管理員分頁"}), 500
     
-    # 檢查帳號密碼
-    for admin in ws.get_all_records():
-        if str(admin.get('帳號')) == str(u) and str(admin.get('密碼')) == str(p):
+    try:
+        # A2 是帳號 (Row 2, Col 1), C2 是密碼 (Row 2, Col 3)
+        sheet_username = ws.cell(2, 1).value
+        sheet_password = ws.cell(2, 3).value
+        
+        if str(u) == str(sheet_username) and str(p) == str(sheet_password):
             session['admin_logged_in'] = True
             return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "message": f"讀取失敗: {e}"}), 500
+        
     return jsonify({"success": False, "message": "帳號或密碼錯誤"}), 401
 
 @app.route('/api/logout')
@@ -127,7 +133,7 @@ def checkin(pid):
         {'range': gspread.utils.rowcol_to_a1(p['_row'], int(cols.get('meal', 16))), 'values': [[meal]]}
     ]
     
-    # 精準寫入 Q(17), R(18), S(19)
+    # 替代資訊回填 Q(17), R(18), S(19)
     p_name_col, p_phone_col, p_email_col = 17, 18, 19
     if not is_original and proxy_info:
         updates.extend([
@@ -136,7 +142,7 @@ def checkin(pid):
             {'range': gspread.utils.rowcol_to_a1(p['_row'], p_email_col), 'values': [[proxy_info.get('email', '')]]}
         ])
     else:
-        # 本人報到則清空
+        # 本人則清空替代欄位
         updates.extend([{'range': gspread.utils.rowcol_to_a1(p['_row'], c), 'values': [['']]} for c in [p_name_col, p_phone_col, p_email_col]])
             
     threading.Thread(target=async_update_sheet, args=(updates,)).start()
