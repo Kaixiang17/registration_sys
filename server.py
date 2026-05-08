@@ -52,6 +52,7 @@ def admin_login():
     ws = get_worksheet("管理員")
     if not ws: return jsonify({"success": False, "message": "尚未建立管理員分頁"}), 500
     try:
+        # A2 是帳號, C2 是密碼
         sheet_username = ws.cell(2, 1).value
         sheet_password = ws.cell(2, 3).value
         if str(u) == str(sheet_username) and str(p) == str(sheet_password):
@@ -78,42 +79,48 @@ def get_dashboard_stats():
     checked_in_list = [p for p in participants_cache if p['status'] in ['checked_in', '已報到', '替代']]
     logs = [{"name": f"{p['name']} (替代)" if p['status'] == '替代' else p['name'], "time": p['checkedInAt'], "company": p['company'], "meal": p['meal']} for p in checked_in_list]
     logs.sort(key=lambda x: x['time'], reverse=True)
-    return jsonify({
-        "success": True,
-        "stats": { "total": total, "checked_in": len(checked_in_list), "not_checked_in": total - len(checked_in_list), "logs": logs[:25], "table_stats": get_table_stats() }
-    })
-
-def get_table_stats():
-    stats = {}
+    
+    # 計算各桌報到率
+    stats_data = {}
     for p in participants_cache:
         t = p.get("table", "").strip()
         if not t: continue
-        if t not in stats: stats[t] = {"total": 0, "checked_in": 0}
-        stats[t]["total"] += 1
-        if p["status"] in ["checked_in", "已報到", "替代"]: stats[t]["checked_in"] += 1
-    return {t: {"total": s["total"], "checked_in": s["checked_in"], "rate": round(s["checked_in"]/s["total"]*100, 1)} for t, s in stats.items() if s["total"] > 0}
+        if t not in stats_data: stats_data[t] = {"total": 0, "checked": 0}
+        stats_data[t]["total"] += 1
+        if p["status"] in ["checked_in", "已報到", "替代"]: stats_data[t]["checked"] += 1
+    
+    table_stats = {t: round(s["checked"]/s["total"]*100, 1) for t, s in stats_data.items() if s["total"] > 0}
+
+    return jsonify({
+        "success": True,
+        "stats": { "total": total, "checked_in": len(checked_in_list), "not_checked_in": total - len(checked_in_list), "logs": logs[:25], "table_stats": table_stats }
+    })
 
 @app.route('/')
 def index(): return send_from_directory('.', '活動報到系統.html')
 
-@app.route('/api/config')
-def get_config(): return jsonify(load_config())
+@app.route('/api/config', methods=['GET', 'POST'])
+def handle_config():
+    if not session.get('admin_logged_in'): return jsonify({"success": False}), 403
+    if request.method == 'POST':
+        with open(CONFIG_PATH, 'w', encoding='utf-8') as f: json.dump(request.json, f, ensure_ascii=False, indent=4)
+        return jsonify({"success": True, "data": request.json})
+    return jsonify(load_config())
 
-# --- 搜尋邏輯優化：解決 [object Object] 與非該公司員工問題 ---
 @app.route('/api/search/<method>')
 def search(method):
     refresh_cache()
     q = request.args.get(method, "").strip().lower()
     
     if method == 'company':
-        # 僅回傳公司名稱清單，避免回傳物件
-        matched_companies = sorted(list(set(p.get('company', '') for p in participants_cache if q in p.get('company', '').lower() and p.get('company'))))
-        return jsonify({"success": True, "data": matched_companies})
+        # 僅回傳不重複的公司名稱，解決顯示 [object Object] 的問題
+        matched = sorted(list(set(p.get('company', '') for p in participants_cache if q in p.get('company', '').lower() and p.get('company'))))
+        return jsonify({"success": True, "data": matched})
     
     if method == 'company_members':
-        # 嚴格過濾：僅回傳完全符合公司名稱的人員
-        company_name = request.args.get('name', '').strip().lower()
-        members = [p for p in participants_cache if p.get('company', '').lower() == company_name]
+        # 嚴格過濾該公司員工
+        name = request.args.get('name', '').strip().lower()
+        members = [p for p in participants_cache if p.get('company', '').lower() == name]
         return jsonify({"success": True, "data": members})
 
     return jsonify({"success": True, "data": [p for p in participants_cache if q in p.get(method, "").lower() or q in p.get('name', '').lower()]})
@@ -139,15 +146,14 @@ def checkin(pid):
         {'range': gspread.utils.rowcol_to_a1(p['_row'], int(cols.get('meal', 16))), 'values': [[meal]]}
     ]
     
-    # Q(17), R(18), S(19) 精準寫入
+    # 替代欄位 Q(17), R(18), S(19)
     p_name_col, p_phone_col, p_email_col = 17, 18, 19
     if not is_original and proxy_info:
-        updates.extend([
-            {'range': gspread.utils.rowcol_to_a1(p['_row'], p_name_col), 'values': [[proxy_info.get('name', '')]]},
-            {'range': gspread.utils.rowcol_to_a1(p['_row'], p_phone_col), 'values': [[proxy_info.get('phone', '')]]},
-            {'range': gspread.utils.rowcol_to_a1(p['_row'], p_email_col), 'values': [[proxy_info.get('email', '')]]}
-        ])
+        updates.append({'range': gspread.utils.rowcol_to_a1(p['_row'], p_name_col), 'values': [[proxy_info.get('name', '')]]})
+        updates.append({'range': gspread.utils.rowcol_to_a1(p['_row'], p_phone_col), 'values': [[proxy_info.get('phone', '')]]})
+        updates.append({'range': gspread.utils.rowcol_to_a1(p['_row'], p_email_col), 'values': [[proxy_info.get('email', '')]]})
     else:
+        # 本人報到則自動清空替代者欄位
         updates.extend([{'range': gspread.utils.rowcol_to_a1(p['_row'], c), 'values': [['']]} for c in [p_name_col, p_phone_col, p_email_col]])
             
     threading.Thread(target=async_update_sheet, args=(updates,)).start()
@@ -171,11 +177,11 @@ def refresh_cache(force=False):
                     "company": g(cols.get('company', 3)), "email": g(cols.get('email', 9)),
                     "status": g(cols.get('status', 15)), "meal": g(cols.get('meal', 16)),
                     "checkedInAt": g(cols.get('checkedInAt', 14)), "seat": g(cols.get('seat', 13)), 
-                    "_row": i + 4 
+                    "table": g(cols.get("seat", 13))[:2] if g(cols.get("seat", 13))[:2].isdigit() else "", "_row": i + 4 
                 })
             participants_cache = new_cache
             last_cache_update = time.time()
-        except Exception as e: print(f"同步失敗: {e}")
+        except Exception as e: print(f"緩存刷新失敗: {e}")
 
 if __name__ == '__main__':
     refresh_cache(True)
