@@ -146,18 +146,32 @@
         function prepareSearch(m, l) { searchMethod = m; document.getElementById('actionTitle').textContent = `輸入旅客${l}`; setAppState('action'); }
 
         async function handleAction() {
-            const val = document.getElementById('actionInput').value.trim();
-            if(!val) return;
-            try {
-                const res = await fetch(`${API_BASE}/search/${searchMethod}?${searchMethod}=${encodeURIComponent(val)}`);
-                const json = await res.json();
-                if (json.data && json.data.length > 0) {
-                    if (searchMethod === 'company') { renderCompanyList(json.data); }
-                    else if (json.data.length === 1) { selectedUser = json.data[0]; renderMealOptions(); }
-                    else { window.tempData = json.data; renderUserList(json.data); }
-                } else alert('查無資料');
-            } catch(e) { alert('通訊異常'); }
-        }
+        const val = document.getElementById('actionInput').value.trim();
+        if(!val) return;
+        try {
+            const res = await fetch(`${API_BASE}/search/${searchMethod}?${searchMethod}=${encodeURIComponent(val)}`);
+            const json = await res.json();
+            if (json.data && json.data.length > 0) {
+                if (searchMethod === 'company') { 
+                    renderCompanyList(json.data); 
+                } else if (json.data.length === 1) { 
+                    selectedUser = json.data[0]; renderMealOptions(); 
+                } else { 
+                    window.tempData = json.data; renderUserList(json.data, '找到多位旅客'); 
+                }
+            } else alert('查無此旅客資料');
+        } catch(e) { alert('通訊異常'); }
+    }
+
+    async function fetchMembers(companyName) {
+        // 優化：明確指定搜尋該公司的成員清單
+        try {
+            const res = await fetch(`${API_BASE}/search/company_members?name=${encodeURIComponent(companyName)}`);
+            const json = await res.json();
+            window.tempData = json.data;
+            renderUserList(json.data, companyName);
+        } catch(e) { alert('載入名單失敗'); }
+    }
 
         function renderCompanyList(u) {
             document.getElementById('groupList').innerHTML = u.map(c => `<div class="group-item" onclick="fetchMembers('${c}')"><b>${c}</b></div>`).join('');
@@ -210,38 +224,58 @@
         }
 
         async function submitCheckin() {
-            const btn = document.getElementById('finalBtn');
-            btn.disabled = true; btn.innerHTML = '<span>📡 開立登機證中...</span>';
-            const proxy_info = window.isOriginal ? {} : { 
-                name: document.getElementById('proxyName').value.trim(), 
-                phone: document.getElementById('proxyPhone').value.trim(),
-                email: document.getElementById('proxyEmail').value.trim()
-            };
-            if(!window.isOriginal && (!proxy_info.name || !proxy_info.phone)) return alert("請填寫替代姓名與電話");
-            
-            try {
-                const res = await fetch(`${API_BASE}/checkin/${selectedUser.id}`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ meal: window.selectedMeal, is_original: window.isOriginal, proxy_info })
-                });
-                const json = await res.json();
-                if(json.success) {
-                    const statusText = json.data.status === '替代' ? '<span style="color:#ffa500;">(替代報到)</span>' : '';
-                    // ★ 成功畫面資訊對齊您的截圖
-                    document.getElementById('successInfo').innerHTML = `
-                        <div style="color:#4ade80; font-weight:bold; border-bottom:1px solid #4ade80; margin-bottom:1rem; padding-bottom:0.5rem; font-size:1.1rem;">登艦手續完成，歡迎登機</div>
-                        <p><b>姓名：</b>${json.data.name} ${statusText}</p>
-                        <p><b>單位：</b>${json.data.company || "個人旅客"}</p>
-                        <p><b>座位：</b><span style="color:var(--text-dark); font-size:1.3rem; font-weight:bold;">${json.data.seat || "未分配"}</span></p>
-                        <p><b>餐飲：</b>${json.data.meal}</p>
-                        <p><b>時間：</b>${json.data.checkedInAt}</p>
-                        <div style="margin-top: 1rem; padding: 1rem; background: rgba(255, 255, 255, 0.1); border-radius: 0.5rem; text-align: center; border: 1px dashed var(--text-dark);">📸 <b>截圖提醒：</b>請保存此畫面以供核對</div>`;
-                } else {
-                    document.getElementById('successInfo').innerHTML = `<p style="color:#ff4d4d;">此旅客已完成登機</p><p>姓名：${json.data.name}</p>`;
-                }
-                setAppState('success');
-            } catch(e) { alert('連線中斷'); btn.disabled=false; }
+        const btn = document.getElementById('finalBtn');
+        
+        // ★ 替代資訊精準抓取與格式驗證
+        const proxy_info = window.isOriginal ? {} : { 
+            name: document.getElementById('proxyName').value.trim(), 
+            phone: document.getElementById('proxyPhone').value.trim(),
+            email: document.getElementById('proxyEmail').value.trim()
+        };
+
+        if(!window.isOriginal) {
+            // 防呆 1：基本欄位檢查
+            if (!proxy_info.name || !proxy_info.phone || !proxy_info.email) {
+                alert("替代報到請填寫完整的姓名、電話與 Email");
+                return;
+            }
+            // 防呆 2：電話格式（09 開頭且 10 位數字）
+            const phoneRegex = /^09\d{8}$/;
+            if (!phoneRegex.test(proxy_info.phone)) {
+                alert("電話格式錯誤！請輸入 09 開頭的 10 位數字手機號碼");
+                return;
+            }
+            // 防呆 3：Gmail 格式
+            const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+            if (!gmailRegex.test(proxy_info.email)) {
+                alert("Email 格式錯誤！必須為正確的 @gmail.com 帳號");
+                return;
+            }
         }
+
+        btn.disabled = true; btn.innerHTML = '<span>📡 正在發行登機證...</span>';
+        try {
+            const res = await fetch(`${API_BASE}/checkin/${selectedUser.id}`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ meal: window.selectedMeal, is_original: window.isOriginal, proxy_info })
+            });
+            const json = await res.json();
+            if(json.success) {
+                const statusText = json.data.status === '替代' ? '<span style="color:#ffa500;">(替代報到)</span>' : '';
+                document.getElementById('successInfo').innerHTML = `
+                    <div style="color:#4ade80; font-weight:bold; border-bottom:1px solid #4ade80; margin-bottom:1rem; padding-bottom:0.5rem; font-size:1.1rem;">登艦手續完成，歡迎登機</div>
+                    <p><b>姓名：</b>${json.data.name} ${statusText}</p>
+                    <p><b>單位：</b>${json.data.company || "個人旅客"}</p>
+                    <p><b>座位：</b><span style="color:var(--text-dark); font-size:1.3rem; font-weight:bold;">${json.data.seat || "未分配"}</span></p>
+                    <p><b>餐飲：</b>${json.data.meal}</p>
+                    <p><b>時間：</b>${json.data.checkedInAt}</p>
+                    <div style="margin-top: 1rem; padding: 1rem; background: rgba(255, 255, 255, 0.1); border-radius: 0.5rem; text-align: center; border: 1px dashed var(--text-dark);">📸 <b>截圖提醒：</b>請保存此畫面以供核對</div>`;
+            } else {
+                document.getElementById('successInfo').innerHTML = `<p style="color:#ff4d4d;">此旅客已完成登機</p><p>姓名：${json.data.name}</p>`;
+            }
+            setAppState('success');
+        } catch(e) { alert('連線中斷'); btn.disabled=false; }
+    }
 
         window.onload = async () => { 
             const res = await fetch(`${API_BASE}/config`); 
