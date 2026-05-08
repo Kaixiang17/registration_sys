@@ -6,7 +6,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 
 app = Flask(__name__, static_folder='.', static_url_path='')
-app.secret_key = "rcsa_ark_secure_key_20260508" # 安全加密金鑰
+app.secret_key = "rcsa_ark_secure_key_20260508" 
 CORS(app)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -45,25 +45,19 @@ def async_update_sheet(updates):
     try: get_worksheet().batch_update(updates)
     except Exception as e: print(f"背景同步失敗: {e}")
 
-# --- 管理員登入：精準讀取 A2 與 C2 ---
 @app.route('/api/login', methods=['POST'])
 def admin_login():
     data = request.json
     u, p = data.get('username'), data.get('password')
     ws = get_worksheet("管理員")
     if not ws: return jsonify({"success": False, "message": "尚未建立管理員分頁"}), 500
-    
     try:
-        # A2 是帳號 (Row 2, Col 1), C2 是密碼 (Row 2, Col 3)
         sheet_username = ws.cell(2, 1).value
         sheet_password = ws.cell(2, 3).value
-        
         if str(u) == str(sheet_username) and str(p) == str(sheet_password):
             session['admin_logged_in'] = True
             return jsonify({"success": True})
-    except Exception as e:
-        return jsonify({"success": False, "message": f"讀取失敗: {e}"}), 500
-        
+    except Exception as e: return jsonify({"success": False, "message": f"讀取失敗: {e}"}), 500
     return jsonify({"success": False, "message": "帳號或密碼錯誤"}), 401
 
 @app.route('/api/logout')
@@ -73,8 +67,7 @@ def logout():
 
 @app.route('/admin')
 def admin_page():
-    if not session.get('admin_logged_in'):
-        return send_from_directory('.', 'login.html')
+    if not session.get('admin_logged_in'): return send_from_directory('.', 'login.html')
     return send_from_directory('.', 'admin.html')
 
 @app.route('/api/dashboard_stats')
@@ -106,10 +99,23 @@ def index(): return send_from_directory('.', '活動報到系統.html')
 @app.route('/api/config')
 def get_config(): return jsonify(load_config())
 
+# --- 搜尋邏輯優化：解決 [object Object] 與非該公司員工問題 ---
 @app.route('/api/search/<method>')
 def search(method):
     refresh_cache()
     q = request.args.get(method, "").strip().lower()
+    
+    if method == 'company':
+        # 僅回傳公司名稱清單，避免回傳物件
+        matched_companies = sorted(list(set(p.get('company', '') for p in participants_cache if q in p.get('company', '').lower() and p.get('company'))))
+        return jsonify({"success": True, "data": matched_companies})
+    
+    if method == 'company_members':
+        # 嚴格過濾：僅回傳完全符合公司名稱的人員
+        company_name = request.args.get('name', '').strip().lower()
+        members = [p for p in participants_cache if p.get('company', '').lower() == company_name]
+        return jsonify({"success": True, "data": members})
+
     return jsonify({"success": True, "data": [p for p in participants_cache if q in p.get(method, "").lower() or q in p.get('name', '').lower()]})
 
 @app.route('/api/checkin/<pid>', methods=['POST'])
@@ -133,7 +139,7 @@ def checkin(pid):
         {'range': gspread.utils.rowcol_to_a1(p['_row'], int(cols.get('meal', 16))), 'values': [[meal]]}
     ]
     
-    # 替代資訊回填 Q(17), R(18), S(19)
+    # Q(17), R(18), S(19) 精準寫入
     p_name_col, p_phone_col, p_email_col = 17, 18, 19
     if not is_original and proxy_info:
         updates.extend([
@@ -142,7 +148,6 @@ def checkin(pid):
             {'range': gspread.utils.rowcol_to_a1(p['_row'], p_email_col), 'values': [[proxy_info.get('email', '')]]}
         ])
     else:
-        # 本人則清空替代欄位
         updates.extend([{'range': gspread.utils.rowcol_to_a1(p['_row'], c), 'values': [['']]} for c in [p_name_col, p_phone_col, p_email_col]])
             
     threading.Thread(target=async_update_sheet, args=(updates,)).start()
@@ -166,7 +171,7 @@ def refresh_cache(force=False):
                     "company": g(cols.get('company', 3)), "email": g(cols.get('email', 9)),
                     "status": g(cols.get('status', 15)), "meal": g(cols.get('meal', 16)),
                     "checkedInAt": g(cols.get('checkedInAt', 14)), "seat": g(cols.get('seat', 13)), 
-                    "table": g(cols.get("seat", 13))[:2] if g(cols.get("seat", 13))[:2].isdigit() else "", "_row": i + 4 
+                    "_row": i + 4 
                 })
             participants_cache = new_cache
             last_cache_update = time.time()
