@@ -28,6 +28,7 @@ def load_config():
 def get_gspread_client():
     scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
     json_path = RENDER_KEY if os.path.exists(RENDER_KEY) else LOCAL_KEY
+    if not os.path.exists(json_path): json_path = os.path.join(BASE_DIR, 'test0417-493608-ec0a369af886.json')
     return gspread.authorize(Credentials.from_service_account_file(json_path, scopes=scope))
 
 def get_worksheet():
@@ -45,14 +46,16 @@ def refresh_cache(force=False):
         try:
             all_values = get_worksheet().get_all_values()
             cols = load_config().get('excel_columns', {})
-            new_cache = []
+            new_cache, last_company = [], ""
             for i, row in enumerate(all_values[3:]):
                 def g(c): return row[c-1].strip() if c and c-1 < len(row) else ""
+                comp = g(cols.get('company', 3))
+                if comp: last_company = comp
                 name = g(cols.get('name', 6))
                 if not name: continue
                 new_cache.append({
                     "id": f"{name}_{i}", "name": name, "phone": g(cols.get('phone', 8)),
-                    "company": g(cols.get('company', 3)), "email": g(cols.get('email', 9)),
+                    "company": last_company, "email": g(cols.get('email', 9)),
                     "status": g(cols.get('status', 15)), "meal": g(cols.get('meal', 16)),
                     "checkedInAt": g(cols.get('checkedInAt', 14)), "seat": g(cols.get('seat', 13)), 
                     "table": g(cols.get("seat", 13))[:2] if g(cols.get("seat", 13))[:2].isdigit() else "", "_row": i + 4 
@@ -74,6 +77,16 @@ def handle_config():
         return jsonify({"success": True, "data": request.json})
     return jsonify(load_config())
 
+def get_table_stats():
+    stats = {}
+    for p in participants_cache:
+        t = p.get("table", "").strip()
+        if not t: continue
+        if t not in stats: stats[t] = {"total": 0, "checked_in": 0}
+        stats[t]["total"] += 1
+        if p["status"] in ["checked_in", "已報到", "替代"]: stats[t]["checked_in"] += 1
+    return {t: {"total": s["total"], "checked_in": s["checked_in"], "rate": round(s["checked_in"]/s["total"]*100, 1)} for t, s in stats.items() if s["total"] > 0}
+
 @app.route('/api/dashboard_stats')
 def get_dashboard_stats():
     refresh_cache()
@@ -83,14 +96,28 @@ def get_dashboard_stats():
     logs.sort(key=lambda x: x['time'], reverse=True)
     return jsonify({
         "success": True,
-        "stats": { "total": total, "checked_in": len(checked_in_list), "not_checked_in": total - len(checked_in_list), "logs": logs[:25] }
+        "stats": { "total": total, "checked_in": len(checked_in_list), "not_checked_in": total - len(checked_in_list), "logs": logs[:25] , "table_stats": get_table_stats() }
     })
 
 @app.route('/api/search/<method>')
 def search(method):
     refresh_cache()
     q = request.args.get(method, "").strip().lower()
-    return jsonify({"success": True, "data": [p for p in participants_cache if q in p.get(method, "").lower() or q in p.get('name', '').lower()]})
+    if method == 'name':
+        return jsonify({"success": True, "data": [p for p in participants_cache if q in p['name'].lower()]})
+    elif method == 'phone':
+        q_clean = ''.join(filter(str.isdigit, q))
+        return jsonify({"success": True, "data": [p for p in participants_cache if q_clean in ''.join(filter(str.isdigit, p.get('phone', '')))]})
+    elif method == 'email':
+        return jsonify({"success": True, "data": [p for p in participants_cache if q in p['email'].lower()]})
+    elif method == 'company':
+        matched_companies = sorted(list(set(p.get('company', '') for p in participants_cache if q in p.get('company', '').lower() and p.get('company'))))
+        return jsonify({"success": True, "data": matched_companies})
+    elif method == 'company_members':
+        company_name = request.args.get('name', '').strip().lower()
+        members = [p for p in participants_cache if p.get('company', '').lower() == company_name]
+        return jsonify({"success": True, "data": members})
+    return jsonify({"success": False, "data": []})
 
 @app.route('/api/checkin/<pid>', methods=['POST'])
 def checkin(pid):
@@ -98,6 +125,7 @@ def checkin(pid):
     now_tw = (datetime.utcnow() + timedelta(hours=8)).strftime('%Y/%m/%d %H:%M:%S')
     p = next((x for x in participants_cache if x['id'] == pid), None)
     if not p: return jsonify({"success": False}), 404
+    
     if p['status'] in ['checked_in', '已報到', '替代']:
         return jsonify({"success": False, "error": "already_done", "data": p})
     
@@ -107,28 +135,28 @@ def checkin(pid):
     cols = load_config().get('excel_columns', {})
     status_val = 'checked_in' if is_original else '替代'
     
-    # 基本寫入：時間(14)、狀態(15)、餐點(16)
+    # 鎖定寫入更新清單
     updates = [
         {'range': gspread.utils.rowcol_to_a1(p['_row'], int(cols.get('checkedInAt', 14))), 'values': [[now_tw]]},
         {'range': gspread.utils.rowcol_to_a1(p['_row'], int(cols.get('status', 15))), 'values': [[status_val]]},
         {'range': gspread.utils.rowcol_to_a1(p['_row'], int(cols.get('meal', 16))), 'values': [[meal]]}
     ]
     
-    # 精準定位替代者欄位 Q(17), R(18), S(19)
+    # 精準匹配替代者欄位 Q(17), R(18), S(19)
     p_name_col = int(cols.get('proxyName', 17))
     p_phone_col = int(cols.get('proxyPhone', 18))
     p_email_col = int(cols.get('proxyEmail', 19))
     
     if not is_original and proxy_info:
-        # 替代者：精準寫入資訊
-        updates.extend([
-            {'range': gspread.utils.rowcol_to_a1(p['_row'], p_name_col), 'values': [[proxy_info.get('name', '')]]},
-            {'range': gspread.utils.rowcol_to_a1(p['_row'], p_phone_col), 'values': [[proxy_info.get('phone', '')]]},
-            {'range': gspread.utils.rowcol_to_a1(p['_row'], p_email_col), 'values': [[proxy_info.get('email', '')]]}
-        ])
+        # 替代報到：寫入資料
+        updates.append({'range': gspread.utils.rowcol_to_a1(p['_row'], p_name_col), 'values': [[proxy_info.get('name', '')]]})
+        updates.append({'range': gspread.utils.rowcol_to_a1(p['_row'], p_phone_col), 'values': [[proxy_info.get('phone', '')]]})
+        updates.append({'range': gspread.utils.rowcol_to_a1(p['_row'], p_email_col), 'values': [[proxy_info.get('email', '')]]})
     else:
-        # 本人：精準清空欄位
-        updates.extend([{'range': gspread.utils.rowcol_to_a1(p['_row'], c), 'values': [['']]} for c in [p_name_col, p_phone_col, p_email_col]])
+        # 本人報到：清空替代欄位（達成精準寫入，防止髒資料殘留）
+        updates.append({'range': gspread.utils.rowcol_to_a1(p['_row'], p_name_col), 'values': [['']]})
+        updates.append({'range': gspread.utils.rowcol_to_a1(p['_row'], p_phone_col), 'values': [['']]})
+        updates.append({'range': gspread.utils.rowcol_to_a1(p['_row'], p_email_col), 'values': [['']]})
             
     threading.Thread(target=async_update_sheet, args=(updates,)).start()
     p.update({"status": status_val, "meal": meal, "checkedInAt": now_tw})
