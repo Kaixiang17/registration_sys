@@ -52,7 +52,6 @@ def admin_login():
     ws = get_worksheet("管理員")
     if not ws: return jsonify({"success": False, "message": "尚未建立管理員分頁"}), 500
     try:
-        # A2 是帳號, C2 是密碼
         sheet_username = ws.cell(2, 1).value
         sheet_password = ws.cell(2, 3).value
         if str(u) == str(sheet_username) and str(p) == str(sheet_password):
@@ -80,7 +79,6 @@ def get_dashboard_stats():
     logs = [{"name": f"{p['name']} (替代)" if p['status'] == '替代' else p['name'], "time": p['checkedInAt'], "company": p['company'], "meal": p['meal']} for p in checked_in_list]
     logs.sort(key=lambda x: x['time'], reverse=True)
     
-    # 計算各桌報到率
     stats_data = {}
     for p in participants_cache:
         t = p.get("table", "").strip()
@@ -113,12 +111,10 @@ def search(method):
     q = request.args.get(method, "").strip().lower()
     
     if method == 'company':
-        # 僅回傳不重複的公司名稱，解決顯示 [object Object] 的問題
         matched = sorted(list(set(p.get('company', '') for p in participants_cache if q in p.get('company', '').lower() and p.get('company'))))
         return jsonify({"success": True, "data": matched})
     
     if method == 'company_members':
-        # 嚴格過濾該公司員工
         name = request.args.get('name', '').strip().lower()
         members = [p for p in participants_cache if p.get('company', '').lower() == name]
         return jsonify({"success": True, "data": members})
@@ -146,14 +142,12 @@ def checkin(pid):
         {'range': gspread.utils.rowcol_to_a1(p['_row'], int(cols.get('meal', 16))), 'values': [[meal]]}
     ]
     
-    # 替代欄位 Q(17), R(18), S(19)
     p_name_col, p_phone_col, p_email_col = 17, 18, 19
     if not is_original and proxy_info:
         updates.append({'range': gspread.utils.rowcol_to_a1(p['_row'], p_name_col), 'values': [[proxy_info.get('name', '')]]})
         updates.append({'range': gspread.utils.rowcol_to_a1(p['_row'], p_phone_col), 'values': [[proxy_info.get('phone', '')]]})
         updates.append({'range': gspread.utils.rowcol_to_a1(p['_row'], p_email_col), 'values': [[proxy_info.get('email', '')]]})
     else:
-        # 本人報到則自動清空替代者欄位
         updates.extend([{'range': gspread.utils.rowcol_to_a1(p['_row'], c), 'values': [['']]} for c in [p_name_col, p_phone_col, p_email_col]])
             
     threading.Thread(target=async_update_sheet, args=(updates,)).start()
@@ -168,16 +162,30 @@ def refresh_cache(force=False):
             all_values = get_worksheet().get_all_values()
             cols = load_config().get('excel_columns', {})
             new_cache = []
+            last_company = "" # 核心：追蹤合併儲存格的公司名稱
             for i, row in enumerate(all_values[3:]):
                 def g(c): return row[c-1].strip() if c and c-1 < len(row) else ""
+                
+                # 處理合併儲存格：如果目前公司欄位為空，延用上一列的公司名稱
+                current_comp = g(cols.get('company', 3))
+                if current_comp:
+                    last_company = current_comp
+                
                 name = g(cols.get('name', 6))
                 if not name: continue
+                
                 new_cache.append({
-                    "id": f"{name}_{i}", "name": name, "phone": g(cols.get('phone', 8)),
-                    "company": g(cols.get('company', 3)), "email": g(cols.get('email', 9)),
-                    "status": g(cols.get('status', 15)), "meal": g(cols.get('meal', 16)),
-                    "checkedInAt": g(cols.get('checkedInAt', 14)), "seat": g(cols.get('seat', 13)), 
-                    "table": g(cols.get("seat", 13))[:2] if g(cols.get("seat", 13))[:2].isdigit() else "", "_row": i + 4 
+                    "id": f"{name}_{i}", 
+                    "name": name, 
+                    "phone": g(cols.get('phone', 8)),
+                    "company": last_company, # 套用追蹤後的公司名稱
+                    "email": g(cols.get('email', 9)),
+                    "status": g(cols.get('status', 15)), 
+                    "meal": g(cols.get('meal', 16)),
+                    "checkedInAt": g(cols.get('checkedInAt', 14)), 
+                    "seat": g(cols.get('seat', 13)), 
+                    "table": g(cols.get("seat", 13))[:2] if g(cols.get("seat", 13))[:2].isdigit() else "", 
+                    "_row": i + 4 
                 })
             participants_cache = new_cache
             last_cache_update = time.time()
