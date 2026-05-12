@@ -162,19 +162,31 @@ def refresh_cache(force=False):
             all_values = get_worksheet().get_all_values()
             cols = load_config().get('excel_columns', {})
             new_cache = []
-            last_company = "" 
+            last_company = "" # 處理 Excel 合併儲存格：用於紀錄最新出現過的公司名稱
+            
             for i, row in enumerate(all_values[3:]):
                 def g(c): return row[c-1].strip() if c and c-1 < len(row) else ""
+                
+                # 合併儲存格邏輯：如果當前公司欄位有字，更新 last_company；如果沒字，沿用上一個有字的公司
                 current_comp = g(cols.get('company', 3))
-                if current_comp: last_company = current_comp
+                if current_comp:
+                    last_company = current_comp
+                
                 name = g(cols.get('name', 6))
-                if not name: continue
+                if not name: continue # 略過空行
+                
                 new_cache.append({
-                    "id": f"{name}_{i}", "name": name, "phone": g(cols.get('phone', 8)),
-                    "company": last_company, "email": g(cols.get('email', 9)),
-                    "status": g(cols.get('status', 15)), "meal": g(cols.get('meal', 16)),
-                    "checkedInAt": g(cols.get('checkedInAt', 14)), "seat": g(cols.get('seat', 13)), 
-                    "table": g(cols.get("seat", 13))[:2] if g(cols.get("seat", 13))[:2].isdigit() else "", "_row": i + 4 
+                    "id": f"{name}_{i}", 
+                    "name": name, 
+                    "phone": g(cols.get('phone', 8)),
+                    "company": last_company, # 確保這裡永遠抓得到公司名
+                    "email": g(cols.get('email', 9)),
+                    "status": g(cols.get('status', 15)), 
+                    "meal": g(cols.get('meal', 16)),
+                    "checkedInAt": g(cols.get('checkedInAt', 14)), 
+                    "seat": g(cols.get('seat', 13)), 
+                    "table": g(cols.get("seat", 13))[:2] if g(cols.get("seat", 13))[:2].isdigit() else "", 
+                    "_row": i + 4 
                 })
             participants_cache = new_cache
             last_cache_update = time.time()
