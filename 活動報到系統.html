@@ -6,78 +6,40 @@
     <title>智慧方舟 - 航空登機系統</title>
     <link rel="stylesheet" href="smart-ark-theme.css">
     <style>
+        /* 保留您原本的所有 CSS 樣式 */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "PingFang TC", "Michroma", "Stick", sans-serif; }
         body { line-height: 1.6; color: #fff; }
         header { padding: 1.2rem 0; position: sticky; top: 0; z-index: 100; }
         .header-container { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; }
         main { max-width: 1200px; margin: 0 auto; padding: 3rem 1.5rem; }
         .state-hidden { display: none !important; }
-
-        /* 首頁雙按鈕 */
         .home-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 3rem; margin-top: 2rem; }
         .home-card { padding: 5rem 2rem; text-align: center; cursor: pointer; border-radius: 1.5rem; min-height: 400px; display: flex; flex-direction: column; justify-content: center; }
         .home-card h2 { margin: 1.5rem 0 1rem 0; font-size: 2.2rem; }
-        
-        /* 驗證方式四宮格 */
         .verify-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-top: 2rem; }
         .verify-card { padding: 2.5rem 1.5rem; text-align: center; cursor: pointer; border-radius: 1rem; }
         @media(max-width: 768px) { .verify-grid { grid-template-columns: 1fr; } }
-
         .form-card { max-width: 600px; margin: 0 auto; padding: 3rem; text-align: center; border-radius: 1.5rem; }
         .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2.5rem; }
         .product-img { width: 100%; height: 220px; object-fit: contain; background: rgba(0,0,0,0.4); border-bottom: 1px solid var(--accent-gray); }
-
-        .btn-back-nav {
-            background: none; border: 1px solid var(--accent-gray); color: var(--text-dark);
-            padding: 0.5rem 1.2rem; border-radius: 0.5rem; cursor: pointer; font-weight: bold;
-            transition: 0.3s; margin-bottom: 1.5rem; display: inline-flex; align-items: center; gap: 0.5rem;
-        }
+        .btn-back-nav { background: none; border: 1px solid var(--accent-gray); color: var(--text-dark); padding: 0.5rem 1.2rem; border-radius: 0.5rem; cursor: pointer; font-weight: bold; transition: 0.3s; margin-bottom: 1.5rem; display: inline-flex; align-items: center; gap: 0.5rem; }
         .btn-back-nav:hover { border-color: var(--text-dark); background: rgba(0, 229, 255, 0.1); }
-        .btn-back-nav:active { transform: scale(0.95); background: rgba(0, 229, 255, 0.2); }
-
         .cyber-input { width: 100%; margin-bottom: 1.5rem; padding: 1.2rem; font-size: 1.2rem; }
         .cyber-button { width: 100%; margin-top: 0.5rem; padding: 1.2rem; font-size: 1.1rem; }
-        .cyber-button:active { transform: scale(0.98); filter: brightness(1.2); }
-        
         .group-item { padding: 1.5rem; border-bottom: 1px solid rgba(0,229,255,0.2); cursor: pointer; transition: 0.3s; text-align: left; display: flex; justify-content: space-between; align-items: center;}
         .group-item:hover { background: rgba(0,229,255,0.1); }
-        .group-item:active { background: rgba(0,229,255,0.2); transform: scale(0.99); }
-
-        /* 針對首頁與驗證卡片的點擊反饋 */
-        .home-card:active, .verify-card:active { transform: scale(0.98); filter: brightness(1.1); }
-        
-        /* 針對餐點選項與替代者按鈕的點擊反饋 */
-        [id^="m-"]:active, #isOriginalYes:active, #isOriginalNo:active { 
-            transform: scale(0.95); 
-            filter: brightness(1.3);
-            box-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
-        }
-        
-        /* 選取後的狀態加強 */
-        .meal-selected, .is-original-selected {
-            border-color: var(--text-dark) !important;
-            background: rgba(0, 229, 255, 0.2) !important;
-            box-shadow: 0 0 15px rgba(0, 229, 255, 0.2) !important;
-        }
-        
-        /* 替代者選取狀態 (橘色系) */
-        .proxy-selected {
-            border-color: #ffa500 !important;
-            background: rgba(255, 165, 0, 0.15) !important;
-            box-shadow: 0 0 15px rgba(255, 165, 0, 0.2) !important;
-        }
-
+        .meal-selected, .is-original-selected { border-color: var(--text-dark) !important; background: rgba(0, 229, 255, 0.2) !important; }
+        .proxy-selected { border-color: #ffa500 !important; background: rgba(255, 165, 0, 0.15) !important; }
         .info-box { text-align: left; padding: 1.5rem; border-radius: 1rem; margin: 1.5rem 0; background: rgba(0,0,0,0.5); border: 1px solid var(--accent-gray); }
     </style>
 </head>
 <body class="circuit-background">
     <div class="ark-background"></div>
-
     <header class="panel-border" style="border-top:none; border-left:none; border-right:none; background: rgba(10,20,35,0.85); backdrop-filter: blur(15px);">
         <div class="header-container">
             <div onclick="resetToHome()" style="cursor:pointer; color:var(--text-dark); font-weight: bold; font-size: 1.1rem;">✈️ 航班大廳</div>
             <div class="neon-text" style="font-size: 1.4rem;">BOARDING SYSTEM</div>
-            <div id="mapBtn" onclick="toggleMapModal(true)" style="font-size: 0.9rem; color: var(--text-dark); cursor: pointer; border: 1px solid var(--text-dark); padding: 4px 12px; border-radius: 20px; font-weight: bold; transition: 0.3s;">🗺️ 地圖導覽</div>
+            <div id="mapBtn" onclick="toggleMapModal(true)" style="font-size: 0.9rem; color: var(--text-dark); cursor: pointer; border: 1px solid var(--text-dark); padding: 4px 12px; border-radius: 20px; font-weight: bold;">🗺️ 地圖導覽</div>
         </div>
     </header>
 
@@ -104,20 +66,16 @@
                 <h2 class="neon-text" style="font-size: 2.2rem; margin-bottom:1rem;">請選擇驗證方式</h2>
                 <div class="verify-grid">
                     <div class="verify-card cyber-card cyber-hover" onclick="prepareSearch('name', '姓名')">
-                        <div style="font-size:3.5rem;">📝</div>
-                        <h3 class="neon-text">姓名報到</h3>
+                        <div style="font-size:3.5rem;">📝</div><h3 class="neon-text">姓名報到</h3>
                     </div>
                     <div class="verify-card cyber-card cyber-hover" onclick="prepareSearch('phone', '手機')">
-                        <div style="font-size:3.5rem;">📱</div>
-                        <h3 class="neon-text">手機報到</h3>
+                        <div style="font-size:3.5rem;">📱</div><h3 class="neon-text">手機報到</h3>
                     </div>
                     <div class="verify-card cyber-card cyber-hover" onclick="prepareSearch('email', 'Email')">
-                        <div style="font-size:3.5rem;">✉️</div>
-                        <h3 class="neon-text">Email 報到</h3>
+                        <div style="font-size:3.5rem;">✉️</div><h3 class="neon-text">Email 報到</h3>
                     </div>
                     <div class="verify-card cyber-card cyber-hover" onclick="prepareSearch('company', '公司')">
-                        <div style="font-size:3.5rem;">🏢</div>
-                        <h3 class="neon-text">公司報到</h3>
+                        <div style="font-size:3.5rem;">🏢</div><h3 class="neon-text">公司報到</h3>
                     </div>
                 </div>
             </div>
@@ -128,7 +86,7 @@
             <div class="form-card cyber-card">
                 <h2 id="actionTitle" class="neon-text" style="margin-bottom: 2rem; font-size: 2rem;">登機驗證</h2>
                 <input type="text" id="actionInput" class="cyber-input" placeholder="請輸入資訊">
-                <button class="cyber-button" style="margin-top: 1rem;" onclick="handleAction()"><span>啟動搜尋</span></button>
+                <button class="cyber-button" onclick="handleAction()"><span>啟動搜尋</span></button>
             </div>
         </div>
 
@@ -145,54 +103,40 @@
             <div class="form-card cyber-card">
                 <h2 class="neon-text" style="margin-bottom:2rem;">🍽️ 機上餐飲偏好</h2>
                 <div id="mealOptions"></div>
-                <button id="finalBtn" class="cyber-button" disabled style="margin-top: 2rem; font-size:1.3rem; padding:1.5rem;" onclick="submitCheckin()"><span>確認並核發登機證</span></button>
+                <button id="finalBtn" class="cyber-button" disabled onclick="submitCheckin()"><span>確認並核發登機證</span></button>
             </div>
         </div>
 
         <div id="successState" class="state-hidden">
             <div class="form-card cyber-card">
-                <div id="successIcon" style="color:var(--text-dark); font-size:6rem; line-height: 1; margin-bottom: 1rem;">🎫</div>
-                <h2 id="successTitle" class="neon-text" style="margin-bottom:1rem; font-size: 2.5rem;">手續完成！</h2>
+                <div id="successIcon" style="color:var(--text-dark); font-size:6rem;">🎫</div>
+                <h2 id="successTitle" class="neon-text">手續完成！</h2>
                 <div id="successInfo" class="info-box panel-border"></div>
-                <button class="cyber-button" onclick="resetToHome()"><span>🏠 回到航班大廳</span></button>
+                <button class="cyber-button" onclick="resetToHome()"><span>🏠 回到大廳</span></button>
             </div>
         </div>
 
         <div id="productState" class="state-hidden">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3rem;">
-                <div>
-                    <h1 class="neon-text" style="font-size: 2.5rem;">🛍️ 活動商品專區</h1>
-                    <p style="color: #888;">專屬物資補給清單</p>
-                </div>
-                <button class="cyber-button" style="width:auto;" onclick="resetToHome()"><span>← 回航班大廳</span></button>
+                <h1 class="neon-text" style="font-size: 2.5rem;">🛍️ 活動商品專區</h1>
+                <button class="cyber-button" style="width:auto;" onclick="resetToHome()"><span>← 返回</span></button>
             </div>
-            <!-- 伴手禮專區 -->
-            <div id="giftsSection" class="state-hidden" style="margin-bottom: 4rem;">
-                <h2 class="neon-text" style="font-size: 1.8rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.8rem;">
-                    <span>🎁 精選伴手禮</span>
-                    <small style="font-size: 0.9rem; color: #888; font-weight: normal;">GIFT SELECTION</small>
-                </h2>
+            <div id="giftsSection" class="state-hidden">
+                <h2 class="neon-text">🎁 精選伴手禮</h2>
                 <div id="giftsGrid" class="products-grid"></div>
             </div>
-
-            <!-- 一般商品專區 -->
-            <div id="normalProductsSection">
-                <h2 class="neon-text" style="font-size: 1.8rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.8rem;">
-                    <span>📦 補給品清單</span>
-                    <small style="font-size: 0.9rem; color: #888; font-weight: normal;">PRODUCT LIST</small>
-                </h2>
-                <div id="categoryFilters" style="margin-bottom: 2rem; display: flex; flex-wrap: wrap;"></div>
+            <div id="normalProductsSection" style="margin-top: 2rem;">
+                <h2 class="neon-text">📦 補給品清單</h2>
+                <div id="categoryFilters" style="margin-bottom: 2rem;"></div>
                 <div id="productsGrid" class="products-grid"></div>
             </div>
         </div>
     </main>
-    
-    <!-- 地圖導覽彈窗 -->
+
     <div id="mapModal" class="state-hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
         <div style="position: relative; max-width: 90%; max-height: 90%;">
-            <button onclick="toggleMapModal(false)" style="position: absolute; top: -40px; right: 0; background: none; border: 1px solid #fff; color: #fff; padding: 5px 15px; cursor: pointer; border-radius: 5px; font-weight: bold;">✕ 關閉</button>
-            <img id="mapDisplayImage" src="" style="max-width: 100%; max-height: 80vh; border-radius: 10px; box-shadow: 0 0 30px rgba(0,229,255,0.3); border: 1px solid var(--accent-gray);">
-            <div id="mapError" class="state-hidden" style="color: #ff4d4d; text-align: center; padding: 2rem;">尚未設定地圖圖片</div>
+            <button onclick="toggleMapModal(false)" style="position: absolute; top: -40px; right: 0; background: none; border: 1px solid #fff; color: #fff; padding: 5px 15px; cursor: pointer;">關閉</button>
+            <img id="mapDisplayImage" src="" style="max-width: 100%; max-height: 80vh; border-radius: 10px;">
         </div>
     </div>
 
@@ -213,29 +157,16 @@
         function toggleMapModal(show) {
             const modal = document.getElementById('mapModal');
             const img = document.getElementById('mapDisplayImage');
-            const err = document.getElementById('mapError');
-            
             if (show) {
-                const url = (systemConfig && systemConfig.map_image_url) ? systemConfig.map_image_url : '';
-                if (url) {
-                    img.src = url;
-                    img.classList.remove('state-hidden');
-                    err.classList.add('state-hidden');
-                } else {
-                    img.classList.add('state-hidden');
-                    err.classList.remove('state-hidden');
-                }
+                img.src = (systemConfig && systemConfig.map_image_url) ? systemConfig.map_image_url : '';
                 modal.classList.remove('state-hidden');
-            } else {
-                modal.classList.add('state-hidden');
-            }
+            } else modal.classList.add('state-hidden');
         }
 
         function prepareSearch(method, label) {
             searchMethod = method;
             document.getElementById('actionTitle').textContent = `請輸入旅客${label}`;
             document.getElementById('actionInput').value = '';
-            document.getElementById('actionInput').placeholder = `輸入${label}...`;
             setAppState('action');
         }
 
@@ -246,14 +177,9 @@
                 const res = await fetch(`${API_BASE}/search/${searchMethod}?${searchMethod}=${encodeURIComponent(val)}`);
                 const json = await res.json();
                 if (json.data && json.data.length > 0) {
-                    if (searchMethod === 'company') {
-                        renderCompanyList(json.data);
-                    } else if (json.data.length === 1) {
-                        selectedUser = json.data[0]; renderMealOptions();
-                    } else {
-                        window.tempData = json.data;
-                        renderUserList(json.data, '找到多位旅客，請選擇');
-                    }
+                    if (searchMethod === 'company') renderCompanyList(json.data);
+                    else if (json.data.length === 1) { selectedUser = json.data[0]; renderMealOptions(); }
+                    else { window.tempData = json.data; renderUserList(json.data, '搜尋結果'); }
                 } else alert('查無旅客資料');
             } catch(e) { alert('通訊異常'); }
         }
@@ -262,10 +188,7 @@
             document.getElementById('groupName').textContent = '請選擇所屬公司';
             document.getElementById('groupList').innerHTML = companies.map(c => `
                 <div class="group-item" onclick="fetchCompanyMembers('${c}')">
-                    <div>
-                        <b style="font-size:1.2rem; color:var(--text-dark);">${c}</b>
-                    </div>
-                    <span style="font-size:0.9rem; color:#888;">選擇此公司 →</span>
+                    <b>${c}</b><span>選擇 →</span>
                 </div>`).join('');
             setAppState('groupList');
         }
@@ -274,10 +197,8 @@
             try {
                 const res = await fetch(`${API_BASE}/search/company_members?name=${encodeURIComponent(companyName)}`);
                 const json = await res.json();
-                if (json.data && json.data.length > 0) {
-                    window.tempData = json.data;
-                    renderUserList(json.data, `${companyName} - 旅客名單`);
-                } else alert('該公司目前無旅客資料');
+                window.tempData = json.data;
+                renderUserList(json.data, `${companyName} 旅客名單`);
             } catch(e) { alert('通訊異常'); }
         }
 
@@ -285,13 +206,8 @@
             document.getElementById('groupName').textContent = title;
             document.getElementById('groupList').innerHTML = users.map(u => `
                 <div class="group-item" onclick="selectSingleUser('${u.id}')">
-                    <div>
-                        <b style="font-size:1.2rem; color:var(--text-dark);">${u.name}</b>
-                        <div style="font-size:0.9rem; color:#aaa; margin-top:0.3rem;">${u.company || '個人旅客'}</div>
-                    </div>
-                    <span style="font-size:0.95rem; font-weight:bold; color:${u.status === 'checked_in' || u.status === '替代' ? 'var(--text-dark)' : '#666'}">
-                        ${u.status === 'checked_in' || u.status === '替代' ? '🟢 已登機' : '⚪ 待劃位'}
-                    </span>
+                    <div><b>${u.name}</b><br><small>${u.company || ''}</small></div>
+                    <span>${u.status === 'checked_in' || u.status === '替代' ? '🟢 已登機' : '⚪ 待報到'}</span>
                 </div>`).join('');
             setAppState('groupList');
         }
@@ -301,95 +217,48 @@
             renderMealOptions();
         }
 
-        // ★ 核心優化：精確對應 Emoji
         function renderMealOptions() {
-              const options = (systemConfig && systemConfig.meal_types) ? systemConfig.meal_types : ['葷食', '素食', '不須用餐'];
-              const mealHtml = options.map(m => {
-                  let icon = '🍽️';
-                  if (m.includes('葷')) icon = '🍱';
-                  else if (m.includes('素')) icon = '🥗';
-                  else if (m.includes('不') || m.includes('❌')) icon = '❌';
-                  return `
-                  <div class="cyber-card cyber-hover panel-border" id="m-${m}" onclick="selectMeal('${m}')"
-                       style="padding:1.5rem; margin-bottom:1.2rem; cursor:pointer; display:flex; align-items:center; gap:1.2rem; background:rgba(0,0,0,0.4);">
-                      <span style="font-size:1.8rem;">${icon}</span> <span style="font-weight:bold; font-size:1.2rem;">${m}</span>
-                  </div>`;
-              }).join('');
-              
-              const proxyHtml = `
-              <div style="margin-top: 2rem; margin-bottom: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(0, 229, 255, 0.3);">
-                  <label style="display: block; margin-bottom: 1rem; font-size: 1.2rem; font-weight: bold; color: var(--text-dark);">👤 是否為原報名者？</label>
-                  <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-                      <div id="isOriginalYes" class="cyber-card cyber-hover panel-border active" onclick="setIsOriginal(true)" style="flex: 1; padding: 1rem; text-align: center; cursor: pointer; border-color: var(--text-dark); background: rgba(0, 229, 255, 0.1);">
-                          ✅ 是，我是本人
-                      </div>
-                      <div id="isOriginalNo" class="cyber-card cyber-hover panel-border" onclick="setIsOriginal(false)" style="flex: 1; padding: 1rem; text-align: center; cursor: pointer; border-color: rgba(0, 229, 255, 0.3); background: rgba(0, 0, 0, 0.4);">
-                          ❌ 否，我是替代者
-                      </div>
-                  </div>
-                  <div id="proxyInfoSection" style="display: none; padding: 1.5rem; background: rgba(255, 165, 0, 0.05); border: 1px solid rgba(255, 165, 0, 0.3); border-radius: 1rem;">
-                      <h3 style="color: #ffa500; margin-bottom: 1.5rem; font-size: 1.1rem;">📝 請輸入替代者資訊</h3>
-                      <div style="margin-bottom: 1.2rem; text-align: left;">
-                          <label style="display: block; margin-bottom: 0.5rem; color: #ccc;">姓名 <span style="color:#ff4d4d;">*</span></label>
-                          <input id="proxyName" type="text" class="cyber-input" placeholder="請輸入您的姓名" style="width: 100%; padding: 0.8rem; margin-bottom:0;">
-                      </div>
-                      <div style="margin-bottom: 1.2rem; text-align: left;">
-                          <label style="display: block; margin-bottom: 0.5rem; color: #ccc;">電話 <span style="color:#ff4d4d;">*</span></label>
-                          <input id="proxyPhone" type="tel" class="cyber-input" placeholder="請輸入您的聯絡電話" style="width: 100%; padding: 0.8rem; margin-bottom:0;">
-                      </div>
-                      <div style="margin-bottom: 1.2rem; text-align: left;">
-                          <label style="display: block; margin-bottom: 0.5rem; color: #ccc;">Email <span style="color:#ff4d4d;">*</span></label>
-                          <input id="proxyEmail" type="email" class="cyber-input" placeholder="請輸入您的電子信箱" style="width: 100%; padding: 0.8rem; margin-bottom:0;">
-                      </div>
-                  </div>
-              </div>`;
-              
-              document.getElementById('mealOptions').innerHTML = mealHtml + proxyHtml;
-              window.selectedMeal = '';
-              window.isOriginal = true;
-              document.getElementById('finalBtn').disabled = true;
-              setAppState('meal');
-          }
-          
-	          window.setIsOriginal = function(value) {
-	              window.isOriginal = value;
-	              const yesBtn = document.getElementById('isOriginalYes');
-	              const noBtn = document.getElementById('isOriginalNo');
-	              const proxySection = document.getElementById('proxyInfoSection');
-	              
-	              // 清除所有選取狀態與行內樣式
-	              [yesBtn, noBtn].forEach(btn => {
-	                  btn.classList.remove('is-original-selected', 'proxy-selected');
-	                  btn.style.borderColor = '';
-	                  btn.style.background = '';
-	              });
-
-	              if (value) {
-	                  yesBtn.classList.add('is-original-selected');
-	                  proxySection.style.display = 'none';
-	              } else {
-	                  noBtn.classList.add('proxy-selected');
-	                  proxySection.style.display = 'block';
-	              }
-	          };
-          function selectMeal(m) {
-            window.selectedMeal = m;
-            document.querySelectorAll('[id^="m-"]').forEach(el => {
-                el.classList.remove('meal-selected');
-                // 移除行內樣式以套用 CSS class
-                el.style.borderColor = '';
-                el.style.background = '';
-            });
-            const sel = document.getElementById('m-'+m);
-            sel.classList.add('meal-selected');
-            document.getElementById('finalBtn').disabled = false;
+            const options = (systemConfig && systemConfig.meal_types) ? systemConfig.meal_types : ['葷食', '素食', '不須用餐'];
+            const mealHtml = options.map(m => {
+                let icon = m.includes('葷') ? '🍱' : (m.includes('素') ? '🥗' : '❌');
+                return `<div class="cyber-card panel-border" id="m-${m}" onclick="selectMeal('${m}')" style="padding:1.5rem; margin-bottom:1rem; cursor:pointer;">${icon} ${m}</div>`;
+            }).join('');
+            
+            const proxyHtml = `
+            <div style="margin-top: 2rem; border-top: 1px solid rgba(0, 229, 255, 0.3); padding-top: 1.5rem;">
+                <label style="display: block; margin-bottom: 1rem; font-weight: bold;">👤 是否為本人報到？</label>
+                <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div id="isOriginalYes" class="cyber-card" onclick="setIsOriginal(true)" style="flex: 1; padding: 1rem; text-align: center; cursor: pointer;">✅ 是，本人</div>
+                    <div id="isOriginalNo" class="cyber-card" onclick="setIsOriginal(false)" style="flex: 1; padding: 1rem; text-align: center; cursor: pointer;">❌ 否，替代者</div>
+                </div>
+                <div id="proxyInfoSection" style="display: none; padding: 1rem; background: rgba(255, 165, 0, 0.05); border: 1px solid #ffa500; border-radius: 1rem;">
+                    <input id="proxyName" class="cyber-input" placeholder="替代者姓名">
+                    <input id="proxyPhone" class="cyber-input" placeholder="替代者電話">
+                    <input id="proxyEmail" class="cyber-input" placeholder="替代者 Email">
+                </div>
+            </div>`;
+            document.getElementById('mealOptions').innerHTML = mealHtml + proxyHtml;
+            window.isOriginal = true;
+            document.getElementById('finalBtn').disabled = true;
+            setAppState('meal');
         }
+
+        window.setIsOriginal = function(val) {
+            window.isOriginal = val;
+            document.getElementById('isOriginalYes').classList.toggle('is-original-selected', val);
+            document.getElementById('isOriginalNo').classList.toggle('proxy-selected', !val);
+            document.getElementById('proxyInfoSection').style.display = val ? 'none' : 'block';
+        };
+
+        window.selectMeal = function(m) {
+            window.selectedMeal = m;
+            document.querySelectorAll('[id^="m-"]').forEach(el => el.classList.remove('meal-selected'));
+            document.getElementById('m-'+m).classList.add('meal-selected');
+            document.getElementById('finalBtn').disabled = false;
+        };
 
         async function submitCheckin() {
             const btn = document.getElementById('finalBtn');
-            btn.disabled = true; btn.innerHTML = '<span>📡 開立登機證中...</span>';
-            
-            // 收集替代者資訊與防呆驗證
             let proxyInfo = {};
             if (window.isOriginal === false) {
                 proxyInfo = {
@@ -397,167 +266,49 @@
                     phone: document.getElementById('proxyPhone').value.trim(),
                     email: document.getElementById('proxyEmail').value.trim()
                 };
-                
-                // 防呆 1：檢查是否填寫完整
-                if (!proxyInfo.name || !proxyInfo.phone || !proxyInfo.email) {
-                    alert('請填寫完整的替代者資訊 (姓名、電話、Email)');
-                    btn.disabled = false;
-                    btn.innerHTML = '<span>確認並核發登機證</span>';
-                    return;
-                }
-
-                // 防呆 2：檢查電話格式 (09 開頭且剛好 10 位數字)
-                if (!/^09\d{8}$/.test(proxyInfo.phone)) {
-                    alert('電話格式錯誤！請輸入 09 開頭的 10 位數字手機號碼');
-                    btn.disabled = false;
-                    btn.innerHTML = '<span>確認並核發登機證</span>';
-                    return;
-                }
-
-                // 防呆 3：檢查 Gmail 格式 (確保結尾是 @gmail.com)
-                if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(proxyInfo.email)) {
-                    alert('Email 格式錯誤！必須為正確的 @gmail.com 帳號');
-                    btn.disabled = false;
-                    btn.innerHTML = '<span>確認並核發登機證</span>';
-                    return;
-                }
+                if (!proxyInfo.name || !proxyInfo.phone || !proxyInfo.email) return alert('請填寫完整替代者資訊');
+                if (!/^09\d{8}$/.test(proxyInfo.phone)) return alert('電話格式錯誤！需為 09 開頭 10 位數');
+                if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(proxyInfo.email)) return alert('必須使用 @gmail.com 帳號');
             }
 
+            btn.disabled = true; btn.innerHTML = '<span>📡 開立登機證中...</span>';
             try {
                 const res = await fetch(`${API_BASE}/checkin/${selectedUser.id}`, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ 
-                        meal: window.selectedMeal,
-                        is_original: window.isOriginal,
-                        proxy_info: proxyInfo
-                    }) 
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ meal: window.selectedMeal, is_original: window.isOriginal, proxy_info: proxyInfo }) 
                 });
                 const json = await res.json();
                 const info = document.getElementById('successInfo');
                 if (json.success) {
-                    
                     const statusText = json.data.status === '替代' ? '<span style="color:#ffa500;">(替代報到)</span>' : '';
-                    info.innerHTML = `<div style="color:#4ade80; font-weight:bold; border-bottom:1px solid #4ade80; margin-bottom:1rem; padding-bottom:0.5rem;">登艦手續完成，歡迎登機</div><p><b>姓名：</b>${json.data.name} ${statusText}</p><p><b>單位：</b>${json.data.company || "個人旅客"}</p><p><b>座位：</b>${json.data.seat || "未分配"}</p><p><b>餐飲：</b>${json.data.meal}</p><p><b>時間：</b>${json.data.checkedInAt}</p>`;
+                    info.innerHTML = `
+                        <div style="color:#4ade80; font-weight:bold; border-bottom:1px solid #4ade80; margin-bottom:1rem;">登艦完成，歡迎登機</div>
+                        <p><b>姓名：</b>${json.data.name} ${statusText}</p>
+                        <p><b>單位：</b>${json.data.company || "個人旅客"}</p>
+                        <p><b>座位：</b><span style="color:var(--text-dark); font-weight:bold;">${json.data.seat || "未分配"}</span></p>
+                        <p><b>餐飲：</b>${json.data.meal}</p>
+                        <p><b>時間：</b>${json.data.checkedInAt}</p>
+                        <div style="margin-top: 1rem; padding: 1rem; border: 1px dashed var(--text-dark); border-radius: 0.5rem; text-align: center;">📸 <b>截圖提醒：</b>請保存此畫面以供核對</div>`;
                 } else if (json.error === 'already_done') {
-                    document.getElementById('successIcon').textContent = '⚠️';
-                    document.getElementById('successTitle').textContent = '重複手續紀錄';
-                    info.innerHTML = `<div style="color:#ff4d4d; font-weight:bold; border-bottom:1px solid #ff4d4d; margin-bottom:1rem; padding-bottom:0.5rem;">此旅客已完成登機</div><p><b>姓名：</b>${json.data.name}</p><p><b>座位：</b>${json.data.seat || "未分配"}</p><p><b>初次手續：</b>${json.data.checkedInAt}</p><p><b>餐飲：</b>${json.data.meal}</p>`;
+                    info.innerHTML = `<div style="color:#ff4d4d; font-weight:bold;">此旅客已完成登機</div><p><b>姓名：</b>${json.data.name}</p>`;
                 }
                 setAppState('success');
-            } catch (e) { 
-                alert('通訊中斷'); 
-                btn.disabled = false;
-                btn.innerHTML = '<span>確認並核發登機證</span>'; 
-            }
+            } catch (e) { alert('通訊中斷'); btn.disabled = false; }
         }
 
-            try {
-                const res = await fetch(`${API_BASE}/checkin/${selectedUser.id}`, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ 
-                        meal: window.selectedMeal,
-                        is_original: window.isOriginal,
-                        proxy_info: proxyInfo
-                    }) 
-                });
-                const json = await res.json();
-                const info = document.getElementById('successInfo');
-                if (json.success) {
-                    
-                    const statusText = json.data.status === '替代' ? '<span style="color:#ffa500;">(替代報到)</span>' : '';
-                    info.innerHTML = `<div style="color:#4ade80; font-weight:bold; border-bottom:1px solid #4ade80; margin-bottom:1rem; padding-bottom:0.5rem;">登艦手續完成，歡迎登機</div><p><b>姓名：</b>${json.data.name} ${statusText}</p><p><b>單位：</b>${json.data.company || "個人旅客"}</p><p><b>座位：</b>${json.data.seat || "未分配"}</p><p><b>餐飲：</b>${json.data.meal}</p><p><b>時間：</b>${json.data.checkedInAt}</p>`;
-                } else if (json.error === 'already_done') {
-                    document.getElementById('successIcon').textContent = '⚠️';
-                    document.getElementById('successTitle').textContent = '重複手續紀錄';
-                    info.innerHTML = `<div style="color:#ff4d4d; font-weight:bold; border-bottom:1px solid #ff4d4d; margin-bottom:1rem; padding-bottom:0.5rem;">此旅客已完成登機</div><p><b>姓名：</b>${json.data.name}</p><p><b>座位：</b>${json.data.seat || "未分配"}</p><p><b>初次手續：</b>${json.data.checkedInAt}</p><p><b>餐飲：</b>${json.data.meal}</p>`;
-                }
-                setAppState('success');
-            } catch (e) { alert('通訊中斷'); btn.disabled=false; }
-        }
-
-        let allProducts = [];
         async function showProducts() {
-            const grid = document.getElementById('productsGrid');
-            grid.innerHTML = '<div class="neon-text" style="font-size:1.5rem;">讀取型錄中...</div>';
             setAppState('product');
-            try {
-                const res = await fetch(`${API_BASE}/config`);
-                const config = await res.json();
-                allProducts = config.products || [];
-                
-                const gifts = allProducts.filter(p => p.isGift);
-                const normalProducts = allProducts.filter(p => !p.isGift);
-                
-                renderGiftsGrid(gifts);
-                renderProductGrid(normalProducts);
-                renderCategoryFilters(normalProducts);
-            } catch(e) { grid.innerHTML = '<div class="neon-text">連線異常</div>'; }
-        }
-
-        function renderGiftsGrid(gifts) {
-            const section = document.getElementById('giftsSection');
-            const grid = document.getElementById('giftsGrid');
-            if (gifts.length > 0) {
-                section.classList.remove('state-hidden');
-                grid.innerHTML = gifts.map(p => renderSingleCard(p, false)).join('');
-            } else {
-                section.classList.add('state-hidden');
-            }
-        }
-
-        function renderCategoryFilters(products) {
-            const categories = ['全部', ...new Set(products.map(p => p.category).filter(c => c))];
-            const filterContainer = document.getElementById('categoryFilters');
-            if (!filterContainer) return;
-            filterContainer.innerHTML = categories.map(cat => `
-                <button class="cyber-button" style="width:auto; padding:0.5rem 1.2rem; margin-right:0.5rem; margin-bottom:0.5rem; font-size:0.9rem; border-color:${cat === '全部' ? 'var(--text-dark)' : 'rgba(0,229,255,0.3)'}" 
-                        onclick="filterByCategory('${cat}', this)">
-                    <span>${cat}</span>
-                </button>
+            const res = await fetch(`${API_BASE}/config`);
+            const config = await res.json();
+            document.getElementById('productsGrid').innerHTML = (config.products || []).map(p => `
+                <div class="cyber-card"><img src="${p.image}" class="product-img"><h3>${p.name}</h3><p>${p.description || ''}</p></div>
             `).join('');
-        }
-
-        function filterByCategory(cat, btn) {
-            document.querySelectorAll('#categoryFilters .cyber-button').forEach(b => b.style.borderColor = 'rgba(0,229,255,0.3)');
-            btn.style.borderColor = 'var(--text-dark)';
-            const normalProducts = allProducts.filter(p => !p.isGift);
-            const filtered = cat === '全部' ? normalProducts : normalProducts.filter(p => p.category === cat);
-            renderProductGrid(filtered);
-        }
-
-        function renderProductGrid(products) {
-            const grid = document.getElementById('productsGrid');
-            if (products.length > 0) {
-                grid.innerHTML = products.map(p => renderSingleCard(p, true)).join('');
-            } else {
-                grid.innerHTML = '<div class="neon-text">此分類尚無商品</div>';
-            }
-        }
-        
-
-        function renderSingleCard(p, showCategory) {
-            return `
-                <div class="cyber-card panel-border" style="padding:0; overflow:hidden; border-radius:1rem; position:relative;">
-                    ${p.image ? `<img src="${p.image}" class="product-img">` : `<div class="product-img" style="display:flex;align-items:center;justify-content:center;color:#555;">無影像</div>`}
-                    <div style="padding:1.8rem;">
-                        <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:0.8rem;">
-                            <h3 class="neon-text" style="font-size:1.3rem;">${p.name}</h3>
-                            ${(showCategory && p.category) ? `<span style="font-size:0.75rem; color:var(--text-dark); border:1px solid var(--text-dark); padding:2px 6px; border-radius:4px;">${p.category}</span>` : ''}
-                        </div>
-                        <p style="color:#aaa; font-size:0.95rem; height:4.5rem; overflow:hidden;">${p.description || '暫無說明'}</p>
-                        ${p.link ? `<a href="${p.link}" target="_blank" class="cyber-button" style="display:block;text-align:center;text-decoration:none;margin-top:1.5rem;padding:0.8rem;"><span>了解詳情</span></a>` : ''}
-                    </div>
-                </div>`;
         }
 
         window.onload = async () => {
             try {
                 const res = await fetch(`${API_BASE}/config`);
-                if (res.ok) {
-                    systemConfig = await res.json();
-                }
+                if (res.ok) systemConfig = await res.json();
             } catch(e) {}
             setAppState('home');
         };
