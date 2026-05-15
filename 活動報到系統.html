@@ -297,13 +297,21 @@
         }
 
         async function showProducts() {
-            setAppState('product');
-            const res = await fetch(`${API_BASE}/config`);
-            const config = await res.json();
-            document.getElementById('productsGrid').innerHTML = (config.products || []).map(p => `
-                <div class="cyber-card"><img src="${p.image}" class="product-img"><h3>${p.name}</h3><p>${p.description || ''}</p></div>
-            `).join('');
-        }
+    setAppState('product');
+    const res = await fetch(`${API_BASE}/config`);
+    const config = await res.json();
+    const placeholder = 'https://placehold.co/600x400/0a1423/00e5ff?text=No+Image'; // 預設佔位圖
+    
+    document.getElementById('productsGrid').innerHTML = (config.products || []).map(p => `
+        <div class="cyber-card">
+            <img src="${p.image || placeholder}" class="product-img" onerror="this.src='${placeholder}'">
+            <div style="padding: 1.5rem;">
+                <h3 class="neon-text">${p.name}</h3>
+                <p style="color: #ccc; font-size: 0.9rem; margin-top: 0.5rem;">${p.description || ''}</p>
+            </div>
+        </div>
+    `).join('');
+}
 
         window.onload = async () => {
             try {
