@@ -222,17 +222,21 @@
         }
 
         function renderProductRow(p, idx) {
-            return `<div class="product-item">
-                <div class="product-info">
-                    <div class="product-name neon-text">${p.name}</div>
-                    <div class="product-field">TAG: ${p.category || '未分類'} | ${p.image ? '<span style="color:#4ade80">✓ 已有圖</span>' : '<span style="color:#f87171">✗ 無圖</span>'}</div>
-                </div>
-                <div class="product-actions">
-                    <button class="cyber-button" style="width:auto; padding:0.5rem 1rem;" onclick="editProduct(${idx})"><span>編輯</span></button>
-                    <button class="cyber-button" style="width:auto; padding:0.5rem 1rem; border-color:#dc2626; color:#dc2626;" onclick="openDeleteModal(${idx})"><span>刪除</span></button>
-                </div>
-            </div>`;
-        }
+    const thumb = p.image ? p.image : 'https://placehold.co/50x50/0a1423/00e5ff?text=?';
+    return `<div class="product-item">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <img src="${thumb}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid var(--accent-gray);">
+            <div class="product-info">
+                <div class="product-name neon-text">${p.name}</div>
+                <div class="product-field">TAG: ${p.category || '未分類'}</div>
+            </div>
+        </div>
+        <div class="product-actions">
+            <button class="cyber-button" style="width:auto; padding:0.5rem 1rem;" onclick="editProduct(${idx})"><span>編輯</span></button>
+            <button class="cyber-button" style="width:auto; padding:0.5rem 1rem; border-color:#dc2626; color:#dc2626;" onclick="openDeleteModal(${idx})"><span>刪除</span></button>
+        </div>
+    </div>`;
+}
 
         function openAddGiftModal() { openProductModal(null, true); }
         function openAddProductModal() { openProductModal(null, false); }
