@@ -89,6 +89,10 @@
         td { padding: 1rem 1.2rem; border-bottom: 1px solid rgba(0, 229, 255, 0.1); font-size: 0.95rem; }
         tr:hover { background: rgba(255,255,255,0.02); }
 
+        /* 表單排版優化 */
+        .form-group { margin-bottom: 1.5rem; text-align: left; }
+        .form-group label { display: block; margin-bottom: 0.5rem; color: var(--text-dark); font-size: 0.95rem; font-weight: bold; }
+
         /* 商品管理項目優化 */
         .product-item { 
             background: rgba(255,255,255,0.03); 
@@ -102,6 +106,11 @@
             transition: 0.3s;
         }
         .product-item:hover { border-color: var(--text-dark); background: rgba(0, 229, 255, 0.05); }
+
+        /* 彈窗排版優化 */
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
+        .modal.active { display: flex; }
+        .modal-content { max-width: 550px; width: 90%; max-height: 90vh; overflow-y: auto; padding: 2.5rem; border-radius: 1.5rem; }
 
         /* 訊息提示優化 */
         .alert { 
@@ -216,9 +225,22 @@
             </div>
             <div class="form-group"><label>簡介</label><textarea id="productDescription" class="cyber-input" rows="3"></textarea></div>
             <div class="form-group"><label>分類 (TAG)</label><input type="text" class="cyber-input" id="productCategory"></div>
+            <div class="form-group"><label>產品連結</label><input type="url" class="cyber-input" id="productLink"></div>
+            <input type="hidden" id="productIsGift">
             <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:1rem; margin-top:2rem;">
                 <button class="cyber-button" style="border-color:#888; color:#aaa; width:auto;" onclick="closeProductModal()"><span>取消</span></button>
                 <button class="cyber-button" style="width:auto;" onclick="saveProduct()"><span id="saveButtonText">儲存</span></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="deleteModal" class="modal">
+        <div class="modal-content cyber-card" style="border-left-color: #dc2626 !important; max-width: 420px;">
+            <div class="modal-header neon-text" style="color: #dc2626; font-size: 1.3rem; margin-bottom: 1rem;">⚠️ 確認刪除物資</div>
+            <p style="margin-bottom: 2rem; color: #ccc;">確定要移除「<strong id="deleteProductName" style="color:#fff;"></strong>」嗎？此變更儲存後無法還原。</p>
+            <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:1rem;">
+                <button class="cyber-button" style="border-color:#888; color:#aaa; width:auto;" onclick="closeDeleteModal()"><span>取消變更</span></button>
+                <button class="cyber-button" style="border-color:#dc2626; color:#dc2626; width:auto;" onclick="confirmDelete()"><span>確認移除</span></button>
             </div>
         </div>
     </div>
@@ -227,12 +249,24 @@
         const API_BASE = '/api';
         let currentConfig = null;
         let editingIdx = null;
+        let deleteIdx = null;
 
         async function init() {
             await loadConfig();
             setupTabButtons();
             updateDashboard();
             setInterval(updateDashboard, 15000);
+            
+            // 綁定圖片即時預覽監聽
+            document.getElementById('productImage').oninput = (e) => {
+                const previewImg = document.getElementById('modalImgPreview');
+                if(e.target.value) {
+                    previewImg.src = e.target.value;
+                    previewImg.style.display = 'block';
+                } else {
+                    previewImg.style.display = 'none';
+                }
+            };
         }
 
         function setupTabButtons() {
@@ -282,50 +316,100 @@
             const giftsContainer = document.getElementById('giftsList');
             const prodsContainer = document.getElementById('productsList');
             
-            giftsContainer.innerHTML = gifts.length ? gifts.map(p => renderProductRow(p, currentConfig.products.indexOf(p))).join('') : `<div style="text-align:center; padding:2rem; color:#555;">NO DATA</div>`;
-            prodsContainer.innerHTML = prods.length ? prods.map(p => renderProductRow(p, currentConfig.products.indexOf(p))).join('') : `<div style="text-align:center; padding:2rem; color:#555;">NO DATA</div>`;
+            giftsContainer.innerHTML = gifts.length ? gifts.map(p => renderProductRow(p, currentConfig.products.indexOf(p))).join('') : `<div style="text-align:center; padding:2rem; color:#555;">尚無伴手禮資料</div>`;
+            prodsContainer.innerHTML = prods.length ? prods.map(p => renderProductRow(p, currentConfig.products.indexOf(p))).join('') : `<div style="text-align:center; padding:2rem; color:#555;">尚無補給品資料</div>`;
         }
 
         function renderProductRow(p, idx) {
             const thumb = p.image || 'https://placehold.co/50x50/0a1423/00e5ff?text=?';
             return `<div class="product-item">
                 <div style="display: flex; align-items: center; gap: 1.2rem;">
-                    <img src="${thumb}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px; border: 1px solid var(--accent-gray);">
+                    <img src="${thumb}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px; border: 1px solid var(--accent-gray);" onerror="this.src='https://placehold.co/50x50/0a1423/00e5ff?text=Error'">
                     <div>
                         <div class="neon-text" style="font-size: 1.05rem;">${p.name}</div>
-                        <div style="font-size: 0.8rem; color: #777;">${p.category || 'GENERAL'}</div>
+                        <div style="font-size: 0.8rem; color: #777;">${p.category || '未分類'}</div>
                     </div>
                 </div>
                 <div style="display: flex; gap: 0.8rem;">
-                    <button class="cyber-button" style="width:auto; padding:0.5rem 1rem;" onclick="editProduct(${idx})"><span>EDIT</span></button>
-                    <button class="cyber-button" style="width:auto; padding:0.5rem 1rem; border-color:#dc2626; color:#dc2626;" onclick="openDeleteModal(${idx})"><span>DEL</span></button>
+                    <button class="cyber-button" style="width:auto; padding:0.5rem 1rem;" onclick="editProduct(${idx})"><span>編輯</span></button>
+                    <button class="cyber-button" style="width:auto; padding:0.5rem 1rem; border-color:#dc2626; color:#dc2626;" onclick="openDeleteModal(${idx})"><span>刪除</span></button>
                 </div>
             </div>`;
         }
 
-        function editProduct(idx) {
+        function openAddGiftModal() { openProductModal(null, true); }
+        function openAddProductModal() { openProductModal(null, false); }
+
+        function openProductModal(idx, isGift) {
             editingIdx = idx;
-            const p = currentConfig.products[idx];
-            document.getElementById('modalTitle').textContent = '編輯物資細節';
-            document.getElementById('productName').value = p.name;
-            document.getElementById('productImage').value = p.image || '';
-            document.getElementById('productDescription').value = p.description || '';
-            document.getElementById('productCategory').value = p.category || '';
-            
+            document.getElementById('modalTitle').textContent = idx === null ? (isGift ? '新增精選伴手禮' : '新增物資補給品') : '編輯物資細節';
+            document.getElementById('saveButtonText').textContent = idx === null ? '新增物資' : '儲存修改';
+            document.getElementById('productIsGift').value = isGift;
+
             const preview = document.getElementById('modalImgPreview');
-            if(p.image) { preview.src = p.image; preview.style.display = 'block'; }
-            else { preview.style.display = 'none'; }
-            
+
+            if (idx !== null) {
+                const p = currentConfig.products[idx];
+                document.getElementById('productName').value = p.name || '';
+                document.getElementById('productImage').value = p.image || '';
+                document.getElementById('productDescription').value = p.description || '';
+                document.getElementById('productCategory').value = p.category || '';
+                document.getElementById('productLink').value = p.link || '';
+                if(p.image) { preview.src = p.image; preview.style.display = 'block'; } else { preview.style.display = 'none'; }
+            } else {
+                document.getElementById('productName').value = '';
+                document.getElementById('productImage').value = '';
+                document.getElementById('productDescription').value = '';
+                document.getElementById('productCategory').value = isGift ? '伴手禮' : '補給品';
+                document.getElementById('productLink').value = '';
+                preview.style.display = 'none';
+            }
             document.getElementById('productModal').classList.add('active');
         }
 
-        // 其餘保存功能函數與您原本的邏輯完全一致，只需確保 DOM ID 正確即可。
-        // (openProductModal, saveProduct, saveSystemSettings, postConfig 等)
+        function editProduct(idx) {
+            const p = currentConfig.products[idx];
+            openProductModal(idx, p.isGift);
+        }
+
+        function closeProductModal() { document.getElementById('productModal').classList.remove('active'); }
+
+        async function saveProduct() {
+            const p = {
+                name: document.getElementById('productName').value.trim(),
+                image: document.getElementById('productImage').value.trim(),
+                category: document.getElementById('productCategory').value.trim(),
+                description: document.getElementById('productDescription').value.trim(),
+                link: document.getElementById('productLink').value.trim(),
+                isGift: document.getElementById('productIsGift').value === "true"
+            };
+            if(!p.name) return alert('商品名稱為必填項目');
+            
+            if(editingIdx !== null) currentConfig.products[editingIdx] = p; 
+            else currentConfig.products.push(p);
+            
+            if(await postConfig()) { renderProducts(); closeProductModal(); showMessage('物資數據更新成功', 'success'); }
+            else { showMessage('連線同步失敗', 'danger'); }
+        }
+
+        function openDeleteModal(idx) { 
+            deleteIdx = idx; 
+            document.getElementById('deleteProductName').textContent = currentConfig.products[idx].name; 
+            document.getElementById('deleteModal').classList.add('active'); 
+        }
+        function closeDeleteModal() { document.getElementById('deleteModal').classList.remove('active'); }
         
+        async function confirmDelete() { 
+            currentConfig.products.splice(deleteIdx, 1); 
+            if(await postConfig()) { renderProducts(); closeDeleteModal(); showMessage('物資已成功移除', 'success'); } 
+            else { showMessage('連線同步失敗', 'danger'); }
+        }
+
         async function saveSystemSettings() {
             currentConfig.google_sheet_name = document.getElementById('googleSheetName').value.trim();
             currentConfig.map_image_url = document.getElementById('mapImageUrl').value.trim();
             if(await postConfig()) showMessage('方舟系統設定已成功儲存', 'success');
+            else showMessage('設定儲存失敗', 'danger');
         }
 
         async function postConfig() {
@@ -340,8 +424,6 @@
             container.innerHTML = `<div class="alert alert-${type}">${text}</div>`;
             setTimeout(() => container.innerHTML = '', 3000);
         }
-
-        function closeProductModal() { document.getElementById('productModal').classList.remove('active'); }
 
         window.onload = init;
     </script>
