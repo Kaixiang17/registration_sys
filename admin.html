@@ -267,7 +267,8 @@
             const p = { name: document.getElementById('productName').value.trim(), image: document.getElementById('productImage').value.trim(), category: document.getElementById('productCategory').value.trim(), description: document.getElementById('productDescription').value.trim(), link: document.getElementById('productLink').value.trim(), isGift: document.getElementById('productIsGift').value === "true" };
             if(!p.name) return alert('商品名稱為必填');
             if(editingIdx !== null) currentConfig.products[editingIdx] = p; else currentConfig.products.push(p);
-            if(await postConfig()) { renderProducts(); closeProductModal(); }
+            if(await postConfig()) { renderProducts(); closeProductModal(); alert('儲存成功！'); // 新增跳出視窗 
+            }
         }
 
         function openDeleteModal(idx) { deleteIdx = idx; document.getElementById('deleteProductName').textContent = currentConfig.products[idx].name; document.getElementById('deleteModal').classList.add('active'); }
