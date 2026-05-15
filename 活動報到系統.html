@@ -159,34 +159,42 @@
         function resetToHome() { setAppState('home'); }
 
         async function toggleMapModal(show) {
-    const modal = document.getElementById('mapModal');
-    const img = document.getElementById('mapDisplayImage');
-    if (show) {
-        modal.classList.remove('state-hidden');
-        try {
-            // 加上時間戳 ?t=，強迫前台地圖彈窗即時向伺服器重新讀取最新網址
-            const res = await fetch(`${API_BASE}/config?t=` + new Date().getTime());
-            const config = await res.json();
-            if (config.map_image_url) {
-                img.src = config.map_image_url;
-                img.style.display = 'block';
+            const modal = document.getElementById('mapModal');
+            const img = document.getElementById('mapDisplayImage');
+            const frame = document.getElementById('mapDisplayFrame');
+            
+            if (show) {
+                modal.classList.remove('state-hidden');
+                try {
+                    // 強制抓取最新設定，避開快取
+                    const res = await fetch(`${API_BASE}/config?t=` + new Date().getTime());
+                    const config = await res.json();
+                    const url = config.map_image_url;
+                    
+                    if (url) {
+                        // 智能判斷：如果是 .html 結尾或是證交所網址，改用 iframe 網頁崁入顯示！
+                        if (url.includes('.html') || url.includes('.htm') || url.includes('twse.com.tw')) {
+                            img.style.display = 'none';
+                            frame.src = url;
+                            frame.style.display = 'block';
+                        } else {
+                            frame.style.display = 'none';
+                            img.src = url;
+                            img.style.display = 'block';
+                        }
+                    } else {
+                        alert('後台尚未填寫地圖網址！');
+                        modal.classList.add('state-hidden');
+                    }
+                } catch(e) {
+                    modal.classList.add('state-hidden');
+                }
             } else {
+                modal.classList.add('state-hidden');
                 img.removeAttribute('src');
-                img.style.display = 'none';
-                alert('後台尚未填寫地圖網址！');
-            }
-        } catch(e) {
-            if (systemConfig && systemConfig.map_image_url) {
-                img.src = systemConfig.map_image_url;
-                img.style.display = 'block';
-            } else {
-                img.style.display = 'none';
+                frame.removeAttribute('src');
             }
         }
-    } else {
-        modal.classList.add('state-hidden');
-    }
-}
 
         function prepareSearch(method, label) {
             searchMethod = method;
@@ -322,22 +330,26 @@
         }
 
         async function showProducts() {
-    setAppState('product');
-    // 加上時間戳 ?t=，強制瀏覽器即時抓取後台最新商品數據與圖片
-    const res = await fetch(`${API_BASE}/config?t=` + new Date().getTime());
-    const config = await res.json();
-    const placeholder = 'https://placehold.co/600x400/0a1423/00e5ff?text=No+Image';
-
-    document.getElementById('productsGrid').innerHTML = (config.products || []).map(p => `
-        <div class="cyber-card">
-            <img src="${p.image || placeholder}" class="product-img" onerror="this.onerror=null; this.src='${placeholder}'">
-            <div style="padding: 1.5rem;">
-                <h3 class="neon-text">${p.name}</h3>
-                <p style="color: #ccc; font-size: 0.9rem; margin-top: 0.5rem;">${p.description || ''}</p>
-            </div>
-        </div>
-    `).join('');
-}
+            setAppState('product');
+            const res = await fetch(`${API_BASE}/config?t=` + new Date().getTime());
+            const config = await res.json();
+            
+            document.getElementById('productsGrid').innerHTML = (config.products || []).map(p => {
+                const imgUrl = p.image ? p.image : '';
+                return `
+                <div class="cyber-card">
+                    <div style="width: 100%; height: 220px; background: rgba(0,0,0,0.4); border-bottom: 1px solid var(--accent-gray); display: flex; justify-content: center; align-items: center; overflow: hidden; text-align: center;">
+                        ${imgUrl ? `<img src="${imgUrl}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                    <div style="display: none; color: #f87171; font-weight: bold; padding: 1rem;">圖片載入失敗<br><small style="color:#aaa; font-weight:normal;">(請確保後台填寫的是 .jpg / .png 結尾的圖片網址，而非網頁網址)</small></div>` 
+                                 : `<div style="color: #666;">無圖片</div>`}
+                    </div>
+                    <div style="padding: 1.5rem;">
+                        <h3 class="neon-text">${p.name}</h3>
+                        <p style="color: #ccc; font-size: 0.9rem; margin-top: 0.5rem;">${p.description || ''}</p>
+                    </div>
+                </div>`;
+            }).join('');
+        }
 
         window.onload = async () => {
             try {
