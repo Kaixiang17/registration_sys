@@ -241,28 +241,28 @@
         function openAddGiftModal() { openProductModal(null, true); }
         function openAddProductModal() { openProductModal(null, false); }
         
-        function openProductModal(idx, isGift) {
-            editingIdx = idx;
-            document.getElementById('modalTitle').textContent = idx === null ? (isGift ? '新增伴手禮' : '新增一般商品') : (isGift ? '編輯伴手禮' : '編輯一般商品');
-            document.getElementById('saveButtonText').textContent = idx === null ? '新增' : '儲存修改';
-            document.getElementById('productIsGift').value = isGift;
-
-            if (idx !== null) {
-                const p = currentConfig.products[idx];
-                document.getElementById('productName').value = p.name || '';
-                document.getElementById('productImage').value = p.image || '';
-                document.getElementById('productDescription').value = p.description || '';
-                document.getElementById('productLink').value = p.link || '';
-                document.getElementById('productCategory').value = p.category || '';
-            } else {
-                document.getElementById('productName').value = '';
-                document.getElementById('productImage').value = '';
-                document.getElementById('productDescription').value = '';
-                document.getElementById('productLink').value = '';
-                document.getElementById('productCategory').value = '';
-            }
-            document.getElementById('productModal').classList.add('active');
+function openProductModal(idx, isGift) {
+    // ... 原有邏輯 ...
+    const imgUrl = idx !== null ? currentConfig.products[idx].image : '';
+    const previewImg = document.getElementById('modalImgPreview');
+    if(imgUrl) {
+        previewImg.src = imgUrl;
+        previewImg.style.display = 'block';
+    } else {
+        previewImg.style.display = 'none';
+    }
+    
+    // 監聽輸入框變動即時更新預覽
+    document.getElementById('productImage').oninput = (e) => {
+        if(e.target.value) {
+            previewImg.src = e.target.value;
+            previewImg.style.display = 'block';
+        } else {
+            previewImg.style.display = 'none';
         }
+    };
+    document.getElementById('productModal').classList.add('active');
+}
 
         function editProduct(idx) { const p = currentConfig.products[idx]; openProductModal(idx, p.isGift); }
         function closeProductModal() { document.getElementById('productModal').classList.remove('active'); }
