@@ -155,14 +155,35 @@
 
         function resetToHome() { setAppState('home'); }
 
-        function toggleMapModal(show) {
-            const modal = document.getElementById('mapModal');
-            const img = document.getElementById('mapDisplayImage');
-            if (show) {
-                img.src = (systemConfig && systemConfig.map_image_url) ? systemConfig.map_image_url : '';
-                modal.classList.remove('state-hidden');
-            } else modal.classList.add('state-hidden');
+        async function toggleMapModal(show) {
+    const modal = document.getElementById('mapModal');
+    const img = document.getElementById('mapDisplayImage');
+    if (show) {
+        modal.classList.remove('state-hidden');
+        try {
+            // 加上時間戳 ?t=，強迫前台地圖彈窗即時向伺服器重新讀取最新網址
+            const res = await fetch(`${API_BASE}/config?t=` + new Date().getTime());
+            const config = await res.json();
+            if (config.map_image_url) {
+                img.src = config.map_image_url;
+                img.style.display = 'block';
+            } else {
+                img.removeAttribute('src');
+                img.style.display = 'none';
+                alert('後台尚未填寫地圖網址！');
+            }
+        } catch(e) {
+            if (systemConfig && systemConfig.map_image_url) {
+                img.src = systemConfig.map_image_url;
+                img.style.display = 'block';
+            } else {
+                img.style.display = 'none';
+            }
         }
+    } else {
+        modal.classList.add('state-hidden');
+    }
+}
 
         function prepareSearch(method, label) {
             searchMethod = method;
@@ -298,22 +319,22 @@
         }
 
         async function showProducts() {
-            setAppState('product');
-            // 加上 ?t= 時間戳，防止瀏覽器快取導致看不到最新圖片
-            const res = await fetch(`${API_BASE}/config?t=` + new Date().getTime());
-            const config = await res.json();
-            const placeholder = 'https://placehold.co/600x400/0a1423/00e5ff?text=No+Image'; // 預設佔位圖
-            
-            document.getElementById('productsGrid').innerHTML = (config.products || []).map(p => `
-                <div class="cyber-card">
-                    <img src="${p.image || placeholder}" class="product-img" onerror="this.onerror=null; this.src='${placeholder}'">
-                    <div style="padding: 1.5rem;">
-                        <h3 class="neon-text">${p.name}</h3>
-                        <p style="color: #ccc; font-size: 0.9rem; margin-top: 0.5rem;">${p.description || ''}</p>
-                    </div>
-                </div>
-            `).join('');
-        }
+    setAppState('product');
+    // 加上時間戳 ?t=，強制瀏覽器即時抓取後台最新商品數據與圖片
+    const res = await fetch(`${API_BASE}/config?t=` + new Date().getTime());
+    const config = await res.json();
+    const placeholder = 'https://placehold.co/600x400/0a1423/00e5ff?text=No+Image';
+
+    document.getElementById('productsGrid').innerHTML = (config.products || []).map(p => `
+        <div class="cyber-card">
+            <img src="${p.image || placeholder}" class="product-img" onerror="this.onerror=null; this.src='${placeholder}'">
+            <div style="padding: 1.5rem;">
+                <h3 class="neon-text">${p.name}</h3>
+                <p style="color: #ccc; font-size: 0.9rem; margin-top: 0.5rem;">${p.description || ''}</p>
+            </div>
+        </div>
+    `).join('');
+}
 
         window.onload = async () => {
             try {
