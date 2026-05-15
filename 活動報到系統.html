@@ -169,16 +169,23 @@
                     // 強制抓取最新設定，避開快取
                     const res = await fetch(`${API_BASE}/config?t=` + new Date().getTime());
                     const config = await res.json();
-                    const url = config.map_image_url;
+                    const url = config.map_image_url ? config.map_image_url.trim() : '';
                     
                     if (url) {
-                        // 智能判斷：如果是 .html 結尾或是證交所網址，改用 iframe 網頁崁入顯示！
-                        if (url.includes('.html') || url.includes('.htm') || url.includes('twse.com.tw')) {
+                        const lowerUrl = url.toLowerCase();
+                        // 【超強防呆判斷】只有明確是網頁網址 (.html/.htm) 才用 iframe，其餘（png, jpg, gif, webp...）一律用 img 標籤
+                        const isWebPage = lowerUrl.endsWith('.html') || lowerUrl.endsWith('.htm') || lowerUrl.includes('twse.com.tw/zh/about/company/map.html');
+                        
+                        if (isWebPage) {
+                            // 如果是網頁，用 iframe 內嵌顯示
                             img.style.display = 'none';
+                            img.removeAttribute('src');
                             frame.src = url;
                             frame.style.display = 'block';
                         } else {
+                            // 如果是任何圖片 (.png, .jpg, .gif 等等)，用 img 標籤完美顯示
                             frame.style.display = 'none';
+                            frame.removeAttribute('src');
                             img.src = url;
                             img.style.display = 'block';
                         }
