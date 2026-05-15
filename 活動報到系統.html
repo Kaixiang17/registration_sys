@@ -45,20 +45,27 @@
 
     <main>
         <div id="homeState">
-            <h1 class="neon-text" style="text-align:center; margin-bottom: 2rem; font-size: 3rem; display: block;">請選擇服務項目</h1>
-            <div class="home-grid">
-                <div class="home-card cyber-card cyber-hover" onclick="setAppState('methodSelection')">
-                    <div style="font-size:6rem;">🎫</div>
-                    <h2 class="neon-text">辦理登機報到</h2>
-                    <p style="color:#aaa; font-size:1.1rem;">CHECK-IN SERVICE</p>
-                </div>
-                <div class="home-card cyber-card cyber-hover" onclick="showProducts()">
-                    <div style="font-size:6rem;">🛍️</div>
-                    <h2 class="neon-text">活動商品專區</h2>
-                    <p style="color:#aaa; font-size:1.1rem;">ACTIVITY PRODUCTS</p>
-                </div>
-            </div>
+    <h1 class="neon-text" style="text-align:center; margin-bottom: 2rem; font-size: 3rem; display: block;">請選擇服務項目</h1>
+    <div class="home-grid">
+        <div class="home-card cyber-card cyber-hover" onclick="setAppState('methodSelection')">
+            <div style="font-size:6rem;">🎫</div>
+            <h2 class="neon-text">辦理登機報到</h2>
+            <p style="color:#aaa; font-size:1.1rem;">CHECK-IN SERVICE</p>
         </div>
+
+        <div class="home-card cyber-card cyber-hover" onclick="toggleMapModal(true)">
+            <div style="font-size:6rem;">🗺️</div>
+            <h2 class="neon-text">會場地圖導覽</h2>
+            <p style="color:#aaa; font-size:1.1rem;">VENUE MAP</p>
+        </div>
+
+        <div class="home-card cyber-card cyber-hover" onclick="showProducts()">
+            <div style="font-size:6rem;">🛍️</div>
+            <h2 class="neon-text">活動商品專區</h2>
+            <p style="color:#aaa; font-size:1.1rem;">ACTIVITY PRODUCTS</p>
+        </div>
+    </div>
+</div>
 
         <div id="methodSelectionState" class="state-hidden">
             <button class="btn-back-nav" onclick="resetToHome()">← 返回大廳</button>
