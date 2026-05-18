@@ -365,8 +365,14 @@
             
             document.getElementById('productsGrid').innerHTML = (config.products || []).map(p => {
                 const imgUrl = p.image ? p.image : '';
+                // 檢查後台是否有填寫有效的商品連結
+                const hasLink = p.link && p.link.trim() !== '';
+                const safeLink = hasLink ? p.link.trim().replace(/'/g, "\\'") : '';
+
                 return `
-                <div class="cyber-card">
+                <div class="cyber-card ${hasLink ? 'cyber-hover' : ''}" 
+                     style="${hasLink ? 'cursor: pointer;' : ''}" 
+                     onclick="${hasLink ? `window.open('${safeLink}', '_blank')` : ''}">
                     <div style="width: 100%; height: 220px; background: rgba(0,0,0,0.4); border-bottom: 1px solid var(--accent-gray); display: flex; justify-content: center; align-items: center; overflow: hidden; text-align: center;">
                         ${imgUrl ? `<img src="${imgUrl}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                                     <div style="display: none; color: #f87171; font-weight: bold; padding: 1rem;">圖片載入失敗<br><small style="color:#aaa; font-weight:normal;">(請確保後台填寫的是 .jpg / .png 結尾的圖片網址，而非網頁網址)</small></div>` 
