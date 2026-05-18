@@ -116,7 +116,21 @@
             <div class="cyber-card" style="padding: 2rem; border-radius: 1rem;">
                 <div class="card-title neon-text">🔧 系統基本設定</div>
                 <div class="form-group"><label>Google Sheet 名稱</label><input type="text" class="cyber-input" id="googleSheetName" placeholder="例：活動報到名單"></div>
-                <div class="form-group"><label>🗺️ 地圖導覽圖片網址</label><input type="text" class="cyber-input" id="mapImageUrl" placeholder="地圖 URL"></div>
+                
+                <div class="form-group">
+                    <label>🗺️ 地圖導覽圖片網址 或 直接上傳圖片檔</label>
+                    <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 0.5rem;">
+                        <input type="text" class="cyber-input" id="mapImageUrl" style="margin-bottom: 0; flex-grow: 1;" placeholder="地圖 URL 或貼上本機圖片 Base64">
+                        <label class="cyber-button" style="width: auto; margin-top: 0; padding: 0.8rem 1.5rem; font-size: 0.95rem; cursor: pointer; white-space: nowrap;">
+                            <span>📁 上傳檔案</span>
+                            <input type="file" id="mapLocalFile" accept="image/*" style="display: none;" onchange="handleMapFileUpload(this)">
+                        </label>
+                    </div>
+                    <div id="systemMapPreviewContainer" style="margin-top: 10px; display: none; text-align: left;">
+                        <img id="systemMapPreview" src="" style="max-width: 240px; max-height: 150px; border-radius: 8px; border: 1px solid var(--accent-gray); object-fit: contain; background: rgba(0,0,0,0.3);">
+                    </div>
+                </div>
+                
                 <button class="cyber-button" style="width:auto;" onclick="saveSystemSettings()"><span>💾 儲存設定</span></button>
             </div>
         </div>
@@ -126,7 +140,21 @@
         <div class="modal-content cyber-card">
             <div class="modal-header neon-text" id="modalTitle">編輯商品</div>
             <div class="form-group"><label>名稱 *</label><input type="text" class="cyber-input" id="productName"></div>
-            <div class="form-group"><label>圖片網址</label><input type="url" class="cyber-input" id="productImage"></div>
+            
+            <div class="form-group">
+                <label>圖片網址 或 直接上傳圖片檔</label>
+                <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 0.5rem;">
+                    <input type="url" class="cyber-input" id="productImage" style="margin-bottom: 0; flex-grow: 1;" placeholder="圖片網址">
+                    <label class="cyber-button" style="width: auto; margin-top: 0; padding: 0.8rem 1.5rem; font-size: 0.95rem; cursor: pointer; white-space: nowrap;">
+                        <span>📁 上傳圖片</span>
+                        <input type="file" accept="image/*" style="display: none;" onchange="handleProductFileUpload(this)">
+                    </label>
+                </div>
+                <div id="imagePreview" style="margin-top: 10px; text-align: center;">
+                    <img id="modalImgPreview" src="" style="max-width: 100%; max-height: 150px; display: none; border-radius: 8px; border: 1px solid var(--accent-gray); object-fit: contain;">
+                </div>
+            </div>
+
             <div class="form-group"><label>簡介</label><textarea id="productDescription" class="cyber-input"></textarea></div>
             <div class="form-group"><label>分類</label><input type="text" class="cyber-input" id="productCategory" placeholder="例：紀念品、課程"></div>
             <div class="form-group"><label>連結</label><input type="url" class="cyber-input" id="productLink"></div>
@@ -160,6 +188,21 @@
             setupTabButtons();
             updateDashboard();
             setInterval(updateDashboard, 15000);
+
+            // 商品彈窗內輸入網址時的即時預覽監聽
+            document.getElementById('productImage').oninput = (e) => {
+                const previewImg = document.getElementById('modalImgPreview');
+                if(e.target.value) { previewImg.src = e.target.value; previewImg.style.display = 'block'; } 
+                else { previewImg.style.display = 'none'; }
+            };
+
+            // 系統地圖設定輸入網址時的即時預覽監聽
+            document.getElementById('mapImageUrl').oninput = (e) => {
+                const val = e.target.value.trim();
+                const previewImg = document.getElementById('systemMapPreview');
+                if(val) { previewImg.src = val; document.getElementById('systemMapPreviewContainer').style.display = 'block'; }
+                else { document.getElementById('systemMapPreviewContainer').style.display = 'none'; }
+            };
         }
 
         function setupTabButtons() {
@@ -179,7 +222,15 @@
                 currentConfig = await res.json();
                 renderProducts();
                 document.getElementById('googleSheetName').value = currentConfig.google_sheet_name || '';
-                document.getElementById('mapImageUrl').value = currentConfig.map_image_url || '';
+                
+                const mapUrl = currentConfig.map_image_url ? currentConfig.map_image_url.trim() : '';
+                document.getElementById('mapImageUrl').value = mapUrl;
+                if(mapUrl) {
+                    document.getElementById('systemMapPreview').src = mapUrl;
+                    document.getElementById('systemMapPreviewContainer').style.display = 'block';
+                } else {
+                    document.getElementById('systemMapPreviewContainer').style.display = 'none';
+                }
             } catch (e) { showMessage('設定載入失敗', 'danger'); }
         }
 
@@ -243,6 +294,8 @@
             document.getElementById('saveButtonText').textContent = idx === null ? '新增' : '儲存修改';
             document.getElementById('productIsGift').value = isGift;
 
+            const previewImg = document.getElementById('modalImgPreview');
+
             if (idx !== null) {
                 const p = currentConfig.products[idx];
                 document.getElementById('productName').value = p.name || '';
@@ -250,12 +303,15 @@
                 document.getElementById('productDescription').value = p.description || '';
                 document.getElementById('productLink').value = p.link || '';
                 document.getElementById('productCategory').value = p.category || '';
+                if(p.image) { previewImg.src = p.image; previewImg.style.display = 'block'; } 
+                else { previewImg.style.display = 'none'; }
             } else {
                 document.getElementById('productName').value = '';
                 document.getElementById('productImage').value = '';
                 document.getElementById('productDescription').value = '';
                 document.getElementById('productLink').value = '';
                 document.getElementById('productCategory').value = '';
+                previewImg.style.display = 'none';
             }
             document.getElementById('productModal').classList.add('active');
         }
@@ -267,18 +323,60 @@
             const p = { name: document.getElementById('productName').value.trim(), image: document.getElementById('productImage').value.trim(), category: document.getElementById('productCategory').value.trim(), description: document.getElementById('productDescription').value.trim(), link: document.getElementById('productLink').value.trim(), isGift: document.getElementById('productIsGift').value === "true" };
             if(!p.name) return alert('商品名稱為必填');
             if(editingIdx !== null) currentConfig.products[editingIdx] = p; else currentConfig.products.push(p);
-            if(await postConfig()) { renderProducts(); closeProductModal(); alert('儲存成功！'); // 新增跳出視窗 
+            if(await postConfig()) { 
+                renderProducts(); 
+                closeProductModal(); 
+                alert('儲存成功！'); 
             }
         }
 
         function openDeleteModal(idx) { deleteIdx = idx; document.getElementById('deleteProductName').textContent = currentConfig.products[idx].name; document.getElementById('deleteModal').classList.add('active'); }
         function closeDeleteModal() { document.getElementById('deleteModal').classList.remove('active'); }
-        async function confirmDelete() { currentConfig.products.splice(deleteIdx, 1); if(await postConfig()) { renderProducts(); closeDeleteModal(); } }
+        async function confirmDelete() { 
+            currentConfig.products.splice(deleteIdx, 1); 
+            if(await postConfig()) { 
+                renderProducts(); 
+                closeDeleteModal(); 
+                alert('刪除成功！');
+            } 
+        }
 
         async function saveSystemSettings() {
             currentConfig.google_sheet_name = document.getElementById('googleSheetName').value.trim();
             currentConfig.map_image_url = document.getElementById('mapImageUrl').value.trim();
-            if(await postConfig()) showMessage('方舟系統設定已成功儲存', 'success');
+            if(await postConfig()) {
+                alert('儲存成功！');
+            }
+        }
+
+        // 新增：處理地圖檔案本機直接上傳
+        function handleMapFileUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Data = e.target.result;
+                document.getElementById('mapImageUrl').value = base64Data;
+                const previewImg = document.getElementById('systemMapPreview');
+                previewImg.src = base64Data;
+                document.getElementById('systemMapPreviewContainer').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 新增：處理商品物資圖片本機直接上傳
+        function handleProductFileUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Data = e.target.result;
+                document.getElementById('productImage').value = base64Data;
+                const previewImg = document.getElementById('modalImgPreview');
+                previewImg.src = base64Data;
+                previewImg.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
         }
 
         async function postConfig() {
