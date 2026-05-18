@@ -124,6 +124,19 @@
                 </div>
                 <button class="cyber-button" style="width:auto;" onclick="saveSystemSettings()"><span>💾 儲存設定</span></button>
             </div>
+
+            <div class="cyber-card" style="padding: 2rem; border-radius: 1rem; margin-top: 2rem;">
+                <div class="card-title neon-text">🏷️ 商品分類管理中心</div>
+                <div class="form-group">
+                    <label>管理選單項目：新增自訂分類</label>
+                    <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem;">
+                        <input type="text" class="cyber-input" id="newCategoryPoolInput" style="margin-bottom: 0; flex-grow: 1;" placeholder="請輸入新分類名稱 (例如：服飾、軟體裝置)">
+                        <button class="cyber-button" style="width: auto; margin-top: 0; padding: 0.8rem 1.5rem; font-size: 0.95rem;" onclick="addCategoryToPool()"><span>➕ 新增分類</span></button>
+                    </div>
+                </div>
+                <label style="margin-bottom: 0.8rem;">目前系統全域可用分類清單 (點擊紅色 ✕ 可直接刪除該下拉選項)：</label>
+                <div id="categoryPoolListContainer" style="display: flex; flex-wrap: wrap; gap: 0.8rem; margin-top: 0.5rem;"></div>
+            </div>
         </div>
     </main>
 
@@ -153,12 +166,17 @@
             
             <div class="form-group">
                 <label>分類選項</label>
-                <select class="cyber-input" id="productCategory" style="background: rgba(10, 20, 35, 0.95); color: #fff; border: 1px solid rgba(0, 229, 255, 0.2); padding: 0.8rem 1.2rem; width: 100%; border-radius: 0.5rem; font-size: 1.05rem;">
+                <select class="cyber-input" id="productCategory" onchange="checkCategorySelection(this)" style="background: rgba(10, 20, 35, 0.95); color: #fff; border: 1px solid rgba(0, 229, 255, 0.2); padding: 0.8rem 1.2rem; width: 100%; border-radius: 0.5rem; font-size: 1.05rem;">
                     <option value="課程">📚 課程</option>
                     <option value="諮詢">💼 諮詢</option>
                     <option value="聯盟">🤝 聯盟</option>
                     <option value="紀念品">🎁 紀念品</option>
                 </select>
+            </div>
+
+            <div class="form-group" id="customCategoryContainer" style="display: none;">
+                <label>✍️ 請輸入新分類名稱</label>
+                <input type="text" class="cyber-input" id="customCategoryInput" placeholder="例如：服飾、講座、硬體設備">
             </div>
 
             <div class="form-group"><label>連結</label><input type="url" class="cyber-input" id="productLink"></div>
@@ -193,11 +211,9 @@
             if (dummy && dummy.description) {
                 return dummy.description.split(',').map(c => c.trim()).filter(c => c);
             }
-            // 若雲端尚未初始化，則預設提供初始四大核心航線分類
             return ['課程', '諮詢', '聯盟', '紀念品']; 
         }
 
-        // 渲染分類管理中心介面（加在系統設定頁籤內）
         function renderCategoryManager() {
             const cats = getCategoryList();
             const container = document.getElementById('categoryPoolListContainer');
@@ -210,7 +226,6 @@
             `).join('');
         }
 
-        // 全自動按鈕刪除功能（免改程式碼）
         async function deleteCategoryFromPool(catName) {
             if(!confirm(`確定要將「${catName}」從系統下拉選單選單池中移除嗎？`)) return;
             let cats = getCategoryList();
@@ -230,7 +245,6 @@
             }
         }
 
-        // 全自動按鈕新增功能
         async function addCategoryToPool() {
             const input = document.getElementById('newCategoryPoolInput');
             const newCat = input.value.trim();
@@ -313,7 +327,7 @@
                 const res = await fetch(`${API_BASE}/config`);
                 currentConfig = await res.json();
                 renderProducts();
-                renderCategoryManager(); // 同步加載分類面板
+                renderCategoryManager();
 
                 document.getElementById('googleSheetName').value = currentConfig.google_sheet_name || '';
                 const mapUrl = currentConfig.map_image_url ? currentConfig.map_image_url.trim() : '';
@@ -348,7 +362,6 @@
         }
 
         function renderProducts() {
-            // 核心過濾：排除虛擬分類配置物件項目
             const validItems = (currentConfig.products || []).filter(p => p.name !== "__SYSTEM_CATEGORIES__");
             
             const gifts = validItems.filter(p => p.isGift);
@@ -393,7 +406,6 @@
             const previewImg = document.getElementById('modalImgPreview');
             document.getElementById('customCategoryContainer').style.display = 'none';
 
-            // 【智慧連動】動態將當前雲端分類池渲染至下拉選單
             const cats = getCategoryList();
             document.getElementById('productCategory').innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('') + 
                 `<option value="__NEW__">➕ 新增其它自訂分類...</option>`;
@@ -447,7 +459,6 @@
                 finalCategory = document.getElementById('customCategoryInput').value.trim();
                 if (!finalCategory) return alert('請填寫自訂分類名稱！');
                 
-                // 全自動同步更新分類公用池
                 let cats = getCategoryList();
                 if (!cats.includes(finalCategory)) {
                     cats.push(finalCategory);
