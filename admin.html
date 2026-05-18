@@ -187,27 +187,88 @@
         let editingIdx = null;
         let deleteIdx = null;
 
-        // ==================== 【前端智慧型核心：圖片全端相容自動瘦身壓縮補丁】 ====================
+        // ==================== 【全新核心：虛擬雲端分類池解析器】 ====================
+        function getCategoryList() {
+            const dummy = (currentConfig.products || []).find(p => p.name === "__SYSTEM_CATEGORIES__");
+            if (dummy && dummy.description) {
+                return dummy.description.split(',').map(c => c.trim()).filter(c => c);
+            }
+            // 若雲端尚未初始化，則預設提供初始四大核心航線分類
+            return ['課程', '諮詢', '聯盟', '紀念品']; 
+        }
+
+        // 渲染分類管理中心介面（加在系統設定頁籤內）
+        function renderCategoryManager() {
+            const cats = getCategoryList();
+            const container = document.getElementById('categoryPoolListContainer');
+            if(!container) return;
+            container.innerHTML = cats.map(c => `
+                <div style="display: flex; align-items: center; gap: 0.6rem; background: rgba(0, 229, 255, 0.1); border: 1px solid rgba(0, 229, 255, 0.3); padding: 0.5rem 1.2rem; border-radius: 20px; font-size: 0.95rem; font-weight: bold; letter-spacing: 1px;">
+                    <span style="color: #fff;">${c}</span>
+                    <span style="color: #f87171; cursor: pointer; font-weight: bold; margin-left: 5px; font-size: 1.1rem;" onclick="deleteCategoryFromPool('${c}')" title="刪除此分類">✕</span>
+                </div>
+            `).join('');
+        }
+
+        // 全自動按鈕刪除功能（免改程式碼）
+        async function deleteCategoryFromPool(catName) {
+            if(!confirm(`確定要將「${catName}」從系統下拉選單選單池中移除嗎？`)) return;
+            let cats = getCategoryList();
+            cats = cats.filter(c => c !== catName);
+            
+            let dummy = currentConfig.products.find(p => p.name === "__SYSTEM_CATEGORIES__");
+            if (!dummy) {
+                dummy = { name: "__SYSTEM_CATEGORIES__", isGift: false, image: "", link: "", category: "SYSTEM" };
+                currentConfig.products.push(dummy);
+            }
+            dummy.description = cats.join(',');
+            
+            if (await postConfig()) {
+                renderProducts();
+                renderCategoryManager();
+                alert(`分類「${catName}」已成功移除！`);
+            }
+        }
+
+        // 全自動按鈕新增功能
+        async function addCategoryToPool() {
+            const input = document.getElementById('newCategoryPoolInput');
+            const newCat = input.value.trim();
+            if (!newCat) return alert('請輸入欲新增的分類名稱');
+            
+            let cats = getCategoryList();
+            if (cats.includes(newCat)) return alert('該分類已存在於選單池中');
+            cats.push(newCat);
+            
+            let dummy = currentConfig.products.find(p => p.name === "__SYSTEM_CATEGORIES__");
+            if (!dummy) {
+                dummy = { name: "__SYSTEM_CATEGORIES__", isGift: false, image: "", link: "", category: "SYSTEM" };
+                currentConfig.products.push(dummy);
+            }
+            dummy.description = cats.join(',');
+            
+            if (await postConfig()) {
+                input.value = '';
+                renderProducts();
+                renderCategoryManager();
+                alert(`分類「${newCat}」已成功加入選單池！`);
+            }
+        }
+
         function processAndCompressImage(file, maxTargetWidth, callback) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 const img = new Image();
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
-                    let width = img.width;
-                    let height = img.height;
-                    
+                    let width = img.width, height = img.height;
                     if (width > maxTargetWidth) {
                         height = Math.round((height * maxTargetWidth) / width);
                         width = maxTargetWidth;
                     }
-                    canvas.width = width;
-                    canvas.height = height;
-                    
+                    canvas.width = width; canvas.height = height;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
-                    
-                    // 強制轉換為輕量級 JPEG 並將壓縮係數設為 0.7，體積劇烈縮減 95%！突破手機 DataURL 長度上限限制
                     const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
                     callback(compressedBase64);
                 };
@@ -252,8 +313,9 @@
                 const res = await fetch(`${API_BASE}/config`);
                 currentConfig = await res.json();
                 renderProducts();
+                renderCategoryManager(); // 同步加載分類面板
+
                 document.getElementById('googleSheetName').value = currentConfig.google_sheet_name || '';
-                
                 const mapUrl = currentConfig.map_image_url ? currentConfig.map_image_url.trim() : '';
                 document.getElementById('mapImageUrl').value = mapUrl;
                 if(mapUrl) {
@@ -286,8 +348,11 @@
         }
 
         function renderProducts() {
-            const gifts = (currentConfig.products || []).filter(p => p.isGift);
-            const prods = (currentConfig.products || []).filter(p => !p.isGift);
+            // 核心過濾：排除虛擬分類配置物件項目
+            const validItems = (currentConfig.products || []).filter(p => p.name !== "__SYSTEM_CATEGORIES__");
+            
+            const gifts = validItems.filter(p => p.isGift);
+            const prods = validItems.filter(p => !p.isGift);
             
             const giftsContainer = document.getElementById('giftsList');
             const prodsContainer = document.getElementById('productsList');
@@ -326,6 +391,12 @@
             document.getElementById('productIsGift').value = isGift;
 
             const previewImg = document.getElementById('modalImgPreview');
+            document.getElementById('customCategoryContainer').style.display = 'none';
+
+            // 【智慧連動】動態將當前雲端分類池渲染至下拉選單
+            const cats = getCategoryList();
+            document.getElementById('productCategory').innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('') + 
+                `<option value="__NEW__">➕ 新增其它自訂分類...</option>`;
 
             if (idx !== null) {
                 const p = currentConfig.products[idx];
@@ -333,7 +404,17 @@
                 document.getElementById('productImage').value = p.image || '';
                 document.getElementById('productDescription').value = p.description || '';
                 document.getElementById('productLink').value = p.link || '';
-                document.getElementById('productCategory').value = p.category || '課程';
+                
+                if (cats.includes(p.category)) {
+                    document.getElementById('productCategory').value = p.category;
+                } else if (p.category) {
+                    document.getElementById('productCategory').value = '__NEW__';
+                    document.getElementById('customCategoryContainer').style.display = 'block';
+                    document.getElementById('customCategoryInput').value = p.category;
+                } else {
+                    document.getElementById('productCategory').value = cats[0] || '課程';
+                }
+
                 if(p.image) { previewImg.src = p.image; previewImg.style.display = 'block'; } 
                 else { previewImg.style.display = 'none'; }
             } else {
@@ -341,7 +422,7 @@
                 document.getElementById('productImage').value = '';
                 document.getElementById('productDescription').value = '';
                 document.getElementById('productLink').value = '';
-                document.getElementById('productCategory').value = '課程';
+                document.getElementById('productCategory').value = cats[0] || '課程';
                 previewImg.style.display = 'none';
             }
             document.getElementById('productModal').classList.add('active');
@@ -350,12 +431,41 @@
         function editProduct(idx) { const p = currentConfig.products[idx]; openProductModal(idx, p.isGift); }
         function closeProductModal() { document.getElementById('productModal').classList.remove('active'); }
         
+        function checkCategorySelection(select) {
+            const container = document.getElementById('customCategoryContainer');
+            if (select.value === '__NEW__') {
+                container.style.display = 'block';
+                document.getElementById('customCategoryInput').value = '';
+            } else {
+                container.style.display = 'none';
+            }
+        }
+
         async function saveProduct() {
-            const p = { name: document.getElementById('productName').value.trim(), image: document.getElementById('productImage').value.trim(), category: document.getElementById('productCategory').value, description: document.getElementById('productDescription').value.trim(), link: document.getElementById('productLink').value.trim(), isGift: document.getElementById('productIsGift').value === "true" };
+            let finalCategory = document.getElementById('productCategory').value;
+            if (finalCategory === '__NEW__') {
+                finalCategory = document.getElementById('customCategoryInput').value.trim();
+                if (!finalCategory) return alert('請填寫自訂分類名稱！');
+                
+                // 全自動同步更新分類公用池
+                let cats = getCategoryList();
+                if (!cats.includes(finalCategory)) {
+                    cats.push(finalCategory);
+                    let dummy = currentConfig.products.find(p => p.name === "__SYSTEM_CATEGORIES__");
+                    if (!dummy) {
+                        dummy = { name: "__SYSTEM_CATEGORIES__", isGift: false, image: "", link: "", category: "SYSTEM" };
+                        currentConfig.products.push(dummy);
+                    }
+                    dummy.description = cats.join(',');
+                }
+            }
+
+            const p = { name: document.getElementById('productName').value.trim(), image: document.getElementById('productImage').value.trim(), category: finalCategory, description: document.getElementById('productDescription').value.trim(), link: document.getElementById('productLink').value.trim(), isGift: document.getElementById('productIsGift').value === "true" };
             if(!p.name) return alert('商品名稱為必填');
             if(editingIdx !== null) currentConfig.products[editingIdx] = p; else currentConfig.products.push(p);
             if(await postConfig()) { 
                 renderProducts(); 
+                renderCategoryManager();
                 closeProductModal(); 
                 alert('儲存成功！'); 
             }
@@ -367,6 +477,7 @@
             currentConfig.products.splice(deleteIdx, 1); 
             if(await postConfig()) { 
                 renderProducts(); 
+                renderCategoryManager();
                 closeDeleteModal(); 
                 alert('刪除成功！');
             } 
@@ -380,7 +491,6 @@
             }
         }
 
-        // 地圖檔案上傳處理（整合自動壓縮，限制高精度寬度為 1200px）
         function handleMapFileUpload(input) {
             const file = input.files[0];
             if (!file) return;
@@ -392,7 +502,6 @@
             });
         }
 
-        // 商品圖片上傳處理（整合自動壓縮，限制一般標準寬度為 600px，保證手機秒開）
         function handleProductFileUpload(input) {
             const file = input.files[0];
             if (!file) return;
