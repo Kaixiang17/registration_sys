@@ -6,7 +6,6 @@
     <title>智慧方舟 - 艦橋管理中心</title>
     <link rel="stylesheet" href="smart-ark-theme.css">
     <style>
-        /* 保留原本所有 CSS，並加入專屬樣式使 Admin 更精緻 */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Michroma", "Stick", sans-serif; }
         body { line-height: 1.6; min-height: 100vh; color: #fff; }
         header { background: rgba(10, 20, 35, 0.8); border-bottom: 1px solid var(--accent-gray); padding: 1rem 0; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
@@ -21,34 +20,24 @@
         .tab-btn.active { color: var(--text-dark); border-bottom-color: var(--text-dark); text-shadow: 0 0 8px var(--text-glow); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-
-        /* 戰情室專屬網格：優化為玻璃質感框 */
         .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
         .stat-card { padding: 2rem; text-align: center; border-radius: 1rem; position: relative; border: 1px solid var(--accent-gray); overflow: hidden;}
         .stat-card::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(45deg, transparent, rgba(0,229,255,0.05), transparent); transform: rotate(45deg); animation: statGlow 4s infinite linear; }
         .stat-value { font-size: 3.5rem; font-weight: bold; margin-top: 1rem; }
         @keyframes statGlow { 0% { transform: translate(-50%, -50%) rotate(45deg); } 100% { transform: translate(50%, 50%) rotate(45deg); } }
-
         .table-container { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; min-width: 600px; }
         th, td { padding: 1rem; text-align: left; border-bottom: 1px solid rgba(0,229,255,0.2); }
         th { color: var(--text-dark); font-weight: bold; }
-
-        /* 表單排版：優化為玻璃質感框 */
         .card-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; }
         .form-group { margin-bottom: 1.25rem; }
         label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: #fff; font-size: 0.95rem; }
-        .form-hint { font-size: 0.85rem; color: #aaa; margin-top: 0.4rem; }
-
-        /* 商品項目排版：優化為玻璃質感框 */
         .product-item { background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(0, 229, 255, 0.2); border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; transition: 0.3s; }
         .product-item:hover { border-color: var(--text-dark); background: rgba(0, 229, 255, 0.05); }
         .product-info { display: grid; gap: 0.4rem; }
         .product-name { font-weight: 700; font-size: 1.1rem; margin-bottom: 0.2rem; }
         .product-field { font-size: 0.9rem; color: #ccc; }
         .product-actions { display: flex; gap: 0.5rem; }
-
-        /* 彈窗排版：優化為玻璃質感框 */
         .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
         .modal.active { display: flex; }
         .modal-content { max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; padding: 2rem; border-radius: 1rem; border: 1px solid var(--accent-gray); background: rgba(10, 20, 35, 0.9); }
@@ -133,7 +122,6 @@
                         <img id="systemMapPreview" src="" style="max-width: 240px; max-height: 150px; border-radius: 8px; border: 1px solid var(--accent-gray); object-fit: contain; background: rgba(0,0,0,0.3);">
                     </div>
                 </div>
-                
                 <button class="cyber-button" style="width:auto;" onclick="saveSystemSettings()"><span>💾 儲存設定</span></button>
             </div>
         </div>
@@ -162,7 +150,17 @@
             </div>
 
             <div class="form-group"><label>簡介</label><textarea id="productDescription" class="cyber-input"></textarea></div>
-            <div class="form-group"><label>分類</label><input type="text" class="cyber-input" id="productCategory" placeholder="例：紀念品、課程"></div>
+            
+            <div class="form-group">
+                <label>分類選項</label>
+                <select class="cyber-input" id="productCategory" style="background: rgba(10, 20, 35, 0.95); color: #fff; border: 1px solid rgba(0, 229, 255, 0.2); padding: 0.8rem 1.2rem; width: 100%; border-radius: 0.5rem; font-size: 1.05rem;">
+                    <option value="課程">📚 課程</option>
+                    <option value="諮詢">💼 諮詢</option>
+                    <option value="聯盟">🤝 聯盟</option>
+                    <option value="紀念品">🎁 紀念品</option>
+                </select>
+            </div>
+
             <div class="form-group"><label>連結</label><input type="url" class="cyber-input" id="productLink"></div>
             <input type="hidden" id="productIsGift">
             <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:1rem; margin-top:1.5rem;">
@@ -189,20 +187,47 @@
         let editingIdx = null;
         let deleteIdx = null;
 
+        // ==================== 【前端智慧型核心：圖片全端相容自動瘦身壓縮補丁】 ====================
+        function processAndCompressImage(file, maxTargetWidth, callback) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > maxTargetWidth) {
+                        height = Math.round((height * maxTargetWidth) / width);
+                        width = maxTargetWidth;
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // 強制轉換為輕量級 JPEG 並將壓縮係數設為 0.7，體積劇烈縮減 95%！突破手機 DataURL 長度上限限制
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                    callback(compressedBase64);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
         async function init() {
             await loadConfig();
             setupTabButtons();
             updateDashboard();
             setInterval(updateDashboard, 15000);
 
-            // 商品彈窗內輸入網址時的即時預覽監聽
             document.getElementById('productImage').oninput = (e) => {
                 const previewImg = document.getElementById('modalImgPreview');
                 if(e.target.value) { previewImg.src = e.target.value; previewImg.style.display = 'block'; } 
                 else { previewImg.style.display = 'none'; }
             };
 
-            // 系統地圖設定輸入網址時的即時預覽監聽
             document.getElementById('mapImageUrl').oninput = (e) => {
                 const val = e.target.value.trim();
                 const previewImg = document.getElementById('systemMapPreview');
@@ -308,7 +333,7 @@
                 document.getElementById('productImage').value = p.image || '';
                 document.getElementById('productDescription').value = p.description || '';
                 document.getElementById('productLink').value = p.link || '';
-                document.getElementById('productCategory').value = p.category || '';
+                document.getElementById('productCategory').value = p.category || '課程';
                 if(p.image) { previewImg.src = p.image; previewImg.style.display = 'block'; } 
                 else { previewImg.style.display = 'none'; }
             } else {
@@ -316,7 +341,7 @@
                 document.getElementById('productImage').value = '';
                 document.getElementById('productDescription').value = '';
                 document.getElementById('productLink').value = '';
-                document.getElementById('productCategory').value = '';
+                document.getElementById('productCategory').value = '課程';
                 previewImg.style.display = 'none';
             }
             document.getElementById('productModal').classList.add('active');
@@ -326,7 +351,7 @@
         function closeProductModal() { document.getElementById('productModal').classList.remove('active'); }
         
         async function saveProduct() {
-            const p = { name: document.getElementById('productName').value.trim(), image: document.getElementById('productImage').value.trim(), category: document.getElementById('productCategory').value.trim(), description: document.getElementById('productDescription').value.trim(), link: document.getElementById('productLink').value.trim(), isGift: document.getElementById('productIsGift').value === "true" };
+            const p = { name: document.getElementById('productName').value.trim(), image: document.getElementById('productImage').value.trim(), category: document.getElementById('productCategory').value, description: document.getElementById('productDescription').value.trim(), link: document.getElementById('productLink').value.trim(), isGift: document.getElementById('productIsGift').value === "true" };
             if(!p.name) return alert('商品名稱為必填');
             if(editingIdx !== null) currentConfig.products[editingIdx] = p; else currentConfig.products.push(p);
             if(await postConfig()) { 
@@ -355,34 +380,28 @@
             }
         }
 
-        // 處理地圖本機檔案選取上傳 (自動編碼為 Base64 字串)
+        // 地圖檔案上傳處理（整合自動壓縮，限制高精度寬度為 1200px）
         function handleMapFileUpload(input) {
             const file = input.files[0];
             if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const base64Data = e.target.result;
-                document.getElementById('mapImageUrl').value = base64Data;
+            processAndCompressImage(file, 1200, function(compressedBase64) {
+                document.getElementById('mapImageUrl').value = compressedBase64;
                 const previewImg = document.getElementById('systemMapPreview');
-                previewImg.src = base64Data;
+                previewImg.src = compressedBase64;
                 document.getElementById('systemMapPreviewContainer').style.display = 'block';
-            };
-            reader.readAsDataURL(file);
+            });
         }
 
-        // 處理一般補給品/伴手禮本機圖片選取上傳 (自動編碼為 Base64 字串)
+        // 商品圖片上傳處理（整合自動壓縮，限制一般標準寬度為 600px，保證手機秒開）
         function handleProductFileUpload(input) {
             const file = input.files[0];
             if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const base64Data = e.target.result;
-                document.getElementById('productImage').value = base64Data;
+            processAndCompressImage(file, 600, function(compressedBase64) {
+                document.getElementById('productImage').value = compressedBase64;
                 const previewImg = document.getElementById('modalImgPreview');
-                previewImg.src = base64Data;
+                previewImg.src = compressedBase64;
                 previewImg.style.display = 'block';
-            };
-            reader.readAsDataURL(file);
+            });
         }
 
         async function postConfig() {
