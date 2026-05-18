@@ -6,7 +6,6 @@
     <title>智慧方舟 - 航空登機系統</title>
     <link rel="stylesheet" href="smart-ark-theme.css">
     <style>
-        /* 保留您原本的所有 CSS 樣式 */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "PingFang TC", "Michroma", "Stick", sans-serif; }
         body { line-height: 1.6; color: #fff; }
         header { padding: 1.2rem 0; position: sticky; top: 0; z-index: 100; }
@@ -52,7 +51,6 @@
                     <h2 class="neon-text">辦理登機報到</h2>
                     <p style="color:#aaa; font-size:1.1rem;">CHECK-IN SERVICE</p>
                 </div>
-
                 <div class="home-card cyber-card cyber-hover" onclick="showProducts()">
                     <div style="font-size:6rem;">🛍️</div>
                     <h2 class="neon-text">活動商品專區</h2>
@@ -84,10 +82,10 @@
 
         <div id="actionState" class="state-hidden">
             <button class="btn-back-nav" onclick="setAppState('methodSelection')">← 重新選擇方式</button>
-            <div class="form-card cyber-card">
-                <h2 id="actionTitle" class="neon-text" style="margin-bottom: 2rem; font-size: 2rem;">登機驗證</h2>
-                <input type="text" id="actionInput" class="cyber-input" placeholder="請輸入資訊">
-                <button class="cyber-button" onclick="handleAction()"><span>啟動搜尋</span></button>
+            <div class="form-card cyber-card" style="max-width: 800px; padding: 4.5rem; margin-top: 2rem;">
+                <h2 id="actionTitle" class="neon-text" style="margin-bottom: 2.5rem; font-size: 2.5rem;">登機驗證</h2>
+                <input type="text" id="actionInput" class="cyber-input" placeholder="請輸入資訊" style="font-size: 1.5rem; padding: 1.5rem; height: 60px;">
+                <button class="cyber-button" onclick="handleAction()" style="font-size: 1.4rem; padding: 1.2rem; margin-top: 1rem;"><span>啟動搜尋</span></button>
             </div>
         </div>
 
@@ -120,15 +118,15 @@
         <div id="productState" class="state-hidden">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3rem;">
                 <h1 class="neon-text" style="font-size: 2.5rem;">🛍️ 活動商品專區</h1>
-                <button class="cyber-button" style="width:auto; border-radius: 30px; padding: 0.5rem 1.5rem;" onclick="resetToHome()"><span>← 返回</span></button>
+                <button class="cyber-button" style="width:auto; border-radius: 30px; padding: 0.6rem 1.8rem;" onclick="resetToHome()"><span>← 返回</span></button>
             </div>
             <div id="giftsSection" class="state-hidden">
-                <h2 class="neon-text">🎁 精選伴手禮</h2>
+                <h2 class="neon-text" style="margin-bottom: 1.5rem;">🎁 精選伴手禮</h2>
                 <div id="giftsGrid" class="products-grid"></div>
             </div>
-            <div id="normalProductsSection" style="margin-top: 2rem;">
-                <h2 class="neon-text">📦 補給品清單</h2>
-                <div id="categoryFilters" style="margin-bottom: 2rem;"></div>
+            <div id="normalProductsSection" style="margin-top: 3rem;">
+                <h2 class="neon-text" style="margin-bottom: 1.5rem;">📦 補給品清單</h2>
+                <div id="categoryFilters" style="margin-bottom: 2.5rem; display: flex; flex-wrap: wrap; gap: 0.8rem;"></div>
                 <div id="productsGrid" class="products-grid"></div>
             </div>
         </div>
@@ -138,9 +136,7 @@
         <div style="position: relative; width: 90%; height: 85vh; max-width: 1200px; display: flex; flex-direction: column;">
             <button onclick="toggleMapModal(false)" style="align-self: flex-end; margin-bottom: 10px; background: rgba(0,229,255,0.2); border: 1px solid #00e5ff; color: #00e5ff; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 1.1rem;">✕ 關閉地圖</button>
             <div style="flex-grow: 1; background: #0a1423; border-radius: 10px; overflow: hidden; border: 2px solid var(--accent-gray); display: flex; align-items: center; justify-content: center;">
-                
                 <img id="mapDisplayImage" src="" style="width: 100%; height: 100%; object-fit: contain; display: none;">
-                
                 <iframe id="mapDisplayFrame" src="" style="width: 100%; height: 100%; border: none; display: none; background: #fff;"></iframe>
             </div>
         </div>
@@ -149,6 +145,8 @@
     <script>
         const API_BASE = '/api';
         let searchMethod = '', selectedUser = null, systemConfig = null;
+        window.allProducts = [];
+        window.currentCategory = '全部';
 
         function setAppState(s) {
             ['home', 'methodSelection', 'action', 'groupList', 'meal', 'success', 'product'].forEach(x => {
@@ -168,31 +166,24 @@
             if (show) {
                 modal.classList.remove('state-hidden');
                 try {
-                    // 強制抓取最新設定，加入時間戳避開快取
                     const res = await fetch(`${API_BASE}/config?t=` + new Date().getTime());
                     const config = await res.json();
                     let url = config.map_image_url ? config.map_image_url.trim() : '';
                     
                     if (url) {
-                        // 自動修正 Mixed Content 安全問題（若主站是 https，預防性升級圖片連結）
                         if (url.startsWith('http://') && window.location.protocol === 'https:') {
                             url = url.replace('http://', 'https://');
                         }
 
                         const lowerUrl = url.toLowerCase();
-                        
-                        // 【全新穩定機制】取消背景圖片測試，改用純字串精準過濾，徹底繞過手機安全防護
-                        // 只有當網址明確包含 .html 或 .htm 時才使用網頁內嵌，其餘（Base64、png、jpg、gif 等）一律走 img 標籤！
                         const isWebPage = lowerUrl.includes('.html') || lowerUrl.includes('.htm');
                         
                         if (isWebPage) {
-                            // 網頁模式：使用 iframe 內嵌顯示
                             img.style.display = 'none';
                             img.removeAttribute('src');
                             frame.src = url;
                             frame.style.display = 'block';
                         } else {
-                            // 圖片模式：不論是網路連結還是上傳的 Base64，一律用 img 標籤渲染，手機絕不漏圖！
                             frame.style.display = 'none';
                             frame.removeAttribute('src');
                             img.src = url;
@@ -345,32 +336,79 @@
             } catch (e) { alert('通訊中斷'); btn.disabled = false; }
         }
 
+        // 核心改版：建立前台分類動態渲染與客戶端過濾機制
         async function showProducts() {
             setAppState('product');
             const res = await fetch(`${API_BASE}/config?t=` + new Date().getTime());
             const config = await res.json();
+            window.allProducts = config.products || [];
             
-            document.getElementById('productsGrid').innerHTML = (config.products || []).map(p => {
-                const imgUrl = p.image ? p.image : '';
-                // 檢查後台是否有填寫有效的商品連結
-                const hasLink = p.link && p.link.trim() !== '';
-                const safeLink = hasLink ? p.link.trim().replace(/'/g, "\\'") : '';
+            // 1. 渲染伴手禮區塊 (isGift 為 true)
+            const gifts = window.allProducts.filter(p => p.isGift);
+            if (gifts.length > 0) {
+                document.getElementById('giftsSection').classList.remove('state-hidden');
+                document.getElementById('giftsGrid').innerHTML = gifts.map(p => renderProductCard(p)).join('');
+            } else {
+                document.getElementById('giftsSection').classList.add('state-hidden');
+            }
 
-                return `
-                <div class="cyber-card ${hasLink ? 'cyber-hover' : ''}" 
-                     style="${hasLink ? 'cursor: pointer;' : ''}" 
-                     onclick="${hasLink ? `window.open('${safeLink}', '_blank')` : ''}">
-                    <div style="width: 100%; height: 220px; background: rgba(0,0,0,0.4); border-bottom: 1px solid var(--accent-gray); display: flex; justify-content: center; align-items: center; overflow: hidden; text-align: center;">
-                        ${imgUrl ? `<img src="${imgUrl}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                                    <div style="display: none; color: #f87171; font-weight: bold; padding: 1rem;">圖片載入失敗<br><small style="color:#aaa; font-weight:normal;">(請確保後台填寫的是 .jpg / .png 結尾的圖片網址，而非網頁網址)</small></div>` 
-                                 : `<div style="color: #666;">無圖片</div>`}
-                    </div>
-                    <div style="padding: 1.5rem;">
-                        <h3 class="neon-text">${p.name}</h3>
-                        <p style="color: #ccc; font-size: 0.9rem; margin-top: 0.5rem;">${p.description || ''}</p>
-                    </div>
-                </div>`;
-            }).join('');
+            // 2. 獲取所有一般補給品的分類標籤清單
+            const normalProducts = window.allProducts.filter(p => !p.isGift);
+            const categories = ['全部', ...new Set(normalProducts.map(p => p.category).filter(c => c && c.trim() !== ''))];
+            
+            // 3. 渲染分類按鈕
+            document.getElementById('categoryFilters').innerHTML = categories.map(cat => `
+                <button class="cyber-button" style="width:auto; padding: 0.5rem 1.5rem; font-size: 0.95rem; background: ${window.currentCategory === cat ? 'rgba(0, 229, 255, 0.25)' : 'none'}; border-color: ${window.currentCategory === cat ? 'var(--text-dark)' : 'var(--accent-gray)'};" onclick="filterCategory('${cat}')">
+                    <span>${cat}</span>
+                </button>
+            `).join('');
+
+            renderFilteredProducts();
+        }
+
+        function filterCategory(cat) {
+            window.currentCategory = cat;
+            const buttons = document.getElementById('categoryFilters').querySelectorAll('button');
+            buttons.forEach(btn => {
+                const txt = btn.textContent.trim();
+                if (txt === cat) {
+                    btn.style.background = 'rgba(0, 229, 255, 0.25)';
+                    btn.style.borderColor = 'var(--text-dark)';
+                } else {
+                    btn.style.background = 'none';
+                    btn.style.borderColor = 'var(--accent-gray)';
+                }
+            });
+            renderFilteredProducts();
+        }
+
+        function renderFilteredProducts() {
+            const normalProducts = window.allProducts.filter(p => !p.isGift);
+            const filtered = window.currentCategory === '全部' 
+                ? normalProducts 
+                : normalProducts.filter(p => p.category === window.currentCategory);
+
+            document.getElementById('productsGrid').innerHTML = filtered.map(p => renderProductCard(p)).join('');
+        }
+
+        function renderProductCard(p) {
+            const imgUrl = p.image ? p.image : '';
+            const hasLink = p.link && p.link.trim() !== '';
+            const safeLink = hasLink ? p.link.trim().replace(/'/g, "\\'") : '';
+            return `
+            <div class="cyber-card ${hasLink ? 'cyber-hover' : ''}" 
+                 style="${hasLink ? 'cursor: pointer;' : ''}" 
+                 onclick="${hasLink ? `window.open('${safeLink}', '_blank')` : ''}">
+                <div style="width: 100%; height: 220px; background: rgba(0,0,0,0.4); border-bottom: 1px solid var(--accent-gray); display: flex; justify-content: center; align-items: center; overflow: hidden; text-align: center;">
+                    ${imgUrl ? `<img src="${imgUrl}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                <div style="display: none; color: #f87171; font-weight: bold; padding: 1rem;">圖片載入失敗</div>` 
+                             : `<div style="color: #666;">無圖片</div>`}
+                </div>
+                <div style="padding: 1.5rem;">
+                    <h3 class="neon-text">${p.name}</h3>
+                    <p style="color: #ccc; font-size: 0.9rem; margin-top: 0.5rem;">${p.description || ''}</p>
+                </div>
+            </div>`;
         }
 
         window.onload = async () => {
