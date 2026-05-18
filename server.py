@@ -19,13 +19,6 @@ last_cache_update = 0
 cache_lock = threading.Lock()
 CACHE_TTL = 300
 
-def load_config():
-    if os.path.exists(CONFIG_PATH):
-        try:
-            with open(CONFIG_PATH, 'r', encoding='utf-8') as f: return json.load(f)
-        except: return {}
-    return {"google_sheet_name": "活動報到名單", "excel_columns": {}}
-
 def get_gspread_client():
     scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
     json_path = RENDER_KEY if os.path.exists(RENDER_KEY) else LOCAL_KEY
@@ -33,13 +26,109 @@ def get_gspread_client():
     return gspread.authorize(Credentials.from_service_account_file(json_path, scopes=scope))
 
 def get_worksheet(name=None):
-    config = load_config()
-    sheet_name = config.get('google_sheet_name', '活動報到名單')
+    # 這裡固定從本地讀取基本試算表名稱，避免雞生蛋蛋生雞的循環
+    sheet_name = "活動報到名單"
+    if os.path.exists(CONFIG_PATH):
+        try:
+            with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
+                sheet_name = json.load(f).get('google_sheet_name', '活動報到名單')
+        except: pass
     spreadsheet = get_gspread_client().open(sheet_name)
     if name:
         try: return spreadsheet.worksheet(name)
         except: return None
     return spreadsheet.get_worksheet(0)
+
+# ==================== 【核心升級：從 Google Sheet 永久載入設定】 ====================
+def load_config_from_sheet():
+    base_config = {"google_sheet_name": "活動報到名單", "map_image_url": "", "products": [], "excel_columns": {"id": 6, "name": 6, "phone": 8, "company": 3, "status": 15, "meal": 16}}
+    # 先融合本地基本配置
+    if os.path.exists(CONFIG_PATH):
+        try:
+            with open(CONFIG_PATH, 'r', encoding='utf-8') as f: base_config.update(json.load(f))
+        except: pass
+        
+    try:
+        client = get_gspread_client()
+        spreadsheet = client.open(base_config['google_sheet_name'])
+        
+        # 1. 讀取「系統設定」分頁（若不存在則全自動建立）
+        try:
+            ws_sys = spreadsheet.worksheet("系統設定")
+            sys_values = ws_sys.get_all_records()
+            if sys_values:
+                base_config["map_image_url"] = sys_values[0].get("map_image_url", "")
+                base_config["google_sheet_name"] = sys_values[0].get("google_sheet_name", base_config['google_sheet_name'])
+        except:
+            ws_sys = spreadsheet.add_worksheet(title="系統設定", rows="2", cols="2")
+            ws_sys.append_row(["google_sheet_name", "map_image_url"])
+            ws_sys.append_row([base_config["google_sheet_name"], ""])
+
+        # 2. 讀取「商品清單」分頁（若不存在則全自動建立）
+        try:
+            ws_prod = spreadsheet.worksheet("商品清單")
+            prod_rows = ws_prod.get_all_records()
+            products = []
+            for r in prod_rows:
+                products.append({
+                    "name": str(r.get("name", "")),
+                    "image": str(r.get("image", "")),
+                    "category": str(r.get("category", "")),
+                    "description": str(r.get("description", "")),
+                    "link": str(r.get("link", "")),
+                    "isGift": str(r.get("isGift", "")).lower() == "true"
+                })
+            base_config["products"] = products
+        except:
+            ws_prod = spreadsheet.add_worksheet(title="商品清單", rows="100", cols="6")
+            ws_prod.append_row(["name", "image", "category", "description", "link", "isGift"])
+
+    except Exception as e:
+        print(f"⚠️ 雲端配置同步失敗，改從本地暫存讀取: {e}")
+    return base_config
+
+# ==================== 【核心升級：將設定永久儲存至 Google Sheet】 ====================
+def save_config_to_sheet(config_data):
+    # 本地覆寫做為緊急快取
+    try:
+        with open(CONFIG_PATH, 'w', encoding='utf-8') as f:
+            json.dump(config_data, f, ensure_ascii=False, indent=4)
+    except: pass
+
+    try:
+        client = get_gspread_client()
+        spreadsheet = client.open(config_data.get('google_sheet_name', '活動報到名單'))
+        
+        # 寫入「系統設定」分頁
+        try: ws_sys = spreadsheet.worksheet("系統設定")
+        except:
+            ws_sys = spreadsheet.add_worksheet(title="系統設定", rows="2", cols="2")
+            ws_sys.append_row(["google_sheet_name", "map_image_url"])
+        ws_sys.update('A2:B2', [[config_data.get("google_sheet_name", ""), config_data.get("map_image_url", "")]])
+
+        # 寫入「商品清單」分頁
+        try: 
+            ws_prod = spreadsheet.worksheet("商品清單")
+            ws_prod.clear()
+        except:
+            ws_prod = spreadsheet.add_worksheet(title="商品清單", rows="100", cols="6")
+            
+        headers = ["name", "image", "category", "description", "link", "isGift"]
+        rows_to_write = [headers]
+        for p in config_data.get("products", []):
+            rows_to_write.append([
+                p.get("name", ""),
+                p.get("image", ""),
+                p.get("category", ""),
+                p.get("description", ""),
+                p.get("link", ""),
+                "true" if p.get("isGift") else "false"
+            ])
+        ws_prod.update('A1', rows_to_write)
+        return True
+    except Exception as e:
+        print(f"❌ 寫入雲端失敗: {e}")
+        return False
 
 def async_update_sheet(updates):
     try: get_worksheet().batch_update(updates)
@@ -97,13 +186,16 @@ def get_dashboard_stats():
 @app.route('/')
 def index(): return send_from_directory('.', '活動報到系統.html')
 
+# 改裝完成：核心地圖與商品路由全面對接 Google Sheet 試算表雲端！
 @app.route('/api/config', methods=['GET', 'POST'])
 def handle_config():
     if not session.get('admin_logged_in'): return jsonify({"success": False}), 403
     if request.method == 'POST':
-        with open(CONFIG_PATH, 'w', encoding='utf-8') as f: json.dump(request.json, f, ensure_ascii=False, indent=4)
-        return jsonify({"success": True, "data": request.json})
-    return jsonify(load_config())
+        if save_config_to_sheet(request.json):
+            return jsonify({"success": True, "data": request.json})
+            
+        return jsonify({"success": False, "message": "雲端儲存失敗"}), 500
+    return jsonify(load_config_from_sheet())
 
 @app.route('/api/search/<method>')
 def search(method):
@@ -133,7 +225,10 @@ def checkin(pid):
     meal = data.get('meal', '未選擇')
     is_original = data.get('is_original', True)
     proxy_info = data.get('proxy_info', {})
-    cols = load_config().get('excel_columns', {})
+    
+    # 與雲端載入欄位索引同步
+    config_tmp = load_config_from_sheet()
+    cols = config_tmp.get('excel_columns', {"id": 6, "name": 6, "phone": 8, "company": 3, "status": 15, "meal": 16})
     status_val = 'checked_in' if is_original else '替代'
     
     updates = [
@@ -160,26 +255,23 @@ def refresh_cache(force=False):
     with cache_lock:
         try:
             all_values = get_worksheet().get_all_values()
-            cols = load_config().get('excel_columns', {})
+            config_tmp = load_config_from_sheet()
+            cols = config_tmp.get('excel_columns', {"id": 6, "name": 6, "phone": 8, "company": 3, "status": 15, "meal": 16})
             new_cache = []
-            last_company = "" # 處理 Excel 合併儲存格：用於紀錄最新出現過的公司名稱
+            last_company = ""
             
             for i, row in enumerate(all_values[3:]):
                 def g(c): return row[c-1].strip() if c and c-1 < len(row) else ""
-                
-                # 合併儲存格邏輯：如果當前公司欄位有字，更新 last_company；如果沒字，沿用上一個有字的公司
                 current_comp = g(cols.get('company', 3))
-                if current_comp:
-                    last_company = current_comp
-                
+                if current_comp: last_company = current_comp
                 name = g(cols.get('name', 6))
-                if not name: continue # 略過空行
+                if not name: continue
                 
                 new_cache.append({
                     "id": f"{name}_{i}", 
                     "name": name, 
                     "phone": g(cols.get('phone', 8)),
-                    "company": last_company, # 確保這裡永遠抓得到公司名
+                    "company": last_company,
                     "email": g(cols.get('email', 9)),
                     "status": g(cols.get('status', 15)), 
                     "meal": g(cols.get('meal', 16)),
@@ -193,5 +285,4 @@ def refresh_cache(force=False):
         except Exception as e: print(f"緩存刷新失敗: {e}")
 
 if __name__ == '__main__':
-    refresh_cache(True)
     app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 10000)))
