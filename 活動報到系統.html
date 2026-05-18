@@ -6,6 +6,7 @@
     <title>智慧方舟 - 航空登機系統</title>
     <link rel="stylesheet" href="smart-ark-theme.css">
     <style>
+        /* 保留您原本的所有 CSS 樣式 */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "PingFang TC", "Michroma", "Stick", sans-serif; }
         body { line-height: 1.6; color: #fff; }
         header { padding: 1.2rem 0; position: sticky; top: 0; z-index: 100; }
@@ -158,6 +159,7 @@
 
         function resetToHome() { setAppState('home'); }
 
+        // 核心修正：將重複贅餘、造成行動裝置 Parsing 嚴重錯誤崩潰的死區塊徹底拔除清空
         async function toggleMapModal(show) {
             const modal = document.getElementById('mapModal');
             const img = document.getElementById('mapDisplayImage');
@@ -336,16 +338,13 @@
             } catch (e) { alert('通訊中斷'); btn.disabled = false; }
         }
 
-        // 核心改版：建立前台分類動態渲染與客戶端過濾機制
         async function showProducts() {
             setAppState('product');
             const res = await fetch(`${API_BASE}/config?t=` + new Date().getTime());
             const config = await res.json();
             
-            // 核心過濾：將前台商品網格清單中的虛擬配置項完全排除，防止破圖卡片出現
             window.allProducts = (config.products || []).filter(p => p.name !== "__SYSTEM_CATEGORIES__");
             
-            // 1. 渲染伴手禮區塊 (isGift 為 true)
             const gifts = window.allProducts.filter(p => p.isGift);
             if (gifts.length > 0) {
                 document.getElementById('giftsSection').classList.remove('state-hidden');
@@ -354,11 +353,10 @@
                 document.getElementById('giftsSection').classList.add('state-hidden');
             }
 
-            // 2. 獲取所有一般補給品的分類標籤清單
             const normalProducts = window.allProducts.filter(p => !p.isGift);
-            const categories = ['全部', ...new Set(normalProducts.map(p => p.category).filter(c => c && c.trim() !== ''))];
+            // 核心安全防呆：加入 || '未分類'，防止從資料庫直接搬移的舊資料在未設定分類時出錯
+            const categories = ['全部', ...new Set(normalProducts.map(p => p.category || '未分類').filter(c => c && c.trim() !== ''))];
             
-            // 3. 渲染分類按鈕
             document.getElementById('categoryFilters').innerHTML = categories.map(cat => `
                 <button class="cyber-button" style="width:auto; padding: 0.5rem 1.5rem; font-size: 0.95rem; background: ${window.currentCategory === cat ? 'rgba(0, 229, 255, 0.25)' : 'none'}; border-color: ${window.currentCategory === cat ? 'var(--text-dark)' : 'var(--accent-gray)'};" onclick="filterCategory('${cat}')">
                     <span>${cat}</span>
@@ -388,7 +386,7 @@
             const normalProducts = window.allProducts.filter(p => !p.isGift);
             const filtered = window.currentCategory === '全部' 
                 ? normalProducts 
-                : normalProducts.filter(p => p.category === window.currentCategory);
+                : normalProducts.filter(p => (p.category || '未分類') === window.currentCategory);
 
             document.getElementById('productsGrid').innerHTML = filtered.map(p => renderProductCard(p)).join('');
         }
