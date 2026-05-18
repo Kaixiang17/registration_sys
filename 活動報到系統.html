@@ -45,21 +45,21 @@
 
     <main>
         <div id="homeState">
-    <h1 class="neon-text" style="text-align:center; margin-bottom: 2rem; font-size: 3rem; display: block;">請選擇服務項目</h1>
-    <div class="home-grid">
-        <div class="home-card cyber-card cyber-hover" onclick="setAppState('methodSelection')">
-            <div style="font-size:6rem;">🎫</div>
-            <h2 class="neon-text">辦理登機報到</h2>
-            <p style="color:#aaa; font-size:1.1rem;">CHECK-IN SERVICE</p>
-        </div>
+            <h1 class="neon-text" style="text-align:center; margin-bottom: 2rem; font-size: 3rem; display: block;">請選擇服務項目</h1>
+            <div class="home-grid">
+                <div class="home-card cyber-card cyber-hover" onclick="setAppState('methodSelection')">
+                    <div style="font-size:6rem;">🎫</div>
+                    <h2 class="neon-text">辦理登機報到</h2>
+                    <p style="color:#aaa; font-size:1.1rem;">CHECK-IN SERVICE</p>
+                </div>
 
-        <div class="home-card cyber-card cyber-hover" onclick="showProducts()">
-            <div style="font-size:6rem;">🛍️</div>
-            <h2 class="neon-text">活動商品專區</h2>
-            <p style="color:#aaa; font-size:1.1rem;">ACTIVITY PRODUCTS</p>
+                <div class="home-card cyber-card cyber-hover" onclick="showProducts()">
+                    <div style="font-size:6rem;">🛍️</div>
+                    <h2 class="neon-text">活動商品專區</h2>
+                    <p style="color:#aaa; font-size:1.1rem;">ACTIVITY PRODUCTS</p>
+                </div>
+            </div>
         </div>
-    </div>
-</div>
 
         <div id="methodSelectionState" class="state-hidden">
             <button class="btn-back-nav" onclick="resetToHome()">← 返回大廳</button>
@@ -166,18 +166,15 @@
             if (show) {
                 modal.classList.remove('state-hidden');
                 try {
-                    // 強制抓取後台最新設定，加入時間戳避開快取
                     const res = await fetch(`${API_BASE}/config?t=` + new Date().getTime());
                     const config = await res.json();
                     let url = config.map_image_url ? config.map_image_url.trim() : '';
                     
                     if (url) {
-                        // 1. 【自動修復安全連線阻擋】如果是 http 開頭網址，自動修復為 https
                         if (url.startsWith('http://')) {
                             url = url.replace('http://', 'https://');
                         }
 
-                        // 2. 【支援直接上傳格式】如果是上傳檔案產生的 Base64 編碼 (data:image/) 或 Blob 本地路徑
                         if (url.startsWith('data:image/') || url.startsWith('blob:')) {
                             frame.style.display = 'none';
                             frame.removeAttribute('src');
@@ -186,7 +183,6 @@
                             return;
                         }
 
-                        // 3. 【支援常見圖片網址】若網址結尾包含常見圖片副檔名 (不限大小寫)
                         const lowerUrl = url.toLowerCase();
                         const isImageExtension = lowerUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)($|\?)/);
                         
@@ -198,17 +194,14 @@
                             return;
                         }
 
-                        // 4. 【終極背景防呆測試】若網址沒有副檔名，直接在背景模擬載入測試
                         const testImg = new Image();
                         testImg.onload = function() {
-                            // 載入成功 ➔ 判定為圖片類型，使用 img 標籤渲染
                             frame.style.display = 'none';
                             frame.removeAttribute('src');
                             img.src = url;
                             img.style.display = 'block';
                         };
                         testImg.onerror = function() {
-                            // 載入失敗 ➔ 判定為網頁類型 (.html 或非圖片連結)，使用 iframe 內嵌顯示
                             img.style.display = 'none';
                             img.removeAttribute('src');
                             frame.src = url;
@@ -218,46 +211,6 @@
 
                     } else {
                         alert('後台尚未填寫地圖網址或上傳地圖！');
-                        modal.classList.add('state-hidden');
-                    }
-                } catch(e) {
-                    modal.classList.add('state-hidden');
-                }
-            } else {
-                modal.classList.add('state-hidden');
-                img.removeAttribute('src');
-                frame.removeAttribute('src');
-            }
-        }
-            
-            if (show) {
-                modal.classList.remove('state-hidden');
-                try {
-                    // 強制抓取最新設定，避開快取
-                    const res = await fetch(`${API_BASE}/config?t=` + new Date().getTime());
-                    const config = await res.json();
-                    const url = config.map_image_url ? config.map_image_url.trim() : '';
-                    
-                    if (url) {
-                        const lowerUrl = url.toLowerCase();
-                        // 【超強防呆判斷】只有明確是網頁網址 (.html/.htm) 才用 iframe，其餘（png, jpg, gif, webp...）一律用 img 標籤
-                        const isWebPage = lowerUrl.endsWith('.html') || lowerUrl.endsWith('.htm') || lowerUrl.includes('twse.com.tw/zh/about/company/map.html');
-                        
-                        if (isWebPage) {
-                            // 如果是網頁，用 iframe 內嵌顯示
-                            img.style.display = 'none';
-                            img.removeAttribute('src');
-                            frame.src = url;
-                            frame.style.display = 'block';
-                        } else {
-                            // 如果是任何圖片 (.png, .jpg, .gif 等等)，用 img 標籤完美顯示
-                            frame.style.display = 'none';
-                            frame.removeAttribute('src');
-                            img.src = url;
-                            img.style.display = 'block';
-                        }
-                    } else {
-                        alert('後台尚未填寫地圖網址！');
                         modal.classList.add('state-hidden');
                     }
                 } catch(e) {
