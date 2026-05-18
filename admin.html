@@ -126,6 +126,9 @@
                             <input type="file" id="mapLocalFile" accept="image/*" style="display: none;" onchange="handleMapFileUpload(this)">
                         </label>
                     </div>
+                    <p style="color: #ffa500; font-size: 0.85rem; margin-top: 0.5rem; text-align: left; letter-spacing: 1px;">
+                        ⚠️ 航空提示：請盡量上傳高解析度圖片（建議 1920x1080 或 1200x900），寬度小於 800px 的圖片在前台放大時會產生模糊。
+                    </p>
                     <div id="systemMapPreviewContainer" style="margin-top: 10px; display: none; text-align: left;">
                         <img id="systemMapPreview" src="" style="max-width: 240px; max-height: 150px; border-radius: 8px; border: 1px solid var(--accent-gray); object-fit: contain; background: rgba(0,0,0,0.3);">
                     </div>
@@ -150,6 +153,9 @@
                         <input type="file" accept="image/*" style="display: none;" onchange="handleProductFileUpload(this)">
                     </label>
                 </div>
+                <p style="color: #00e5ff; font-size: 0.85rem; margin-top: 0.5rem; text-align: left; letter-spacing: 1px;">
+                    💡 建議比例：4:3 或 3:2（例如 800x600 像素），動態 GIF 亦可完美支援。
+                </p>
                 <div id="imagePreview" style="margin-top: 10px; text-align: center;">
                     <img id="modalImgPreview" src="" style="max-width: 100%; max-height: 150px; display: none; border-radius: 8px; border: 1px solid var(--accent-gray); object-fit: contain;">
                 </div>
@@ -349,7 +355,7 @@
             }
         }
 
-        // 新增：處理地圖檔案本機直接上傳
+        // 處理地圖本機檔案選取上傳 (自動編碼為 Base64 字串)
         function handleMapFileUpload(input) {
             const file = input.files[0];
             if (!file) return;
@@ -364,7 +370,7 @@
             reader.readAsDataURL(file);
         }
 
-        // 新增：處理商品物資圖片本機直接上傳
+        // 處理一般補給品/伴手禮本機圖片選取上傳 (自動編碼為 Base64 字串)
         function handleProductFileUpload(input) {
             const file = input.files[0];
             if (!file) return;
