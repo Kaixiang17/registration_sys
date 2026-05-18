@@ -137,8 +137,8 @@
     <div id="mapModal" class="state-hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
         <div style="position: relative; width: 90%; height: 85vh; max-width: 1200px; display: flex; flex-direction: column;">
             <button onclick="toggleMapModal(false)" style="align-self: flex-end; margin-bottom: 10px; background: rgba(0,229,255,0.2); border: 1px solid #00e5ff; color: #00e5ff; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 1.1rem;">✕ 關閉地圖</button>
-            <div style="flex-grow: 1; background: #fff; border-radius: 10px; overflow: hidden; border: 2px solid var(--accent-gray);">
-                <img id="mapDisplayImage" src="" style="width: 100%; height: 100%; object-fit: contain; background: #0a1423; display: none;">
+            <div style="flex-grow: 1; background: #0a1423; border-radius: 10px; overflow: hidden; border: 2px solid var(--accent-gray); display: flex; align-items: center; justify-content: center;">
+                <img id="mapDisplayImage" src="" style="max-width: 100%; max-height: 100%; object-fit: contain; display: none;">
                 <iframe id="mapDisplayFrame" src="" style="width: 100%; height: 100%; border: none; display: none; background: #fff;"></iframe>
             </div>
         </div>
@@ -162,6 +162,73 @@
             const modal = document.getElementById('mapModal');
             const img = document.getElementById('mapDisplayImage');
             const frame = document.getElementById('mapDisplayFrame');
+            
+            if (show) {
+                modal.classList.remove('state-hidden');
+                try {
+                    // 強制抓取後台最新設定，加入時間戳避開快取
+                    const res = await fetch(`${API_BASE}/config?t=` + new Date().getTime());
+                    const config = await res.json();
+                    let url = config.map_image_url ? config.map_image_url.trim() : '';
+                    
+                    if (url) {
+                        // 1. 【自動修復安全連線阻擋】如果是 http 開頭網址，自動修復為 https
+                        if (url.startsWith('http://')) {
+                            url = url.replace('http://', 'https://');
+                        }
+
+                        // 2. 【支援直接上傳格式】如果是上傳檔案產生的 Base64 編碼 (data:image/) 或 Blob 本地路徑
+                        if (url.startsWith('data:image/') || url.startsWith('blob:')) {
+                            frame.style.display = 'none';
+                            frame.removeAttribute('src');
+                            img.src = url;
+                            img.style.display = 'block';
+                            return;
+                        }
+
+                        // 3. 【支援常見圖片網址】若網址結尾包含常見圖片副檔名 (不限大小寫)
+                        const lowerUrl = url.toLowerCase();
+                        const isImageExtension = lowerUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)($|\?)/);
+                        
+                        if (isImageExtension) {
+                            frame.style.display = 'none';
+                            frame.removeAttribute('src');
+                            img.src = url;
+                            img.style.display = 'block';
+                            return;
+                        }
+
+                        // 4. 【終極背景防呆測試】若網址沒有副檔名，直接在背景模擬載入測試
+                        const testImg = new Image();
+                        testImg.onload = function() {
+                            // 載入成功 ➔ 判定為圖片類型，使用 img 標籤渲染
+                            frame.style.display = 'none';
+                            frame.removeAttribute('src');
+                            img.src = url;
+                            img.style.display = 'block';
+                        };
+                        testImg.onerror = function() {
+                            // 載入失敗 ➔ 判定為網頁類型 (.html 或非圖片連結)，使用 iframe 內嵌顯示
+                            img.style.display = 'none';
+                            img.removeAttribute('src');
+                            frame.src = url;
+                            frame.style.display = 'block';
+                        };
+                        testImg.src = url;
+
+                    } else {
+                        alert('後台尚未填寫地圖網址或上傳地圖！');
+                        modal.classList.add('state-hidden');
+                    }
+                } catch(e) {
+                    modal.classList.add('state-hidden');
+                }
+            } else {
+                modal.classList.add('state-hidden');
+                img.removeAttribute('src');
+                frame.removeAttribute('src');
+            }
+        }
             
             if (show) {
                 modal.classList.remove('state-hidden');
