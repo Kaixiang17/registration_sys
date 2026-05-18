@@ -341,7 +341,9 @@
             setAppState('product');
             const res = await fetch(`${API_BASE}/config?t=` + new Date().getTime());
             const config = await res.json();
-            window.allProducts = config.products || [];
+            
+            // 核心過濾：將前台商品網格清單中的虛擬配置項完全排除，防止破圖卡片出現
+            window.allProducts = (config.products || []).filter(p => p.name !== "__SYSTEM_CATEGORIES__");
             
             // 1. 渲染伴手禮區塊 (isGift 為 true)
             const gifts = window.allProducts.filter(p => p.isGift);
