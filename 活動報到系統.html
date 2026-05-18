@@ -168,49 +168,36 @@
             if (show) {
                 modal.classList.remove('state-hidden');
                 try {
+                    // 強制抓取最新設定，加入時間戳避開快取
                     const res = await fetch(`${API_BASE}/config?t=` + new Date().getTime());
                     const config = await res.json();
                     let url = config.map_image_url ? config.map_image_url.trim() : '';
                     
                     if (url) {
-                        if (url.startsWith('http://')) {
+                        // 自動修正 Mixed Content 安全問題（若主站是 https，預防性升級圖片連結）
+                        if (url.startsWith('http://') && window.location.protocol === 'https:') {
                             url = url.replace('http://', 'https://');
                         }
 
-                        if (url.startsWith('data:image/') || url.startsWith('blob:')) {
-                            frame.style.display = 'none';
-                            frame.removeAttribute('src');
-                            img.src = url;
-                            img.style.display = 'block';
-                            return;
-                        }
-
                         const lowerUrl = url.toLowerCase();
-                        const isImageExtension = lowerUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)($|\?)/);
                         
-                        if (isImageExtension) {
-                            frame.style.display = 'none';
-                            frame.removeAttribute('src');
-                            img.src = url;
-                            img.style.display = 'block';
-                            return;
-                        }
-
-                        const testImg = new Image();
-                        testImg.onload = function() {
-                            frame.style.display = 'none';
-                            frame.removeAttribute('src');
-                            img.src = url;
-                            img.style.display = 'block';
-                        };
-                        testImg.onerror = function() {
+                        // 【全新穩定機制】取消背景圖片測試，改用純字串精準過濾，徹底繞過手機安全防護
+                        // 只有當網址明確包含 .html 或 .htm 時才使用網頁內嵌，其餘（Base64、png、jpg、gif 等）一律走 img 標籤！
+                        const isWebPage = lowerUrl.includes('.html') || lowerUrl.includes('.htm');
+                        
+                        if (isWebPage) {
+                            // 網頁模式：使用 iframe 內嵌顯示
                             img.style.display = 'none';
                             img.removeAttribute('src');
                             frame.src = url;
                             frame.style.display = 'block';
-                        };
-                        testImg.src = url;
-
+                        } else {
+                            // 圖片模式：不論是網路連結還是上傳的 Base64，一律用 img 標籤渲染，手機絕不漏圖！
+                            frame.style.display = 'none';
+                            frame.removeAttribute('src');
+                            img.src = url;
+                            img.style.display = 'block';
+                        }
                     } else {
                         alert('後台尚未填寫地圖網址或上傳地圖！');
                         modal.classList.add('state-hidden');
