@@ -113,17 +113,22 @@ def index(): return send_from_directory('.', '活動報到系統.html')
 
 @app.route('/api/config', methods=['GET', 'POST'])
 def handle_config():
-    if not session.get('admin_logged_in'): return jsonify({"success": False}), 403
+    # 如果是 POST (寫入設定/上傳圖片)，才需要嚴格檢查管理員權限
     if request.method == 'POST':
-        # 儲存端防護：確保寫入時一定含有商品主體，絕對不允許被覆蓋為空
+        if not session.get('admin_logged_in'): 
+            return jsonify({"success": False, "message": "未授權的操作"}), 403
+            
         payload = request.json
         current = load_config()
+        # 儲存端防護：確保寫入時一定含有商品主體，絕對不允許被覆蓋為空
         if "products" not in payload or not payload["products"]:
             payload["products"] = current.get("products", [])
             
         with open(CONFIG_PATH, 'w', encoding='utf-8') as f: 
             json.dump(payload, f, ensure_ascii=False, indent=4)
         return jsonify({"success": True, "data": payload})
+        
+    # 如果是 GET (前台載入讀取)，則無條件開放給所有人 (包含未登入的手機端) 讀取
     return jsonify(load_config())
 
 @app.route('/api/search/<method>')
