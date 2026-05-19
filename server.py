@@ -19,12 +19,26 @@ last_cache_update = 0
 cache_lock = threading.Lock()
 CACHE_TTL = 300
 
+# ==================== 【安全升級：全自動補全防呆機制】 ====================
 def load_config():
+    # 建立標準防護底標，確保 products 陣列萬無一失
+    default_config = {
+        "show_meal_options": True,
+        "google_sheet_name": "活動報到名單",
+        "map_image_url": "",
+        "products": [],
+        "excel_columns": {}
+    }
     if os.path.exists(CONFIG_PATH):
         try:
-            with open(CONFIG_PATH, 'r', encoding='utf-8') as f: return json.load(f)
-        except: return {}
-    return {"google_sheet_name": "活動報到名單", "excel_columns": {}}
+            with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                # 融合讀取到的設定，若缺少任何必要欄位會自動用預設值補齊
+                default_config.update(data)
+                return default_config
+        except:
+            return default_config
+    return default_config
 
 def get_gspread_client():
     scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
@@ -101,8 +115,15 @@ def index(): return send_from_directory('.', '活動報到系統.html')
 def handle_config():
     if not session.get('admin_logged_in'): return jsonify({"success": False}), 403
     if request.method == 'POST':
-        with open(CONFIG_PATH, 'w', encoding='utf-8') as f: json.dump(request.json, f, ensure_ascii=False, indent=4)
-        return jsonify({"success": True, "data": request.json})
+        # 儲存端防護：確保寫入時一定含有商品主體，絕對不允許被覆蓋為空
+        payload = request.json
+        current = load_config()
+        if "products" not in payload or not payload["products"]:
+            payload["products"] = current.get("products", [])
+            
+        with open(CONFIG_PATH, 'w', encoding='utf-8') as f: 
+            json.dump(payload, f, ensure_ascii=False, indent=4)
+        return jsonify({"success": True, "data": payload})
     return jsonify(load_config())
 
 @app.route('/api/search/<method>')
@@ -162,24 +183,22 @@ def refresh_cache(force=False):
             all_values = get_worksheet().get_all_values()
             cols = load_config().get('excel_columns', {})
             new_cache = []
-            last_company = "" # 處理 Excel 合併儲存格：用於紀錄最新出現過的公司名稱
+            last_company = ""
             
             for i, row in enumerate(all_values[3:]):
                 def g(c): return row[c-1].strip() if c and c-1 < len(row) else ""
-                
-                # 合併儲存格邏輯：如果當前公司欄位有字，更新 last_company；如果沒字，沿用上一個有字的公司
                 current_comp = g(cols.get('company', 3))
                 if current_comp:
                     last_company = current_comp
                 
                 name = g(cols.get('name', 6))
-                if not name: continue # 略過空行
+                if not name: continue
                 
                 new_cache.append({
                     "id": f"{name}_{i}", 
                     "name": name, 
                     "phone": g(cols.get('phone', 8)),
-                    "company": last_company, # 確保這裡永遠抓得到公司名
+                    "company": last_company,
                     "email": g(cols.get('email', 9)),
                     "status": g(cols.get('status', 15)), 
                     "meal": g(cols.get('meal', 16)),
@@ -193,5 +212,4 @@ def refresh_cache(force=False):
         except Exception as e: print(f"緩存刷新失敗: {e}")
 
 if __name__ == '__main__':
-    refresh_cache(True)
     app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 10000)))
