@@ -18,7 +18,7 @@
         .home-card h2 { margin: 1.5rem 0 1rem 0; font-size: 2.2rem; }
         .verify-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-top: 2rem; }
         .verify-card { padding: 2.5rem 1.5rem; text-align: center; cursor: pointer; border-radius: 1rem; }
-        @media(max-width: 768px) { .verify-grid { grid-template-columns: 1fr; } }
+        
         .form-card { max-width: 600px; margin: 0 auto; padding: 3rem; text-align: center; border-radius: 1.5rem; }
         .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2.5rem; }
         .product-img { width: 100%; height: 220px; object-fit: contain; background: rgba(0,0,0,0.4); border-bottom: 1px solid var(--accent-gray); }
@@ -30,16 +30,101 @@
         .group-item:hover { background: rgba(0,229,255,0.1); }
         .meal-selected, .is-original-selected { border-color: var(--text-dark) !important; background: rgba(0, 229, 255, 0.2) !important; }
         .proxy-selected { border-color: #ffa500 !important; background: rgba(255, 165, 0, 0.15) !important; }
-        .info-box { text-align: left; padding: 1.5rem; border-radius: 1rem; margin: 1.5rem 0; background: rgba(0,0,0,0.5); border: 1px solid var(--accent-gray); }
+        .info-box { text-align: left; padding: 1.5rem; border-radius: 1rem; margin: 1.5rem 0; background: rgba(0,0,0,0.3); }
+
+        /* === 手機端全介面優化修復包 === */
+        @media(max-width: 768px) {
+            /* 1. 標題文字優化：防止換行並自動縮放 */
+            h1.neon-text, h2.neon-text {
+                font-size: 1.8rem !important;
+                white-space: nowrap !important;
+                letter-spacing: 1px !important;
+            }
+
+            /* 2. 大廳卡片佈局優化：防止超出螢幕 */
+            .home-grid {
+                grid-template-columns: 1fr !important;
+                gap: 1.5rem !important;
+                padding: 0 10px !important;
+                margin-top: 1rem !important;
+            }
+
+            .home-card {
+                min-height: auto !important;
+                padding: 2.5rem 1rem !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+            }
+
+            .home-card h2 {
+                font-size: 1.6rem !important;
+                margin: 1rem 0 !important;
+            }
+
+            /* 3. 商品專區優化：標題與返回按鈕排列 */
+            #productState > div:first-child {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 1rem !important;
+                margin-bottom: 2rem !important;
+            }
+
+            .btn-back-nav {
+                margin-bottom: 0 !important;
+                padding: 0.4rem 1rem !important;
+                font-size: 0.9rem !important;
+            }
+
+            /* 4. 商品網格優化 */
+            .products-grid {
+                grid-template-columns: 1fr !important;
+                gap: 1.5rem !important;
+                padding: 0 5px !important;
+            }
+
+            /* 5. 頁首與導覽列優化 */
+            header {
+                padding: 0.6rem 0 !important;
+            }
+
+            .header-container {
+                padding: 0 12px !important;
+            }
+
+            #mapBtn {
+                font-size: 0.8rem !important;
+                padding: 4px 8px !important;
+            }
+
+            /* 6. 表單與輸入框優化 */
+            .form-card {
+                padding: 1.5rem !important;
+                width: 95% !important;
+                margin: 0 auto !important;
+            }
+
+            .cyber-input {
+                padding: 0.8rem !important;
+                font-size: 1rem !important;
+            }
+
+            .cyber-button {
+                padding: 0.8rem !important;
+                font-size: 1rem !important;
+            }
+
+            .verify-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
     </style>
 </head>
 <body class="circuit-background">
     <div class="ark-background"></div>
-    <header class="panel-border" style="border-top:none; border-left:none; border-right:none; background: rgba(10,20,35,0.85); backdrop-filter: blur(15px);">
+    <header class="panel-border" style="border-top:none; border-left:none; border-right:none; background: rgba(10,20,35,0.8);">
         <div class="header-container">
-            <div onclick="resetToHome()" style="cursor:pointer; color:var(--text-dark); font-weight: bold; font-size: 1.1rem;">✈️ 航班大廳</div>
-            <div class="neon-text" style="font-size: 1.4rem;">BOARDING SYSTEM</div>
-            <div id="mapBtn" onclick="toggleMapModal(true)" style="font-size: 0.9rem; color: var(--text-dark); cursor: pointer; border: 1px solid var(--text-dark); padding: 4px 12px; border-radius: 20px; font-weight: bold;">🗺️ 地圖導覽</div>
+            <div onclick="resetToHome()" style="cursor:pointer; color:var(--text-dark); font-weight: bold; font-size: 1.2rem;">✈️ <span class="neon-text" style="font-size: 1.4rem;">BOARDING SYSTEM</span></div>
+            <div id="mapBtn" onclick="toggleMapModal(true)" style="font-size: 0.9rem; color: var(--text-dark); cursor: pointer; border: 1px solid var(--text-dark); padding: 5px 12px; border-radius: 20px;">🗺️ 地圖導覽</div>
         </div>
     </header>
 
@@ -83,10 +168,10 @@
 
         <div id="actionState" class="state-hidden">
             <button class="btn-back-nav" onclick="setAppState('methodSelection')">← 重新選擇方式</button>
-            <div class="form-card cyber-card" style="max-width: 800px; padding: 4.5rem; margin-top: 2rem;">
+            <div class="form-card cyber-card">
                 <h2 id="actionTitle" class="neon-text" style="margin-bottom: 2.5rem; font-size: 2.5rem;">登機驗證</h2>
-                <input type="text" id="actionInput" class="cyber-input" placeholder="請輸入資訊" style="font-size: 1.5rem; padding: 1.5rem; height: 60px;">
-                <button class="cyber-button" onclick="handleAction()" style="font-size: 1.4rem; padding: 1.2rem; margin-top: 1rem;"><span>啟動搜尋</span></button>
+                <input type="text" id="actionInput" class="cyber-input" placeholder="請輸入資訊" style="font-size: 1.4rem;">
+                <button class="cyber-button" onclick="handleAction()" style="font-size: 1.4rem; padding: 1.2rem;">開始驗證</button>
             </div>
         </div>
 
@@ -94,7 +179,7 @@
             <button class="btn-back-nav" onclick="setAppState('action')">← 重新搜尋</button>
             <div class="form-card cyber-card" style="max-width: 700px;">
                 <h2 id="groupName" class="neon-text" style="margin-bottom: 1.5rem;">請選擇旅客</h2>
-                <div id="groupList" class="panel-border" style="background: rgba(0,0,0,0.3); border-radius: 1rem; max-height:450px; overflow-y:auto;"></div>
+                <div id="groupList" class="panel-border" style="background: rgba(0,0,0,0.3); border-radius: 1rem; overflow: hidden;"></div>
             </div>
         </div>
 
@@ -109,36 +194,38 @@
 
         <div id="successState" class="state-hidden">
             <div class="form-card cyber-card">
-                <div id="successIcon" style="color:var(--text-dark); font-size:6rem;">🎫</div>
+                <div id="successIcon" style="color:var(--text-dark); font-size:6rem;">✅</div>
                 <h2 id="successTitle" class="neon-text">手續完成！</h2>
                 <div id="successInfo" class="info-box panel-border"></div>
-                <button class="cyber-button" onclick="resetToHome()"><span>🏠 回到大廳</span></button>
+                <button class="cyber-button" onclick="resetToHome()"><span>回到大廳</span></button>
             </div>
         </div>
 
         <div id="productState" class="state-hidden">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3rem;">
                 <h1 class="neon-text" style="font-size: 2.5rem;">🛍️ 活動商品專區</h1>
-                <button class="cyber-button" style="width:auto; border-radius: 30px; padding: 0.6rem 1.8rem;" onclick="resetToHome()"><span>← 返回</span></button>
+                <button class="cyber-button" style="width:auto; border-radius: 30px; padding: 0.6rem 1.8rem;" onclick="resetToHome()">← 返回</button>
             </div>
+            
             <div id="giftsSection" class="state-hidden">
                 <h2 class="neon-text" style="margin-bottom: 1.5rem;">🎁 精選伴手禮</h2>
                 <div id="giftsGrid" class="products-grid"></div>
             </div>
+
             <div id="normalProductsSection" style="margin-top: 3rem;">
-                <h2 class="neon-text" style="margin-bottom: 1.5rem;">📦 補給品清單</h2>
+                <h2 class="neon-text" style="margin-bottom: 1.5rem;">📚 補給品清單</h2>
                 <div id="categoryFilters" style="margin-bottom: 2.5rem; display: flex; flex-wrap: wrap; gap: 0.8rem;"></div>
                 <div id="productsGrid" class="products-grid"></div>
             </div>
         </div>
     </main>
 
-    <div id="mapModal" class="state-hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
+    <div id="mapModal" class="state-hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; display: flex; justify-content: center; align-items: center;">
         <div style="position: relative; width: 90%; height: 85vh; max-width: 1200px; display: flex; flex-direction: column;">
-            <button onclick="toggleMapModal(false)" style="align-self: flex-end; margin-bottom: 10px; background: rgba(0,229,255,0.2); border: 1px solid #00e5ff; color: #00e5ff; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 1.1rem;">✕ 關閉地圖</button>
-            <div style="flex-grow: 1; background: #0a1423; border-radius: 10px; overflow: hidden; border: 2px solid var(--accent-gray); display: flex; align-items: center; justify-content: center;">
+            <button onclick="toggleMapModal(false)" style="align-self: flex-end; margin-bottom: 10px; background: var(--text-dark); color: #000; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">✕ 關閉地圖</button>
+            <div style="flex-grow: 1; background: #0a1423; border-radius: 10px; overflow: hidden; border: 2px solid var(--accent-gray); display: flex; justify-content: center; align-items: center;">
                 <img id="mapDisplayImage" src="" style="width: 100%; height: 100%; object-fit: contain; display: none;">
-                <iframe id="mapDisplayFrame" src="" style="width: 100%; height: 100%; border: none; display: none; background: #fff;"></iframe>
+                <iframe id="mapDisplayFrame" src="" style="width: 100%; height: 100%; border: none; display: none;"></iframe>
             </div>
         </div>
     </div>
@@ -159,37 +246,38 @@
 
         function resetToHome() { setAppState('home'); }
 
-        // 核心修正：將重複贅餘、造成行動裝置 Parsing 嚴重錯誤崩潰的死區塊徹底拔除清空
         async function toggleMapModal(show) {
             const modal = document.getElementById('mapModal');
             const img = document.getElementById('mapDisplayImage');
             const frame = document.getElementById('mapDisplayFrame');
-            
+
             if (show) {
                 modal.classList.remove('state-hidden');
                 try {
                     const res = await fetch(`${API_BASE}/config?t=` + new Date().getTime());
                     const config = await res.json();
                     let url = config.map_image_url ? config.map_image_url.trim() : '';
-                    
-                    if (url) {
-                        if (url.startsWith('http://') && window.location.protocol === 'https:') {
-                            url = url.replace('http://', 'https://');
-                        }
 
+                    if (url) {
                         const lowerUrl = url.toLowerCase();
-                        const isWebPage = lowerUrl.includes('.html') || lowerUrl.includes('.htm');
-                        
-                        if (isWebPage) {
-                            img.style.display = 'none';
-                            img.removeAttribute('src');
-                            frame.src = url;
-                            frame.style.display = 'block';
-                        } else {
+                        // 判斷是否為常見的圖片格式
+                        const isImage = lowerUrl.endsWith('.png') || 
+                                        lowerUrl.endsWith('.jpg') || 
+                                        lowerUrl.endsWith('.jpeg') || 
+                                        lowerUrl.endsWith('.gif') || 
+                                        lowerUrl.endsWith('.webp') ||
+                                        url.startsWith('data:image/');
+
+                        if (isImage) {
                             frame.style.display = 'none';
                             frame.removeAttribute('src');
                             img.src = url;
                             img.style.display = 'block';
+                        } else {
+                            img.style.display = 'none';
+                            img.removeAttribute('src');
+                            frame.src = url;
+                            frame.style.display = 'block';
                         }
                     } else {
                         alert('後台尚未填寫地圖網址或上傳地圖！');
@@ -227,197 +315,176 @@
         }
 
         function renderCompanyList(companies) {
+            const list = document.getElementById('groupList');
+            list.innerHTML = '';
+            companies.forEach(c => {
+                const div = document.createElement('div');
+                div.className = 'group-item';
+                div.innerHTML = `<span>🏢 ${c}</span><span>➔</span>`;
+                div.onclick = async () => {
+                    const res = await fetch(`${API_BASE}/search/company_members?name=${encodeURIComponent(c)}`);
+                    const json = await res.json();
+                    renderUserList(json.data, c);
+                };
+                list.appendChild(div);
+            });
             document.getElementById('groupName').textContent = '請選擇所屬公司';
-            document.getElementById('groupList').innerHTML = companies.map(c => `
-                <div class="group-item" onclick="fetchCompanyMembers('${c}')">
-                    <b>${c}</b><span>選擇 →</span>
-                </div>`).join('');
             setAppState('groupList');
-        }
-
-        async function fetchCompanyMembers(companyName) {
-            try {
-                const res = await fetch(`${API_BASE}/search/company_members?name=${encodeURIComponent(companyName)}`);
-                const json = await res.json();
-                window.tempData = json.data;
-                renderUserList(json.data, `${companyName} 旅客名單`);
-            } catch(e) { alert('通訊異常'); }
         }
 
         function renderUserList(users, title) {
+            const list = document.getElementById('groupList');
+            list.innerHTML = '';
+            users.forEach(u => {
+                const div = document.createElement('div');
+                div.className = 'group-item';
+                const statusTag = (u.status === 'checked_in' || u.status === '已報到' || u.status === '替代') ? '<span style="color:#555;">[已報到]</span>' : '<span>➔</span>';
+                div.innerHTML = `<div><div style="font-weight:bold; font-size:1.2rem;">${u.name}</div><div style="font-size:0.9rem; color:#aaa;">${u.company}</div></div>${statusTag}`;
+                if (statusTag === '<span>➔</span>') {
+                    div.onclick = () => { selectedUser = u; renderMealOptions(); };
+                }
+                list.appendChild(div);
+            });
             document.getElementById('groupName').textContent = title;
-            document.getElementById('groupList').innerHTML = users.map(u => `
-                <div class="group-item" onclick="selectSingleUser('${u.id}')">
-                    <div><b>${u.name}</b><br><small>${u.company || ''}</small></div>
-                    <span>${u.status === 'checked_in' || u.status === '替代' ? '🟢 已登機' : '⚪ 待報到'}</span>
-                </div>`).join('');
             setAppState('groupList');
         }
 
-        function selectSingleUser(id) {
-            selectedUser = window.tempData.find(u => u.id === id);
-            renderMealOptions();
-        }
-
-        function renderMealOptions() {
-            const options = (systemConfig && systemConfig.meal_types) ? systemConfig.meal_types : ['葷食', '素食', '不須用餐'];
-            const mealHtml = options.map(m => {
-                let icon = m.includes('葷') ? '🍱' : (m.includes('素') ? '🥗' : '❌');
-                return `<div class="cyber-card panel-border" id="m-${m}" onclick="selectMeal('${m}')" style="padding:1.5rem; margin-bottom:1rem; cursor:pointer;">${icon} ${m}</div>`;
-            }).join('');
+        async function renderMealOptions() {
+            const res = await fetch(`${API_BASE}/config`);
+            systemConfig = await res.json();
+            if (!systemConfig.show_meal_options) { submitCheckin('不需要'); return; }
             
-            const proxyHtml = `
-            <div style="margin-top: 2rem; border-top: 1px solid rgba(0, 229, 255, 0.3); padding-top: 1.5rem;">
-                <label style="display: block; margin-bottom: 1rem; font-weight: bold;">👤 是否為本人報到？</label>
-                <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-                    <div id="isOriginalYes" class="cyber-card" onclick="setIsOriginal(true)" style="flex: 1; padding: 1rem; text-align: center; cursor: pointer;">✅ 是，本人</div>
-                    <div id="isOriginalNo" class="cyber-card" onclick="setIsOriginal(false)" style="flex: 1; padding: 1rem; text-align: center; cursor: pointer;">❌ 否，替代者</div>
+            const container = document.getElementById('mealOptions');
+            container.innerHTML = `
+                <div style="margin-bottom:2rem; text-align:left; padding:1rem; background:rgba(0,229,255,0.1); border-radius:0.5rem;">
+                    <div style="font-size:0.9rem; color:var(--text-dark);">旅客姓名</div>
+                    <div style="font-size:1.4rem; font-weight:bold;">${selectedUser.name}</div>
                 </div>
-                <div id="proxyInfoSection" style="display: none; padding: 1rem; background: rgba(255, 165, 0, 0.05); border: 1px solid #ffa500; border-radius: 1rem;">
-                    <input id="proxyName" class="cyber-input" placeholder="替代者姓名">
-                    <input id="proxyPhone" class="cyber-input" placeholder="替代者電話">
-                    <input id="proxyEmail" class="cyber-input" placeholder="替代者 Email">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:2rem;">
+                    <div id="btnOrig" class="verify-card cyber-card is-original-selected" onclick="toggleIdentity(true)">本人報到</div>
+                    <div id="btnProxy" class="verify-card cyber-card" onclick="toggleIdentity(false)">替代報到</div>
                 </div>
-            </div>`;
-            document.getElementById('mealOptions').innerHTML = mealHtml + proxyHtml;
+                <div id="proxyForm" class="state-hidden" style="margin-bottom:2rem; text-align:left; border:1px solid #ffa500; padding:1.5rem; border-radius:1rem;">
+                    <p style="color:#ffa500; margin-bottom:1rem;">請輸入替代人資訊：</p>
+                    <input type="text" id="proxyName" class="cyber-input" placeholder="替代人姓名" style="margin-bottom:0.8rem;">
+                    <input type="text" id="proxyPhone" class="cyber-input" placeholder="替代人手機">
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                    ${['葷食', '素食'].map(m => `<div class="verify-card cyber-card meal-opt" onclick="selectMeal(this, '${m}')">${m}</div>`).join('')}
+                </div>
+            `;
+            window.selectedMeal = null;
             window.isOriginal = true;
             document.getElementById('finalBtn').disabled = true;
             setAppState('meal');
         }
 
-        window.setIsOriginal = function(val) {
-            window.isOriginal = val;
-            document.getElementById('isOriginalYes').classList.toggle('is-original-selected', val);
-            document.getElementById('isOriginalNo').classList.toggle('proxy-selected', !val);
-            document.getElementById('proxyInfoSection').style.display = val ? 'none' : 'block';
-        };
+        function toggleIdentity(isOrig) {
+            window.isOriginal = isOrig;
+            document.getElementById('btnOrig').classList.toggle('is-original-selected', isOrig);
+            document.getElementById('btnProxy').classList.toggle('proxy-selected', !isOrig);
+            document.getElementById('proxyForm').classList.toggle('state-hidden', isOrig);
+            checkMealReady();
+        }
 
-        window.selectMeal = function(m) {
+        function selectMeal(el, m) {
+            document.querySelectorAll('.meal-opt').forEach(x => x.classList.remove('meal-selected'));
+            el.classList.add('meal-selected');
             window.selectedMeal = m;
-            document.querySelectorAll('[id^="m-"]').forEach(el => el.classList.remove('meal-selected'));
-            document.getElementById('m-'+m).classList.add('meal-selected');
-            document.getElementById('finalBtn').disabled = false;
-        };
+            checkMealReady();
+        }
 
-        async function submitCheckin() {
+        function checkMealReady() {
+            document.getElementById('finalBtn').disabled = !window.selectedMeal;
+        }
+
+        async function submitCheckin(autoMeal) {
+            const meal = autoMeal || window.selectedMeal;
+            const proxyInfo = window.isOriginal ? {} : {
+                name: document.getElementById('proxyName').value.trim(),
+                phone: document.getElementById('proxyPhone').value.trim()
+            };
+            
+            if (!window.isOriginal && !proxyInfo.name) { alert('請輸入替代人姓名'); return; }
+
             const btn = document.getElementById('finalBtn');
-            let proxyInfo = {};
-            if (window.isOriginal === false) {
-                proxyInfo = {
-                    name: document.getElementById('proxyName').value.trim(),
-                    phone: document.getElementById('proxyPhone').value.trim(),
-                    email: document.getElementById('proxyEmail').value.trim()
-                };
-                if (!proxyInfo.name || !proxyInfo.phone || !proxyInfo.email) return alert('請填寫完整替代者資訊');
-                if (!/^09\d{8}$/.test(proxyInfo.phone)) return alert('電話格式錯誤！需為 09 開頭 10 位數');
-                if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(proxyInfo.email)) return alert('必須使用 @gmail.com 帳號');
-            }
-
-            btn.disabled = true; btn.innerHTML = '<span>📡 開立登機證中...</span>';
+            btn.disabled = true;
+            btn.innerHTML = '<span>處理中...</span>';
+            
             try {
-                const res = await fetch(`${API_BASE}/checkin/${selectedUser.id}`, { 
-                    method: 'POST', headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ meal: window.selectedMeal, is_original: window.isOriginal, proxy_info: proxyInfo }) 
+                const res = await fetch(`${API_BASE}/checkin/${selectedUser.id}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ meal, is_original: window.isOriginal, proxy_info: proxyInfo })
                 });
                 const json = await res.json();
-                const info = document.getElementById('successInfo');
                 if (json.success) {
-                    const statusText = json.data.status === '替代' ? '<span style="color:#ffa500;">(替代報到)</span>' : '';
-                    info.innerHTML = `
-                        <div style="color:#4ade80; font-weight:bold; border-bottom:1px solid #4ade80; margin-bottom:1rem;">登艦完成，歡迎登機</div>
-                        <p><b>姓名：</b>${json.data.name} ${statusText}</p>
-                        <p><b>單位：</b>${json.data.company || "個人旅客"}</p>
-                        <p><b>座位：</b><span style="color:var(--text-dark); font-weight:bold;">${json.data.seat || "未分配"}</span></p>
-                        <p><b>餐飲：</b>${json.data.meal}</p>
-                        <p><b>時間：</b>${json.data.checkedInAt}</p>
-                        <div style="margin-top: 1rem; padding: 1rem; border: 1px dashed var(--text-dark); border-radius: 0.5rem; text-align: center;">📸 <b>截圖提醒：</b>請保存此畫面以供核對</div>`;
-                } else if (json.error === 'already_done') {
-                    info.innerHTML = `<div style="color:#ff4d4d; font-weight:bold;">此旅客已完成登機</div><p><b>姓名：</b>${json.data.name}</p>`;
-                }
-                setAppState('success');
-            } catch (e) { alert('通訊中斷'); btn.disabled = false; }
+                    const u = json.data;
+                    document.getElementById('successInfo').innerHTML = `
+                        <div style="margin-bottom:0.5rem;">旅客：<b>${u.name}</b></div>
+                        <div style="margin-bottom:0.5rem;">單位：${u.company}</div>
+                        <div style="margin-bottom:0.5rem;">座位：<span style="font-size:1.5rem; color:var(--text-dark); font-weight:bold;">${u.seat || '現場安排'}</span></div>
+                        <div>時間：${u.checkedInAt}</div>
+                    `;
+                    setAppState('success');
+                } else alert('報到失敗');
+            } catch(e) { alert('網路異常'); }
         }
 
         async function showProducts() {
-            setAppState('product');
-            const res = await fetch(`${API_BASE}/config?t=` + new Date().getTime());
-            const config = await res.json();
-            
-            window.allProducts = (config.products || []).filter(p => p.name !== "__SYSTEM_CATEGORIES__");
-            
-            const gifts = window.allProducts.filter(p => p.isGift);
-            if (gifts.length > 0) {
-                document.getElementById('giftsSection').classList.remove('state-hidden');
-                document.getElementById('giftsGrid').innerHTML = gifts.map(p => renderProductCard(p)).join('');
-            } else {
-                document.getElementById('giftsSection').classList.add('state-hidden');
-            }
+            try {
+                const res = await fetch(`${API_BASE}/config`);
+                const config = await res.json();
+                window.allProducts = config.products || [];
+                
+                const gifts = window.allProducts.filter(p => p.isGift);
+                const normals = window.allProducts.filter(p => !p.isGift);
+                
+                const giftsSection = document.getElementById('giftsSection');
+                if (gifts.length > 0) {
+                    giftsSection.classList.remove('state-hidden');
+                    renderGrid('giftsGrid', gifts);
+                } else giftsSection.classList.add('state-hidden');
 
-            const normalProducts = window.allProducts.filter(p => !p.isGift);
-            // 核心安全防呆：加入 || '未分類'，防止從資料庫直接搬移的舊資料在未設定分類時出錯
-            const categories = ['全部', ...new Set(normalProducts.map(p => p.category || '未分類').filter(c => c && c.trim() !== ''))];
-            
-            document.getElementById('categoryFilters').innerHTML = categories.map(cat => `
-                <button class="cyber-button" style="width:auto; padding: 0.5rem 1.5rem; font-size: 0.95rem; background: ${window.currentCategory === cat ? 'rgba(0, 229, 255, 0.25)' : 'none'}; border-color: ${window.currentCategory === cat ? 'var(--text-dark)' : 'var(--accent-gray)'};" onclick="filterCategory('${cat}')">
-                    <span>${cat}</span>
-                </button>
-            `).join('');
+                const categories = ['全部', ...new Set(normals.map(p => p.category).filter(c => c))];
+                const filterContainer = document.getElementById('categoryFilters');
+                filterContainer.innerHTML = categories.map(c => `
+                    <div class="cyber-button ${window.currentCategory === c ? 'active' : ''}" 
+                         style="width:auto; padding:0.5rem 1.2rem; border-radius:20px; cursor:pointer;"
+                         onclick="filterCategory('${c}')">${c}</div>
+                `).join('');
 
-            renderFilteredProducts();
+                filterCategory(window.currentCategory);
+                setAppState('product');
+            } catch(e) { alert('無法載入商品'); }
         }
 
         function filterCategory(cat) {
             window.currentCategory = cat;
-            const buttons = document.getElementById('categoryFilters').querySelectorAll('button');
-            buttons.forEach(btn => {
-                const txt = btn.textContent.trim();
-                if (txt === cat) {
-                    btn.style.background = 'rgba(0, 229, 255, 0.25)';
-                    btn.style.borderColor = 'var(--text-dark)';
-                } else {
-                    btn.style.background = 'none';
-                    btn.style.borderColor = 'var(--accent-gray)';
-                }
+            document.querySelectorAll('#categoryFilters .cyber-button').forEach(btn => {
+                btn.style.background = btn.textContent === cat ? 'var(--text-dark)' : 'rgba(0,229,255,0.1)';
+                btn.style.color = btn.textContent === cat ? '#000' : 'var(--text-dark)';
             });
-            renderFilteredProducts();
-        }
-
-        function renderFilteredProducts() {
-            const normalProducts = window.allProducts.filter(p => !p.isGift);
             const filtered = window.currentCategory === '全部' 
-                ? normalProducts 
-                : normalProducts.filter(p => (p.category || '未分類') === window.currentCategory);
-
-            document.getElementById('productsGrid').innerHTML = filtered.map(p => renderProductCard(p)).join('');
+                ? window.allProducts.filter(p => !p.isGift)
+                : window.allProducts.filter(p => !p.isGift && p.category === cat);
+            renderGrid('productsGrid', filtered);
         }
 
-        function renderProductCard(p) {
-            const imgUrl = p.image ? p.image : '';
-            const hasLink = p.link && p.link.trim() !== '';
-            const safeLink = hasLink ? p.link.trim().replace(/'/g, "\\'") : '';
-            return `
-            <div class="cyber-card ${hasLink ? 'cyber-hover' : ''}" 
-                 style="${hasLink ? 'cursor: pointer;' : ''}" 
-                 onclick="${hasLink ? `window.open('${safeLink}', '_blank')` : ''}">
-                <div style="width: 100%; height: 220px; background: rgba(0,0,0,0.4); border-bottom: 1px solid var(--accent-gray); display: flex; justify-content: center; align-items: center; overflow: hidden; text-align: center;">
-                    ${imgUrl ? `<img src="${imgUrl}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                                <div style="display: none; color: #f87171; font-weight: bold; padding: 1rem;">圖片載入失敗</div>` 
-                             : `<div style="color: #666;">無圖片</div>`}
+        function renderGrid(id, items) {
+            const grid = document.getElementById(id);
+            grid.innerHTML = items.map(p => `
+                <div class="cyber-card" style="padding:0; overflow:hidden; display:flex; flex-direction:column;">
+                    ${p.image ? `<img src="${p.image}" class="product-img">` : '<div class="product-img" style="display:flex; align-items:center; justify-content:center; font-size:3rem;">📦</div>'}
+                    <div style="padding:1.5rem; flex-grow:1; display:flex; flex-direction:column;">
+                        <div style="color:var(--text-dark); font-size:0.8rem; margin-bottom:0.5rem;"># ${p.category || '一般'}</div>
+                        <h3 style="margin-bottom:0.8rem; font-size:1.3rem;">${p.name}</h3>
+                        <p style="font-size:0.9rem; color:#ccc; margin-bottom:1.5rem; flex-grow:1;">${p.description || ''}</p>
+                        ${p.link ? `<a href="${p.link}" target="_blank" class="cyber-button" style="text-decoration:none; text-align:center; display:block; padding:0.8rem; border-radius:0.5rem;">立即查看</a>` : ''}
+                    </div>
                 </div>
-                <div style="padding: 1.5rem;">
-                    <h3 class="neon-text">${p.name}</h3>
-                    <p style="color: #ccc; font-size: 0.9rem; margin-top: 0.5rem;">${p.description || ''}</p>
-                </div>
-            </div>`;
+            `).join('');
         }
-
-        window.onload = async () => {
-            try {
-                const res = await fetch(`${API_BASE}/config`);
-                if (res.ok) systemConfig = await res.json();
-            } catch(e) {}
-            setAppState('home');
-        };
     </script>
 </body>
 </html>
