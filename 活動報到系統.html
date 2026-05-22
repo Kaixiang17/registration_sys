@@ -31,15 +31,28 @@
         .cyber-button { width: 100%; margin-top: 0.5rem; padding: 1.2rem; font-size: 1.1rem; }
         .group-item { padding: 1.5rem; border-bottom: 1px solid rgba(0,229,255,0.2); cursor: pointer; transition: 0.3s; text-align: left; display: flex; justify-content: space-between; align-items: center;}
         .group-item:hover { background: rgba(0,229,255,0.1); }
-        .meal-selected, .is-original-selected { border-color: var(--text-dark) !important; background: rgba(0, 229, 255, 0.2) !important; }
-        .proxy-selected { border-color: #ffa500 !important; background: rgba(255, 165, 0, 0.15) !important; }
+        
+        /* 【視覺強化修正】點擊高亮時帶有強烈的外發光與明顯色彩對比 */
+        .meal-selected, .is-original-selected { 
+            border-color: #00e5ff !important; 
+            background: rgba(0, 229, 255, 0.3) !important;
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.6), inset 0 0 10px rgba(0, 229, 255, 0.3) !important;
+            font-weight: bold !important;
+            transform: translateY(-2px);
+            transition: all 0.2s ease;
+        }
+        .proxy-selected { 
+            border-color: #ffa500 !important; 
+            background: rgba(255, 165, 0, 0.25) !important;
+            box-shadow: 0 0 15px rgba(255, 165, 0, 0.5) !important;
+        }
+        
         .info-box { text-align: left; padding: 1.5rem; border-radius: 1rem; margin: 1.5rem 0; background: rgba(0,0,0,0.3); }
 
         /* ============================================================
            2. 手機端專屬修復 (僅在螢幕寬度小於 768px 時生效)
            ============================================================ */
         @media(max-width: 768px) {
-            /* 標題縮放並防止換行 */
             h1.neon-text {
                 font-size: 1.8rem !important;
                 white-space: nowrap !important;
@@ -47,7 +60,6 @@
                 text-align: center !important;
             }
 
-            /* 頁首標題縮小 */
             .header-title-text {
                 font-size: 0.8rem !important;
             }
@@ -55,7 +67,6 @@
                 font-size: 1rem !important;
             }
 
-            /* 強制單欄顯示，解決爆出去的問題 */
             .home-grid {
                 grid-template-columns: 1fr !important;
                 gap: 1.5rem !important;
@@ -78,7 +89,6 @@
                 font-size: 4rem !important;
             }
 
-            /* 商品專區優化 */
             #productState > div:first-child {
                 flex-direction: column !important;
                 align-items: flex-start !important;
@@ -90,12 +100,10 @@
                 gap: 1.5rem !important;
             }
 
-            /* 頁首優化 */
             header { padding: 0.8rem 0 !important; }
             .header-container { padding: 0 12px !important; }
             #mapBtn { font-size: 0.75rem !important; padding: 4px 8px !important; }
             
-            /* 驗證方式網格 */
             .verify-grid { grid-template-columns: 1fr !important; }
         }
     </style>
@@ -132,11 +140,10 @@
             </div>
         </div>
 
-        <!-- 其餘內容保持不變 -->
         <div id="methodSelectionState" class="state-hidden">
             <button class="btn-back-nav" onclick="resetToHome()">← 返回大廳</button>
             <div style="text-align:center; max-width:800px; margin: 0 auto;">
-                <h2 class="neon-text" style="font-size: 2.2rem; margin-bottom:1rem;">請 選 擇 驗 證 方 式</h2>
+                <h2 class="neon-text" style="font-size: 2.2rem; margin-bottom:1rem;">請 選 擇 驗 補 償 方 式</h2>
                 <div class="verify-grid">
                     <div class="verify-card cyber-card cyber-hover" onclick="prepareSearch('name', '姓名')">
                         <div style="font-size:3.5rem;">📝</div><h3 class="neon-text">姓 名 報 到</h3>
@@ -280,6 +287,7 @@
             setAppState('action');
         }
 
+        /* 【功能修正 2】當精確查到單一旅客，且其已完成報到時，直接彈出已登機完成提示 */
         async function handleAction() {
             const val = document.getElementById('actionInput').value.trim();
             if(!val) return;
@@ -288,7 +296,16 @@
                 const json = await res.json();
                 if (json.data && json.data.length > 0) {
                     if (searchMethod === 'company') renderCompanyList(json.data);
-                    else if (json.data.length === 1) { selectedUser = json.data[0]; renderMealOptions(); }
+                    else if (json.data.length === 1) { 
+                        const u = json.data[0];
+                        // 判斷狀態
+                        if (u.status === 'checked_in' || u.status === '已報到' || u.status === '替代') {
+                            alert('🛬 已登機報到完成！');
+                            return;
+                        }
+                        selectedUser = u; 
+                        renderMealOptions(); 
+                    }
                     else { window.tempData = json.data; renderUserList(json.data, '搜尋結果'); }
                 } else alert('查無旅客資料');
             } catch(e) { alert('通訊異常'); }
@@ -302,7 +319,7 @@
                 div.className = 'group-item';
                 div.innerHTML = `<span>🏢 ${c}</span><span>➔</span>`;
                 div.onclick = async () => {
-                    const res = await fetch(`${API_BASE}/search/company_members?name=${encodeURIComponent(c)}`);
+                    const res = await fetch(`${API_BASE}/company_members?name=${encodeURIComponent(c)}`);
                     const json = await res.json();
                     renderUserList(json.data, c);
                 };
@@ -312,23 +329,32 @@
             setAppState('groupList');
         }
 
+        /* 【功能修正 2】在多人清單中，如果點擊已報到的成員，也一樣直接彈出已完成提示 */
         function renderUserList(users, title) {
             const list = document.getElementById('groupList');
             list.innerHTML = '';
             users.forEach(u => {
                 const div = document.createElement('div');
                 div.className = 'group-item';
-                const statusTag = (u.status === 'checked_in' || u.status === '已報到' || u.status === '替代') ? '<span style="color:#555;">[已報到]</span>' : '<span>➔</span>';
+                const isRegistered = (u.status === 'checked_in' || u.status === '已報到' || u.status === '替代');
+                const statusTag = isRegistered ? '<span style="color:#f87171; font-weight:bold;">[已報到]</span>' : '<span>➔</span>';
                 div.innerHTML = `<div><div style="font-weight:bold; font-size:1.2rem;">${u.name}</div><div style="font-size:0.9rem; color:#aaa;">${u.company}</div></div>${statusTag}`;
-                if (statusTag === '<span>➔</span>') {
-                    div.onclick = () => { selectedUser = u; renderMealOptions(); };
-                }
+                
+                div.onclick = () => {
+                    if (isRegistered) {
+                        alert('🛬 已登機報到完成！');
+                    } else {
+                        selectedUser = u; 
+                        renderMealOptions();
+                    }
+                };
                 list.appendChild(div);
             });
             document.getElementById('groupName').textContent = title;
             setAppState('groupList');
         }
 
+        /* 【視覺與內容優化 1】將葷食、素食按鈕加入動態 Emoji 配對 */
         async function renderMealOptions() {
             const res = await fetch(`${API_BASE}/config`);
             systemConfig = await res.json();
@@ -350,7 +376,10 @@
                     <input type="text" id="proxyPhone" class="cyber-input" placeholder="替代人手機">
                 </div>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-                    ${['葷食', '素食'].map(m => `<div class="verify-card cyber-card meal-opt" onclick="selectMeal(this, '${m}')">${m}</div>`).join('')}
+                    ${['葷食', '素食'].map(m => {
+                        const emoji = m === '葷食' ? '🥩' : '🥬';
+                        return `<div class="verify-card cyber-card meal-opt" onclick="selectMeal(this, '${m}')">${emoji} ${m}</div>`;
+                    }).join('')}
                 </div>
             `;
             window.selectedMeal = null;
@@ -376,6 +405,7 @@
 
         function checkMealReady() { document.getElementById('finalBtn').disabled = !window.selectedMeal; }
 
+        /* 【功能修正 3】解決按鈕卡死問題：不論報到成功、失敗或網頁異常，皆會重置按鈕狀態 */
         async function submitCheckin(autoMeal) {
             const meal = autoMeal || window.selectedMeal;
             const proxyInfo = window.isOriginal ? {} : {
@@ -383,9 +413,11 @@
                 phone: document.getElementById('proxyPhone').value.trim()
             };
             if (!window.isOriginal && !proxyInfo.name) { alert('請輸入替代人姓名'); return; }
+            
             const btn = document.getElementById('finalBtn');
             btn.disabled = true;
             btn.innerHTML = '<span>處 理 中 ...</span>';
+            
             try {
                 const res = await fetch(`${API_BASE}/checkin/${selectedUser.id}`, {
                     method: 'POST',
@@ -402,8 +434,23 @@
                         <div>時 間 ： ${u.checkedInAt}</div>
                     `;
                     setAppState('success');
-                } else alert('報 到 失 敗');
-            } catch(e) { alert('網 路 異 常'); }
+                } else {
+                    // 若後端判斷重複報到
+                    if (json.error === 'already_done') {
+                        alert('🛬 已登機報到完成！');
+                    } else {
+                        alert('報 到 失 敗');
+                    }
+                    // 解除按鈕卡死狀態
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>確 認 並 核 發 登 機 證</span>';
+                }
+            } catch(e) { 
+                alert('網 路 異 常'); 
+                // 解除按鈕卡死狀態
+                btn.disabled = false;
+                btn.innerHTML = '<span>確 認 並 核 發 登 機 證</span>';
+            }
         }
 
         async function showProducts() {
