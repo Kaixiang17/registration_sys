@@ -16,7 +16,6 @@
         main { max-width: 1200px; margin: 0 auto; padding: 3rem 1.5rem; }
         .state-hidden { display: none !important; }
         
-        /* 這是您原本的橫向並排設定 */
         .home-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 3rem; margin-top: 2rem; }
         .home-card { padding: 5rem 2rem; text-align: center; cursor: pointer; border-radius: 1.5rem; min-height: 400px; display: flex; flex-direction: column; justify-content: center; }
         .home-card h2 { margin: 1.5rem 0 1rem 0; font-size: 2.2rem; }
@@ -48,6 +47,14 @@
                 text-align: center !important;
             }
 
+            /* 頁首標題縮小 */
+            .header-title-text {
+                font-size: 0.8rem !important;
+            }
+            .header-title-main {
+                font-size: 1rem !important;
+            }
+
             /* 強制單欄顯示，解決爆出去的問題 */
             .home-grid {
                 grid-template-columns: 1fr !important;
@@ -68,7 +75,7 @@
             }
 
             .home-card div[style*="font-size:6rem"] {
-                font-size: 4rem !important; /* 縮小圖示 */
+                font-size: 4rem !important;
             }
 
             /* 商品專區優化 */
@@ -86,7 +93,7 @@
             /* 頁首優化 */
             header { padding: 0.8rem 0 !important; }
             .header-container { padding: 0 12px !important; }
-            #mapBtn { font-size: 0.8rem !important; padding: 4px 10px !important; }
+            #mapBtn { font-size: 0.75rem !important; padding: 4px 8px !important; }
             
             /* 驗證方式網格 */
             .verify-grid { grid-template-columns: 1fr !important; }
@@ -97,23 +104,29 @@
     <div class="ark-background"></div>
     <header class="panel-border" style="border-top:none; border-left:none; border-right:none; background: rgba(10,20,35,0.8);">
         <div class="header-container">
-            <div onclick="resetToHome()" style="cursor:pointer; color:var(--text-dark); font-weight: bold; font-size: 1.2rem;">✈️ <span class="neon-text" style="font-size: 1.4rem;">BOARDING SYSTEM</span></div>
-            <div id="mapBtn" onclick="toggleMapModal(true)" style="font-size: 0.9rem; color: var(--text-dark); cursor: pointer; border: 1px solid var(--text-dark); padding: 5px 12px; border-radius: 20px;">🗺️ 地圖導覽</div>
+            <div onclick="resetToHome()" style="cursor:pointer; color:var(--text-dark); font-weight: bold; display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.5rem;">✈️</span>
+                <div style="display: flex; flex-direction: column; line-height: 1.2;">
+                    <span class="header-title-text" style="font-size: 1rem; letter-spacing: 4px;">航 班 大 廳</span>
+                    <span class="header-title-main neon-text" style="font-size: 1.4rem; letter-spacing: 1px;">BOARDING SYSTEM</span>
+                </div>
+            </div>
+            <div id="mapBtn" onclick="toggleMapModal(true)" style="font-size: 0.9rem; color: var(--text-dark); cursor: pointer; border: 1px solid var(--text-dark); padding: 5px 15px; border-radius: 20px; white-space: nowrap;">🗺️ 地 圖 導 覽</div>
         </div>
     </header>
 
     <main>
         <div id="homeState">
-            <h1 class="neon-text" style="text-align:center; margin-bottom: 2rem; font-size: 3rem; display: block;">請選擇服務項目</h1>
+            <h1 class="neon-text" style="text-align:center; margin-bottom: 2rem; font-size: 3rem; display: block;">請 選 擇 服 務 項 目</h1>
             <div class="home-grid">
                 <div class="home-card cyber-card cyber-hover" onclick="setAppState('methodSelection')">
                     <div style="font-size:6rem;">🎫</div>
-                    <h2 class="neon-text">辦理登機報到</h2>
+                    <h2 class="neon-text">辦 理 登 機 報 到</h2>
                     <p style="color:#aaa; font-size:1.1rem;">CHECK-IN SERVICE</p>
                 </div>
                 <div class="home-card cyber-card cyber-hover" onclick="showProducts()">
                     <div style="font-size:6rem;">🛍️</div>
-                    <h2 class="neon-text">活動商品專區</h2>
+                    <h2 class="neon-text">活 動 商 品 專 區</h2>
                     <p style="color:#aaa; font-size:1.1rem;">ACTIVITY PRODUCTS</p>
                 </div>
             </div>
@@ -123,19 +136,19 @@
         <div id="methodSelectionState" class="state-hidden">
             <button class="btn-back-nav" onclick="resetToHome()">← 返回大廳</button>
             <div style="text-align:center; max-width:800px; margin: 0 auto;">
-                <h2 class="neon-text" style="font-size: 2.2rem; margin-bottom:1rem;">請選擇驗證方式</h2>
+                <h2 class="neon-text" style="font-size: 2.2rem; margin-bottom:1rem;">請 選 擇 驗 證 方 式</h2>
                 <div class="verify-grid">
                     <div class="verify-card cyber-card cyber-hover" onclick="prepareSearch('name', '姓名')">
-                        <div style="font-size:3.5rem;">📝</div><h3 class="neon-text">姓名報到</h3>
+                        <div style="font-size:3.5rem;">📝</div><h3 class="neon-text">姓 名 報 到</h3>
                     </div>
                     <div class="verify-card cyber-card cyber-hover" onclick="prepareSearch('phone', '手機')">
-                        <div style="font-size:3.5rem;">📱</div><h3 class="neon-text">手機報到</h3>
+                        <div style="font-size:3.5rem;">📱</div><h3 class="neon-text">手 機 報 到</h3>
                     </div>
                     <div class="verify-card cyber-card cyber-hover" onclick="prepareSearch('email', 'Email')">
-                        <div style="font-size:3.5rem;">✉️</div><h3 class="neon-text">Email 報到</h3>
+                        <div style="font-size:3.5rem;">✉️</div><h3 class="neon-text">Email 報 到</h3>
                     </div>
                     <div class="verify-card cyber-card cyber-hover" onclick="prepareSearch('company', '公司')">
-                        <div style="font-size:3.5rem;">🏢</div><h3 class="neon-text">公司報到</h3>
+                        <div style="font-size:3.5rem;">🏢</div><h3 class="neon-text">公 司 報 到</h3>
                     </div>
                 </div>
             </div>
@@ -144,16 +157,16 @@
         <div id="actionState" class="state-hidden">
             <button class="btn-back-nav" onclick="setAppState('methodSelection')">← 重新選擇方式</button>
             <div class="form-card cyber-card">
-                <h2 id="actionTitle" class="neon-text" style="margin-bottom: 2.5rem; font-size: 2.5rem;">登機驗證</h2>
+                <h2 id="actionTitle" class="neon-text" style="margin-bottom: 2.5rem; font-size: 2.5rem;">登 機 驗 證</h2>
                 <input type="text" id="actionInput" class="cyber-input" placeholder="請輸入資訊" style="font-size: 1.4rem;">
-                <button class="cyber-button" onclick="handleAction()" style="font-size: 1.4rem; padding: 1.2rem;">開始驗證</button>
+                <button class="cyber-button" onclick="handleAction()" style="font-size: 1.4rem; padding: 1.2rem;">開 始 驗 證</button>
             </div>
         </div>
 
         <div id="groupListState" class="state-hidden">
             <button class="btn-back-nav" onclick="setAppState('action')">← 重新搜尋</button>
             <div class="form-card cyber-card" style="max-width: 700px;">
-                <h2 id="groupName" class="neon-text" style="margin-bottom: 1.5rem;">請選擇旅客</h2>
+                <h2 id="groupName" class="neon-text" style="margin-bottom: 1.5rem;">請 選 擇 旅 客</h2>
                 <div id="groupList" class="panel-border" style="background: rgba(0,0,0,0.3); border-radius: 1rem; overflow: hidden;"></div>
             </div>
         </div>
@@ -161,34 +174,34 @@
         <div id="mealState" class="state-hidden">
             <button class="btn-back-nav" onclick="resetToHome()">← 取消</button>
             <div class="form-card cyber-card">
-                <h2 class="neon-text" style="margin-bottom:2rem;">🍽️ 機上餐飲偏好</h2>
+                <h2 class="neon-text" style="margin-bottom:2rem;">🍽️ 機 上 餐 飲 偏 好</h2>
                 <div id="mealOptions"></div>
-                <button id="finalBtn" class="cyber-button" disabled onclick="submitCheckin()"><span>確認並核發登機證</span></button>
+                <button id="finalBtn" class="cyber-button" disabled onclick="submitCheckin()"><span>確 認 並 核 發 登 機 證</span></button>
             </div>
         </div>
 
         <div id="successState" class="state-hidden">
             <div class="form-card cyber-card">
                 <div id="successIcon" style="color:var(--text-dark); font-size:6rem;">✅</div>
-                <h2 id="successTitle" class="neon-text">手續完成！</h2>
+                <h2 id="successTitle" class="neon-text">手 續 完 成 ！</h2>
                 <div id="successInfo" class="info-box panel-border"></div>
-                <button class="cyber-button" onclick="resetToHome()"><span>回到大廳</span></button>
+                <button class="cyber-button" onclick="resetToHome()"><span>回 到 大 廳</span></button>
             </div>
         </div>
 
         <div id="productState" class="state-hidden">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3rem;">
-                <h1 class="neon-text" style="font-size: 2.5rem;">🛍️ 活動商品專區</h1>
-                <button class="cyber-button" style="width:auto; border-radius: 30px; padding: 0.6rem 1.8rem;" onclick="resetToHome()">← 返回</button>
+                <h1 class="neon-text" style="font-size: 2.5rem;">🛍️ 活 動 商 品 專 區</h1>
+                <button class="cyber-button" style="width:auto; border-radius: 30px; padding: 0.6rem 1.8rem;" onclick="resetToHome()">← 返 回</button>
             </div>
             
             <div id="giftsSection" class="state-hidden">
-                <h2 class="neon-text" style="margin-bottom: 1.5rem;">🎁 精選伴手禮</h2>
+                <h2 class="neon-text" style="margin-bottom: 1.5rem;">🎁 精 選 伴 手 禮</h2>
                 <div id="giftsGrid" class="products-grid"></div>
             </div>
 
             <div id="normalProductsSection" style="margin-top: 3rem;">
-                <h2 class="neon-text" style="margin-bottom: 1.5rem;">📚 補給品清單</h2>
+                <h2 class="neon-text" style="margin-bottom: 1.5rem;">📚 補 給 品 清 單</h2>
                 <div id="categoryFilters" style="margin-bottom: 2.5rem; display: flex; flex-wrap: wrap; gap: 0.8rem;"></div>
                 <div id="productsGrid" class="products-grid"></div>
             </div>
@@ -197,7 +210,7 @@
 
     <div id="mapModal" class="state-hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; display: flex; justify-content: center; align-items: center;">
         <div style="position: relative; width: 90%; height: 85vh; max-width: 1200px; display: flex; flex-direction: column;">
-            <button onclick="toggleMapModal(false)" style="align-self: flex-end; margin-bottom: 10px; background: var(--text-dark); color: #000; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">✕ 關閉地圖</button>
+            <button onclick="toggleMapModal(false)" style="align-self: flex-end; margin-bottom: 10px; background: var(--text-dark); color: #000; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">✕ 關 閉 地 圖</button>
             <div style="flex-grow: 1; background: #0a1423; border-radius: 10px; overflow: hidden; border: 2px solid var(--accent-gray); display: flex; justify-content: center; align-items: center;">
                 <img id="mapDisplayImage" src="" style="width: 100%; height: 100%; object-fit: contain; display: none;">
                 <iframe id="mapDisplayFrame" src="" style="width: 100%; height: 100%; border: none; display: none;"></iframe>
@@ -262,7 +275,7 @@
 
         function prepareSearch(method, label) {
             searchMethod = method;
-            document.getElementById('actionTitle').textContent = `請輸入旅客${label}`;
+            document.getElementById('actionTitle').textContent = `請 輸 入 旅 客 ${label}`;
             document.getElementById('actionInput').value = '';
             setAppState('action');
         }
@@ -295,7 +308,7 @@
                 };
                 list.appendChild(div);
             });
-            document.getElementById('groupName').textContent = '請選擇所屬公司';
+            document.getElementById('groupName').textContent = '請 選 擇 所 屬 公 司';
             setAppState('groupList');
         }
 
@@ -324,15 +337,15 @@
             const container = document.getElementById('mealOptions');
             container.innerHTML = `
                 <div style="margin-bottom:2rem; text-align:left; padding:1rem; background:rgba(0,229,255,0.1); border-radius:0.5rem;">
-                    <div style="font-size:0.9rem; color:var(--text-dark);">旅客姓名</div>
+                    <div style="font-size:0.9rem; color:var(--text-dark);">旅 客 姓 名</div>
                     <div style="font-size:1.4rem; font-weight:bold;">${selectedUser.name}</div>
                 </div>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:2rem;">
-                    <div id="btnOrig" class="verify-card cyber-card is-original-selected" onclick="toggleIdentity(true)">本人報到</div>
-                    <div id="btnProxy" class="verify-card cyber-card" onclick="toggleIdentity(false)">替代報到</div>
+                    <div id="btnOrig" class="verify-card cyber-card is-original-selected" onclick="toggleIdentity(true)">本 人 報 到</div>
+                    <div id="btnProxy" class="verify-card cyber-card" onclick="toggleIdentity(false)">替 代 報 到</div>
                 </div>
                 <div id="proxyForm" class="state-hidden" style="margin-bottom:2rem; text-align:left; border:1px solid #ffa500; padding:1.5rem; border-radius:1rem;">
-                    <p style="color:#ffa500; margin-bottom:1rem;">請輸入替代人資訊：</p>
+                    <p style="color:#ffa500; margin-bottom:1rem;">請 輸 入 替 代 人 資 訊 ：</p>
                     <input type="text" id="proxyName" class="cyber-input" placeholder="替代人姓名" style="margin-bottom:0.8rem;">
                     <input type="text" id="proxyPhone" class="cyber-input" placeholder="替代人手機">
                 </div>
@@ -372,7 +385,7 @@
             if (!window.isOriginal && !proxyInfo.name) { alert('請輸入替代人姓名'); return; }
             const btn = document.getElementById('finalBtn');
             btn.disabled = true;
-            btn.innerHTML = '<span>處理中...</span>';
+            btn.innerHTML = '<span>處 理 中 ...</span>';
             try {
                 const res = await fetch(`${API_BASE}/checkin/${selectedUser.id}`, {
                     method: 'POST',
@@ -383,14 +396,14 @@
                 if (json.success) {
                     const u = json.data;
                     document.getElementById('successInfo').innerHTML = `
-                        <div style="margin-bottom:0.5rem;">旅客：<b>${u.name}</b></div>
-                        <div style="margin-bottom:0.5rem;">單位：${u.company}</div>
-                        <div style="margin-bottom:0.5rem;">座位：<span style="font-size:1.5rem; color:var(--text-dark); font-weight:bold;">${u.seat || '現場安排'}</span></div>
-                        <div>時間：${u.checkedInAt}</div>
+                        <div style="margin-bottom:0.5rem;">旅 客 ： <b>${u.name}</b></div>
+                        <div style="margin-bottom:0.5rem;">單 位 ： ${u.company}</div>
+                        <div style="margin-bottom:0.5rem;">座 位 ： <span style="font-size:1.5rem; color:var(--text-dark); font-weight:bold;">${u.seat || '現 場 安 排'}</span></div>
+                        <div>時 間 ： ${u.checkedInAt}</div>
                     `;
                     setAppState('success');
-                } else alert('報到失敗');
-            } catch(e) { alert('網路異常'); }
+                } else alert('報 到 失 敗');
+            } catch(e) { alert('網 路 異 常'); }
         }
 
         async function showProducts() {
@@ -405,7 +418,7 @@
                     giftsSection.classList.remove('state-hidden');
                     renderGrid('giftsGrid', gifts);
                 } else giftsSection.classList.add('state-hidden');
-                const categories = ['全部', ...new Set(normals.map(p => p.category).filter(c => c))];
+                const categories = ['全 部', ...new Set(normals.map(p => p.category).filter(c => c))];
                 const filterContainer = document.getElementById('categoryFilters');
                 filterContainer.innerHTML = categories.map(c => `
                     <div class="cyber-button ${window.currentCategory === c ? 'active' : ''}" 
@@ -414,7 +427,7 @@
                 `).join('');
                 filterCategory(window.currentCategory);
                 setAppState('product');
-            } catch(e) { alert('無法載入商品'); }
+            } catch(e) { alert('無 法 載 入 商 品'); }
         }
 
         function filterCategory(cat) {
@@ -423,7 +436,7 @@
                 btn.style.background = btn.textContent === cat ? 'var(--text-dark)' : 'rgba(0,229,255,0.1)';
                 btn.style.color = btn.textContent === cat ? '#000' : 'var(--text-dark)';
             });
-            const filtered = window.currentCategory === '全部' ? window.allProducts.filter(p => !p.isGift) : window.allProducts.filter(p => !p.isGift && p.category === cat);
+            const filtered = window.currentCategory === '全 部' ? window.allProducts.filter(p => !p.isGift) : window.allProducts.filter(p => !p.isGift && p.category === cat);
             renderGrid('productsGrid', filtered);
         }
 
@@ -433,10 +446,10 @@
                 <div class="cyber-card" style="padding:0; overflow:hidden; display:flex; flex-direction:column;">
                     ${p.image ? `<img src="${p.image}" class="product-img">` : '<div class="product-img" style="display:flex; align-items:center; justify-content:center; font-size:3rem;">📦</div>'}
                     <div style="padding:1.5rem; flex-grow:1; display:flex; flex-direction:column;">
-                        <div style="color:var(--text-dark); font-size:0.8rem; margin-bottom:0.5rem;"># ${p.category || '一般'}</div>
+                        <div style="color:var(--text-dark); font-size:0.8rem; margin-bottom:0.5rem;"># ${p.category || '一 般'}</div>
                         <h3 style="margin-bottom:0.8rem; font-size:1.3rem;">${p.name}</h3>
                         <p style="font-size:0.9rem; color:#ccc; margin-bottom:1.5rem; flex-grow:1;">${p.description || ''}</p>
-                        ${p.link ? `<a href="${p.link}" target="_blank" class="cyber-button" style="text-decoration:none; text-align:center; display:block; padding:0.8rem; border-radius:0.5rem;">立即查看</a>` : ''}
+                        ${p.link ? `<a href="${p.link}" target="_blank" class="cyber-button" style="text-decoration:none; text-align:center; display:block; padding:0.8rem; border-radius:0.5rem;">立 即 查 看</a>` : ''}
                     </div>
                 </div>
             `).join('');
