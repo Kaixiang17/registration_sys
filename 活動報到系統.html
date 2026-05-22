@@ -50,61 +50,80 @@
         .info-box { text-align: left; padding: 1.5rem; border-radius: 1rem; margin: 1.5rem 0; background: rgba(0,0,0,0.3); }
 
         /* ============================================================
-           2. 手機端專屬修復 (僅在螢幕寬度小於 768px 時生效)
+           2. 手機端專屬修復 (完整優化版 - 瓦解按鈕擠壓與空間釋放)
            ============================================================ */
         @media(max-width: 768px) {
+            /* 縮減主容器的外邊距，為手機保留更多橫向空間 */
+            main { padding: 1.5rem 0.6rem !important; }
+            .form-card { padding: 1.5rem 1rem !important; width: 100% !important; }
+
+            /* 標題與文字縮放優化 */
             h1.neon-text {
-                font-size: 1.8rem !important;
-                white-space: nowrap !important;
+                font-size: 1.6rem !important;
+                white-space: normal !important; /* 允許自然換行防止爆字 */
                 letter-spacing: 1px !important;
                 text-align: center !important;
+                margin-bottom: 1.5rem !important;
             }
+            h2.neon-text { font-size: 1.45rem !important; margin-bottom: 1.5rem !important; }
 
-            .header-title-text {
-                font-size: 0.8rem !important;
-            }
-            .header-title-main {
-                font-size: 1rem !important;
-            }
-
-            .home-grid {
-                grid-template-columns: 1fr !important;
-                gap: 1.5rem !important;
-                padding: 0 10px !important;
-            }
-
-            .home-card {
-                min-height: auto !important;
-                padding: 2.5rem 1rem !important;
-                width: 100% !important;
-                box-sizing: border-box !important;
-            }
-
-            .home-card h2 {
-                font-size: 1.6rem !important;
-                margin: 1rem 0 !important;
-            }
-
-            .home-card div[style*="font-size:6rem"] {
-                font-size: 4rem !important;
-            }
-
-            #productState > div:first-child {
-                flex-direction: column !important;
-                align-items: flex-start !important;
-                gap: 1rem !important;
-            }
-
-            .products-grid {
-                grid-template-columns: 1fr !important;
-                gap: 1.5rem !important;
-            }
-
+            /* 頁首比例優化 */
+            .header-title-text { font-size: 0.75rem !important; letter-spacing: 2px !important; }
+            .header-title-main { font-size: 1.1rem !important; }
             header { padding: 0.8rem 0 !important; }
             .header-container { padding: 0 12px !important; }
-            #mapBtn { font-size: 0.75rem !important; padding: 4px 8px !important; }
+            #mapBtn { font-size: 0.75rem !important; padding: 4px 10px !important; }
+
+            /* 功能選單網格：一律改為單欄排隊 */
+            .home-grid, .verify-grid {
+                grid-template-columns: 1fr !important;
+                gap: 1.2rem !important;
+                padding: 0 !important;
+            }
+            .home-card { min-height: auto !important; padding: 2rem 1rem !important; }
+            .home-card div[style*="font-size:6rem"] { font-size: 3.5rem !important; }
+            .verify-card { padding: 1.5rem 1rem !important; font-size: 1.1rem !important; }
+            .verify-card div { font-size: 2.2rem !important; }
+
+            /* ========================================================
+               【核心修正】覆寫由 JavaScript 動態生成的 2 欄並排網格
+               ======================================================== */
+            #mealOptions > div[style*="grid-template-columns"] {
+                grid-template-columns: 1fr !important; /* 強制把 本人/替代、葷/素 拆成上下單欄疊加 */
+                gap: 0.8rem !important;
+                margin-bottom: 1.2rem !important;
+            }
             
-            .verify-grid { grid-template-columns: 1fr !important; }
+            /* 加大卡片觸控高度，字體與外框更平衡 */
+            .meal-opt, #btnOrig, #btnProxy {
+                padding: 1.1rem 1rem !important;
+                font-size: 1.1rem !important;
+            }
+
+            /* 輸入框與主送出按鈕優化 */
+            .cyber-input { 
+                padding: 0.9rem 1rem !important; 
+                font-size: 1.1rem !important; 
+                margin-bottom: 1rem !important; 
+            }
+            .cyber-button { 
+                padding: 0.9rem !important; 
+                font-size: 1.1rem !important; 
+            }
+
+            /* 替代人表單細部微調 */
+            #proxyForm { 
+                padding: 1rem !important; 
+                margin-bottom: 1.2rem !important; 
+            }
+
+            /* 商品專區排版 */
+            #productState > div:first-child {
+                flex-direction: column !important;
+                align-items: center !important;
+                gap: 1rem !important;
+            }
+            .products-grid { grid-template-columns: 1fr !important; gap: 1.5rem !important; }
         }
     </style>
 </head>
@@ -312,27 +331,26 @@
         }
 
         function renderCompanyList(companies) {
-    const list = document.getElementById('groupList');
-    list.innerHTML = '';
-    companies.forEach(c => {
-        const div = document.createElement('div');
-        div.className = 'group-item';
-        div.innerHTML = `<span>🏢 ${c}</span><span>➔</span>`;
-        div.onclick = async () => {
-            try {
-                // 【關鍵修正】補回原本的 /search/ 路徑，與 Flask 後端完全對齊
-                const res = await fetch(`${API_BASE}/search/company_members?name=${encodeURIComponent(c)}`);
-                const json = await res.json();
-                renderUserList(json.data, c);
-            } catch(e) {
-                alert('無法讀取公司成員資料');
-            }
-        };
-        list.appendChild(div);
-    });
-    document.getElementById('groupName').textContent = '請 選 擇 所 屬 公 司';
-    setAppState('groupList');
-}
+            const list = document.getElementById('groupList');
+            list.innerHTML = '';
+            companies.forEach(c => {
+                const div = document.createElement('div');
+                div.className = 'group-item';
+                div.innerHTML = `<span>🏢 ${c}</span><span>➔</span>`;
+                div.onclick = async () => {
+                    try {
+                        const res = await fetch(`${API_BASE}/search/company_members?name=${encodeURIComponent(c)}`);
+                        const json = await res.json();
+                        renderUserList(json.data, c);
+                    } catch(e) {
+                        alert('無法讀取公司成員資料');
+                    }
+                };
+                list.appendChild(div);
+            });
+            document.getElementById('groupName').textContent = '請 選 擇 所 屬 公 司';
+            setAppState('groupList');
+        }
 
         /* 【功能修正 2】在多人清單中，如果點擊已報到的成員，也一樣直接彈出已完成提示 */
         function renderUserList(users, title) {
