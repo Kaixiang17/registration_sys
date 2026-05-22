@@ -312,22 +312,27 @@
         }
 
         function renderCompanyList(companies) {
-            const list = document.getElementById('groupList');
-            list.innerHTML = '';
-            companies.forEach(c => {
-                const div = document.createElement('div');
-                div.className = 'group-item';
-                div.innerHTML = `<span>🏢 ${c}</span><span>➔</span>`;
-                div.onclick = async () => {
-                    const res = await fetch(`${API_BASE}/company_members?name=${encodeURIComponent(c)}`);
-                    const json = await res.json();
-                    renderUserList(json.data, c);
-                };
-                list.appendChild(div);
-            });
-            document.getElementById('groupName').textContent = '請 選 擇 所 屬 公 司';
-            setAppState('groupList');
-        }
+    const list = document.getElementById('groupList');
+    list.innerHTML = '';
+    companies.forEach(c => {
+        const div = document.createElement('div');
+        div.className = 'group-item';
+        div.innerHTML = `<span>🏢 ${c}</span><span>➔</span>`;
+        div.onclick = async () => {
+            try {
+                // 【關鍵修正】補回原本的 /search/ 路徑，與 Flask 後端完全對齊
+                const res = await fetch(`${API_BASE}/search/company_members?name=${encodeURIComponent(c)}`);
+                const json = await res.json();
+                renderUserList(json.data, c);
+            } catch(e) {
+                alert('無法讀取公司成員資料');
+            }
+        };
+        list.appendChild(div);
+    });
+    document.getElementById('groupName').textContent = '請 選 擇 所 屬 公 司';
+    setAppState('groupList');
+}
 
         /* 【功能修正 2】在多人清單中，如果點擊已報到的成員，也一樣直接彈出已完成提示 */
         function renderUserList(users, title) {
