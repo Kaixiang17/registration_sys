@@ -1,4 +1,4 @@
-import os, json, time, threading, requests
+import os, json, time, threading, requests, csv, io
 from datetime import datetime, timedelta
 from flask import Flask, request, jsonify, send_from_directory, session, redirect
 from flask_cors import CORS
@@ -29,7 +29,12 @@ def get_gspread_client():
     return gspread.authorize(Credentials.from_service_account_file(json_path, scopes=scope))
 
 def get_worksheet(name=None):
-    spreadsheet = get_gspread_client().open("活動報到名單")
+    # 核心安全修正：從記憶體快取動態取得目標試算表名稱，避免讀取初始化時產生無窮循環遞迴
+    sheet_name = "活動報到名單"
+    if config_cache and "google_sheet_name" in config_cache:
+        sheet_name = config_cache["google_sheet_name"]
+        
+    spreadsheet = get_gspread_client().open(sheet_name)
     if name:
         try: return spreadsheet.worksheet(name)
         except: return None
@@ -69,8 +74,6 @@ def load_config_from_sheets(force_refresh=False):
         if ws_cfg:
             vals = ws_cfg.get_all_values()
             if len(vals) > 1:
-                # 欄位一律鎖死：第一列是標題，第二列是實際值
-                # A2 = 顯示餐點選項, B2 = 地圖圖片網址, C2 = Google試算表名稱
                 row = vals[1]
                 config_data["show_meal_options"] = str(row[0]).upper() == "TRUE" if len(row) > 0 else True
                 config_data["map_image_url"] = str(row[1]) if len(row) > 1 else ""
@@ -100,7 +103,6 @@ def async_save_process(payload, current_data):
     """ 背景處理：強制在 Google Sheet 建立指定格子存放地圖，絕對不卡死 """
     print("🛰️ [背景同步] 正在將地圖與商品寫入指定 Google Sheet 格子...")
     try:
-        # 1. 處理圖片轉網址
         if payload.get("map_image_url"):
             payload["map_image_url"] = upload_image_to_free_pool(payload["map_image_url"])
         if payload.get("products"):
@@ -108,7 +110,6 @@ def async_save_process(payload, current_data):
                 if p.get("image"):
                     p["image"] = upload_image_to_free_pool(p["image"])
         
-        # 2. 【核心修正】強制覆寫「系統設定」分頁，確保 A2, B2, C2 位置絕對精準
         ws_cfg = get_worksheet("系統設定")
         if ws_cfg:
             ws_cfg.clear()
@@ -121,7 +122,6 @@ def async_save_process(payload, current_data):
                 ]
             ])
             
-        # 3. 覆寫寫入「商品清單」分頁
         ws_prod = get_worksheet("商品清單")
         if ws_prod and "products" in payload:
             ws_prod.clear()
@@ -133,11 +133,10 @@ def async_save_process(payload, current_data):
                 ])
             ws_prod.update(f'A1:F{len(rows_to_write)}', rows_to_write)
         
-        # 4. 更新記憶體快取
         global config_cache, last_config_update
         config_cache = payload
         last_config_update = time.time()
-        print("🟢 [背景同步] 雲端試算表格子已完全對齊，地圖網址成功寫入 B2 格子！")
+        print("🟢 [背景同步] 雲端試算表格子已完全對齊，系統設定儲存成功！")
     except Exception as e:
         print(f"❌ [背景同步失敗]: {e}")
 
@@ -156,11 +155,53 @@ def handle_config():
         if "map_image_url" not in payload:
             payload["map_image_url"] = current_data.get("map_image_url", "")
 
-        # 拋給背景執行緒，讓前端 0.1 秒內立刻收到回應跳出「儲存成功」
         threading.Thread(target=async_save_process, args=(payload, current_data)).start()
         return jsonify({"success": True, "message": "儲存成功！系統正在背景寫入 Google Sheet。"})
             
     return jsonify(load_config_from_sheets())
+
+# ============================================================
+# 【全新優化 1】自動撈取目前 API 金鑰帳戶底下的所有 Google 試算表
+# ============================================================
+@app.route('/api/sheets/list', methods=['GET'])
+def list_available_sheets():
+    if not session.get('admin_logged_in'): 
+        return jsonify({"success": False, "message": "未授權的操作"}), 403
+    try:
+        client = get_gspread_client()
+        all_sheets = client.openall()
+        sheets_list = [s.title for s in all_sheets]
+        return jsonify({"success": True, "sheets": sheets_list})
+    except Exception as e:
+        return jsonify({"success": False, "message": f"無法自動取得帳戶內試算表清單: {e}"}), 500
+
+# ============================================================
+# 【全新優化 2】接收本機 CSV 檔案，一鍵清洗並強制更新目前的試算表名單
+# ============================================================
+@app.route('/api/sheets/upload_csv', methods=['POST'])
+def upload_csv_to_sheet():
+    if not session.get('admin_logged_in'): 
+        return jsonify({"success": False, "message": "未授權的操作"}), 403
+    if 'file' not in request.files:
+        return jsonify({"success": False, "message": "找不到上傳的檔案"}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"success": False, "message": "未選擇檔案"}), 400
+    try:
+        stream = io.StringIO(file.stream.read().decode("UTF-8"), newline=None)
+        csv_input = csv.reader(stream)
+        rows_to_write = list(csv_input)
+        if not rows_to_write:
+            return jsonify({"success": False, "message": "檔案內容不能為空"}), 400
+
+        ws = get_worksheet()
+        ws.clear()
+        ws.update(f'A1:Z{len(rows_to_write)}', rows_to_write)
+        
+        refresh_cache(force=True)
+        return jsonify({"success": True, "message": "名單 CSV 上傳覆寫成功，已完美同步至雲端！"})
+    except Exception as e:
+        return jsonify({"success": False, "message": f"洗入 Google Sheet 失敗: {e}"}), 500
 
 @app.route('/api/login', methods=['POST'])
 def admin_login():
