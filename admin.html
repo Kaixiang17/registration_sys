@@ -104,7 +104,13 @@
         <div id="system" class="tab-content">
             <div class="cyber-card" style="padding: 2rem; border-radius: 1rem;">
                 <div class="card-title neon-text">🔧 系統基本設定</div>
-                <div class="form-group"><label>Google Sheet 名稱</label><input type="text" class="cyber-input" id="googleSheetName" placeholder="例：活動報到名單"></div>
+                
+                <div class="form-group">
+                    <label>連結 Google Sheet 試算表名稱</label>
+                    <select class="cyber-input" id="googleSheetName" style="background: rgba(10, 20, 35, 0.95); color: #fff; border: 1px solid rgba(0, 229, 255, 0.2); padding: 0.8rem 1.2rem; width: 100%; border-radius: 0.5rem; font-size: 1.05rem;">
+                        <option value="">⏳ 正在自動探測雲端試算表資源池...</option>
+                    </select>
+                </div>
                 
                 <div class="form-group">
                     <label>🗺️ 地圖導覽圖片網址 或 直接上傳圖片檔</label>
@@ -122,7 +128,19 @@
                         <img id="systemMapPreview" src="" style="max-width: 240px; max-height: 150px; border-radius: 8px; border: 1px solid var(--accent-gray); object-fit: contain; background: rgba(0,0,0,0.3);">
                     </div>
                 </div>
-                <button class="cyber-button" style="width:auto;" onclick="saveSystemSettings()"><span>💾 儲存設定</span></button>
+                <button class="cyber-button" style="width:auto; margin-bottom: 2rem;" onclick="saveSystemSettings()"><span>💾 儲存設定</span></button>
+
+                <div class="form-group" style="border-top: 1px solid rgba(0,229,255,0.2); padding-top: 2rem;">
+                    <div class="card-title neon-text" style="margin-bottom:0.5rem;">📥 本機名單一鍵覆寫同步</div>
+                    <label style="color:#aaa; margin-bottom:1.5rem;">您可以直接選擇本機的 CSV 檔案上傳，系統會自動清除當前 Google Sheet 分頁並覆寫最新名單。</label>
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <label class="cyber-button" style="width: auto; margin-top: 0; padding: 0.8rem 1.8rem; font-size: 1rem; cursor: pointer; white-space: nowrap; border-color:#00e5ff;">
+                            <span>📊 選擇名單 CSV 檔案並匯入</span>
+                            <input type="file" id="csvLocalFile" accept=".csv" style="display: none;" onchange="handleCsvUpload(this)">
+                        </label>
+                        <span id="csvUploadStatus" style="color: #00e5ff; font-size: 0.95rem; letter-spacing:1px;">未選擇任何檔案</span>
+                    </div>
+                </div>
             </div>
 
             <div class="cyber-card" style="padding: 2rem; border-radius: 1rem; margin-top: 2rem;">
@@ -205,7 +223,6 @@
         let editingIdx = null;
         let deleteIdx = null;
 
-        // ==================== 【全新核心：虛擬雲端分類池解析器】 ====================
         function getCategoryList() {
             const dummy = (currentConfig.products || []).find(p => p.name === "__SYSTEM_CATEGORIES__");
             if (dummy && dummy.description) {
@@ -293,6 +310,7 @@
 
         async function init() {
             await loadConfig();
+            await loadAvailableSheets(); // 【優化追加】初始化時向後端非同步撈取可用試算表清單
             setupTabButtons();
             updateDashboard();
             setInterval(updateDashboard, 15000);
@@ -309,6 +327,61 @@
                 if(val) { previewImg.src = val; document.getElementById('systemMapPreviewContainer').style.display = 'block'; }
                 else { document.getElementById('systemMapPreviewContainer').style.display = 'none'; }
             };
+        }
+
+        // ============================================================
+        // 【全新前端邏輯 1】非同步取得試算表列表並生成下拉選單
+        // ============================================================
+        async function loadAvailableSheets() {
+            try {
+                const res = await fetch(`${API_BASE}/sheets/list`);
+                const json = await res.json();
+                if (json.success && json.sheets.length > 0) {
+                    const select = document.getElementById('googleSheetName');
+                    const currentValue = currentConfig.google_sheet_name || '';
+                    
+                    select.innerHTML = json.sheets.map(name => `
+                        <option value="${name}" ${name === currentValue ? 'selected' : ''}>📊 ${name}</option>
+                    `).join('');
+                } else {
+                    document.getElementById('googleSheetName').innerHTML = '<option value="">❌ 您的帳戶內無任何共用的試算表資源</option>';
+                }
+            } catch(e) {
+                document.getElementById('googleSheetName').innerHTML = '<option value="">❌ 無法與雲端通訊獲取列表</option>';
+            }
+        }
+
+        // ============================================================
+        // 【全新前端邏輯 2】處理 CSV 上傳覆寫邏輯
+        // ============================================================
+        async function handleCsvUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const statusText = document.getElementById('csvUploadStatus');
+            statusText.innerHTML = `<span style="color:#00e5ff">⏳ 正在上傳名單：${file.name}...</span>`;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const res = await fetch(`${API_BASE}/sheets/upload_csv`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const json = await res.json();
+                if (json.success) {
+                    statusText.innerHTML = `<span style="color:#4ade80">✓ ${json.message}</span>`;
+                    alert(json.message);
+                    updateDashboard(); // 重新拉取一次儀表板最新應到人數數據
+                } else {
+                    statusText.innerHTML = `<span style="color:#f87171">✕ 同步失敗：${json.message}</span>`;
+                    alert('匯入失敗：' + json.message);
+                }
+            } catch(e) {
+                statusText.innerHTML = `<span style="color:#f87171">✕ 網路同步異常</span>`;
+                alert('網路連線異常，請稍後再試');
+            }
         }
 
         function setupTabButtons() {
@@ -329,7 +402,6 @@
                 renderProducts();
                 renderCategoryManager();
 
-                document.getElementById('googleSheetName').value = currentConfig.google_sheet_name || '';
                 const mapUrl = currentConfig.map_image_url ? currentConfig.map_image_url.trim() : '';
                 document.getElementById('mapImageUrl').value = mapUrl;
                 if(mapUrl) {
@@ -495,7 +567,7 @@
         }
 
         async function saveSystemSettings() {
-            currentConfig.google_sheet_name = document.getElementById('googleSheetName').value.trim();
+            currentConfig.google_sheet_name = document.getElementById('googleSheetName').value;
             currentConfig.map_image_url = document.getElementById('mapImageUrl').value.trim();
             if(await postConfig()) {
                 alert('儲存成功！');
