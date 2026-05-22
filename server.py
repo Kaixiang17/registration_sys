@@ -1,480 +1,313 @@
+import os, json, time, threading, requests
+from datetime import datetime, timedelta
+from flask import Flask, request, jsonify, send_from_directory, session, redirect
+from flask_cors import CORS
+import gspread
+from google.oauth2.service_account import Credentials
 
+app = Flask(__name__, static_folder='.', static_url_path='')
+app.secret_key = "rcsa_ark_secure_key_20260508" 
+CORS(app)
 
-開始免費試用
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+RENDER_KEY = "/etc/secrets/google-creds.json"
+LOCAL_KEY = os.path.join(BASE_DIR, 'test0417-493608-ec0a369af886.json')
 
-分享
-Lite
-我已經為您準備好了最終優化版的 活動報到系統.html。
-這次的修復重點：
-電腦版完全還原：我將您原本的 CSS 樣式完整保留在最上方，確保電腦看的時候依然是橫向並排、大字體、大間距，跟您一開始設計的一模一樣。
-手機版精準修復：所有的手機端優化（單欄顯示、防止換行、字體縮放）都嚴格限制在 @media 區塊內。只有當螢幕寬度小於 768px 時，這些修復才會啟動。
-文字內容一致：確保所有按鈕與標題的文字都跟您原始版本完全相同。
-操作建議：
-請下載附件 活動報到系統_v3.html，並整份替換您 GitHub 專案中的 活動報到系統.html。
-這樣一來，您在電腦上展示時會維持原本的大氣佈局，而使用者在手機上操作時則會自動切換到好讀、好操作的手機版介面。如果您測試後還有任何地方想微調，隨時告訴我！
-活動報到系統_v3.html
-程式碼 · 25.32 KB
-查看此任務中的所有檔案
-任務已完成
-這個結果怎麼樣？
-建議追問
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智慧方舟 - 航空登機系統</title>
-    <link rel="stylesheet" href="smart-ark-theme.css">
+participants_cache = []
+last_cache_update = 0
+cache_lock = threading.Lock()
+CACHE_TTL = 300
 
+config_cache = None
+last_config_update = 0
+CONFIG_TTL = 600
 
+def get_gspread_client():
+    scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+    json_path = RENDER_KEY if os.path.exists(RENDER_KEY) else LOCAL_KEY
+    if not os.path.exists(json_path): json_path = os.path.join(BASE_DIR, 'test0417-493608-ec0a369af886.json')
+    return gspread.authorize(Credentials.from_service_account_file(json_path, scopes=scope))
 
+def get_worksheet(name=None):
+    spreadsheet = get_gspread_client().open("活動報到名單")
+    if name:
+        try: return spreadsheet.worksheet(name)
+        except: return None
+    return spreadsheet.get_worksheet(0)
 
+def upload_image_to_free_pool(base64_str):
+    if not base64_str or not str(base64_str).startswith("data:image/"):
+        return base64_str
+    try:
+        if "," in base64_str:
+            base64_data = base64_str.split(",")[1]
+        else:
+            base64_data = base64_str
+        url = "https://api.imgbb.com/1/upload"
+        payload = {
+            "key": "2b3149867c4b69cdbda90ea8fbd52ec3",
+            "image": base64_data
+        }
+        res = requests.post(url, data=payload, timeout=15).json()
+        if res.get("success"):
+            return res["data"]["url"]
+    except Exception as e:
+        print(f"❌ [圖床失敗]: {e}")
+    return base64_str
 
-活動報到系統_v3.html
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智慧方舟 - 航空登機系統</title>
-    <link rel="stylesheet" href="smart-ark-theme.css">
-    <style>
-        /* ============================================================
-           1. 電腦版原始樣式 (完全保留您原本的設定)
-           ============================================================ */
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "PingFang TC", "Michroma", "Stick", sans-serif; }
-        body { line-height: 1.6; color: #fff; }
-        header { padding: 1.2rem 0; position: sticky; top: 0; z-index: 100; }
-        .header-container { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; }
-        main { max-width: 1200px; margin: 0 auto; padding: 3rem 1.5rem; }
-        .state-hidden { display: none !important; }
+def load_config_from_sheets(force_refresh=False):
+    global config_cache, last_config_update
+    if not force_refresh and config_cache and (time.time() - last_config_update < CONFIG_TTL):
+        return config_cache
+
+    config_data = {
+        "show_meal_options": True, "google_sheet_name": "活動報到名單", "map_image_url": "", "products": [],
+        "excel_columns": {"id": 6, "name": 6, "phone": 8, "company": 3, "email": 9, "qrCode": 4, "registeredAt": 5, "checkedInAt": 14, "status": 15, "meal": 16}
+    }
+    try:
+        ws_cfg = get_worksheet("系統設定")
+        if ws_cfg:
+            vals = ws_cfg.get_all_values()
+            if len(vals) > 1:
+                # 欄位一律鎖死：第一列是標題，第二列是實際值
+                # A2 = 顯示餐點選項, B2 = 地圖圖片網址, C2 = Google試算表名稱
+                row = vals[1]
+                config_data["show_meal_options"] = str(row[0]).upper() == "TRUE" if len(row) > 0 else True
+                config_data["map_image_url"] = str(row[1]) if len(row) > 1 else ""
+                config_data["google_sheet_name"] = str(row[2]) if len(row) > 2 else "活動報到名單"
+                
+        ws_prod = get_worksheet("商品清單")
+        if ws_prod:
+            prod_rows = ws_prod.get_all_records()
+            for r in prod_rows:
+                if not r.get("商品名稱"): continue
+                config_data["products"].append({
+                    "name": str(r.get("商品名稱")),
+                    "image": str(r.get("商品圖片", "")),
+                    "category": str(r.get("商品分類", "課程")),
+                    "description": str(r.get("商品描述", "")),
+                    "link": str(r.get("購買連結", "")),
+                    "isGift": str(r.get("是否為贈品", "FALSE")).upper() == "TRUE"
+                })
+        config_cache = config_data
+        last_config_update = time.time()
+    except Exception as e:
+        print(f"⚠️ [讀取失敗] 沿用舊快取: {e}")
+        if not config_cache: config_cache = config_data
+    return config_cache
+
+def async_save_process(payload, current_data):
+    """ 背景處理：強制在 Google Sheet 建立指定格子存放地圖，絕對不卡死 """
+    print("🛰️ [背景同步] 正在將地圖與商品寫入指定 Google Sheet 格子...")
+    try:
+        # 1. 處理圖片轉網址
+        if payload.get("map_image_url"):
+            payload["map_image_url"] = upload_image_to_free_pool(payload["map_image_url"])
+        if payload.get("products"):
+            for p in payload["products"]:
+                if p.get("image"):
+                    p["image"] = upload_image_to_free_pool(p["image"])
         
-        /* 這是您原本的橫向並排設定 */
-        .home-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 3rem; margin-top: 2rem; }
-        .home-card { padding: 5rem 2rem; text-align: center; cursor: pointer; border-radius: 1.5rem; min-height: 400px; display: flex; flex-direction: column; justify-content: center; }
-        .home-card h2 { margin: 1.5rem 0 1rem 0; font-size: 2.2rem; }
+        # 2. 【核心修正】強制覆寫「系統設定」分頁，確保 A2, B2, C2 位置絕對精準
+        ws_cfg = get_worksheet("系統設定")
+        if ws_cfg:
+            ws_cfg.clear()
+            ws_cfg.update('A1:C2', [
+                ["顯示餐點選項", "地圖圖片網址", "Google試算表名稱"],
+                [
+                    "TRUE" if payload.get("show_meal_options", True) else "FALSE",
+                    payload.get("map_image_url", ""),
+                    payload.get("google_sheet_name", "活動報到名單")
+                ]
+            ])
+            
+        # 3. 覆寫寫入「商品清單」分頁
+        ws_prod = get_worksheet("商品清單")
+        if ws_prod and "products" in payload:
+            ws_prod.clear()
+            rows_to_write = [["商品名稱", "商品圖片", "商品分類", "商品描述", "購買連結", "是否為贈品"]]
+            for p in payload["products"]:
+                rows_to_write.append([
+                    p.get("name", ""), p.get("image", ""), p.get("category", "課程"),
+                    p.get("description", ""), p.get("link", ""), "TRUE" if p.get("isGift") else "FALSE"
+                ])
+            ws_prod.update(f'A1:F{len(rows_to_write)}', rows_to_write)
         
-        .verify-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-top: 2rem; }
-        .verify-card { padding: 2.5rem 1.5rem; text-align: center; cursor: pointer; border-radius: 1rem; }
-        .form-card { max-width: 600px; margin: 0 auto; padding: 3rem; text-align: center; border-radius: 1.5rem; }
-        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2.5rem; }
-        .product-img { width: 100%; height: 220px; object-fit: contain; background: rgba(0,0,0,0.4); border-bottom: 1px solid var(--accent-gray); }
-        .btn-back-nav { background: none; border: 1px solid var(--accent-gray); color: var(--text-dark); padding: 0.5rem 1.2rem; border-radius: 0.5rem; cursor: pointer; font-weight: bold; transition: 0.3s; margin-bottom: 1.5rem; display: inline-flex; align-items: center; gap: 0.5rem; }
-        .btn-back-nav:hover { border-color: var(--text-dark); background: rgba(0, 229, 255, 0.1); }
-        .cyber-input { width: 100%; margin-bottom: 1.5rem; padding: 1.2rem; font-size: 1.2rem; }
-        .cyber-button { width: 100%; margin-top: 0.5rem; padding: 1.2rem; font-size: 1.1rem; }
-        .group-item { padding: 1.5rem; border-bottom: 1px solid rgba(0,229,255,0.2); cursor: pointer; transition: 0.3s; text-align: left; display: flex; justify-content: space-between; align-items: center;}
-        .group-item:hover { background: rgba(0,229,255,0.1); }
-        .meal-selected, .is-original-selected { border-color: var(--text-dark) !important; background: rgba(0, 229, 255, 0.2) !important; }
-        .proxy-selected { border-color: #ffa500 !important; background: rgba(255, 165, 0, 0.15) !important; }
-        .info-box { text-align: left; padding: 1.5rem; border-radius: 1rem; margin: 1.5rem 0; background: rgba(0,0,0,0.3); }
+        # 4. 更新記憶體快取
+        global config_cache, last_config_update
+        config_cache = payload
+        last_config_update = time.time()
+        print("🟢 [背景同步] 雲端試算表格子已完全對齊，地圖網址成功寫入 B2 格子！")
+    except Exception as e:
+        print(f"❌ [背景同步失敗]: {e}")
 
-        /* ============================================================
-           2. 手機端專屬修復 (僅在螢幕寬度小於 768px 時生效)
-           ============================================================ */
-        @media(max-width: 768px) {
-            /* 標題縮放並防止換行 */
-            h1.neon-text {
-                font-size: 1.8rem !important;
-                white-space: nowrap !important;
-                letter-spacing: 1px !important;
-                text-align: center !important;
-            }
-
-            /* 強制單欄顯示，解決爆出去的問題 */
-            .home-grid {
-                grid-template-columns: 1fr !important;
-                gap: 1.5rem !important;
-                padding: 0 10px !important;
-            }
-
-            .home-card {
-                min-height: auto !important;
-                padding: 2.5rem 1rem !important;
-                width: 100% !important;
-                box-sizing: border-box !important;
-            }
-
-            .home-card h2 {
-                font-size: 1.6rem !important;
-                margin: 1rem 0 !important;
-            }
-
-            .home-card div[style*="font-size:6rem"] {
-                font-size: 4rem !important; /* 縮小圖示 */
-            }
-
-            /* 商品專區優化 */
-            #productState > div:first-child {
-                flex-direction: column !important;
-                align-items: flex-start !important;
-                gap: 1rem !important;
-            }
-
-            .products-grid {
-                grid-template-columns: 1fr !important;
-                gap: 1.5rem !important;
-            }
-
-            /* 頁首優化 */
-            header { padding: 0.8rem 0 !important; }
-            .header-container { padding: 0 12px !important; }
-            #mapBtn { font-size: 0.8rem !important; padding: 4px 10px !important; }
+@app.route('/api/config', methods=['GET', 'POST'])
+def handle_config():
+    if request.method == 'POST':
+        if not session.get('admin_logged_in'): 
+            return jsonify({"success": False, "message": "未授權的操作"}), 403
             
-            /* 驗證方式網格 */
-            .verify-grid { grid-template-columns: 1fr !important; }
-        }
-    </style>
-</head>
-<body class="circuit-background">
-    <div class="ark-background"></div>
-    <header class="panel-border" style="border-top:none; border-left:none; border-right:none; background: rgba(10,20,35,0.8);">
-        <div class="header-container">
-            <div onclick="resetToHome()" style="cursor:pointer; color:var(--text-dark); font-weight: bold; font-size: 1.2rem;">✈️ <span class="neon-text" style="font-size: 1.4rem;">BOARDING SYSTEM</span></div>
-            <div id="mapBtn" onclick="toggleMapModal(true)" style="font-size: 0.9rem; color: var(--text-dark); cursor: pointer; border: 1px solid var(--text-dark); padding: 5px 12px; border-radius: 20px;">🗺️ 地圖導覽</div>
-        </div>
-    </header>
-
-    <main>
-        <div id="homeState">
-            <h1 class="neon-text" style="text-align:center; margin-bottom: 2rem; font-size: 3rem; display: block;">請選擇服務項目</h1>
-            <div class="home-grid">
-                <div class="home-card cyber-card cyber-hover" onclick="setAppState('methodSelection')">
-                    <div style="font-size:6rem;">🎫</div>
-                    <h2 class="neon-text">辦理登機報到</h2>
-                    <p style="color:#aaa; font-size:1.1rem;">CHECK-IN SERVICE</p>
-                </div>
-                <div class="home-card cyber-card cyber-hover" onclick="showProducts()">
-                    <div style="font-size:6rem;">🛍️</div>
-                    <h2 class="neon-text">活動商品專區</h2>
-                    <p style="color:#aaa; font-size:1.1rem;">ACTIVITY PRODUCTS</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- 其餘內容保持不變 -->
-        <div id="methodSelectionState" class="state-hidden">
-            <button class="btn-back-nav" onclick="resetToHome()">← 返回大廳</button>
-            <div style="text-align:center; max-width:800px; margin: 0 auto;">
-                <h2 class="neon-text" style="font-size: 2.2rem; margin-bottom:1rem;">請選擇驗證方式</h2>
-                <div class="verify-grid">
-                    <div class="verify-card cyber-card cyber-hover" onclick="prepareSearch('name', '姓名')">
-                        <div style="font-size:3.5rem;">📝</div><h3 class="neon-text">姓名報到</h3>
-                    </div>
-                    <div class="verify-card cyber-card cyber-hover" onclick="prepareSearch('phone', '手機')">
-                        <div style="font-size:3.5rem;">📱</div><h3 class="neon-text">手機報到</h3>
-                    </div>
-                    <div class="verify-card cyber-card cyber-hover" onclick="prepareSearch('email', 'Email')">
-                        <div style="font-size:3.5rem;">✉️</div><h3 class="neon-text">Email 報到</h3>
-                    </div>
-                    <div class="verify-card cyber-card cyber-hover" onclick="prepareSearch('company', '公司')">
-                        <div style="font-size:3.5rem;">🏢</div><h3 class="neon-text">公司報到</h3>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="actionState" class="state-hidden">
-            <button class="btn-back-nav" onclick="setAppState('methodSelection')">← 重新選擇方式</button>
-            <div class="form-card cyber-card">
-                <h2 id="actionTitle" class="neon-text" style="margin-bottom: 2.5rem; font-size: 2.5rem;">登機驗證</h2>
-                <input type="text" id="actionInput" class="cyber-input" placeholder="請輸入資訊" style="font-size: 1.4rem;">
-                <button class="cyber-button" onclick="handleAction()" style="font-size: 1.4rem; padding: 1.2rem;">開始驗證</button>
-            </div>
-        </div>
-
-        <div id="groupListState" class="state-hidden">
-            <button class="btn-back-nav" onclick="setAppState('action')">← 重新搜尋</button>
-            <div class="form-card cyber-card" style="max-width: 700px;">
-                <h2 id="groupName" class="neon-text" style="margin-bottom: 1.5rem;">請選擇旅客</h2>
-                <div id="groupList" class="panel-border" style="background: rgba(0,0,0,0.3); border-radius: 1rem; overflow: hidden;"></div>
-            </div>
-        </div>
-
-        <div id="mealState" class="state-hidden">
-            <button class="btn-back-nav" onclick="resetToHome()">← 取消</button>
-            <div class="form-card cyber-card">
-                <h2 class="neon-text" style="margin-bottom:2rem;">🍽️ 機上餐飲偏好</h2>
-                <div id="mealOptions"></div>
-                <button id="finalBtn" class="cyber-button" disabled onclick="submitCheckin()"><span>確認並核發登機證</span></button>
-            </div>
-        </div>
-
-        <div id="successState" class="state-hidden">
-            <div class="form-card cyber-card">
-                <div id="successIcon" style="color:var(--text-dark); font-size:6rem;">✅</div>
-                <h2 id="successTitle" class="neon-text">手續完成！</h2>
-                <div id="successInfo" class="info-box panel-border"></div>
-                <button class="cyber-button" onclick="resetToHome()"><span>回到大廳</span></button>
-            </div>
-        </div>
-
-        <div id="productState" class="state-hidden">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3rem;">
-                <h1 class="neon-text" style="font-size: 2.5rem;">🛍️ 活動商品專區</h1>
-                <button class="cyber-button" style="width:auto; border-radius: 30px; padding: 0.6rem 1.8rem;" onclick="resetToHome()">← 返回</button>
-            </div>
+        payload = request.json
+        current_data = load_config_from_sheets()
+        
+        if "products" not in payload or not payload["products"]:
+            payload["products"] = current_data.get("products", [])
             
-            <div id="giftsSection" class="state-hidden">
-                <h2 class="neon-text" style="margin-bottom: 1.5rem;">🎁 精選伴手禮</h2>
-                <div id="giftsGrid" class="products-grid"></div>
-            </div>
+        if "map_image_url" not in payload:
+            payload["map_image_url"] = current_data.get("map_image_url", "")
 
-            <div id="normalProductsSection" style="margin-top: 3rem;">
-                <h2 class="neon-text" style="margin-bottom: 1.5rem;">📚 補給品清單</h2>
-                <div id="categoryFilters" style="margin-bottom: 2.5rem; display: flex; flex-wrap: wrap; gap: 0.8rem;"></div>
-                <div id="productsGrid" class="products-grid"></div>
-            </div>
-        </div>
-    </main>
-
-    <div id="mapModal" class="state-hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; display: flex; justify-content: center; align-items: center;">
-        <div style="position: relative; width: 90%; height: 85vh; max-width: 1200px; display: flex; flex-direction: column;">
-            <button onclick="toggleMapModal(false)" style="align-self: flex-end; margin-bottom: 10px; background: var(--text-dark); color: #000; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">✕ 關閉地圖</button>
-            <div style="flex-grow: 1; background: #0a1423; border-radius: 10px; overflow: hidden; border: 2px solid var(--accent-gray); display: flex; justify-content: center; align-items: center;">
-                <img id="mapDisplayImage" src="" style="width: 100%; height: 100%; object-fit: contain; display: none;">
-                <iframe id="mapDisplayFrame" src="" style="width: 100%; height: 100%; border: none; display: none;"></iframe>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const API_BASE = '/api';
-        let searchMethod = '', selectedUser = null, systemConfig = null;
-        window.allProducts = [];
-        window.currentCategory = '全部';
-
-        function setAppState(s) {
-            ['home', 'methodSelection', 'action', 'groupList', 'meal', 'success', 'product'].forEach(x => {
-                document.getElementById(x+'State').classList.add('state-hidden');
-            });
-            document.getElementById(s+'State').classList.remove('state-hidden');
-            window.scrollTo(0, 0);
-        }
-
-        function resetToHome() { setAppState('home'); }
-
-        async function toggleMapModal(show) {
-            const modal = document.getElementById('mapModal');
-            const img = document.getElementById('mapDisplayImage');
-            const frame = document.getElementById('mapDisplayFrame');
-
-            if (show) {
-                modal.classList.remove('state-hidden');
-                try {
-                    const res = await fetch(`${API_BASE}/config?t=` + new Date().getTime());
-                    const config = await res.json();
-                    let url = config.map_image_url ? config.map_image_url.trim() : '';
-
-                    if (url) {
-                        const lowerUrl = url.toLowerCase();
-                        const isImage = lowerUrl.endsWith('.png') || lowerUrl.endsWith('.jpg') || lowerUrl.endsWith('.jpeg') || lowerUrl.endsWith('.gif') || lowerUrl.endsWith('.webp') || url.startsWith('data:image/');
-
-                        if (isImage) {
-                            frame.style.display = 'none';
-                            frame.removeAttribute('src');
-                            img.src = url;
-                            img.style.display = 'block';
-                        } else {
-                            img.style.display = 'none';
-                            img.removeAttribute('src');
-                            frame.src = url;
-                            frame.style.display = 'block';
-                        }
-                    } else {
-                        alert('後台尚未填寫地圖網址或上傳地圖！');
-                        modal.classList.add('state-hidden');
-                    }
-                } catch(e) { modal.classList.add('state-hidden'); }
-            } else {
-                modal.classList.add('state-hidden');
-                img.removeAttribute('src');
-                frame.removeAttribute('src');
-            }
-        }
-
-        function prepareSearch(method, label) {
-            searchMethod = method;
-            document.getElementById('actionTitle').textContent = `請輸入旅客${label}`;
-            document.getElementById('actionInput').value = '';
-            setAppState('action');
-        }
-
-        async function handleAction() {
-            const val = document.getElementById('actionInput').value.trim();
-            if(!val) return;
-            try {
-                const res = await fetch(`${API_BASE}/search/${searchMethod}?${searchMethod}=${encodeURIComponent(val)}`);
-                const json = await res.json();
-                if (json.data && json.data.length > 0) {
-                    if (searchMethod === 'company') renderCompanyList(json.data);
-                    else if (json.data.length === 1) { selectedUser = json.data[0]; renderMealOptions(); }
-                    else { window.tempData = json.data; renderUserList(json.data, '搜尋結果'); }
-                } else alert('查無旅客資料');
-            } catch(e) { alert('通訊異常'); }
-        }
-
-        function renderCompanyList(companies) {
-            const list = document.getElementById('groupList');
-            list.innerHTML = '';
-            companies.forEach(c => {
-                const div = document.createElement('div');
-                div.className = 'group-item';
-                div.innerHTML = `<span>🏢 ${c}</span><span>➔</span>`;
-                div.onclick = async () => {
-                    const res = await fetch(`${API_BASE}/search/company_members?name=${encodeURIComponent(c)}`);
-                    const json = await res.json();
-                    renderUserList(json.data, c);
-                };
-                list.appendChild(div);
-            });
-            document.getElementById('groupName').textContent = '請選擇所屬公司';
-            setAppState('groupList');
-        }
-
-        function renderUserList(users, title) {
-            const list = document.getElementById('groupList');
-            list.innerHTML = '';
-            users.forEach(u => {
-                const div = document.createElement('div');
-                div.className = 'group-item';
-                const statusTag = (u.status === 'checked_in' || u.status === '已報到' || u.status === '替代') ? '<span style="color:#555;">[已報到]</span>' : '<span>➔</span>';
-                div.innerHTML = `<div><div style="font-weight:bold; font-size:1.2rem;">${u.name}</div><div style="font-size:0.9rem; color:#aaa;">${u.company}</div></div>${statusTag}`;
-                if (statusTag === '<span>➔</span>') {
-                    div.onclick = () => { selectedUser = u; renderMealOptions(); };
-                }
-                list.appendChild(div);
-            });
-            document.getElementById('groupName').textContent = title;
-            setAppState('groupList');
-        }
-
-        async function renderMealOptions() {
-            const res = await fetch(`${API_BASE}/config`);
-            systemConfig = await res.json();
-            if (!systemConfig.show_meal_options) { submitCheckin('不需要'); return; }
+        # 拋給背景執行緒，讓前端 0.1 秒內立刻收到回應跳出「儲存成功」
+        threading.Thread(target=async_save_process, args=(payload, current_data)).start()
+        return jsonify({"success": True, "message": "儲存成功！系統正在背景寫入 Google Sheet。"})
             
-            const container = document.getElementById('mealOptions');
-            container.innerHTML = `
-                <div style="margin-bottom:2rem; text-align:left; padding:1rem; background:rgba(0,229,255,0.1); border-radius:0.5rem;">
-                    <div style="font-size:0.9rem; color:var(--text-dark);">旅客姓名</div>
-                    <div style="font-size:1.4rem; font-weight:bold;">${selectedUser.name}</div>
-                </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:2rem;">
-                    <div id="btnOrig" class="verify-card cyber-card is-original-selected" onclick="toggleIdentity(true)">本人報到</div>
-                    <div id="btnProxy" class="verify-card cyber-card" onclick="toggleIdentity(false)">替代報到</div>
-                </div>
-                <div id="proxyForm" class="state-hidden" style="margin-bottom:2rem; text-align:left; border:1px solid #ffa500; padding:1.5rem; border-radius:1rem;">
-                    <p style="color:#ffa500; margin-bottom:1rem;">請輸入替代人資訊：</p>
-                    <input type="text" id="proxyName" class="cyber-input" placeholder="替代人姓名" style="margin-bottom:0.8rem;">
-                    <input type="text" id="proxyPhone" class="cyber-input" placeholder="替代人手機">
-                </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-                    ${['葷食', '素食'].map(m => `<div class="verify-card cyber-card meal-opt" onclick="selectMeal(this, '${m}')">${m}</div>`).join('')}
-                </div>
-            `;
-            window.selectedMeal = null;
-            window.isOriginal = true;
-            document.getElementById('finalBtn').disabled = true;
-            setAppState('meal');
-        }
+    return jsonify(load_config_from_sheets())
 
-        function toggleIdentity(isOrig) {
-            window.isOriginal = isOrig;
-            document.getElementById('btnOrig').classList.toggle('is-original-selected', isOrig);
-            document.getElementById('btnProxy').classList.toggle('proxy-selected', !isOrig);
-            document.getElementById('proxyForm').classList.toggle('state-hidden', isOrig);
-            checkMealReady();
-        }
+@app.route('/api/login', methods=['POST'])
+def admin_login():
+    data = request.json
+    u, p = data.get('username'), data.get('password')
+    ws = get_worksheet("管理員")
+    if not ws: return jsonify({"success": False, "message": "尚未建立管理員分頁"}), 500
+    try:
+        sheet_username = ws.cell(2, 1).value
+        sheet_password = ws.cell(2, 3).value
+        if str(u) == str(sheet_username) and str(p) == str(sheet_password):
+            session['admin_logged_in'] = True
+            return jsonify({"success": True})
+    except Exception as e: return jsonify({"success": False, "message": f"讀取失敗: {e}"}), 500
+    return jsonify({"success": False, "message": "帳號或密碼錯誤"}), 401
 
-        function selectMeal(el, m) {
-            document.querySelectorAll('.meal-opt').forEach(x => x.classList.remove('meal-selected'));
-            el.classList.add('meal-selected');
-            window.selectedMeal = m;
-            checkMealReady();
-        }
+@app.route('/api/logout')
+def logout():
+    session.pop('admin_logged_in', None)
+    return redirect('/login.html')
 
-        function checkMealReady() { document.getElementById('finalBtn').disabled = !window.selectedMeal; }
+@app.route('/admin')
+def admin_page():
+    if not session.get('admin_logged_in'): return send_from_directory('.', 'login.html')
+    return send_from_directory('.', 'admin.html')
 
-        async function submitCheckin(autoMeal) {
-            const meal = autoMeal || window.selectedMeal;
-            const proxyInfo = window.isOriginal ? {} : {
-                name: document.getElementById('proxyName').value.trim(),
-                phone: document.getElementById('proxyPhone').value.trim()
-            };
-            if (!window.isOriginal && !proxyInfo.name) { alert('請輸入替代人姓名'); return; }
-            const btn = document.getElementById('finalBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span>處理中...</span>';
-            try {
-                const res = await fetch(`${API_BASE}/checkin/${selectedUser.id}`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ meal, is_original: window.isOriginal, proxy_info: proxyInfo })
-                });
-                const json = await res.json();
-                if (json.success) {
-                    const u = json.data;
-                    document.getElementById('successInfo').innerHTML = `
-                        <div style="margin-bottom:0.5rem;">旅客：<b>${u.name}</b></div>
-                        <div style="margin-bottom:0.5rem;">單位：${u.company}</div>
-                        <div style="margin-bottom:0.5rem;">座位：<span style="font-size:1.5rem; color:var(--text-dark); font-weight:bold;">${u.seat || '現場安排'}</span></div>
-                        <div>時間：${u.checkedInAt}</div>
-                    `;
-                    setAppState('success');
-                } else alert('報到失敗');
-            } catch(e) { alert('網路異常'); }
-        }
+@app.route('/api/dashboard_stats')
+def get_dashboard_stats():
+    if not session.get('admin_logged_in'): return jsonify({"success": False}), 403
+    refresh_cache()
+    total = len(participants_cache)
+    checked_in_list = [p for p in participants_cache if p['status'] in ['checked_in', '已報到', '替代']]
+    logs = [{"name": f"{p['name']} (替代)" if p['status'] == '替代' else p['name'], "time": p['checkedInAt'], "company": p['company'], "meal": p['meal']} for p in checked_in_list]
+    logs.sort(key=lambda x: x['time'], reverse=True)
+    
+    stats_data = {}
+    for p in participants_cache:
+        t = p.get("table", "").strip()
+        if not t: continue
+        if t not in stats_data: stats_data[t] = {"total": 0, "checked": 0}
+        stats_data[t]["total"] += 1
+        if p["status"] in ["checked_in", "已報到", "替代"]: stats_data[t]["checked"] += 1
+    
+    table_stats = {t: round(s["checked"]/s["total"]*100, 1) for t, s in stats_data.items() if s["total"] > 0}
 
-        async function showProducts() {
-            try {
-                const res = await fetch(`${API_BASE}/config`);
-                const config = await res.json();
-                window.allProducts = config.products || [];
-                const gifts = window.allProducts.filter(p => p.isGift);
-                const normals = window.allProducts.filter(p => !p.isGift);
-                const giftsSection = document.getElementById('giftsSection');
-                if (gifts.length > 0) {
-                    giftsSection.classList.remove('state-hidden');
-                    renderGrid('giftsGrid', gifts);
-                } else giftsSection.classList.add('state-hidden');
-                const categories = ['全部', ...new Set(normals.map(p => p.category).filter(c => c))];
-                const filterContainer = document.getElementById('categoryFilters');
-                filterContainer.innerHTML = categories.map(c => `
-                    <div class="cyber-button ${window.currentCategory === c ? 'active' : ''}" 
-                         style="width:auto; padding:0.5rem 1.2rem; border-radius:20px; cursor:pointer;"
-                         onclick="filterCategory('${c}')">${c}</div>
-                `).join('');
-                filterCategory(window.currentCategory);
-                setAppState('product');
-            } catch(e) { alert('無法載入商品'); }
-        }
+    return jsonify({
+        "success": True,
+        "stats": { "total": total, "checked_in": len(checked_in_list), "not_checked_in": total - len(checked_in_list), "logs": logs[:25], "table_stats": table_stats }
+    })
 
-        function filterCategory(cat) {
-            window.currentCategory = cat;
-            document.querySelectorAll('#categoryFilters .cyber-button').forEach(btn => {
-                btn.style.background = btn.textContent === cat ? 'var(--text-dark)' : 'rgba(0,229,255,0.1)';
-                btn.style.color = btn.textContent === cat ? '#000' : 'var(--text-dark)';
-            });
-            const filtered = window.currentCategory === '全部' ? window.allProducts.filter(p => !p.isGift) : window.allProducts.filter(p => !p.isGift && p.category === cat);
-            renderGrid('productsGrid', filtered);
-        }
+@app.route('/')
+def index(): return send_from_directory('.', '活動報到系統.html')
 
-        function renderGrid(id, items) {
-            const grid = document.getElementById(id);
-            grid.innerHTML = items.map(p => `
-                <div class="cyber-card" style="padding:0; overflow:hidden; display:flex; flex-direction:column;">
-                    ${p.image ? `<img src="${p.image}" class="product-img">` : '<div class="product-img" style="display:flex; align-items:center; justify-content:center; font-size:3rem;">📦</div>'}
-                    <div style="padding:1.5rem; flex-grow:1; display:flex; flex-direction:column;">
-                        <div style="color:var(--text-dark); font-size:0.8rem; margin-bottom:0.5rem;"># ${p.category || '一般'}</div>
-                        <h3 style="margin-bottom:0.8rem; font-size:1.3rem;">${p.name}</h3>
-                        <p style="font-size:0.9rem; color:#ccc; margin-bottom:1.5rem; flex-grow:1;">${p.description || ''}</p>
-                        ${p.link ? `<a href="${p.link}" target="_blank" class="cyber-button" style="text-decoration:none; text-align:center; display:block; padding:0.8rem; border-radius:0.5rem;">立即查看</a>` : ''}
-                    </div>
-                </div>
-            `).join('');
-        }
-    </script>
-</body>
-</html>
-Why Does This GitHub Page Fail to Display Images on Mobile? - Manus
+@app.route('/api/search/<method>')
+def search(method):
+    refresh_cache()
+    q = request.args.get(method, "").strip().lower()
+    if method == 'company':
+        matched_companies = sorted(list(set(p.get('company', '') for p in participants_cache if q in p.get('company', '').lower() and p.get('company'))))
+        return jsonify({"success": True, "data": matched_companies})
+    if method == 'company_members':
+        company_name = request.args.get('name', '').strip().lower()
+        members = [p for p in participants_cache if p.get('company', '').lower() == company_name]
+        return jsonify({"success": True, "data": members})
+    return jsonify({"success": True, "data": [p for p in participants_cache if q in p.get(method, "").lower() or q in p.get('name', '').lower()]})
+
+@app.route('/api/checkin/<pid>', methods=['POST'])
+def checkin(pid):
+    data = request.json
+    now_tw = (datetime.utcnow() + timedelta(hours=8)).strftime('%Y/%m/%d %H:%M:%S')
+    p = next((x for x in participants_cache if x['id'] == pid), None)
+    if not p: return jsonify({"success": False}), 404
+    if p['status'] in ['checked_in', '已報到', '替代']:
+        return jsonify({"success": False, "error": "already_done", "data": p})
+    
+    meal = data.get('meal', '未選擇')
+    is_original = data.get('is_original', True)
+    proxy_info = data.get('proxy_info', {})
+    
+    config_tmp = load_config_from_sheets()
+    cols = config_tmp.get('excel_columns', {})
+    status_val = 'checked_in' if is_original else '替代'
+    
+    updates = [
+        {'range': gspread.utils.rowcol_to_a1(p['_row'], int(cols.get('checkedInAt', 14))), 'values': [[now_tw]]},
+        {'range': gspread.utils.rowcol_to_a1(p['_row'], int(cols.get('status', 15))), 'values': [[status_val]]},
+        {'range': gspread.utils.rowcol_to_a1(p['_row'], int(cols.get('meal', 16))), 'values': [[meal]]}
+    ]
+    p_name_col, p_phone_col, p_email_col = 17, 18, 19
+    if not is_original and proxy_info:
+        updates.append({'range': gspread.utils.rowcol_to_a1(p['_row'], p_name_col), 'values': [[proxy_info.get('name', '')]]})
+        updates.append({'range': gspread.utils.rowcol_to_a1(p['_row'], p_phone_col), 'values': [[proxy_info.get('phone', '')]]})
+        updates.append({'range': gspread.utils.rowcol_to_a1(p['_row'], p_email_col), 'values': [[proxy_info.get('email', '')]]})
+    else:
+        updates.extend([{'range': gspread.utils.rowcol_to_a1(p['_row'], c), 'values': [['']]} for c in [p_name_col, p_phone_col, p_email_col]])
+            
+    threading.Thread(target=async_update_sheet, args=(updates,)).start()
+    p.update({"status": status_val, "meal": meal, "checkedInAt": now_tw})
+    return jsonify({"success": True, "data": p})
+
+def async_update_sheet(updates):
+    try: get_worksheet().batch_update(updates)
+    except Exception as e: print(f"背景同步失敗: {e}")
+
+def refresh_cache(force=False):
+    global participants_cache, last_cache_update
+    if not force and (time.time() - last_cache_update < CACHE_TTL) and participants_cache: return
+    with cache_lock:
+        try:
+            all_values = get_worksheet().get_all_values()
+            config_tmp = load_config_from_sheets()
+            cols = config_tmp.get('excel_columns', {})
+            new_cache = []
+            last_company = ""
+            for i, row in enumerate(all_values[3:]):
+                def g(c): return row[c-1].strip() if c and c-1 < len(row) else ""
+                current_comp = g(cols.get('company', 3))
+                if current_comp: last_company = current_comp
+                name = g(cols.get('name', 6))
+                if not name: continue
+                new_cache.append({
+                    "id": f"{name}_{i}", "name": name, "phone": g(cols.get('phone', 8)), "company": last_company,
+                    "email": g(cols.get('email', 9)), "status": g(cols.get('status', 15)), "meal": g(cols.get('meal', 16)),
+                    "checkedInAt": g(cols.get('checkedInAt', 14)), "seat": g(cols.get('seat', 13)), 
+                    "table": g(cols.get("seat", 13))[:2] if g(cols.get("seat", 13))[:2].isdigit() else "", "_row": i + 4 
+                })
+            participants_cache = new_cache
+            last_cache_update = time.time()
+        except Exception as e: print(f"緩存刷新失敗: {e}")
+
+def auto_check_and_patch_sheets():
+    try:
+        client = get_gspread_client()
+        spreadsheet = client.open("活動報到名單")
+        try: spreadsheet.worksheet("系統設定")
+        except:
+            ws = spreadsheet.add_worksheet(title="系統設定", rows="10", cols="5")
+            ws.update('A1:C2', [["顯示餐點選項", "地圖圖片網址", "Google試算表名稱"], ["TRUE", "", "活動報到名單"]])
+        try: spreadsheet.worksheet("商品清單")
+        except:
+            ws = spreadsheet.add_worksheet(title="商品清單", rows="50", cols="10")
+            ws.append_row(["商品名稱", "商品圖片", "商品分類", "商品描述", "購買連結", "是否為贈品"])
+    except Exception as e:
+        print(f"❌ [初始化失敗]: {e}")
+
+auto_check_and_patch_sheets()
+load_config_from_sheets(force_refresh=True)
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 10000)))
