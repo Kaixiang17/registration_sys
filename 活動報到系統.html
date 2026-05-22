@@ -1,423 +1,323 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智慧方舟 - 航空登機系統</title>
-    <link rel="stylesheet" href="smart-ark-theme.css">
-    <style>
-        /* 保留您原本的所有 CSS 樣式 */
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "PingFang TC", "Michroma", "Stick", sans-serif; }
-        body { line-height: 1.6; color: #fff; }
-        header { padding: 1.2rem 0; position: sticky; top: 0; z-index: 100; }
-        .header-container { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; }
-        main { max-width: 1200px; margin: 0 auto; padding: 3rem 1.5rem; }
-        .state-hidden { display: none !important; }
-        .home-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 3rem; margin-top: 2rem; }
-        .home-card { padding: 5rem 2rem; text-align: center; cursor: pointer; border-radius: 1.5rem; min-height: 400px; display: flex; flex-direction: column; justify-content: center; }
-        .home-card h2 { margin: 1.5rem 0 1rem 0; font-size: 2.2rem; }
-        .verify-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-top: 2rem; }
-        .verify-card { padding: 2.5rem 1.5rem; text-align: center; cursor: pointer; border-radius: 1rem; }
-        @media(max-width: 768px) { .verify-grid { grid-template-columns: 1fr; } }
-        .form-card { max-width: 600px; margin: 0 auto; padding: 3rem; text-align: center; border-radius: 1.5rem; }
-        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2.5rem; }
-        .product-img { width: 100%; height: 220px; object-fit: contain; background: rgba(0,0,0,0.4); border-bottom: 1px solid var(--accent-gray); }
-        .btn-back-nav { background: none; border: 1px solid var(--accent-gray); color: var(--text-dark); padding: 0.5rem 1.2rem; border-radius: 0.5rem; cursor: pointer; font-weight: bold; transition: 0.3s; margin-bottom: 1.5rem; display: inline-flex; align-items: center; gap: 0.5rem; }
-        .btn-back-nav:hover { border-color: var(--text-dark); background: rgba(0, 229, 255, 0.1); }
-        .cyber-input { width: 100%; margin-bottom: 1.5rem; padding: 1.2rem; font-size: 1.2rem; }
-        .cyber-button { width: 100%; margin-top: 0.5rem; padding: 1.2rem; font-size: 1.1rem; }
-        .group-item { padding: 1.5rem; border-bottom: 1px solid rgba(0,229,255,0.2); cursor: pointer; transition: 0.3s; text-align: left; display: flex; justify-content: space-between; align-items: center;}
-        .group-item:hover { background: rgba(0,229,255,0.1); }
-        .meal-selected, .is-original-selected { border-color: var(--text-dark) !important; background: rgba(0, 229, 255, 0.2) !important; }
-        .proxy-selected { border-color: #ffa500 !important; background: rgba(255, 165, 0, 0.15) !important; }
-        .info-box { text-align: left; padding: 1.5rem; border-radius: 1rem; margin: 1.5rem 0; background: rgba(0,0,0,0.5); border: 1px solid var(--accent-gray); }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智慧方舟 - 航空登機系統</title>
+
+<link rel="stylesheet" href="smart-ark-theme.css">
+
+<style>
+.neon-text { color:#00e5ff; font-weight:bold; }
+.panel-border { border:1px solid rgba(0,229,255,0.3); }
+.cyber-card { background:rgba(10,20,35,0.8); border-radius:1rem; }
+.cyber-hover:hover { transform:translateY(-3px); transition:0.3s; }
+.state-hidden { display:none !important; }
+</style>
 </head>
+
 <body class="circuit-background">
-    <div class="ark-background"></div>
-    <header class="panel-border" style="border-top:none; border-left:none; border-right:none; background: rgba(10,20,35,0.85); backdrop-filter: blur(15px);">
-        <div class="header-container">
-            <div onclick="resetToHome()" style="cursor:pointer; color:var(--text-dark); font-weight: bold; font-size: 1.1rem;">✈️ 航班大廳</div>
-            <div class="neon-text" style="font-size: 1.4rem;">BOARDING SYSTEM</div>
-            <div id="mapBtn" onclick="toggleMapModal(true)" style="font-size: 0.9rem; color: var(--text-dark); cursor: pointer; border: 1px solid var(--text-dark); padding: 4px 12px; border-radius: 20px; font-weight: bold;">🗺️ 地圖導覽</div>
-        </div>
-    </header>
 
-    <main>
-        <div id="homeState">
-            <h1 class="neon-text" style="text-align:center; margin-bottom: 2rem; font-size: 3rem; display: block;">請選擇服務項目</h1>
-            <div class="home-grid">
-                <div class="home-card cyber-card cyber-hover" onclick="setAppState('methodSelection')">
-                    <div style="font-size:6rem;">🎫</div>
-                    <h2 class="neon-text">辦理登機報到</h2>
-                    <p style="color:#aaa; font-size:1.1rem;">CHECK-IN SERVICE</p>
-                </div>
-                <div class="home-card cyber-card cyber-hover" onclick="showProducts()">
-                    <div style="font-size:6rem;">🛍️</div>
-                    <h2 class="neon-text">活動商品專區</h2>
-                    <p style="color:#aaa; font-size:1.1rem;">ACTIVITY PRODUCTS</p>
-                </div>
-            </div>
+<div class="ark-background"></div>
+
+<!-- HEADER -->
+<header class="panel-border" style="background:rgba(10,20,35,0.85);backdrop-filter:blur(15px);">
+    <div class="header-container">
+
+        <div onclick="resetToHome()" style="cursor:pointer;color:var(--text-dark);font-weight:bold;">
+            ✈️ 航班大廳
         </div>
 
-        <div id="methodSelectionState" class="state-hidden">
-            <button class="btn-back-nav" onclick="resetToHome()">← 返回大廳</button>
-            <div style="text-align:center; max-width:800px; margin: 0 auto;">
-                <h2 class="neon-text" style="font-size: 2.2rem; margin-bottom:1rem;">請選擇驗證方式</h2>
-                <div class="verify-grid">
-                    <div class="verify-card cyber-card cyber-hover" onclick="prepareSearch('name', '姓名')">
-                        <div style="font-size:3.5rem;">📝</div><h3 class="neon-text">姓名報到</h3>
-                    </div>
-                    <div class="verify-card cyber-card cyber-hover" onclick="prepareSearch('phone', '手機')">
-                        <div style="font-size:3.5rem;">📱</div><h3 class="neon-text">手機報到</h3>
-                    </div>
-                    <div class="verify-card cyber-card cyber-hover" onclick="prepareSearch('email', 'Email')">
-                        <div style="font-size:3.5rem;">✉️</div><h3 class="neon-text">Email 報到</h3>
-                    </div>
-                    <div class="verify-card cyber-card cyber-hover" onclick="prepareSearch('company', '公司')">
-                        <div style="font-size:3.5rem;">🏢</div><h3 class="neon-text">公司報到</h3>
-                    </div>
-                </div>
-            </div>
+        <div class="neon-text">BOARDING SYSTEM</div>
+
+        <div onclick="toggleMapModal(true)"
+             style="cursor:pointer;padding:4px 12px;border:1px solid var(--text-dark);border-radius:20px;">
+            🗺️ 地圖導覽
         </div>
 
-        <div id="actionState" class="state-hidden">
-            <button class="btn-back-nav" onclick="setAppState('methodSelection')">← 重新選擇方式</button>
-            <div class="form-card cyber-card" style="max-width: 800px; padding: 4.5rem; margin-top: 2rem;">
-                <h2 id="actionTitle" class="neon-text" style="margin-bottom: 2.5rem; font-size: 2.5rem;">登機驗證</h2>
-                <input type="text" id="actionInput" class="cyber-input" placeholder="請輸入資訊" style="font-size: 1.5rem; padding: 1.5rem; height: 60px;">
-                <button class="cyber-button" onclick="handleAction()" style="font-size: 1.4rem; padding: 1.2rem; margin-top: 1rem;"><span>啟動搜尋</span></button>
-            </div>
-        </div>
-
-        <div id="groupListState" class="state-hidden">
-            <button class="btn-back-nav" onclick="setAppState('action')">← 重新搜尋</button>
-            <div class="form-card cyber-card" style="max-width: 700px;">
-                <h2 id="groupName" class="neon-text" style="margin-bottom: 1.5rem;">請選擇旅客</h2>
-                <div id="groupList" class="panel-border" style="background: rgba(0,0,0,0.3); border-radius: 1rem; max-height:450px; overflow-y:auto;"></div>
-            </div>
-        </div>
-
-        <div id="mealState" class="state-hidden">
-            <button class="btn-back-nav" onclick="resetToHome()">← 取消</button>
-            <div class="form-card cyber-card">
-                <h2 class="neon-text" style="margin-bottom:2rem;">🍽️ 機上餐飲偏好</h2>
-                <div id="mealOptions"></div>
-                <button id="finalBtn" class="cyber-button" disabled onclick="submitCheckin()"><span>確認並核發登機證</span></button>
-            </div>
-        </div>
-
-        <div id="successState" class="state-hidden">
-            <div class="form-card cyber-card">
-                <div id="successIcon" style="color:var(--text-dark); font-size:6rem;">🎫</div>
-                <h2 id="successTitle" class="neon-text">手續完成！</h2>
-                <div id="successInfo" class="info-box panel-border"></div>
-                <button class="cyber-button" onclick="resetToHome()"><span>🏠 回到大廳</span></button>
-            </div>
-        </div>
-
-        <div id="productState" class="state-hidden">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3rem;">
-                <h1 class="neon-text" style="font-size: 2.5rem;">🛍️ 活動商品專區</h1>
-                <button class="cyber-button" style="width:auto; border-radius: 30px; padding: 0.6rem 1.8rem;" onclick="resetToHome()"><span>← 返回</span></button>
-            </div>
-            <div id="giftsSection" class="state-hidden">
-                <h2 class="neon-text" style="margin-bottom: 1.5rem;">🎁 精選伴手禮</h2>
-                <div id="giftsGrid" class="products-grid"></div>
-            </div>
-            <div id="normalProductsSection" style="margin-top: 3rem;">
-                <h2 class="neon-text" style="margin-bottom: 1.5rem;">📦 補給品清單</h2>
-                <div id="categoryFilters" style="margin-bottom: 2.5rem; display: flex; flex-wrap: wrap; gap: 0.8rem;"></div>
-                <div id="productsGrid" class="products-grid"></div>
-            </div>
-        </div>
-    </main>
-
-    <div id="mapModal" class="state-hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
-        <div style="position: relative; width: 90%; height: 85vh; max-width: 1200px; display: flex; flex-direction: column;">
-            <button onclick="toggleMapModal(false)" style="align-self: flex-end; margin-bottom: 10px; background: rgba(0,229,255,0.2); border: 1px solid #00e5ff; color: #00e5ff; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 1.1rem;">✕ 關閉地圖</button>
-            <div style="flex-grow: 1; background: #0a1423; border-radius: 10px; overflow: hidden; border: 2px solid var(--accent-gray); display: flex; align-items: center; justify-content: center;">
-                <img id="mapDisplayImage" src="" style="width: 100%; height: 100%; object-fit: contain; display: none;">
-                <iframe id="mapDisplayFrame" src="" style="width: 100%; height: 100%; border: none; display: none; background: #fff;"></iframe>
-            </div>
-        </div>
     </div>
+</header>
 
-    <script>
-        const API_BASE = '/api';
-        let searchMethod = '', selectedUser = null, systemConfig = null;
-        window.allProducts = [];
-        window.currentCategory = '全部';
+<main>
 
-        function setAppState(s) {
-            ['home', 'methodSelection', 'action', 'groupList', 'meal', 'success', 'product'].forEach(x => {
-                document.getElementById(x+'State').classList.add('state-hidden');
-            });
-            document.getElementById(s+'State').classList.remove('state-hidden');
-            window.scrollTo(0, 0);
-        }
+<!-- HOME -->
+<div id="homeState">
 
-        function resetToHome() { setAppState('home'); }
+    <h1 class="neon-text title-xl" style="text-align:center;margin-bottom:2rem;">
+        請選擇服務項目
+    </h1>
 
-        // 核心修正：將重複贅餘、造成行動裝置 Parsing 嚴重錯誤崩潰的死區塊徹底拔除清空
-        async function toggleMapModal(show) {
-            const modal = document.getElementById('mapModal');
-            const img = document.getElementById('mapDisplayImage');
-            const frame = document.getElementById('mapDisplayFrame');
-            
-            if (show) {
-                modal.classList.remove('state-hidden');
-                try {
-                    const res = await fetch(`${API_BASE}/config?t=` + new Date().getTime());
-                    const config = await res.json();
-                    let url = config.map_image_url ? config.map_image_url.trim() : '';
-                    
-                    if (url) {
-                        if (url.startsWith('http://') && window.location.protocol === 'https:') {
-                            url = url.replace('http://', 'https://');
-                        }
+    <div class="home-grid">
 
-                        const lowerUrl = url.toLowerCase();
-                        const isWebPage = lowerUrl.includes('.html') || lowerUrl.includes('.htm');
-                        
-                        if (isWebPage) {
-                            img.style.display = 'none';
-                            img.removeAttribute('src');
-                            frame.src = url;
-                            frame.style.display = 'block';
-                        } else {
-                            frame.style.display = 'none';
-                            frame.removeAttribute('src');
-                            img.src = url;
-                            img.style.display = 'block';
-                        }
-                    } else {
-                        alert('後台尚未填寫地圖網址或上傳地圖！');
-                        modal.classList.add('state-hidden');
-                    }
-                } catch(e) {
-                    modal.classList.add('state-hidden');
-                }
-            } else {
-                modal.classList.add('state-hidden');
-                img.removeAttribute('src');
-                frame.removeAttribute('src');
-            }
-        }
+        <div class="home-card cyber-card cyber-hover"
+             onclick="setAppState('methodSelection')">
+            <div style="font-size:6rem;">🎫</div>
+            <h2 class="title-md neon-text">辦理登機報到</h2>
+            <p style="color:#aaa;">CHECK-IN</p>
+        </div>
 
-        function prepareSearch(method, label) {
-            searchMethod = method;
-            document.getElementById('actionTitle').textContent = `請輸入旅客${label}`;
-            document.getElementById('actionInput').value = '';
-            setAppState('action');
-        }
+        <div class="home-card cyber-card cyber-hover"
+             onclick="showProducts()">
+            <div style="font-size:6rem;">🛍️</div>
+            <h2 class="title-md neon-text">商品專區</h2>
+            <p style="color:#aaa;">PRODUCTS</p>
+        </div>
 
-        async function handleAction() {
-            const val = document.getElementById('actionInput').value.trim();
-            if(!val) return;
-            try {
-                const res = await fetch(`${API_BASE}/search/${searchMethod}?${searchMethod}=${encodeURIComponent(val)}`);
-                const json = await res.json();
-                if (json.data && json.data.length > 0) {
-                    if (searchMethod === 'company') renderCompanyList(json.data);
-                    else if (json.data.length === 1) { selectedUser = json.data[0]; renderMealOptions(); }
-                    else { window.tempData = json.data; renderUserList(json.data, '搜尋結果'); }
-                } else alert('查無旅客資料');
-            } catch(e) { alert('通訊異常'); }
-        }
+    </div>
+</div>
 
-        function renderCompanyList(companies) {
-            document.getElementById('groupName').textContent = '請選擇所屬公司';
-            document.getElementById('groupList').innerHTML = companies.map(c => `
-                <div class="group-item" onclick="fetchCompanyMembers('${c}')">
-                    <b>${c}</b><span>選擇 →</span>
-                </div>`).join('');
-            setAppState('groupList');
-        }
+<!-- METHOD -->
+<div id="methodSelectionState" class="state-hidden">
 
-        async function fetchCompanyMembers(companyName) {
-            try {
-                const res = await fetch(`${API_BASE}/search/company_members?name=${encodeURIComponent(companyName)}`);
-                const json = await res.json();
-                window.tempData = json.data;
-                renderUserList(json.data, `${companyName} 旅客名單`);
-            } catch(e) { alert('通訊異常'); }
-        }
+    <button onclick="resetToHome()">← 返回</button>
 
-        function renderUserList(users, title) {
-            document.getElementById('groupName').textContent = title;
-            document.getElementById('groupList').innerHTML = users.map(u => `
-                <div class="group-item" onclick="selectSingleUser('${u.id}')">
-                    <div><b>${u.name}</b><br><small>${u.company || ''}</small></div>
-                    <span>${u.status === 'checked_in' || u.status === '替代' ? '🟢 已登機' : '⚪ 待報到'}</span>
-                </div>`).join('');
-            setAppState('groupList');
-        }
+    <h2 class="title-lg neon-text" style="text-align:center;">選擇驗證方式</h2>
 
-        function selectSingleUser(id) {
-            selectedUser = window.tempData.find(u => u.id === id);
-            renderMealOptions();
-        }
+    <div class="verify-grid">
 
-        function renderMealOptions() {
-            const options = (systemConfig && systemConfig.meal_types) ? systemConfig.meal_types : ['葷食', '素食', '不須用餐'];
-            const mealHtml = options.map(m => {
-                let icon = m.includes('葷') ? '🍱' : (m.includes('素') ? '🥗' : '❌');
-                return `<div class="cyber-card panel-border" id="m-${m}" onclick="selectMeal('${m}')" style="padding:1.5rem; margin-bottom:1rem; cursor:pointer;">${icon} ${m}</div>`;
-            }).join('');
-            
-            const proxyHtml = `
-            <div style="margin-top: 2rem; border-top: 1px solid rgba(0, 229, 255, 0.3); padding-top: 1.5rem;">
-                <label style="display: block; margin-bottom: 1rem; font-weight: bold;">👤 是否為本人報到？</label>
-                <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-                    <div id="isOriginalYes" class="cyber-card" onclick="setIsOriginal(true)" style="flex: 1; padding: 1rem; text-align: center; cursor: pointer;">✅ 是，本人</div>
-                    <div id="isOriginalNo" class="cyber-card" onclick="setIsOriginal(false)" style="flex: 1; padding: 1rem; text-align: center; cursor: pointer;">❌ 否，替代者</div>
-                </div>
-                <div id="proxyInfoSection" style="display: none; padding: 1rem; background: rgba(255, 165, 0, 0.05); border: 1px solid #ffa500; border-radius: 1rem;">
-                    <input id="proxyName" class="cyber-input" placeholder="替代者姓名">
-                    <input id="proxyPhone" class="cyber-input" placeholder="替代者電話">
-                    <input id="proxyEmail" class="cyber-input" placeholder="替代者 Email">
-                </div>
-            </div>`;
-            document.getElementById('mealOptions').innerHTML = mealHtml + proxyHtml;
-            window.isOriginal = true;
-            document.getElementById('finalBtn').disabled = true;
-            setAppState('meal');
-        }
+        <div onclick="prepareSearch('name','姓名')" class="cyber-card">
+            📝 姓名
+        </div>
 
-        window.setIsOriginal = function(val) {
-            window.isOriginal = val;
-            document.getElementById('isOriginalYes').classList.toggle('is-original-selected', val);
-            document.getElementById('isOriginalNo').classList.toggle('proxy-selected', !val);
-            document.getElementById('proxyInfoSection').style.display = val ? 'none' : 'block';
-        };
+        <div onclick="prepareSearch('phone','手機')" class="cyber-card">
+            📱 手機
+        </div>
 
-        window.selectMeal = function(m) {
-            window.selectedMeal = m;
-            document.querySelectorAll('[id^="m-"]').forEach(el => el.classList.remove('meal-selected'));
-            document.getElementById('m-'+m).classList.add('meal-selected');
-            document.getElementById('finalBtn').disabled = false;
-        };
+        <div onclick="prepareSearch('email','Email')" class="cyber-card">
+            ✉️ Email
+        </div>
 
-        async function submitCheckin() {
-            const btn = document.getElementById('finalBtn');
-            let proxyInfo = {};
-            if (window.isOriginal === false) {
-                proxyInfo = {
-                    name: document.getElementById('proxyName').value.trim(),
-                    phone: document.getElementById('proxyPhone').value.trim(),
-                    email: document.getElementById('proxyEmail').value.trim()
-                };
-                if (!proxyInfo.name || !proxyInfo.phone || !proxyInfo.email) return alert('請填寫完整替代者資訊');
-                if (!/^09\d{8}$/.test(proxyInfo.phone)) return alert('電話格式錯誤！需為 09 開頭 10 位數');
-                if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(proxyInfo.email)) return alert('必須使用 @gmail.com 帳號');
-            }
+        <div onclick="prepareSearch('company','公司')" class="cyber-card">
+            🏢 公司
+        </div>
 
-            btn.disabled = true; btn.innerHTML = '<span>📡 開立登機證中...</span>';
-            try {
-                const res = await fetch(`${API_BASE}/checkin/${selectedUser.id}`, { 
-                    method: 'POST', headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ meal: window.selectedMeal, is_original: window.isOriginal, proxy_info: proxyInfo }) 
-                });
-                const json = await res.json();
-                const info = document.getElementById('successInfo');
-                if (json.success) {
-                    const statusText = json.data.status === '替代' ? '<span style="color:#ffa500;">(替代報到)</span>' : '';
-                    info.innerHTML = `
-                        <div style="color:#4ade80; font-weight:bold; border-bottom:1px solid #4ade80; margin-bottom:1rem;">登艦完成，歡迎登機</div>
-                        <p><b>姓名：</b>${json.data.name} ${statusText}</p>
-                        <p><b>單位：</b>${json.data.company || "個人旅客"}</p>
-                        <p><b>座位：</b><span style="color:var(--text-dark); font-weight:bold;">${json.data.seat || "未分配"}</span></p>
-                        <p><b>餐飲：</b>${json.data.meal}</p>
-                        <p><b>時間：</b>${json.data.checkedInAt}</p>
-                        <div style="margin-top: 1rem; padding: 1rem; border: 1px dashed var(--text-dark); border-radius: 0.5rem; text-align: center;">📸 <b>截圖提醒：</b>請保存此畫面以供核對</div>`;
-                } else if (json.error === 'already_done') {
-                    info.innerHTML = `<div style="color:#ff4d4d; font-weight:bold;">此旅客已完成登機</div><p><b>姓名：</b>${json.data.name}</p>`;
-                }
-                setAppState('success');
-            } catch (e) { alert('通訊中斷'); btn.disabled = false; }
-        }
+    </div>
+</div>
 
-        async function showProducts() {
-            setAppState('product');
-            const res = await fetch(`${API_BASE}/config?t=` + new Date().getTime());
-            const config = await res.json();
-            
-            window.allProducts = (config.products || []).filter(p => p.name !== "__SYSTEM_CATEGORIES__");
-            
-            const gifts = window.allProducts.filter(p => p.isGift);
-            if (gifts.length > 0) {
-                document.getElementById('giftsSection').classList.remove('state-hidden');
-                document.getElementById('giftsGrid').innerHTML = gifts.map(p => renderProductCard(p)).join('');
-            } else {
-                document.getElementById('giftsSection').classList.add('state-hidden');
-            }
+<!-- ACTION -->
+<div id="actionState" class="state-hidden">
 
-            const normalProducts = window.allProducts.filter(p => !p.isGift);
-            // 核心安全防呆：加入 || '未分類'，防止從資料庫直接搬移的舊資料在未設定分類時出錯
-            const categories = ['全部', ...new Set(normalProducts.map(p => p.category || '未分類').filter(c => c && c.trim() !== ''))];
-            
-            document.getElementById('categoryFilters').innerHTML = categories.map(cat => `
-                <button class="cyber-button" style="width:auto; padding: 0.5rem 1.5rem; font-size: 0.95rem; background: ${window.currentCategory === cat ? 'rgba(0, 229, 255, 0.25)' : 'none'}; border-color: ${window.currentCategory === cat ? 'var(--text-dark)' : 'var(--accent-gray)'};" onclick="filterCategory('${cat}')">
-                    <span>${cat}</span>
-                </button>
-            `).join('');
+    <button onclick="setAppState('methodSelection')">← 返回</button>
 
-            renderFilteredProducts();
-        }
+    <div class="form-card p-xl cyber-card">
 
-        function filterCategory(cat) {
-            window.currentCategory = cat;
-            const buttons = document.getElementById('categoryFilters').querySelectorAll('button');
-            buttons.forEach(btn => {
-                const txt = btn.textContent.trim();
-                if (txt === cat) {
-                    btn.style.background = 'rgba(0, 229, 255, 0.25)';
-                    btn.style.borderColor = 'var(--text-dark)';
-                } else {
-                    btn.style.background = 'none';
-                    btn.style.borderColor = 'var(--accent-gray)';
-                }
-            });
-            renderFilteredProducts();
-        }
+        <h2 id="actionTitle" class="neon-text title-lg">輸入資料</h2>
 
-        function renderFilteredProducts() {
-            const normalProducts = window.allProducts.filter(p => !p.isGift);
-            const filtered = window.currentCategory === '全部' 
-                ? normalProducts 
-                : normalProducts.filter(p => (p.category || '未分類') === window.currentCategory);
+        <input id="actionInput" class="cyber-input text-xl" placeholder="輸入">
 
-            document.getElementById('productsGrid').innerHTML = filtered.map(p => renderProductCard(p)).join('');
-        }
+        <button onclick="handleAction()" class="cyber-button text-xl">
+            搜尋
+        </button>
 
-        function renderProductCard(p) {
-            const imgUrl = p.image ? p.image : '';
-            const hasLink = p.link && p.link.trim() !== '';
-            const safeLink = hasLink ? p.link.trim().replace(/'/g, "\\'") : '';
-            return `
-            <div class="cyber-card ${hasLink ? 'cyber-hover' : ''}" 
-                 style="${hasLink ? 'cursor: pointer;' : ''}" 
-                 onclick="${hasLink ? `window.open('${safeLink}', '_blank')` : ''}">
-                <div style="width: 100%; height: 220px; background: rgba(0,0,0,0.4); border-bottom: 1px solid var(--accent-gray); display: flex; justify-content: center; align-items: center; overflow: hidden; text-align: center;">
-                    ${imgUrl ? `<img src="${imgUrl}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                                <div style="display: none; color: #f87171; font-weight: bold; padding: 1rem;">圖片載入失敗</div>` 
-                             : `<div style="color: #666;">無圖片</div>`}
-                </div>
-                <div style="padding: 1.5rem;">
-                    <h3 class="neon-text">${p.name}</h3>
-                    <p style="color: #ccc; font-size: 0.9rem; margin-top: 0.5rem;">${p.description || ''}</p>
-                </div>
-            </div>`;
-        }
+    </div>
+</div>
 
-        window.onload = async () => {
-            try {
-                const res = await fetch(`${API_BASE}/config`);
-                if (res.ok) systemConfig = await res.json();
-            } catch(e) {}
-            setAppState('home');
-        };
-    </script>
+<!-- GROUP -->
+<div id="groupListState" class="state-hidden">
+
+    <button onclick="setAppState('action')">← 返回</button>
+
+    <h2 id="groupName" class="neon-text title-md"></h2>
+
+    <div id="groupList"></div>
+
+</div>
+
+<!-- MEAL -->
+<div id="mealState" class="state-hidden">
+
+    <button onclick="resetToHome()">← 取消</button>
+
+    <h2 class="neon-text title-md">餐飲選擇</h2>
+
+    <div id="mealOptions"></div>
+
+    <button id="finalBtn" onclick="submitCheckin()" disabled class="cyber-button">
+        確認
+    </button>
+
+</div>
+
+<!-- SUCCESS -->
+<div id="successState" class="state-hidden">
+
+    <h2 class="neon-text">完成</h2>
+
+    <div id="successInfo"></div>
+
+    <button onclick="resetToHome()">回首頁</button>
+
+</div>
+
+<!-- PRODUCTS -->
+<div id="productState" class="state-hidden">
+
+    <h1 class="neon-text">商品專區</h1>
+
+    <div id="productsGrid" class="products-grid"></div>
+
+</div>
+
+</main>
+
+<script>
+const API_BASE = '/api';
+
+/* =========================
+   APP STATE
+========================= */
+
+const App = {
+    state:'home',
+    searchMethod:'',
+    selectedUser:null,
+    selectedMeal:null,
+    isOriginal:true,
+    tempUsers:[],
+    allProducts:[],
+    currentCategory:'全部',
+    systemConfig:null
+};
+
+/* =========================
+   STATE CONTROL
+========================= */
+
+function setAppState(state){
+    App.state = state;
+
+    ['home','methodSelection','action','groupList','meal','success','product']
+    .forEach(id=>{
+        const el=document.getElementById(id+'State');
+        if(el) el.classList.add('state-hidden');
+    });
+
+    const target=document.getElementById(state+'State');
+    if(target) target.classList.remove('state-hidden');
+
+    window.scrollTo(0,0);
+}
+
+function resetToHome(){
+    setAppState('home');
+}
+
+/* =========================
+   SEARCH
+========================= */
+
+function prepareSearch(m,l){
+    App.searchMethod=m;
+    document.getElementById('actionTitle').textContent=`輸入${l}`;
+    setAppState('action');
+}
+
+async function handleAction(){
+    const val=document.getElementById('actionInput').value.trim();
+    if(!val) return;
+
+    const res=await fetch(`${API_BASE}/search/${App.searchMethod}?${App.searchMethod}=${val}`);
+    const json=await res.json();
+
+    if(!json.data||json.data.length===0){
+        alert('查無');
+        return;
+    }
+
+    if(json.data.length===1){
+        App.selectedUser=json.data[0];
+        renderMealOptions();
+    }else{
+        App.tempUsers=json.data;
+        renderUserList(json.data);
+    }
+}
+
+/* =========================
+   USER LIST
+========================= */
+
+function renderUserList(users){
+    document.getElementById('groupList').innerHTML =
+    users.map(u=>`
+        <div onclick="selectUser('${u.id}')">
+            ${u.name}
+        </div>
+    `).join('');
+
+    setAppState('groupList');
+}
+
+function selectUser(id){
+    App.selectedUser=App.tempUsers.find(u=>u.id===id);
+    renderMealOptions();
+}
+
+/* =========================
+   MEAL
+========================= */
+
+function renderMealOptions(){
+    const opts=['葷','素','無'];
+
+    document.getElementById('mealOptions').innerHTML=
+    opts.map(m=>`
+        <div onclick="selectMeal('${m}')">${m}</div>
+    `).join('');
+
+    setAppState('meal');
+}
+
+function selectMeal(m){
+    App.selectedMeal=m;
+    document.getElementById('finalBtn').disabled=false;
+}
+
+/* =========================
+   CHECKIN
+========================= */
+
+async function submitCheckin(){
+    const res=await fetch(`${API_BASE}/checkin/${App.selectedUser.id}`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+            meal:App.selectedMeal
+        })
+    });
+
+    const json=await res.json();
+
+    document.getElementById('successInfo').innerText =
+        json.success ? '完成' : '失敗';
+
+    setAppState('success');
+}
+
+/* =========================
+   PRODUCTS
+========================= */
+
+async function showProducts(){
+    setAppState('product');
+
+    const res=await fetch(`${API_BASE}/config`);
+    const config=await res.json();
+
+    App.allProducts=config.products||[];
+
+    document.getElementById('productsGrid').innerHTML=
+    App.allProducts.map(p=>`
+        <div>
+            ${p.name}
+        </div>
+    `).join('');
+}
+
+window.onload=()=>{
+    setAppState('home');
+};
+</script>
+
 </body>
 </html>
