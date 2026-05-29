@@ -138,7 +138,7 @@ body {
     width: 100vw; height: 100vh;
     background-image: url('main-visual.jpg'); 
     background-size: cover;
-    background-position: center 40%; /* 修正4：入口畫面的圖片也往下移 */
+    background-position: center 15%; /* 修正4：入口畫面的圖片也往下移 */
     background-repeat: no-repeat;
     z-index: 9999;
     display: flex;
