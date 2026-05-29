@@ -25,7 +25,7 @@ body {
     height: 100vh; /* 修正1：改用 100vh 解決手機版高度計算問題 */
     background-image: url('main-visual.jpg'); /* 對應你 Github 上的檔名 */
     background-size: cover;
-    background-position: center 35%; /* 修正2：圖片往下移 25%，讓出上方空間 */
+    background-position: center 40%; /* 修正2：圖片往下移 25%，讓出上方空間 */
     background-repeat: no-repeat;
     /* background-attachment: fixed; ⚠️ 修正3：絕對不能加這行，這是手機版背景放大破版的元凶 */
     z-index: -1;
@@ -138,7 +138,7 @@ body {
     width: 100vw; height: 100vh;
     background-image: url('main-visual.jpg'); 
     background-size: cover;
-    background-position: center 25%; /* 修正4：入口畫面的圖片也往下移 */
+    background-position: center 40%; /* 修正4：入口畫面的圖片也往下移 */
     background-repeat: no-repeat;
     z-index: 9999;
     display: flex;
