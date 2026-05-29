@@ -5,15 +5,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Michroma&family=Noto+Sans+TC:wght@900&family=Stick&display=swap');
 
 :root {
-    --text-dark: #00e5ff;           /* 高亮電漿冰藍色 */
+    --text-dark: #00e5ff;           
     --text-glow: rgba(0, 229, 255, 0.6);
-    --accent-gray: rgba(0, 229, 255, 0.3); /* 邊框改為微亮藍色 */
+    --accent-gray: rgba(0, 229, 255, 0.3); 
     --font-main: 'Michroma', 'Stick', 'Noto Sans TC', sans-serif;
 }
 
 body {
     font-family: var(--font-main);
-    color: #e0e0e0; /* 預設文字改為淺色 */
+    color: #e0e0e0; 
 }
 
 /* --- 核心修復：背景圖片層 --- */
@@ -23,17 +23,17 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background-image: url('main-visual.jpg'); /* 請確保檔名已改為 main-visual.jpg */
+    background-image: url('main-visual.jpg'); /* 作為系統底圖 */
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
     z-index: -1;
-    filter: brightness(0.35) contrast(1.2); /* 調暗背景，讓前方科技面板發光 */
+    filter: brightness(0.35) contrast(1.2); 
 }
 
 /* --- 核心修復：透明電路板紋理 --- */
 .circuit-background {
-    background-color: transparent !important; /* 絕對不能有底色，否則會遮住背景圖 */
+    background-color: transparent !important; 
     background-image: 
         linear-gradient(rgba(0, 229, 255, 0.1) 1px, transparent 1px),
         linear-gradient(90deg, rgba(0, 229, 255, 0.1) 1px, transparent 1px);
@@ -52,10 +52,10 @@ body {
     display: inline-block;
 }
 
-/* --- 毛玻璃面板 (第一張圖的質感核心) --- */
+/* --- 毛玻璃面板 --- */
 .panel-border, .cyber-card {
-    background: rgba(10, 20, 35, 0.65) !important; /* 半透明深藍底色 */
-    backdrop-filter: blur(10px); /* 毛玻璃模糊效果 */
+    background: rgba(10, 20, 35, 0.65) !important; 
+    backdrop-filter: blur(10px); 
     -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--accent-gray) !important;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(0, 229, 255, 0.1);
@@ -130,17 +130,12 @@ body {
    新增：全螢幕主視覺點擊入口與浮動按鈕
    ============================================ */
 
-/* 覆蓋掉原本的「登機報到 / 商品」雙大框首頁 */
-#homeState { 
-    display: none !important; 
-}
-
 /* 全螢幕主視覺入口 */
 #splash-screen {
     position: fixed;
     top: 0; left: 0;
     width: 100vw; height: 100vh;
-    background-image: url('main-visual.jpg'); /* 正確讀取你的主視覺檔名 */
+    background-image: url('main-visual.jpg'); /* 正確讀取主視覺檔名 */
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
