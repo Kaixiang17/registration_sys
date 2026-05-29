@@ -1,7 +1,3 @@
-/* ============================================
-   智慧方舟 (Smart Ark) - 暗黑科技透視版 (Glassmorphism)
-   ============================================ */
-
 @import url('https://fonts.googleapis.com/css2?family=Michroma&family=Noto+Sans+TC:wght@900&family=Stick&display=swap');
 
 :root {
@@ -25,7 +21,7 @@ body {
     height: 100vh; 
     background-image: url('main-visual.jpg'); 
     background-size: cover;
-    background-position: center 25%; 
+    background-position: center 10%; 
     background-repeat: no-repeat;
     z-index: -1;
     filter: brightness(0.35) contrast(1.2); 
