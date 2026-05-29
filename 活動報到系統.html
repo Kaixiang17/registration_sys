@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>智慧方舟 - 航空登機系統</title>
-    <link rel="stylesheet" href="smart-ark-theme.css">
+    <link rel="stylesheet" href="smart-ark-theme.css?v=5">
     <style>
         /* ============================================================
            電腦版原始樣式
@@ -51,11 +51,7 @@
             .form-card { padding: 1.5rem 1rem !important; width: 100% !important; }
             h1.neon-text { font-size: 1.6rem !important; white-space: normal !important; letter-spacing: 1px !important; text-align: center !important; margin-bottom: 1.5rem !important; }
             h2.neon-text { font-size: 1.45rem !important; margin-bottom: 1.5rem !important; }
-            .header-title-text { font-size: 0.75rem !important; letter-spacing: 2px !important; }
-            .header-title-main { font-size: 1.1rem !important; }
             header { padding: 0.8rem 0 !important; }
-            .header-container { padding: 0 12px !important; }
-            #mapBtn { font-size: 0.75rem !important; padding: 4px 10px !important; }
             .verify-grid { grid-template-columns: 1fr !important; gap: 1.2rem !important; padding: 0 !important; }
             .verify-card { padding: 1.5rem 1rem !important; font-size: 1.1rem !important; }
             .verify-card div { font-size: 2.2rem !important; }
@@ -76,25 +72,23 @@
         <div class="click-hint">點 擊 畫 面 開 始 報 名</div>
     </div>
 
-    <div id="shopBtn" class="floating-shop-btn" onclick="goToShop()" style="display: none;">
-        🛒 活動商品專區
-    </div>
-
     <header class="panel-border" style="border-top:none; border-left:none; border-right:none; background: rgba(10,20,35,0.8);">
-        <div class="header-container">
-            <div onclick="resetToHome()" style="cursor:pointer; color:var(--text-dark); font-weight: bold; display: flex; align-items: center; gap: 10px;">
-                <span style="font-size: 1.5rem;">✈️</span>
-                <div style="display: flex; flex-direction: column; line-height: 1.2;">
-                    <span class="header-title-text" style="font-size: 1rem; letter-spacing: 4px;">航 班 大 廳</span>
-                    <span class="header-title-main neon-text" style="font-size: 1.4rem; letter-spacing: 1px;">BOARDING SYSTEM</span>
+        <div class="header-container" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div onclick="resetToHome()" style="cursor:pointer; color:var(--text-dark); font-weight: bold; display: flex; align-items: center; gap: 6px;">
+                    <span style="font-size: 1.3rem;">✈️</span>
+                    <span class="header-title-text" style="font-size: 1.15rem; letter-spacing: 2px; white-space: nowrap;">航 班 大 廳</span>
                 </div>
+                <div id="mapBtn" class="cyber-button" onclick="toggleMapModal(true)" style="width: auto; margin-top: 0; padding: 6px 14px; font-size: 0.85rem; border-radius: 20px; cursor: pointer; white-space: nowrap;">🗺️ 地圖導覽</div>
             </div>
-            <div id="mapBtn" onclick="toggleMapModal(true)" style="font-size: 0.9rem; color: var(--text-dark); cursor: pointer; border: 1px solid var(--text-dark); padding: 5px 15px; border-radius: 20px; white-space: nowrap;">🗺️ 地 圖 導 覽</div>
+
+            <div id="shopBtn" class="cyber-button" onclick="goToShop()" style="display: none; width: auto; margin-top: 0; padding: 6px 14px; font-size: 0.85rem; border-radius: 20px; cursor: pointer; white-space: nowrap; border-color: #00e5ff;">🛒 商品專區</div>
+
         </div>
     </header>
 
     <main>
-        <!-- 原本的 homeState 已刪除，預設即為四個選項畫面 -->
         <div id="methodSelectionState" class="state-hidden">
             <div style="text-align:center; max-width:800px; margin: 0 auto;">
                 <h2 class="neon-text" style="font-size: 2.2rem; margin-bottom:1rem;">請 選 擇 登 機 方 式</h2>
@@ -180,7 +174,6 @@
     </div>
 
     <script>
-        // 抓取 URL 中的 sheet 參數 (用於多公司隔離)
         const urlParams = new URLSearchParams(window.location.search);
         const currentSheet = urlParams.get('sheet') || '活動報到名單';
         const API_BASE = '/api';
@@ -188,23 +181,18 @@
         window.allProducts = [];
         window.currentCategory = '全部';
 
-        // 點擊全螢幕主視覺後，淡出並進入 4 個選項
         function startRegistration() {
-    const splash = document.getElementById('splash-screen');
-    splash.style.opacity = '0';
-    splash.style.visibility = 'hidden';
-    
-    setTimeout(() => {
-        splash.style.display = 'none';
-        setAppState('methodSelection'); // 顯示四個選項
-        
-        // 【加上這行魔法】點擊進來後，把右上角的商品按鈕顯示出來！
-        document.getElementById('shopBtn').style.display = 'block'; 
-        
-    }, 800);
-}
+            const splash = document.getElementById('splash-screen');
+            splash.style.opacity = '0';
+            splash.style.visibility = 'hidden';
+            
+            setTimeout(() => {
+                splash.style.display = 'none';
+                setAppState('methodSelection'); 
+                document.getElementById('shopBtn').style.display = 'block'; 
+            }, 800);
+        }
 
-        // 點擊右上角商品按鈕時的處理
         function goToShop() {
             const splash = document.getElementById('splash-screen');
             if (splash && splash.style.display !== 'none') {
@@ -213,7 +201,6 @@
             showProducts();
         }
 
-        // 修改：所有的狀態切換都不再有 'home'，大廳就是 methodSelection
         function setAppState(s) {
             ['methodSelection', 'action', 'groupList', 'meal', 'success', 'product'].forEach(x => {
                 const el = document.getElementById(x+'State');
@@ -347,10 +334,10 @@
             const container = document.getElementById('mealOptions');
             container.innerHTML = `
                 <div style="margin-bottom:2rem; text-align:left; padding:1rem; background:rgba(0,229,255,0.1); border-radius:0.5rem;">
-                    <div style="font-size:0.9rem; color:var(--text-dark);">旅 客 姓 名</div>
+                    <div style="font-size:0.9rem; color:#00e5ff;">旅 客 姓 名</div>
                     <div style="font-size:1.4rem; font-weight:bold;">${selectedUser.name}</div>
                 </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:2rem;">
+                <div class="two-col-grid" style="margin-bottom:2rem;">
                     <div id="btnOrig" class="verify-card cyber-card is-original-selected" onclick="toggleIdentity(true)">本 人 報 到</div>
                     <div id="btnProxy" class="verify-card cyber-card" onclick="toggleIdentity(false)">替 代 報 到</div>
                 </div>
@@ -359,7 +346,7 @@
                     <input type="text" id="proxyName" class="cyber-input" placeholder="替代人姓名" style="margin-bottom:0.8rem;">
                     <input type="text" id="proxyPhone" class="cyber-input" placeholder="替代人手機">
                 </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                <div class="two-col-grid">
                     ${['葷食', '素食'].map(m => {
                         const emoji = m === '葷食' ? '🥩' : '🥬';
                         return `<div class="verify-card cyber-card meal-opt" onclick="selectMeal(this, '${m}')">${emoji} ${m}</div>`;
