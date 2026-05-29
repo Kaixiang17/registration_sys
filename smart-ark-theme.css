@@ -1,3 +1,7 @@
+/* ============================================
+   智慧方舟 (Smart Ark) - 暗黑科技透視版 (Glassmorphism)
+   ============================================ */
+
 @import url('https://fonts.googleapis.com/css2?family=Michroma&family=Noto+Sans+TC:wght@900&family=Stick&display=swap');
 
 :root {
@@ -17,12 +21,12 @@ body {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100vh; 
+    width: 100vw; /* 👑 解決手機轉橫的黑邊問題 */
+    height: 100vh; /* 👑 解決手機轉橫的黑邊問題 */
     background-image: url('main-visual.jpg'); 
-    background-size: cover;
-    background-position: center 5%; 
-    background-repeat: no-repeat;
+    background-size: cover !important; /* 👑 強制填滿不留黑邊 */
+    background-position: center 5%; /* ⚠️ 完全保留你不動的設定 */
+    background-repeat: no-repeat !important;
     z-index: -1;
     filter: brightness(0.35) contrast(1.2); 
 }
@@ -36,6 +40,7 @@ body {
     background-size: 40px 40px;
     position: relative;
     min-height: 100vh;
+    width: 100%;
 }
 
 /* --- 霓虹發光標題 --- */
@@ -122,7 +127,7 @@ body {
     box-shadow: inset 0 0 10px rgba(0, 229, 255, 0.3);
 }
 
-/* 👑 新增：動態選項按鈕排列容器 (電腦版左右兩排) */
+/* 👑 選項按鈕排列容器 (電腦版保持左右雙排) */
 .two-col-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -137,9 +142,9 @@ body {
     top: 0; left: 0;
     width: 100vw; height: 100vh;
     background-image: url('main-visual.jpg'); 
-    background-size: cover;
-    background-position: center 5%; 
-    background-repeat: no-repeat;
+    background-size: cover !important; /* 👑 強制填滿不留黑邊 */
+    background-position: center 40%; /* ⚠️ 完全保留你不動的設定 */
+    background-repeat: no-repeat !important;
     z-index: 9999;
     display: block; 
     cursor: pointer;
@@ -148,7 +153,8 @@ body {
 
 .click-hint {
     position: absolute;
-    bottom: 15%; /* 電腦版高度控制 */
+    /* 🎯 關鍵修正：往下壓到底部 8% 邊緣，絕對不會擋到中間的圖！ */
+    bottom: 8%; 
     left: 50%;
     transform: translateX(-50%);
     white-space: nowrap; 
@@ -171,14 +177,14 @@ body {
 @media (max-width: 768px) {
     /* 1. 微調手機直向螢幕的圖片對齊位置 */
     .ark-background, #splash-screen {
-        background-position: center 15%; 
+        background-position: center 15%; /* ⚠️ 完全保留你不動的設定 */
     }
     
-    /* 2. 精準微調手機版「開始報名」閃爍字的高度與大小，絕不破版 */
+    /* 2. 精準微調手機版「開始報名」閃爍字的高度與大小，往下推到底部防遮擋 */
     .click-hint {
         font-size: 20px !important;
         letter-spacing: 4px !important;
-        bottom: 22% !important; /* 手機版專屬高度位置，確保在畫面中下段不被遮擋 */
+        bottom: 8% !important; /* 🎯 修正：手機版也降到最低 */
     }
     
     /* 3. 把四個報到按鈕往下推，將螢幕上半部讓給主視覺圖片 */
@@ -192,7 +198,7 @@ body {
         padding-right: 0.8rem !important;
     }
 
-    /* 4. 👑 頂部導覽列手機版自動改變縮放顯示 (避免卡住重疊) */
+    /* 4. 頂部導覽列手機版自動改變縮放顯示 */
     .header-container {
         padding: 0 10px !important;
     }
@@ -207,9 +213,31 @@ body {
         font-size: 0.75rem !important;
     }
 
-    /* 5. 👑 魔法核心：強迫手機版的報到與餐點按鈕變為上下單排排列 */
+    /* 5. 強迫手機版的報到與餐點按鈕變為上下單排排列 */
     .two-col-grid {
         grid-template-columns: 1fr !important;
         gap: 0.8rem !important;
+    }
+}
+
+/* ============================================
+   👑 手機轉橫螢幕 (Landscape) 極端防禦修正
+   ============================================ */
+@media (max-width: 950px) and (orientation: landscape) {
+    .ark-background, #splash-screen {
+        width: 100vw !important;
+        height: 100vh !important;
+        background-size: cover !important;
+        /* 橫向時維持你的原本對齊邏輯，不做多餘干預 */
+    }
+    
+    /* 橫向時螢幕高度極低，取消大推擠 margin，避免報到按鈕跑出版面無法滑動 */
+    #methodSelectionState {
+        margin-top: 2rem !important; 
+    }
+    
+    .click-hint {
+        bottom: 5% !important; /* 橫屏因為高度很短，壓到 5% 最保險 */
+        font-size: 18px !important;
     }
 }
