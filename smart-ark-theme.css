@@ -22,11 +22,12 @@ body {
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
-    background-image: url('main-visual.jpg'); /* 作為系統底圖 */
+    height: 100vh; /* 修正1：改用 100vh 解決手機版高度計算問題 */
+    background-image: url('main-visual.jpg'); /* 對應你 Github 上的檔名 */
     background-size: cover;
-    background-position: center 25%;
-    background-attachment: fixed;
+    background-position: center 25%; /* 修正2：圖片往下移 25%，讓出上方空間 */
+    background-repeat: no-repeat;
+    /* background-attachment: fixed; ⚠️ 修正3：絕對不能加這行，這是手機版背景放大破版的元凶 */
     z-index: -1;
     filter: brightness(0.35) contrast(1.2); 
 }
@@ -135,9 +136,9 @@ body {
     position: fixed;
     top: 0; left: 0;
     width: 100vw; height: 100vh;
-    background-image: url('main-visual.jpg'); /* 正確讀取主視覺檔名 */
+    background-image: url('main-visual.jpg'); 
     background-size: cover;
-    background-position: center;
+    background-position: center 25%; /* 修正4：入口畫面的圖片也往下移 */
     background-repeat: no-repeat;
     z-index: 9999;
     display: flex;
@@ -162,7 +163,7 @@ body {
     50% { opacity: 0.2; }
 }
 
-/* 右上角縮小的商品專區按鈕 */
+/* 右上角縮小的商品專區按鈕 (電腦版預設位置) */
 .floating-shop-btn {
     position: fixed;
     top: 25px; 
@@ -185,4 +186,34 @@ body {
     background: #00f0ff;
     color: #000;
     box-shadow: 0 0 20px rgba(0, 240, 255, 0.8);
+}
+
+/* ============================================
+   手機版專屬視覺調整 (解決破版與重疊問題)
+   ============================================ */
+@media (max-width: 768px) {
+    /* 1. 微調手機直向螢幕的圖片對齊位置 */
+    .ark-background, #splash-screen {
+        background-position: center 5%; 
+    }
+    
+    /* 2. 把四個報到按鈕往下推，將螢幕「上半部」讓給主視覺圖片 */
+    #methodSelectionState {
+        margin-top: 25vh; /* 往下推移螢幕高度的 25% */
+    }
+    
+    main {
+        padding-top: 2rem !important;
+    }
+
+    /* 3. 解決右上角按鈕重疊：手機版自動移到「右下角」 */
+    .floating-shop-btn {
+        top: auto !important;       /* 解除上方固定 */
+        bottom: 30px !important;    /* 移到距離底部 30px */
+        right: 20px !important;     
+        padding: 12px 20px !important; /* 放大一點好按 */
+        font-size: 15px !important;
+        background: rgba(10, 20, 35, 0.95) !important; 
+        box-shadow: 0 5px 15px rgba(0, 240, 255, 0.4) !important; 
+    }
 }
