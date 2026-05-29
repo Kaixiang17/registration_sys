@@ -22,12 +22,11 @@ body {
     top: 0;
     left: 0;
     width: 100%;
-    height: 100vh; /* 修正1：改用 100vh 解決手機版高度計算問題 */
-    background-image: url('main-visual.jpg'); /* 對應你 Github 上的檔名 */
+    height: 100vh; 
+    background-image: url('main-visual.jpg'); 
     background-size: cover;
-    background-position: center 40%; /* 修正2：圖片往下移 25%，讓出上方空間 */
+    background-position: center 40%; 
     background-repeat: no-repeat;
-    /* background-attachment: fixed; ⚠️ 修正3：絕對不能加這行，這是手機版背景放大破版的元凶 */
     z-index: -1;
     filter: brightness(0.35) contrast(1.2); 
 }
@@ -126,24 +125,37 @@ body {
     border-color: var(--text-dark) !important;
     box-shadow: inset 0 0 10px rgba(0, 229, 255, 0.3);
 }
+
+/* 👑 新增：動態選項按鈕排列容器 (電腦版左右兩排) */
+.two-col-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+/* ============================================
+   新增：全螢幕主視覺點擊入口
+   ============================================ */
 #splash-screen {
     position: fixed;
     top: 0; left: 0;
     width: 100vw; height: 100vh;
     background-image: url('main-visual.jpg'); 
     background-size: cover;
-    background-position: center 15%; /* 修正4：入口畫面的圖片也往下移 */
+    background-position: center 40%; 
     background-repeat: no-repeat;
     z-index: 9999;
-    display: flex;
-    justify-content: center;
-    align-items: flex-end;
-    padding-bottom: 5%;
+    display: block; 
     cursor: pointer;
     transition: opacity 0.8s ease, visibility 0.8s ease;
 }
 
 .click-hint {
+    position: absolute;
+    bottom: 15%; /* 電腦版高度控制 */
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap; 
     color: #ffffff;
     font-size: 28px;
     font-weight: bold;
@@ -157,57 +169,51 @@ body {
     50% { opacity: 0.2; }
 }
 
-/* 右上角縮小的商品專區按鈕 (電腦版預設位置) */
-.floating-shop-btn {
-    position: fixed;
-    top: 25px; 
-    right: 20px;
-    z-index: 10000;
-    background: rgba(10, 20, 35, 0.8);
-    border: 1px solid #00f0ff;
-    color: #00f0ff;
-    padding: 8px 16px;
-    border-radius: 30px;
-    font-size: 14px;
-    font-weight: bold;
-    cursor: pointer;
-    box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
-    transition: all 0.3s ease;
-    text-decoration: none;
-}
-
-.floating-shop-btn:hover {
-    background: #00f0ff;
-    color: #000;
-    box-shadow: 0 0 20px rgba(0, 240, 255, 0.8);
-}
-
 /* ============================================
-   手機版專屬視覺調整 (解決破版與重疊問題)
+   手機版專屬視覺調整 (響應式偵測 RWD)
    ============================================ */
 @media (max-width: 768px) {
     /* 1. 微調手機直向螢幕的圖片對齊位置 */
     .ark-background, #splash-screen {
-        background-position: center 5%; 
+        background-position: center 15%; 
     }
     
-    /* 2. 把四個報到按鈕往下推，將螢幕「上半部」讓給主視覺圖片 */
+    /* 2. 精準微調手機版「開始報名」閃爍字的高度與大小，絕不破版 */
+    .click-hint {
+        font-size: 20px !important;
+        letter-spacing: 4px !important;
+        bottom: 22% !important; /* 手機版專屬高度位置，確保在畫面中下段不被遮擋 */
+    }
+    
+    /* 3. 把四個報到按鈕往下推，將螢幕上半部讓給主視覺圖片 */
     #methodSelectionState {
-        margin-top: 25vh; /* 往下推移螢幕高度的 25% */
+        margin-top: 25vh; 
     }
     
     main {
-        padding-top: 2rem !important;
+        padding-top: 1.5rem !important;
+        padding-left: 0.8rem !important;
+        padding-right: 0.8rem !important;
     }
 
-    /* 3. 解決右上角按鈕重疊：手機版自動移到「右下角」 *w/
-    .floating-shop-btn {
-        top: auto !important;       /* 解除上方固定 */
-        bottom: 30px !important;    /* 移到距離底部 30px */
-        right: 20px !important;     
-        padding: 12px 20px !important; /* 放大一點好按 */
-        font-size: 15px !important;
-        background: rgba(10, 20, 35, 0.95) !important; 
-        box-shadow: 0 5px 15px rgba(0, 240, 255, 0.4) !important; 
+    /* 4. 👑 頂部導覽列手機版自動改變縮放顯示 (避免卡住重疊) */
+    .header-container {
+        padding: 0 10px !important;
+    }
+    
+    .header-title-text {
+        font-size: 0.95rem !important;
+        letter-spacing: 1px !important;
+    }
+    
+    #mapBtn, #shopBtn {
+        padding: 5px 10px !important;
+        font-size: 0.75rem !important;
+    }
+
+    /* 5. 👑 魔法核心：強迫手機版的報到與餐點按鈕變為上下單排排列 */
+    .two-col-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0.8rem !important;
     }
 }
