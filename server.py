@@ -13,7 +13,9 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 RENDER_KEY = "/etc/secrets/google-creds.json"
 LOCAL_KEY = os.path.join(BASE_DIR, 'test0417-493608-ec0a369af886.json')
 
-# 【多租戶架構】將快取改為字典，支援多間公司同時運作 (Key: sheet_name)
+# ============================================================
+# 【多租戶快取隔離】快取改為字典結構，Key為各公司的 sheet_name
+# ============================================================
 participants_cache = {}
 last_cache_update = {}
 cache_lock = threading.Lock()
@@ -30,16 +32,20 @@ def get_gspread_client():
     return gspread.authorize(Credentials.from_service_account_file(json_path, scopes=scope))
 
 def get_current_sheet_name():
-    """核心判斷邏輯：根據請求來源決定要讀取哪一張 Google Sheet"""
-    # 1. 若為後台已登入管理員，使用其專屬綁定的試算表
-    if session.get('admin_logged_in') and session.get('admin_sheet'):
-        return session.get('admin_sheet')
-    # 2. 若為前台 POST 請求，嘗試從 JSON 抓取 sheet 參數
-    if request.method == 'POST' and request.is_json:
-        data = request.json
-        if data and 'sheet' in data: return data['sheet']
-    # 3. 若為前台 GET 請求，嘗試從 URL 參數抓取 (預設為 '活動報到名單')
-    return request.args.get('sheet', '活動報到名單')
+    """ 核心樞紐：動態判斷目前請求該讀取哪一個資料庫 """
+    # 1. 前端訪客：透過 URL ?sheet= 或 API 內含的 sheet 參數
+    guest_sheet = request.args.get('sheet')
+    if not guest_sheet and request.is_json and 'sheet' in request.json:
+        guest_sheet = request.json['sheet']
+    if guest_sheet:
+        return guest_sheet
+    
+    # 2. 後台管理員：讀取他目前在系統設定中選定的專屬資料庫
+    if session.get('admin_logged_in') and session.get('current_admin_sheet'):
+        return session.get('current_admin_sheet')
+        
+    # 3. 預設值
+    return "活動報到名單"
 
 def get_worksheet(name=None):
     sheet_name = get_current_sheet_name()
@@ -48,7 +54,7 @@ def get_worksheet(name=None):
         if name: return spreadsheet.worksheet(name)
         return spreadsheet.get_worksheet(0)
     except Exception as e:
-        print(f"❌ 找不到試算表 {sheet_name}: {e}")
+        print(f"❌ 找不到試算表 [{sheet_name}]: {e}")
         return None
 
 def upload_image_to_free_pool(base64_str):
@@ -98,12 +104,10 @@ def load_config_from_sheets(force_refresh=False):
 def async_save_process(payload, sheet_name):
     print(f"🛰️ [背景同步] 正在寫入 {sheet_name} 的系統設定...")
     try:
-        if payload.get("map_image_url"):
-            payload["map_image_url"] = upload_image_to_free_pool(payload["map_image_url"])
+        if payload.get("map_image_url"): payload["map_image_url"] = upload_image_to_free_pool(payload["map_image_url"])
         if payload.get("products"):
             for p in payload["products"]:
-                if p.get("image"):
-                    p["image"] = upload_image_to_free_pool(p["image"])
+                if p.get("image"): p["image"] = upload_image_to_free_pool(p["image"])
         
         client = get_gspread_client()
         spreadsheet = client.open(sheet_name)
@@ -111,26 +115,20 @@ def async_save_process(payload, sheet_name):
         ws_cfg = spreadsheet.worksheet("系統設定")
         if ws_cfg:
             ws_cfg.clear()
-            ws_cfg.update('A1:C2', [
-                ["顯示餐點選項", "地圖圖片網址", "Google試算表名稱"],
-                ["TRUE" if payload.get("show_meal_options", True) else "FALSE", payload.get("map_image_url", ""), sheet_name]
-            ])
+            ws_cfg.update('A1:C2', [["顯示餐點選項", "地圖圖片網址", "Google試算表名稱"],
+                                    ["TRUE" if payload.get("show_meal_options", True) else "FALSE", payload.get("map_image_url", ""), sheet_name]])
             
         ws_prod = spreadsheet.worksheet("商品清單")
         if ws_prod and "products" in payload:
             ws_prod.clear()
             rows_to_write = [["商品名稱", "商品圖片", "商品分類", "商品描述", "購買連結", "是否為贈品"]]
             for p in payload["products"]:
-                rows_to_write.append([
-                    p.get("name", ""), p.get("image", ""), p.get("category", "課程"),
-                    p.get("description", ""), p.get("link", ""), "TRUE" if p.get("isGift") else "FALSE"
-                ])
+                rows_to_write.append([p.get("name", ""), p.get("image", ""), p.get("category", "課程"), p.get("description", ""), p.get("link", ""), "TRUE" if p.get("isGift") else "FALSE"])
             ws_prod.update(f'A1:F{len(rows_to_write)}', rows_to_write)
         
         config_cache[sheet_name] = payload
         last_config_update[sheet_name] = time.time()
-    except Exception as e:
-        print(f"❌ [背景同步失敗]: {e}")
+    except Exception as e: print(f"❌ [背景同步失敗]: {e}")
 
 @app.route('/api/config', methods=['GET', 'POST'])
 def handle_config():
@@ -138,60 +136,71 @@ def handle_config():
     if request.method == 'POST':
         if not session.get('admin_logged_in'): return jsonify({"success": False, "message": "未授權的操作"}), 403
         payload = request.json
-        current_data = load_config_from_sheets()
+        
+        # 【資料庫切換邏輯】如果管理員從下拉選單切換了資料庫，在此更新 Session
+        new_sheet = payload.get("google_sheet_name")
+        if new_sheet and new_sheet != session.get('current_admin_sheet'):
+            if new_sheet in session.get('allowed_sheets', []):
+                session['current_admin_sheet'] = new_sheet
+                sheet_name = new_sheet
+        
+        current_data = load_config_from_sheets(force_refresh=True)
         if "products" not in payload or not payload["products"]: payload["products"] = current_data.get("products", [])
         if "map_image_url" not in payload: payload["map_image_url"] = current_data.get("map_image_url", "")
         
         threading.Thread(target=async_save_process, args=(payload, sheet_name)).start()
-        return jsonify({"success": True, "message": "儲存成功！系統正在背景寫入 Google Sheet。"})
+        return jsonify({"success": True, "message": "儲存成功！系統已同步至該資料庫。"})
     return jsonify(load_config_from_sheets())
 
 @app.route('/api/sheets/list', methods=['GET'])
 def list_available_sheets():
     if not session.get('admin_logged_in'): return jsonify({"success": False, "message": "未授權的操作"}), 403
-    # 多公司架構下，只允許管理員看到自己綁定的表，避免資料外洩
-    return jsonify({"success": True, "sheets": [session.get('admin_sheet')]})
+    # 【核心安全限制】不再使用 openall()，只回傳該管理員被授權的資料庫清單
+    allowed = session.get('allowed_sheets', ["活動報到名單"])
+    return jsonify({"success": True, "sheets": allowed})
 
 @app.route('/api/sheets/upload_csv', methods=['POST'])
 def upload_csv_to_sheet():
     if not session.get('admin_logged_in'): return jsonify({"success": False, "message": "未授權的操作"}), 403
-    if 'file' not in request.files: return jsonify({"success": False, "message": "找不到上傳的檔案"}), 400
+    if 'file' not in request.files: return jsonify({"success": False, "message": "找不到檔案"}), 400
     file = request.files['file']
-    if file.filename == '': return jsonify({"success": False, "message": "未選擇檔案"}), 400
     try:
         stream = io.StringIO(file.stream.read().decode("UTF-8"), newline=None)
         rows_to_write = list(csv.reader(stream))
-        if not rows_to_write: return jsonify({"success": False, "message": "檔案內容不能為空"}), 400
+        if not rows_to_write: return jsonify({"success": False, "message": "檔案為空"}), 400
 
-        ws = get_worksheet()
+        ws = get_worksheet() # 自動寫入他目前選中的那家公司的資料庫
         ws.clear()
         ws.update(f'A1:Z{len(rows_to_write)}', rows_to_write)
         refresh_cache(force=True)
         return jsonify({"success": True, "message": "名單 CSV 上傳覆寫成功！"})
-    except Exception as e: return jsonify({"success": False, "message": f"洗入 Google Sheet 失敗: {e}"}), 500
+    except Exception as e: return jsonify({"success": False, "message": f"寫入失敗: {e}"}), 500
 
 @app.route('/api/login', methods=['POST'])
 def admin_login():
     data = request.json
     u, p = data.get('username'), data.get('password')
     try:
-        # 【總樞紐】統一前往「活動報到名單」這張主表的「管理員」頁籤，進行帳號密碼核對
+        # 永遠回到「活動報到名單」這張主表的「管理員」分頁進行身分核對
         client = get_gspread_client()
         ws = client.open("活動報到名單").worksheet("管理員")
         for row in ws.get_all_records():
             if str(row.get('帳號', '')) == str(u) and str(row.get('密碼', '')) == str(p):
                 session['admin_logged_in'] = True
-                # 將該管理員專屬負責的試算表名稱存入 Session
-                session['admin_sheet'] = str(row.get('負責試算表', '活動報到名單')) 
+                # 讀取該管理員負責的資料庫 (支援逗號分隔多個表)
+                allowed_raw = str(row.get('授權試算表', '活動報到名單'))
+                allowed_sheets = [s.strip() for s in allowed_raw.split(',') if s.strip()]
+                if not allowed_sheets: allowed_sheets = ["活動報到名單"]
+                
+                session['allowed_sheets'] = allowed_sheets
+                session['current_admin_sheet'] = allowed_sheets[0] # 預設切換到第一個授權庫
                 return jsonify({"success": True})
         return jsonify({"success": False, "message": "帳號或密碼錯誤"}), 401
-    except Exception as e:
-        return jsonify({"success": False, "message": f"讀取管理員名單失敗: {e}"}), 500
+    except Exception as e: return jsonify({"success": False, "message": f"登入異常: {e}"}), 500
 
 @app.route('/api/logout')
 def logout():
-    session.pop('admin_logged_in', None)
-    session.pop('admin_sheet', None)
+    session.clear()
     return redirect('/login.html')
 
 @app.route('/admin')
@@ -207,6 +216,7 @@ def get_dashboard_stats():
     if not session.get('admin_logged_in'): return jsonify({"success": False}), 403
     sheet_name = get_current_sheet_name()
     refresh_cache()
+    
     current_cache = participants_cache.get(sheet_name, [])
     total = len(current_cache)
     checked_in_list = [p for p in current_cache if p['status'] in ['checked_in', '已報到', '替代']]
@@ -230,9 +240,9 @@ def search(method):
     refresh_cache()
     q = request.args.get(method, "").strip().lower()
     current_cache = participants_cache.get(sheet_name, [])
+    
     if method == 'company':
-        matched = sorted(list(set(p.get('company', '') for p in current_cache if q in p.get('company', '').lower() and p.get('company'))))
-        return jsonify({"success": True, "data": matched})
+        return jsonify({"success": True, "data": sorted(list(set(p.get('company', '') for p in current_cache if q in p.get('company', '').lower() and p.get('company'))))})
     if method == 'company_members':
         company_name = request.args.get('name', '').strip().lower()
         return jsonify({"success": True, "data": [p for p in current_cache if p.get('company', '').lower() == company_name]})
@@ -244,16 +254,13 @@ def checkin(pid):
     data = request.json
     now_tw = (datetime.utcnow() + timedelta(hours=8)).strftime('%Y/%m/%d %H:%M:%S')
     current_cache = participants_cache.get(sheet_name, [])
+    
     p = next((x for x in current_cache if x['id'] == pid), None)
     if not p: return jsonify({"success": False}), 404
     if p['status'] in ['checked_in', '已報到', '替代']: return jsonify({"success": False, "error": "already_done", "data": p})
     
-    meal = data.get('meal', '未選擇')
-    is_original = data.get('is_original', True)
-    proxy_info = data.get('proxy_info', {})
-    
-    config_tmp = load_config_from_sheets()
-    cols = config_tmp.get('excel_columns', {})
+    meal, is_original, proxy_info = data.get('meal', '未選擇'), data.get('is_original', True), data.get('proxy_info', {})
+    cols = load_config_from_sheets().get('excel_columns', {})
     status_val = 'checked_in' if is_original else '替代'
     
     updates = [
@@ -278,8 +285,7 @@ def checkin(pid):
 def async_update_sheet(updates, sheet_name):
     try: 
         client = get_gspread_client()
-        ws = client.open(sheet_name).get_worksheet(0)
-        ws.batch_update(updates)
+        client.open(sheet_name).get_worksheet(0).batch_update(updates)
     except Exception as e: print(f"背景同步失敗: {e}")
 
 def refresh_cache(force=False):
@@ -291,14 +297,12 @@ def refresh_cache(force=False):
             ws = get_worksheet()
             if not ws: return
             all_values = ws.get_all_values()
-            config_tmp = load_config_from_sheets()
-            cols = config_tmp.get('excel_columns', {})
+            cols = load_config_from_sheets().get('excel_columns', {})
             new_cache = []
             last_company = ""
             for i, row in enumerate(all_values[3:]):
                 def g(c): return row[c-1].strip() if c and c-1 < len(row) else ""
-                current_comp = g(cols.get('company', 3))
-                if current_comp: last_company = current_comp
+                if g(cols.get('company', 3)): last_company = g(cols.get('company', 3))
                 name = g(cols.get('name', 6))
                 if not name: continue
                 new_cache.append({
@@ -315,24 +319,20 @@ def auto_check_and_patch_sheets():
     try:
         client = get_gspread_client()
         spreadsheet = client.open("活動報到名單")
-        
-        # 啟動時自動幫你在主表建立管理員帳號密碼對應表
         try: spreadsheet.worksheet("管理員")
         except:
             ws = spreadsheet.add_worksheet(title="管理員", rows="10", cols="5")
-            ws.update('A1:C2', [["帳號", "密碼", "負責試算表"], ["admin", "admin123", "活動報到名單"]])
-            
+            # 初始化時自動建立「授權試算表」這個重要欄位
+            ws.update('A1:C2', [["帳號", "密碼", "授權試算表"], ["admin", "admin123", "活動報到名單"]])
         try: spreadsheet.worksheet("系統設定")
         except:
             ws = spreadsheet.add_worksheet(title="系統設定", rows="10", cols="5")
             ws.update('A1:C2', [["顯示餐點選項", "地圖圖片網址", "Google試算表名稱"], ["TRUE", "", "活動報到名單"]])
-            
         try: spreadsheet.worksheet("商品清單")
         except:
             ws = spreadsheet.add_worksheet(title="商品清單", rows="50", cols="10")
             ws.append_row(["商品名稱", "商品圖片", "商品分類", "商品描述", "購買連結", "是否為贈品"])
-    except Exception as e:
-        print(f"❌ [初始化失敗]: {e}")
+    except Exception as e: print(f"❌ [初始化失敗]: {e}")
 
 auto_check_and_patch_sheets()
 
