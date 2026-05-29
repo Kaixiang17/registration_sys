@@ -190,15 +190,19 @@
 
         // 點擊全螢幕主視覺後，淡出並進入 4 個選項
         function startRegistration() {
-            const splash = document.getElementById('splash-screen');
-            splash.style.opacity = '0';
-            splash.style.visibility = 'hidden';
-            
-            setTimeout(() => {
-                splash.style.display = 'none';
-                setAppState('methodSelection');
-            }, 800);
-        }
+    const splash = document.getElementById('splash-screen');
+    splash.style.opacity = '0';
+    splash.style.visibility = 'hidden';
+    
+    setTimeout(() => {
+        splash.style.display = 'none';
+        setAppState('methodSelection'); // 顯示四個選項
+        
+        // 【加上這行魔法】點擊進來後，把右上角的商品按鈕顯示出來！
+        document.getElementById('shopBtn').style.display = 'block'; 
+        
+    }, 800);
+}
 
         // 點擊右上角商品按鈕時的處理
         function goToShop() {
