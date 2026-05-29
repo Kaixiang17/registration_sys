@@ -567,12 +567,14 @@
         }
 
         async function saveSystemSettings() {
-            currentConfig.google_sheet_name = document.getElementById('googleSheetName').value;
-            currentConfig.map_image_url = document.getElementById('mapImageUrl').value.trim();
-            if(await postConfig()) {
-                alert('儲存成功！');
-            }
-        }
+    currentConfig.google_sheet_name = document.getElementById('googleSheetName').value;
+    currentConfig.map_image_url = document.getElementById('mapImageUrl').value.trim();
+    if(await postConfig()) {
+        alert('設定已儲存！資料庫已同步切換，即將重新整理畫面載入最新數據。');
+        // 儲存後立即重新整理頁面，確保儀表板與商品庫瞬間切換到新選的資料庫！
+        location.reload(); 
+    }
+}
 
         function handleMapFileUpload(input) {
             const file = input.files[0];
