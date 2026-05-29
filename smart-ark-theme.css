@@ -23,7 +23,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background-image: url('main-visual.jpg'); 
+    background-image: url('main-visual.jpg'); /* 請確保檔名已改為 main-visual.jpg */
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
@@ -124,4 +124,70 @@ body {
     background: rgba(0, 229, 255, 0.2);
     border-color: var(--text-dark) !important;
     box-shadow: inset 0 0 10px rgba(0, 229, 255, 0.3);
+}
+
+/* ============================================
+   新增：全螢幕主視覺點擊入口與浮動按鈕
+   ============================================ */
+
+/* 覆蓋掉原本的「登機報到 / 商品」雙大框首頁 */
+#homeState { 
+    display: none !important; 
+}
+
+/* 全螢幕主視覺入口 */
+#splash-screen {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background-image: url('main-visual.jpg'); /* 正確讀取你的主視覺檔名 */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    padding-bottom: 12%;
+    cursor: pointer;
+    transition: opacity 0.8s ease, visibility 0.8s ease;
+}
+
+.click-hint {
+    color: #ffffff;
+    font-size: 28px;
+    font-weight: bold;
+    letter-spacing: 6px;
+    text-shadow: 0 0 15px #00f0ff, 0 0 30px #00f0ff, 0 0 50px #000;
+    animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+}
+
+/* 右上角縮小的商品專區按鈕 */
+.floating-shop-btn {
+    position: fixed;
+    top: 25px; 
+    right: 20px;
+    z-index: 10000;
+    background: rgba(10, 20, 35, 0.8);
+    border: 1px solid #00f0ff;
+    color: #00f0ff;
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.floating-shop-btn:hover {
+    background: #00f0ff;
+    color: #000;
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.8);
 }
