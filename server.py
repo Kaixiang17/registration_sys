@@ -158,7 +158,6 @@ def search(method):
     try:
         with conn.cursor() as cursor:
             if method == 'company':
-                # 👑 公司搜尋至少兩個字
                 if len(q) < 2:
                     return jsonify({"success": True, "data": []})
                 cursor.execute("SELECT * FROM event_registrations WHERE admin_user = %s AND event_key = %s AND company_name LIKE %s LIMIT 50", (admin_user, event_key, f"%{q}%"))
@@ -184,14 +183,12 @@ def checkin(pid):
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
-            # 👑 先查詢原始資料
             cursor.execute("SELECT * FROM event_registrations WHERE id = %s AND admin_user = %s", (pid, admin_user))
             user = cursor.fetchone()
             
             if not user:
                 return jsonify({"success": False, "error": "user_not_found"}), 404
             
-            # 👑 檢查是否已報到
             if user['status'] in ['checked_in', '已報到', '替代']:
                 return jsonify({"success": False, "error": "already_done", "data": {
                     "name": user['name'],
@@ -202,12 +199,9 @@ def checkin(pid):
                     "checkedInAt": user['checkin_time'].strftime('%H:%M:%S') if user['checkin_time'] else ""
                 }}), 200
             
-            # 👑 本人報到：使用原報名餐食
             is_original = data.get('is_original', True)
             meal_choice = user['meal_choice'] if is_original else data.get('meal', user['meal_choice'])
             status_val = 'checked_in' if is_original else '替代'
-            
-            # 👑 記錄原始餐食（如果還沒記錄）
             original_meal = user.get('original_meal_choice', user['meal_choice'])
             
             cursor.execute(
@@ -216,7 +210,6 @@ def checkin(pid):
             )
             conn.commit()
             
-            # 👑 返回完整的報到資訊
             return jsonify({"success": True, "data": {
                 "name": user['name'],
                 "company": user['company_name'],
@@ -243,7 +236,6 @@ def get_dashboard_stats():
         total = len(rows)
         checked = [r for r in rows if r['status'] in ['checked_in', '已報到', '替代']]
         
-        # 👑 餐食統計
         original_meals = {}
         actual_meals = {}
         for r in rows:
@@ -254,60 +246,44 @@ def get_dashboard_stats():
             meal = r['meal_choice']
             actual_meals[meal] = actual_meals.get(meal, 0) + 1
         
-        # 👑 桌次統計 (X/10 格式)
         table_stats = {}
         for r in rows:
             table = r['seating_chart']
             if table:
                 if table not in table_stats:
                     table_stats[table] = {"total": 10, "checked": 0}
-                if r['status'] in ['checked_in', '已報到', '替代']:
+                if r['status'] in ['checked_in', 'AA報到', '替代', '已報到']:
                     table_stats[table]["checked"] += 1
         
-        # 排序桌次
         sorted_tables = sorted(table_stats.items())
         table_stats_formatted = [{"table": k, "checked": v["checked"], "total": v["total"]} for k, v in sorted_tables]
-        
         logs = [{"name": r['name'], "time": r['checkin_time'].strftime('%H:%M:%S') if r['checkin_time'] else "", "company": r['company_name'], "meal": r['meal_choice']} for r in checked[:25]]
         
         return jsonify({"success": True, "stats": {
-            "total": total,
-            "checked_in": len(checked),
-            "not_checked_in": total - len(checked),
-            "original_meals": original_meals,
-            "actual_meals": actual_meals,
-            "table_stats": table_stats_formatted,
-            "logs": logs
+            "total": total, "checked_in": len(checked), "not_checked_in": total - len(checked),
+            "original_meals": original_meals, "actual_meals": actual_meals,
+            "table_stats": table_stats_formatted, "logs": logs
         }})
     finally: conn.close()
 
 @app.route('/api/user/info')
 def get_user_info():
-    if not session.get('admin_logged_in'):
-        return jsonify({"success": False, "message": "未登入"}), 401
-    return jsonify({
-        "success": True, 
-        "username": session.get('username', '管理員')
-    })
+    if not session.get('admin_logged_in'): return jsonify({"success": False, "message": "未登入"}), 401
+    return jsonify({"success": True, "username": session.get('username', '管理員')})
 
 @app.route('/api/current_sheet', methods=['GET'])
 def get_current_sheet():
     admin_user = request.args.get('admin')
-    if not admin_user:
-        return jsonify({"success": False, "error": "Missing admin parameter"}), 400
-    
+    if not admin_user: return jsonify({"success": False, "error": "Missing admin parameter"}), 400
     try:
         conn = get_db_connection()
         with conn.cursor() as cursor:
             cursor.execute("SELECT current_event FROM admins WHERE username = %s", (admin_user,))
             data = cursor.fetchone()
         conn.close()
-        
-        if data:
-            return jsonify({"success": True, "current_sheet": data['current_event']})
+        if data: return jsonify({"success": True, "current_sheet": data['current_event']})
         return jsonify({"success": False, "error": "User not found"}), 404
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+    except Exception as e: return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/api/registrations/add', methods=['POST'])
 def add_registration():
@@ -324,6 +300,105 @@ def add_registration():
         conn.commit()
         return jsonify({"success": True})
     finally: conn.close()
+
+# ============================================================
+# 【👑 新增：前台大會資訊儀表板與後台手動配置 API】
+# ============================================================
+
+@app.route('/api/public_dashboard', methods=['GET'])
+def public_dashboard():
+    admin_user, event_key = get_admin_and_event_context()
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            # 1. 獲取手動設定的大會議程
+            cursor.execute("SELECT * FROM event_agenda WHERE admin_user=%s AND event_key=%s ORDER BY time_str ASC", (admin_user, event_key))
+            agenda = cursor.fetchall()
+
+            # 2. 獲取圓餅圖：依據已報到的「不重複公司 (DISTINCT)」手動分類占比
+            sql_industry = """
+                SELECT 
+                    COALESCE(c.industry_category, '尚未分類') as category, 
+                    COUNT(DISTINCT r.company_name) as count 
+                FROM event_registrations r
+                LEFT JOIN company_industries c 
+                    ON r.company_name = c.company_name 
+                    AND r.admin_user = c.admin_user 
+                    AND r.event_key = c.event_key
+                WHERE r.status IN ('checked_in', '已報到', '替代')
+                  AND r.admin_user = %s 
+                  AND r.event_key = %s
+                  AND r.company_name IS NOT NULL
+                  AND r.company_name != ''
+                GROUP BY COALESCE(c.industry_category, '尚未分類')
+            """
+            cursor.execute(sql_industry, (admin_user, event_key))
+            stats = cursor.fetchall()
+            
+        return jsonify({"success": True, "agenda": agenda, "industry_stats": stats})
+    finally: conn.close()
+
+# 大會議程後台配置端
+@app.route('/api/agenda', methods=['GET', 'POST'])
+def manage_agenda():
+    admin_user, event_key = get_admin_and_event_context()
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            if request.method == 'POST':
+                data = request.json
+                cursor.execute("INSERT INTO event_agenda (admin_user, event_key, time_str, task_desc) VALUES (%s, %s, %s, %s)", 
+                               (admin_user, event_key, data['time_str'], data['task_desc']))
+                conn.commit()
+                return jsonify({"success": True})
+            else:
+                cursor.execute("SELECT * FROM event_agenda WHERE admin_user=%s AND event_key=%s ORDER BY time_str ASC", (admin_user, event_key))
+                return jsonify({"success": True, "data": cursor.fetchall()})
+    finally: conn.close()
+
+@app.route('/api/agenda/<id>', methods=['DELETE'])
+def delete_agenda(id):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("DELETE FROM event_agenda WHERE id=%s", (id,))
+        conn.commit()
+        return jsonify({"success": True})
+    finally: conn.close()
+
+# 行業分類後台配置端
+@app.route('/api/industries', methods=['GET', 'POST'])
+def manage_industries():
+    admin_user, event_key = get_admin_and_event_context()
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            if request.method == 'POST':
+                data = request.json
+                # 如果有重複绑定的公司，先進行清除覆寫
+                cursor.execute("DELETE FROM company_industries WHERE admin_user=%s AND event_key=%s AND company_name=%s", (admin_user, event_key, data['company_name']))
+                cursor.execute("INSERT INTO company_industries (admin_user, event_key, company_name, industry_category) VALUES (%s, %s, %s, %s)", 
+                               (admin_user, event_key, data['company_name'], data['industry_category']))
+                conn.commit()
+                return jsonify({"success": True})
+            else:
+                cursor.execute("SELECT * FROM company_industries WHERE admin_user=%s AND event_key=%s", (admin_user, event_key))
+                return jsonify({"success": True, "data": cursor.fetchall()})
+    finally: conn.close()
+
+@app.route('/api/industries/<id>', methods=['DELETE'])
+def delete_industry(id):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("DELETE FROM company_industries WHERE id=%s", (id,))
+        conn.commit()
+        return jsonify({"success": True})
+    finally: conn.close()
+
+# ============================================================
+# 【基礎頁面與登入基礎路由】
+# ============================================================
 
 @app.route('/admin')
 def admin_page():
@@ -365,7 +440,31 @@ def auto_init_mysql_tables():
             if cursor.fetchone()['cnt'] == 0:
                 cursor.execute("INSERT INTO admins (username, password, allowed_events) VALUES (%s, %s, %s)", ("admin", "admin123", "活動報到名單"))
                 conn.commit()
-                print("💡 [MySQL 初始化] 已成功建立預設 admin 帳號")
+                print("💡 [MySQL 初始化] 已建立預設 admin 帳號")
+            
+            # 👑 自動建立手動議程資料表
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS event_agenda (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    admin_user VARCHAR(100),
+                    event_key VARCHAR(100),
+                    time_str VARCHAR(50),
+                    task_desc VARCHAR(255)
+                )
+            """)
+            
+            # 👑 自動建立手動行業對照分類資料表
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS company_industries (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    admin_user VARCHAR(100),
+                    event_key VARCHAR(100),
+                    company_name VARCHAR(255),
+                    industry_category VARCHAR(100)
+                )
+            """)
+            conn.commit()
+            print("💡 [MySQL 初始化] 大會資訊與行業資料表檢測/建置完成")
     except Exception as e: print(f"❌ [MySQL 初始化失敗]: {e}")
     finally: conn.close()
 
