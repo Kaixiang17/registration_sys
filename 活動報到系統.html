@@ -1,3 +1,10 @@
+沒問題，這個想法非常好！直接在右上角「商品專區」旁邊加一個「大會看板」的按鈕，這樣現場工作人員或長官隨時想切換到投影畫面，一鍵點過去就能直接開啟 `dashboard.html`，非常直覺！
+
+以下為您奉上**修改後完整的 `活動報到系統.html**`，我已經在頂部導覽列幫您把「📊 大會看板」的按鈕做進去了，並且排在商品專區的左邊，視覺上非常平衡對稱：
+
+### `活動報到系統.html` (新增大會看板按鈕版)
+
+```html
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -5,7 +12,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>智慧方舟 - 航空登機系統</title>
     <link rel="stylesheet" href="smart-ark-theme.css?v=8">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* ============================================================
            電腦版原始樣式
@@ -43,7 +49,7 @@
         }
         .info-box { text-align: left; padding: 1.5rem; border-radius: 1rem; margin: 1.5rem 0; background: rgba(0,0,0,0.3); }
 
-        /* 👑 成功頁面詳細資訊樣式 */
+        /* 成功頁面詳細資訊樣式 */
         .success-detail-row {
             display: flex;
             justify-content: space-between;
@@ -126,11 +132,6 @@
             .ck-btn-confirm { font-size: 1rem !important; }
             .ck-btn-pill { font-size: 0.78rem !important; padding: 0.35rem 0.8rem !important; }
         }
-
-        /* 👑 議程時間軸樣式 */
-        .agenda-item { display: flex; gap: 1rem; align-items: center; padding: 0.8rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .agenda-time { font-weight: bold; color: #00e5ff; font-size: 1.1rem; min-width: 70px; }
-        .agenda-desc { color: #fff; font-size: 1.05rem; }
     </style>
 </head>
 <body class="circuit-background">
@@ -153,7 +154,12 @@
                 </div>
                 <button id="mapBtn" class="ck-btn-pill" onclick="toggleMapModal(true)">🗺️ 地圖導覽</button>
             </div>
-            <button id="shopBtn" class="ck-btn-pill" onclick="goToShop()" style="border-color:rgba(0,229,255,0.5);">🛒 商品專區</button>
+            
+            <!-- 👑 這裡加入了大會看板按鈕，點擊會直接跳轉到專屬投影頁面 -->
+            <div style="display: flex; gap: 10px;">
+                <button id="dashboardBtn" class="ck-btn-pill" onclick="goToDashboard()" style="border-color:rgba(74,222,128,0.5); color:#4ade80;">📊 大會看板</button>
+                <button id="shopBtn" class="ck-btn-pill" onclick="goToShop()" style="border-color:rgba(0,229,255,0.5);">🛒 商品專區</button>
+            </div>
         </div>
     </header>
 
@@ -174,21 +180,6 @@
                     <div class="verify-card cyber-card cyber-hover" onclick="prepareSearch('company', '公司')">
                         <div style="position: absolute; top: -12px; right: -12px; background: #ffa500; color: #000; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; box-shadow: 0 0 10px rgba(255,165,0,0.5); z-index: 10;">替代主管點此</div>
                         <div style="font-size:3.5rem;">🏢</div><h3 class="neon-text">公 司 報 到</h3>
-                    </div>
-                </div>
-
-                <div id="dashboardSection" style="margin-top: 4rem; display: flex; flex-wrap: wrap; gap: 2rem; text-align: left;">
-                    <div class="cyber-card" style="flex: 1; min-width: 300px; padding: 2rem; border-radius: 1rem; background: rgba(0,0,0,0.4);">
-                        <h3 class="neon-text" style="margin-bottom: 1.5rem; font-size: 1.3rem;">📊 今日參與企業行業分佈</h3>
-                        <div style="position: relative; height: 300px; width: 100%;">
-                            <canvas id="industryPieChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="cyber-card" style="flex: 1; min-width: 300px; padding: 2rem; border-radius: 1rem; background: rgba(0,0,0,0.4);">
-                        <h3 class="neon-text" style="margin-bottom: 1.5rem; font-size: 1.3rem;">🕒 今日活動大會議程</h3>
-                        <div id="agendaListContainer" style="display: flex; flex-direction: column; max-height: 300px; overflow-y: auto; padding-right: 10px;">
-                            <div style="color:#aaa;">載入中...</div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -299,81 +290,17 @@
         window.allProducts = [];
         window.currentCategory = '全部';
         window.selectedTempMealChoice = '葷食';
-        let pieChartInstance = null; // 儲存圖表實例
 
         window.onload = function() {
             loadSystemConfig();
             setAppState('methodSelection');
-            fetchDashboardData();
-            // 👑 設定每 10 秒自動刷新一次大會資訊 (圓餅圖與議程)
-            setInterval(fetchDashboardData, 10000); 
         };
 
-        // 👑 取得並渲染大會議程與行業別圓餅圖
-        async function fetchDashboardData() {
-            try {
-                const res = await fetch(`${API_BASE}/public_dashboard?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
-                const data = await res.json();
-                if (data.success) {
-                    renderAgenda(data.agenda);
-                    renderPieChart(data.industry_stats);
-                }
-            } catch (e) { console.error("無法取得儀表板資料", e); }
+        // 👑 點擊大會看板跳轉至獨立投影畫面（帶上當前場次的參數，避免跑錯資料庫）
+        function goToDashboard() {
+            window.open(`/dashboard?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`, '_blank');
         }
 
-        function renderAgenda(agendaList) {
-            const container = document.getElementById('agendaListContainer');
-            if (!agendaList || agendaList.length === 0) {
-                container.innerHTML = '<div style="color:#aaa;">目前尚無議程資訊</div>';
-                return;
-            }
-            container.innerHTML = agendaList.map(item => `
-                <div class="agenda-item">
-                    <div class="agenda-time">${item.time_str}</div>
-                    <div class="agenda-desc">${item.task_desc}</div>
-                </div>
-            `).join('');
-        }
-
-        function renderPieChart(stats) {
-            const ctx = document.getElementById('industryPieChart').getContext('2d');
-            const labels = stats.map(s => s.category);
-            const dataValues = stats.map(s => s.count);
-
-            if (pieChartInstance) {
-                pieChartInstance.data.labels = labels;
-                pieChartInstance.data.datasets[0].data = dataValues;
-                pieChartInstance.update();
-                return;
-            }
-
-            pieChartInstance = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: dataValues,
-                        backgroundColor: [
-                            'rgba(0, 229, 255, 0.7)', 'rgba(74, 222, 128, 0.7)', 'rgba(255, 165, 0, 0.7)',
-                            'rgba(236, 72, 153, 0.7)', 'rgba(168, 85, 247, 0.7)', 'rgba(100, 116, 139, 0.7)'
-                        ],
-                        borderColor: 'rgba(10, 20, 35, 1)',
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'right', labels: { color: '#fff', font: { size: 14 } } }
-                    }
-                }
-            });
-        }
-
-        // ============================================
-        // 以下保留原有的報到流程邏輯 (無更動)
-        // ============================================
         function setAppState(state) {
             document.querySelectorAll('[id$="State"]').forEach(el => el.classList.add('state-hidden'));
             const stateEl = document.getElementById(state + 'State');
@@ -390,7 +317,6 @@
             document.getElementById('splash-screen').style.opacity = '1';
             document.getElementById('splash-screen').style.visibility = 'visible';
             setAppState('methodSelection');
-            fetchDashboardData(); // 回首頁時立刻刷新一下
         }
 
         function prepareSearch(method, title) {
@@ -524,7 +450,7 @@
                 const categories = ['全 部', ...new Set(normals.map(p => p.category).filter(c => c))];
                 document.getElementById('categoryFilters').innerHTML = categories.map(c => `<button class="ck-tag ${window.currentCategory === c ? 'active' : ''}" onclick="filterCategory('${c}')">${c}</button>`).join('');
                 filterCategory(window.currentCategory); setAppState('product');
-            } catch(e) { alert('無 法 載 入 商 品'); }
+            } catch(e) { alert('無 法 載 入 商品'); }
         }
 
         function filterCategory(cat) {
@@ -587,3 +513,5 @@
     </script>
 </body>
 </html>
+
+```
