@@ -1,7 +1,7 @@
-flask
-flask-cors
-openpyxl
-gspread
-google-auth
-oauth2client
+Flask
+Flask-CORS
 gunicorn
+pymysql
+cryptography
+python-dotenv
+requests
