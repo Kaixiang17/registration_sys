@@ -431,6 +431,11 @@ def admin_login():
 def logout():
     session.clear()
     return redirect('/login.html')
+    s
+@app.route('/dashboard')
+def dashboard_page():
+    # 會場投影專用獨立路由
+    return send_from_directory('.', 'dashboard.html')
 
 def auto_init_mysql_tables():
     conn = get_db_connection()
