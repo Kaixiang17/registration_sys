@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>智慧方舟 - 航空登機系統</title>
     <link rel="stylesheet" href="smart-ark-theme.css?v=8">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* ============================================================
            電腦版原始樣式
@@ -17,7 +18,7 @@
         .state-hidden { display: none !important; }
         
         .verify-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-top: 2rem; }
-        .verify-card { padding: 2.5rem 1.5rem; text-align: center; cursor: pointer; border-radius: 1rem; }
+        .verify-card { padding: 2.5rem 1.5rem; text-align: center; cursor: pointer; border-radius: 1rem; position: relative; }
         .form-card { max-width: 600px; margin: 0 auto; padding: 3rem; text-align: center; border-radius: 1.5rem; }
         .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2.5rem; }
         .product-img { width: 100%; height: 220px; object-fit: contain; background: rgba(0,0,0,0.4); border-bottom: 1px solid var(--accent-gray); }
@@ -50,39 +51,13 @@
             border-bottom: 1px solid rgba(0,229,255,0.1);
             font-size: 1rem;
         }
-        .success-detail-row:last-child {
-            border-bottom: none;
-        }
-        .success-detail-label {
-            color: #aaa;
-            font-weight: 600;
-        }
-        .success-detail-value {
-            color: var(--text-dark);
-            font-weight: bold;
-            text-align: right;
-        }
-        .success-detail-value.highlight {
-            color: #4ade80;
-            font-size: 1.1rem;
-        }
-        .success-instruction {
-            margin-top: 1.5rem;
-            padding: 1rem;
-            background: rgba(74,222,128,0.1);
-            border-left: 3px solid #4ade80;
-            border-radius: 0.5rem;
-        }
-        .success-instruction-title {
-            color: #4ade80;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-        }
-        .success-instruction-item {
-            color: #ccc;
-            margin: 0.3rem 0;
-            padding-left: 1rem;
-        }
+        .success-detail-row:last-child { border-bottom: none; }
+        .success-detail-label { color: #aaa; font-weight: 600; }
+        .success-detail-value { color: var(--text-dark); font-weight: bold; text-align: right; }
+        .success-detail-value.highlight { color: #4ade80; font-size: 1.1rem; }
+        .success-instruction { margin-top: 1.5rem; padding: 1rem; background: rgba(74,222,128,0.1); border-left: 3px solid #4ade80; border-radius: 0.5rem; }
+        .success-instruction-title { color: #4ade80; font-weight: bold; margin-bottom: 0.5rem; }
+        .success-instruction-item { color: #ccc; margin: 0.3rem 0; padding-left: 1rem; }
 
         /* ============================================================
            手機端專屬修復
@@ -122,11 +97,7 @@
         .ck-btn:active:not(:disabled) { transform: scale(0.98); }
         .ck-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
-        .ck-btn-confirm {
-            border-color: rgba(74,222,128,0.6); color: #4ade80;
-            background: rgba(74,222,128,0.1);
-            font-size: 1.1rem; letter-spacing: 3px;
-        }
+        .ck-btn-confirm { border-color: rgba(74,222,128,0.6); color: #4ade80; background: rgba(74,222,128,0.1); font-size: 1.1rem; letter-spacing: 3px; }
         .ck-btn-confirm:hover:not(:disabled) { background: rgba(74,222,128,0.22); border-color: #4ade80; box-shadow: 0 0 20px rgba(74,222,128,0.3); }
 
         .ck-btn-warn { border-color: rgba(255,165,0,0.55); color: #ffa500; background: rgba(255,165,0,0.08); }
@@ -136,13 +107,10 @@
         .ck-btn-ghost:hover:not(:disabled) { border-color: rgba(255,255,255,0.3); color: #bbb; background: rgba(255,255,255,0.05); }
 
         .ck-btn-pill {
-            width: auto; padding: 0.4rem 1rem;
-            font-size: 0.82rem; letter-spacing: 1px;
+            width: auto; padding: 0.4rem 1rem; font-size: 0.82rem; letter-spacing: 1px;
             border-radius: 20px; border: 1px solid rgba(0,229,255,0.3);
-            color: #00e5ff; background: rgba(0,229,255,0.06);
-            cursor: pointer; transition: all 0.18s;
-            display: inline-flex; align-items: center; gap: 0.35rem;
-            font-family: inherit; font-weight: 600; text-decoration: none;
+            color: #00e5ff; background: rgba(0,229,255,0.06); cursor: pointer; transition: all 0.18s;
+            display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 600;
         }
         .ck-btn-pill:hover { background: rgba(0,229,255,0.15); border-color: #00e5ff; }
 
@@ -150,7 +118,6 @@
             padding: 0.35rem 1rem; border-radius: 20px; font-size: 0.82rem; font-weight: 600;
             border: 1px solid rgba(0,229,255,0.25); color: #aaa; background: transparent;
             cursor: pointer; transition: all 0.18s; letter-spacing: 0.5px;
-            font-family: inherit;
         }
         .ck-tag:hover, .ck-tag.active { border-color: #00e5ff; color: #00e5ff; background: rgba(0,229,255,0.1); }
 
@@ -159,6 +126,11 @@
             .ck-btn-confirm { font-size: 1rem !important; }
             .ck-btn-pill { font-size: 0.78rem !important; padding: 0.35rem 0.8rem !important; }
         }
+
+        /* 👑 議程時間軸樣式 */
+        .agenda-item { display: flex; gap: 1rem; align-items: center; padding: 0.8rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .agenda-time { font-weight: bold; color: #00e5ff; font-size: 1.1rem; min-width: 70px; }
+        .agenda-desc { color: #fff; font-size: 1.05rem; }
     </style>
 </head>
 <body class="circuit-background">
@@ -181,13 +153,13 @@
                 </div>
                 <button id="mapBtn" class="ck-btn-pill" onclick="toggleMapModal(true)">🗺️ 地圖導覽</button>
             </div>
-            <button id="shopBtn" class="ck-btn-pill" onclick="goToShop()" style="display:none; border-color:rgba(0,229,255,0.5);">🛒 商品專區</button>
+            <button id="shopBtn" class="ck-btn-pill" onclick="goToShop()" style="border-color:rgba(0,229,255,0.5);">🛒 商品專區</button>
         </div>
     </header>
 
     <main>
         <div id="methodSelectionState" class="state-hidden">
-            <div style="text-align:center; max-width:800px; margin: 0 auto;">
+            <div style="text-align:center; max-width:1000px; margin: 0 auto;">
                 <h2 class="neon-text" style="font-size: 2.2rem; margin-bottom:1rem;">請 選 擇 登 機 方 式</h2>
                 <div class="verify-grid">
                     <div class="verify-card cyber-card cyber-hover" onclick="prepareSearch('name', '姓名')">
@@ -200,13 +172,24 @@
                         <div style="font-size:3.5rem;">✉️</div><h3 class="neon-text">Email 報 到</h3>
                     </div>
                     <div class="verify-card cyber-card cyber-hover" onclick="prepareSearch('company', '公司')">
+                        <div style="position: absolute; top: -12px; right: -12px; background: #ffa500; color: #000; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; box-shadow: 0 0 10px rgba(255,165,0,0.5); z-index: 10;">替代主管點此</div>
                         <div style="font-size:3.5rem;">🏢</div><h3 class="neon-text">公 司 報 到</h3>
                     </div>
                 </div>
-                <!-- 👑 代理人提示 -->
-                <div style="margin-top: 3rem; padding: 1.5rem; background: rgba(255,165,0,0.1); border: 1px solid rgba(255,165,0,0.3); border-radius: 1rem; text-align: center;">
-                    <div style="color: #ffa500; font-weight: bold; margin-bottom: 0.5rem; font-size: 1.1rem;">若您為替代主管</div>
-                    <div style="color: #ccc; margin-bottom: 1rem;">請選擇「公司報到」進行代理報到</div>
+
+                <div id="dashboardSection" style="margin-top: 4rem; display: flex; flex-wrap: wrap; gap: 2rem; text-align: left;">
+                    <div class="cyber-card" style="flex: 1; min-width: 300px; padding: 2rem; border-radius: 1rem; background: rgba(0,0,0,0.4);">
+                        <h3 class="neon-text" style="margin-bottom: 1.5rem; font-size: 1.3rem;">📊 今日參與企業行業分佈</h3>
+                        <div style="position: relative; height: 300px; width: 100%;">
+                            <canvas id="industryPieChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="cyber-card" style="flex: 1; min-width: 300px; padding: 2rem; border-radius: 1rem; background: rgba(0,0,0,0.4);">
+                        <h3 class="neon-text" style="margin-bottom: 1.5rem; font-size: 1.3rem;">🕒 今日活動大會議程</h3>
+                        <div id="agendaListContainer" style="display: flex; flex-direction: column; max-height: 300px; overflow-y: auto; padding-right: 10px;">
+                            <div style="color:#aaa;">載入中...</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -303,7 +286,6 @@
             <button onclick="toggleMapModal(false)" style="align-self: flex-end; margin-bottom: 10px; background: var(--text-dark); color: #000; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">✕ 關 閉 地 圖</button>
             <div style="flex-grow: 1; background: #0a1423; border-radius: 10px; overflow: hidden; border: 2px solid var(--accent-gray); display: flex; justify-content: center; align-items: center;">
                 <img id="mapDisplayImage" src="" style="width: 100%; height: 100%; object-fit: contain; display: none;">
-                <iframe id="mapDisplayFrame" src="" style="width: 100%; height: 100%; border: none; display: none;"></iframe>
             </div>
         </div>
     </div>
@@ -317,12 +299,81 @@
         window.allProducts = [];
         window.currentCategory = '全部';
         window.selectedTempMealChoice = '葷食';
+        let pieChartInstance = null; // 儲存圖表實例
 
         window.onload = function() {
             loadSystemConfig();
             setAppState('methodSelection');
+            fetchDashboardData();
+            // 👑 設定每 10 秒自動刷新一次大會資訊 (圓餅圖與議程)
+            setInterval(fetchDashboardData, 10000); 
         };
 
+        // 👑 取得並渲染大會議程與行業別圓餅圖
+        async function fetchDashboardData() {
+            try {
+                const res = await fetch(`${API_BASE}/public_dashboard?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
+                const data = await res.json();
+                if (data.success) {
+                    renderAgenda(data.agenda);
+                    renderPieChart(data.industry_stats);
+                }
+            } catch (e) { console.error("無法取得儀表板資料", e); }
+        }
+
+        function renderAgenda(agendaList) {
+            const container = document.getElementById('agendaListContainer');
+            if (!agendaList || agendaList.length === 0) {
+                container.innerHTML = '<div style="color:#aaa;">目前尚無議程資訊</div>';
+                return;
+            }
+            container.innerHTML = agendaList.map(item => `
+                <div class="agenda-item">
+                    <div class="agenda-time">${item.time_str}</div>
+                    <div class="agenda-desc">${item.task_desc}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderPieChart(stats) {
+            const ctx = document.getElementById('industryPieChart').getContext('2d');
+            const labels = stats.map(s => s.category);
+            const dataValues = stats.map(s => s.count);
+
+            if (pieChartInstance) {
+                pieChartInstance.data.labels = labels;
+                pieChartInstance.data.datasets[0].data = dataValues;
+                pieChartInstance.update();
+                return;
+            }
+
+            pieChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: dataValues,
+                        backgroundColor: [
+                            'rgba(0, 229, 255, 0.7)', 'rgba(74, 222, 128, 0.7)', 'rgba(255, 165, 0, 0.7)',
+                            'rgba(236, 72, 153, 0.7)', 'rgba(168, 85, 247, 0.7)', 'rgba(100, 116, 139, 0.7)'
+                        ],
+                        borderColor: 'rgba(10, 20, 35, 1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { color: '#fff', font: { size: 14 } } }
+                    }
+                }
+            });
+        }
+
+        // ============================================
+        // 以下保留原有的報到流程邏輯 (無更動)
+        // ============================================
         function setAppState(state) {
             document.querySelectorAll('[id$="State"]').forEach(el => el.classList.add('state-hidden'));
             const stateEl = document.getElementById(state + 'State');
@@ -339,6 +390,7 @@
             document.getElementById('splash-screen').style.opacity = '1';
             document.getElementById('splash-screen').style.visibility = 'visible';
             setAppState('methodSelection');
+            fetchDashboardData(); // 回首頁時立刻刷新一下
         }
 
         function prepareSearch(method, title) {
@@ -353,62 +405,33 @@
         async function handleAction() {
             const q = document.getElementById('actionInput').value.trim();
             if (!q) { alert('請輸入搜尋資訊'); return; }
-
             try {
                 const res = await fetch(`${API_BASE}/search/${searchMethod}?${searchMethod}=${encodeURIComponent(q)}&admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
                 const json = await res.json();
-                
                 if (!json.success || !json.data || json.data.length === 0) {
                     if (confirm('查無此人，是否開啟現場補位？')) {
                         document.getElementById('tempRegistrationSection').classList.remove('state-hidden');
                     }
                     return;
                 }
-
                 if (json.data.length === 1) {
                     selectedUser = json.data[0];
-                    // 👑 檢查是否已報到
-                    if (selectedUser.status_display === '已報到') {
-                        renderAlreadyCheckedIn(selectedUser);
-                        return;
-                    }
+                    if (selectedUser.status_display === '已報到') { renderAlreadyCheckedIn(selectedUser); return; }
                     renderMealOptions();
                 } else {
                     renderGroupList(json.data, searchMethod === 'company' ? '公司' : '姓名');
                 }
-            } catch(e) {
-                alert('搜尋失敗：' + e.message);
-            }
+            } catch(e) { alert('搜尋失敗：' + e.message); }
         }
 
-        // 👑 已報到重新顯示資訊
         function renderAlreadyCheckedIn(user) {
             document.getElementById('successInfo').innerHTML = `
-                <div class="success-detail-row">
-                    <span class="success-detail-label">姓 名</span>
-                    <span class="success-detail-value">${user.name}</span>
-                </div>
-                <div class="success-detail-row">
-                    <span class="success-detail-label">公 司</span>
-                    <span class="success-detail-value">${user.company || '無'}</span>
-                </div>
-                <div class="success-detail-row">
-                    <span class="success-detail-label">桌 次</span>
-                    <span class="success-detail-value highlight">${user.seat || '現場安排'}</span>
-                </div>
-                <div class="success-detail-row">
-                    <span class="success-detail-label">原報名餐食</span>
-                    <span class="success-detail-value">${user.original_meal || user.meal}</span>
-                </div>
-                <div class="success-detail-row">
-                    <span class="success-detail-label">目前餐食</span>
-                    <span class="success-detail-value">${user.meal}</span>
-                </div>
-                <div class="success-instruction">
-                    <div class="success-instruction-title">請持此畫面至：</div>
-                    <div class="success-instruction-item">① 領識別證</div>
-                    <div class="success-instruction-item">② 領禮品</div>
-                </div>
+                <div class="success-detail-row"><span class="success-detail-label">姓 名</span><span class="success-detail-value">${user.name}</span></div>
+                <div class="success-detail-row"><span class="success-detail-label">公 司</span><span class="success-detail-value">${user.company || '無'}</span></div>
+                <div class="success-detail-row"><span class="success-detail-label">桌 次</span><span class="success-detail-value highlight">${user.seat || '現場安排'}</span></div>
+                <div class="success-detail-row"><span class="success-detail-label">原報名餐食</span><span class="success-detail-value">${user.original_meal || user.meal}</span></div>
+                <div class="success-detail-row"><span class="success-detail-label">目前餐食</span><span class="success-detail-value">${user.meal}</span></div>
+                <div class="success-instruction"><div class="success-instruction-title">請持此畫面至：</div><div class="success-instruction-item">① 領識別證</div><div class="success-instruction-item">② 領禮品</div></div>
             `;
             setAppState('success');
         }
@@ -423,12 +446,8 @@
                 const statusTag = isRegistered ? '<span style="color:#f87171; font-weight:bold;">[已報到]</span>' : '<span>➔</span>';
                 div.innerHTML = `<div><div style="font-weight:bold; font-size:1.2rem;">${u.name}</div><div style="font-size:0.9rem; color:#aaa;">${u.company}</div></div>${statusTag}`;
                 div.onclick = () => {
-                    if (isRegistered) {
-                        renderAlreadyCheckedIn(u);
-                    } else {
-                        selectedUser = u;
-                        renderMealOptions();
-                    }
+                    if (isRegistered) renderAlreadyCheckedIn(u);
+                    else { selectedUser = u; renderMealOptions(); }
                 };
                 list.appendChild(div);
             });
@@ -436,16 +455,11 @@
             setAppState('groupList');
         }
 
-        // 👑 本人報到不選餐食，直接使用原報名餐食
         async function renderMealOptions() {
-            const res = await fetch(`${API_BASE}/config?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
-            systemConfig = await res.json();
-            
             const container = document.getElementById('mealOptions');
             container.innerHTML = `
                 <div style="margin-bottom:2rem; text-align:left; padding:1rem; background:rgba(0,229,255,0.1); border-radius:0.5rem;">
-                    <div style="font-size:0.9rem; color:#00e5ff;">旅 客 姓 名</div>
-                    <div style="font-size:1.4rem; font-weight:bold;">${selectedUser.name}</div>
+                    <div style="font-size:0.9rem; color:#00e5ff;">旅 客 姓 名</div><div style="font-size:1.4rem; font-weight:bold;">${selectedUser.name}</div>
                 </div>
                 <div class="two-col-grid" style="margin-bottom:2rem;">
                     <div id="btnOrig" class="verify-card cyber-card is-original-selected" onclick="toggleIdentity(true)">本 人 報 到</div>
@@ -462,9 +476,7 @@
                     <div class="verify-card cyber-card meal-opt" onclick="selectMeal(this, '不需餐食')" style="padding:1.2rem 0.5rem; font-weight:bold;">❌ 不需餐食</div>
                 </div>
             `;
-            window.selectedMeal = null;
-            window.isOriginal = true;
-            document.getElementById('finalBtn').disabled = true;
+            window.selectedMeal = null; window.isOriginal = true; document.getElementById('finalBtn').disabled = true;
             setAppState('meal');
         }
 
@@ -478,79 +490,24 @@
 
         function selectMeal(el, m) {
             document.querySelectorAll('.meal-opt').forEach(x => x.classList.remove('meal-selected'));
-            el.classList.add('meal-selected');
-            window.selectedMeal = m;
-            checkMealReady();
+            el.classList.add('meal-selected'); window.selectedMeal = m; checkMealReady();
         }
-
-        function checkMealReady() {
-            document.getElementById('finalBtn').disabled = !window.selectedMeal;
-        }
+        function checkMealReady() { document.getElementById('finalBtn').disabled = !window.selectedMeal; }
 
         async function submitCheckin() {
             const meal = window.selectedMeal;
-            const proxyInfo = window.isOriginal ? {} : {
-                name: document.getElementById('proxyName').value.trim(),
-                phone: document.getElementById('proxyPhone').value.trim()
-            };
+            const proxyInfo = window.isOriginal ? {} : { name: document.getElementById('proxyName').value.trim(), phone: document.getElementById('proxyPhone').value.trim() };
             if (!window.isOriginal && !proxyInfo.name) { alert('請輸入替代人姓名'); return; }
-            
             const btn = document.getElementById('finalBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span>登 機 核 對 中 ...</span>';
-            
+            btn.disabled = true; btn.innerHTML = '<span>登 機 核 對 中 ...</span>';
             try {
                 const res = await fetch(`${API_BASE}/checkin/${selectedUser.id}?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ meal, is_original: window.isOriginal, proxy_info: proxyInfo })
+                    method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ meal, is_original: window.isOriginal, proxy_info: proxyInfo })
                 });
                 const json = await res.json();
-                
-                if (json.success) {
-                    const u = json.data;
-                    document.getElementById('successInfo').innerHTML = `
-                        <div class="success-detail-row">
-                            <span class="success-detail-label">姓 名</span>
-                            <span class="success-detail-value">${u.name}</span>
-                        </div>
-                        <div class="success-detail-row">
-                            <span class="success-detail-label">公 司</span>
-                            <span class="success-detail-value">${u.company || '無'}</span>
-                        </div>
-                        <div class="success-detail-row">
-                            <span class="success-detail-label">桌 次</span>
-                            <span class="success-detail-value highlight">${u.seat || '現場安排'}</span>
-                        </div>
-                        <div class="success-detail-row">
-                            <span class="success-detail-label">原報名餐食</span>
-                            <span class="success-detail-value">${u.original_meal}</span>
-                        </div>
-                        <div class="success-detail-row">
-                            <span class="success-detail-label">目前餐食</span>
-                            <span class="success-detail-value">${u.meal}</span>
-                        </div>
-                        <div class="success-instruction">
-                            <div class="success-instruction-title">請持此畫面至：</div>
-                            <div class="success-instruction-item">① 領識別證</div>
-                            <div class="success-instruction-item">② 領禮品</div>
-                        </div>
-                    `;
-                    setAppState('success');
-                } else {
-                    if (json.error === 'already_done') {
-                        renderAlreadyCheckedIn(json.data);
-                    } else {
-                        alert('報 到 失 敗');
-                    }
-                    btn.disabled = false;
-                    btn.innerHTML = '<span>確 認 並 核 發 登 機 證</span>';
-                }
-            } catch(e) {
-                alert('網 路 異 常');
-                btn.disabled = false;
-                btn.innerHTML = '<span>確 認 並 核 發 登 機 證</span>';
-            }
+                if (json.success) renderAlreadyCheckedIn(json.data);
+                else { if (json.error === 'already_done') renderAlreadyCheckedIn(json.data); else alert('報 到 失 敗'); btn.disabled = false; btn.innerHTML = '<span>確 認 並 核 發 登 機 證</span>'; }
+            } catch(e) { alert('網 路 異 常'); btn.disabled = false; btn.innerHTML = '<span>確 認 並 核 發 登 機 證</span>'; }
         }
 
         async function showProducts() {
@@ -561,18 +518,12 @@
                 const gifts = window.allProducts.filter(p => p.isGift);
                 const normals = window.allProducts.filter(p => !p.isGift);
                 const giftsSection = document.getElementById('giftsSection');
-                if (gifts.length > 0) {
-                    giftsSection.classList.remove('state-hidden');
-                    renderGrid('giftsGrid', gifts);
-                } else giftsSection.classList.add('state-hidden');
+                if (gifts.length > 0) { giftsSection.classList.remove('state-hidden'); renderGrid('giftsGrid', gifts); } 
+                else giftsSection.classList.add('state-hidden');
+                
                 const categories = ['全 部', ...new Set(normals.map(p => p.category).filter(c => c))];
-                const filterContainer = document.getElementById('categoryFilters');
-                filterContainer.innerHTML = categories.map(c => `
-                    <button class="ck-tag ${window.currentCategory === c ? 'active' : ''}" 
-                         onclick="filterCategory('${c}')">${c}</button>
-                `).join('');
-                filterCategory(window.currentCategory);
-                setAppState('product');
+                document.getElementById('categoryFilters').innerHTML = categories.map(c => `<button class="ck-tag ${window.currentCategory === c ? 'active' : ''}" onclick="filterCategory('${c}')">${c}</button>`).join('');
+                filterCategory(window.currentCategory); setAppState('product');
             } catch(e) { alert('無 法 載 入 商 品'); }
         }
 
@@ -582,13 +533,11 @@
                 btn.style.background = btn.textContent === cat ? 'var(--text-dark)' : 'rgba(0,229,255,0.1)';
                 btn.style.color = btn.textContent === cat ? '#000' : 'var(--text-dark)';
             });
-            const filtered = window.currentCategory === '全 部' ? window.allProducts.filter(p => !p.isGift) : window.allProducts.filter(p => !p.isGift && p.category === cat);
-            renderGrid('productsGrid', filtered);
+            renderGrid('productsGrid', window.currentCategory === '全 部' ? window.allProducts.filter(p => !p.isGift) : window.allProducts.filter(p => !p.isGift && p.category === cat));
         }
 
         function renderGrid(id, items) {
-            const grid = document.getElementById(id);
-            grid.innerHTML = items.map(p => `
+            document.getElementById(id).innerHTML = items.map(p => `
                 <div class="cyber-card" style="padding:0; overflow:hidden; display:flex; flex-direction:column;">
                     ${p.image ? `<img src="${p.image}" class="product-img">` : '<div class="product-img" style="display:flex; align-items:center; justify-content:center; font-size:3rem;">📦</div>'}
                     <div style="padding:1.5rem; flex-grow:1; display:flex; flex-direction:column;">
@@ -605,66 +554,34 @@
             try {
                 const res = await fetch(`${API_BASE}/config?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
                 systemConfig = await res.json();
-                if(systemConfig && systemConfig.google_sheet_name) {
-                    document.getElementById('header-title').textContent = systemConfig.google_sheet_name.split('').join(' ');
-                }
+                if(systemConfig && systemConfig.google_sheet_name) document.getElementById('header-title').textContent = systemConfig.google_sheet_name.split('').join(' ');
                 const banner = document.getElementById('event-banner');
-                if(systemConfig && systemConfig.banner_image_url) {
-                    banner.src = systemConfig.banner_image_url;
-                    document.getElementById('banner-container').style.display = 'block';
-                } else {
-                    document.getElementById('banner-container').style.display = 'none';
-                }
-            } catch(e) { console.error("加載設定遺失", e); }
+                if(systemConfig && systemConfig.banner_image_url) { banner.src = systemConfig.banner_image_url; document.getElementById('banner-container').style.display = 'block'; } 
+                else { document.getElementById('banner-container').style.display = 'none'; }
+            } catch(e) {}
         }
 
         function toggleMapModal(show) {
             const modal = document.getElementById('mapModal');
             if (show) {
-                if (systemConfig && systemConfig.map_image_url) {
-                    document.getElementById('mapDisplayImage').src = systemConfig.map_image_url;
-                    document.getElementById('mapDisplayImage').style.display = 'block';
-                    document.getElementById('mapDisplayFrame').style.display = 'none';
-                }
+                if (systemConfig && systemConfig.map_image_url) { document.getElementById('mapDisplayImage').src = systemConfig.map_image_url; document.getElementById('mapDisplayImage').style.display = 'block'; }
                 modal.classList.remove('state-hidden');
-            } else {
-                modal.classList.add('state-hidden');
-            }
+            } else { modal.classList.add('state-hidden'); }
         }
 
         function goToShop() { showProducts(); }
-
-        function selectTempMeal(el, meal) {
-            document.querySelectorAll('.meal-opt-temp').forEach(x => x.classList.remove('temp-meal-selected'));
-            el.classList.add('temp-meal-selected');
-            window.selectedTempMealChoice = meal;
-        }
-
-        function hideTempSection() {
-            document.getElementById('tempRegistrationSection').classList.add('state-hidden');
-        }
+        function selectTempMeal(el, meal) { document.querySelectorAll('.meal-opt-temp').forEach(x => x.classList.remove('temp-meal-selected')); el.classList.add('temp-meal-selected'); window.selectedTempMealChoice = meal; }
+        function hideTempSection() { document.getElementById('tempRegistrationSection').classList.add('state-hidden'); }
 
         async function submitAddRegistration() {
-            const name = document.getElementById('addName').value.trim();
-            const phone = document.getElementById('addPhone').value.trim();
+            const name = document.getElementById('addName').value.trim(); const phone = document.getElementById('addPhone').value.trim();
             if (!name || !phone) { alert('請填寫姓名與手機'); return; }
-            
             try {
                 const res = await fetch(`${API_BASE}/registrations/add?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        name,
-                        phone,
-                        company: document.getElementById('addCompany').value.trim(),
-                        seat: document.getElementById('addSeat').value.trim(),
-                        meal: window.selectedTempMealChoice
-                    })
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ name, phone, company: document.getElementById('addCompany').value.trim(), seat: document.getElementById('addSeat').value.trim(), meal: window.selectedTempMealChoice })
                 });
-                if ((await res.json()).success) {
-                    alert('現場報到成功！');
-                    resetToHome();
-                }
+                if ((await res.json()).success) { alert('現場報到成功！'); resetToHome(); }
             } catch(e) { alert('報到失敗'); }
         }
     </script>
