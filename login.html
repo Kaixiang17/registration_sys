@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧方舟 - 授權中心</title>
+    <link rel="stylesheet" href="smart-ark-theme.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            overflow: hidden;
+            background-color: #030712;
+        }
+        
+        /* 大氣且極具科技感的玻璃面板控制台 */
+        .login-card { 
+            width: 520px; /* 全面放大寬度 */
+            padding: 4rem 3.5rem; /* 加大內部空間 */
+            text-align: center; 
+            position: relative;
+            background: rgba(10, 20, 35, 0.75) !important;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 229, 255, 0.35) !important;
+            border-left: 6px solid var(--text-dark) !important;
+            border-radius: 1.25rem !important;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), inset 0 0 25px rgba(0, 229, 255, 0.1);
+            animation: panelSlideIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* 頂部科技感裝飾角線 */
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 40px;
+            height: 40px;
+            border-top: 2px solid var(--text-dark);
+            border-right: 2px solid var(--text-dark);
+            border-radius: 0 1.1rem 0 0;
+            opacity: 0.6;
+        }
+
+        .tech-sub-title {
+            color: rgba(0, 229, 255, 0.4);
+            font-size: 0.8rem;
+            letter-spacing: 4px;
+            margin-bottom: 3rem;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        /* 強制覆寫瀏覽器記憶自動填寫（Autofill）的醜陋底色，維持完美科技透明感 */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 40px rgba(5, 15, 30, 0.95) inset !important;
+            -webkit-text-fill-color: var(--text-dark) !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+
+        /* 放大輸入框尺寸，加強行高與字體 */
+        .cyber-input { 
+            margin-bottom: 1.8rem; 
+            width: 100%; 
+            padding: 1.25rem;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            border-radius: 0.5rem;
+        }
+
+        /* 放大操作按鈕，加強點擊視覺效果 */
+        .cyber-button { 
+            width: 100%; 
+            margin-top: 1rem; 
+            padding: 1.25rem; 
+            font-size: 1.25rem;
+            font-weight: bold;
+            letter-spacing: 4px;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        /* 紅色高警報警戒錯誤提示框 */
+        .err { 
+            color: #ff4d4d; 
+            background: rgba(255, 77, 77, 0.1);
+            border: 1px solid rgba(255, 77, 77, 0.4);
+            font-size: 1rem; 
+            padding: 0.8rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem; 
+            display: none; 
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            animation: shake 0.4s ease;
+        }
+
+        @keyframes panelSlideIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+    </style>
+</head>
+<body class="circuit-background">
+    <div class="ark-background"></div>
+    
+    <div class="login-card cyber-card">
+        <div style="font-size: 4.5rem; margin-bottom: 0.5rem; text-shadow: 0 0 15px var(--text-glow);">⚡</div>
+        
+        <h2 class="neon-text" style="margin-bottom: 0.5rem; font-size: 2.4rem;">艦橋訪問授權</h2>
+        <div class="tech-sub-title">Bridge Access Authorization</div>
+        
+        <div id="err" class="err">❌ 授權失敗：存取密鑰核對錯誤</div>
+        
+        <input type="text" id="u" class="cyber-input" placeholder="系統管理員帳號 (ADMIN ID)">
+        <input type="password" id="p" class="cyber-input" placeholder="安全訪問密鑰 (ACCESS KEY)">
+        
+        <button class="cyber-button" id="loginBtn" onclick="doLogin()">
+            <span>啟動安全驗證 SECURE LOGIN</span>
+        </button>
+    </div>
+
+    <script>
+        // 鍵盤核心監聽：支援按下 Enter 直接提交驗證
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                doLogin();
+            }
+        });
+
+        async function doLogin() {
+            const u = document.getElementById('u').value.trim();
+            const p = document.getElementById('p').value.trim();
+            const btn = document.getElementById('loginBtn');
+            const errBox = document.getElementById('err');
+
+            if (!u || !p) {
+                errBox.innerHTML = "❌ 請完整輸入管理員帳號與存取密鑰";
+                errBox.style.display = 'flex';
+                return;
+            }
+
+            // UI 切換至同步建構狀態
+            errBox.style.display = 'none';
+            btn.disabled = true;
+            btn.innerHTML = '<span>📡 正在建構安全連線...</span>';
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: u, password: p })
+                });
+                
+                if (res.ok) { 
+                    btn.innerHTML = '<span>🟢 授權成功，跳轉中...</span>';
+                    btn.style.borderColor = '#4ade80';
+                    btn.style.color = '#4ade80';
+                    setTimeout(() => {
+                        location.href = '/admin'; 
+                    }, 500);
+                } else { 
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>啟動安全驗證 SECURE LOGIN</span>';
+                    errBox.innerHTML = "❌ 授權失敗：管理員身分或密鑰錯誤";
+                    errBox.style.display = 'flex'; 
+                }
+            } catch(e) { 
+                btn.disabled = false;
+                btn.innerHTML = '<span>啟動安全驗證 SECURE LOGIN</span>';
+                errBox.innerHTML = "❌ 連線異常：無法聯絡中央驗證伺服器";
+                errBox.style.display = 'flex';
+            }
+        }
+    </script>
+</body>
+</html>
