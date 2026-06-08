@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>智慧方舟 - 航空登機系統</title>
-    <link rel="stylesheet" href="smart-ark-theme.css?v=7">
+    <link rel="stylesheet" href="smart-ark-theme.css?v=8">
     <style>
         /* ============================================================
            電腦版原始樣式
@@ -24,7 +24,6 @@
         .btn-back-nav { background: none; border: 1px solid var(--accent-gray); color: var(--text-dark); padding: 0.5rem 1.2rem; border-radius: 0.5rem; cursor: pointer; font-weight: bold; transition: 0.3s; margin-bottom: 1.5rem; display: inline-flex; align-items: center; gap: 0.5rem; }
         .btn-back-nav:hover { border-color: var(--text-dark); background: rgba(0, 229, 255, 0.1); }
         .cyber-input { width: 100%; margin-bottom: 1.5rem; padding: 1.2rem; font-size: 1.2rem; }
-        /* .cyber-button overridden by .ck-btn system above */
         .group-item { padding: 1.5rem; border-bottom: 1px solid rgba(0,229,255,0.2); cursor: pointer; transition: 0.3s; text-align: left; display: flex; justify-content: space-between; align-items: center;}
         .group-item:hover { background: rgba(0,229,255,0.1); }
         
@@ -42,6 +41,48 @@
             box-shadow: 0 0 15px rgba(255, 165, 0, 0.5) !important;
         }
         .info-box { text-align: left; padding: 1.5rem; border-radius: 1rem; margin: 1.5rem 0; background: rgba(0,0,0,0.3); }
+
+        /* 👑 成功頁面詳細資訊樣式 */
+        .success-detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.8rem 0;
+            border-bottom: 1px solid rgba(0,229,255,0.1);
+            font-size: 1rem;
+        }
+        .success-detail-row:last-child {
+            border-bottom: none;
+        }
+        .success-detail-label {
+            color: #aaa;
+            font-weight: 600;
+        }
+        .success-detail-value {
+            color: var(--text-dark);
+            font-weight: bold;
+            text-align: right;
+        }
+        .success-detail-value.highlight {
+            color: #4ade80;
+            font-size: 1.1rem;
+        }
+        .success-instruction {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: rgba(74,222,128,0.1);
+            border-left: 3px solid #4ade80;
+            border-radius: 0.5rem;
+        }
+        .success-instruction-title {
+            color: #4ade80;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        .success-instruction-item {
+            color: #ccc;
+            margin: 0.3rem 0;
+            padding-left: 1rem;
+        }
 
         /* ============================================================
            手機端專屬修復
@@ -63,10 +104,10 @@
             #productState > div:first-child { flex-direction: column !important; align-items: center !important; gap: 1rem !important; }
             .products-grid { grid-template-columns: 1fr !important; gap: 1.5rem !important; }
             #tempMealRadioGroup { grid-template-columns: 1fr !important; gap: 0.8rem !important; }
+            .success-detail-row { font-size: 0.95rem !important; }
         }
 
         /* ── 前台報到按鈕系統 ── */
-        /* 主行動按鈕：確認驗證、確認報到 */
         .ck-btn {
             display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
             width: 100%; padding: 0.95rem 1.5rem;
@@ -81,7 +122,6 @@
         .ck-btn:active:not(:disabled) { transform: scale(0.98); }
         .ck-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
-        /* 強調色（最終確認登機） */
         .ck-btn-confirm {
             border-color: rgba(74,222,128,0.6); color: #4ade80;
             background: rgba(74,222,128,0.1);
@@ -89,15 +129,12 @@
         }
         .ck-btn-confirm:hover:not(:disabled) { background: rgba(74,222,128,0.22); border-color: #4ade80; box-shadow: 0 0 20px rgba(74,222,128,0.3); }
 
-        /* 橙色（外加報到） */
         .ck-btn-warn { border-color: rgba(255,165,0,0.55); color: #ffa500; background: rgba(255,165,0,0.08); }
         .ck-btn-warn:hover:not(:disabled) { background: rgba(255,165,0,0.18); border-color: #ffa500; }
 
-        /* 次要 / 返回 */
         .ck-btn-ghost { border-color: rgba(255,255,255,0.15); color: #888; background: transparent; }
         .ck-btn-ghost:hover:not(:disabled) { border-color: rgba(255,255,255,0.3); color: #bbb; background: rgba(255,255,255,0.05); }
 
-        /* Header 小圓角按鈕 */
         .ck-btn-pill {
             width: auto; padding: 0.4rem 1rem;
             font-size: 0.82rem; letter-spacing: 1px;
@@ -109,7 +146,6 @@
         }
         .ck-btn-pill:hover { background: rgba(0,229,255,0.15); border-color: #00e5ff; }
 
-        /* 分類篩選標籤按鈕 */
         .ck-tag {
             padding: 0.35rem 1rem; border-radius: 20px; font-size: 0.82rem; font-weight: 600;
             border: 1px solid rgba(0,229,255,0.25); color: #aaa; background: transparent;
@@ -166,6 +202,11 @@
                     <div class="verify-card cyber-card cyber-hover" onclick="prepareSearch('company', '公司')">
                         <div style="font-size:3.5rem;">🏢</div><h3 class="neon-text">公 司 報 到</h3>
                     </div>
+                </div>
+                <!-- 👑 代理人提示 -->
+                <div style="margin-top: 3rem; padding: 1.5rem; background: rgba(255,165,0,0.1); border: 1px solid rgba(255,165,0,0.3); border-radius: 1rem; text-align: center;">
+                    <div style="color: #ffa500; font-weight: bold; margin-bottom: 0.5rem; font-size: 1.1rem;">若您為替代主管</div>
+                    <div style="color: #ccc; margin-bottom: 1rem;">請選擇「公司報到」進行代理報到</div>
                 </div>
             </div>
         </div>
@@ -234,7 +275,7 @@
         <div id="successState" class="state-hidden">
             <div class="form-card cyber-card">
                 <div id="successIcon" style="color:var(--text-dark); font-size:6rem;">✅</div>
-                <h2 id="successTitle" class="neon-text">手 續 完 成 ！</h2>
+                <h2 id="successTitle" class="neon-text" style="margin-bottom: 2rem;">報 到 成 功 ！</h2>
                 <div id="successInfo" class="info-box panel-border"></div>
                 <button class="ck-btn ck-btn-ghost" onclick="resetToHome()" style="max-width:260px; margin:0 auto;">← 回 到 大 廳</button>
             </div>
@@ -275,237 +316,119 @@
         let searchMethod = '', selectedUser = null, systemConfig = null;
         window.allProducts = [];
         window.currentCategory = '全部';
-        window.selectedTempMealChoice = '葷食'; // 臨時餐飲預設值
+        window.selectedTempMealChoice = '葷食';
 
         window.onload = function() {
-            if (!currentSheet) {
-                fetchCurrentSheet();
-            } else {
-                initSystem();
-            }
-            setInterval(fetchCurrentSheet, 30000);
+            loadSystemConfig();
+            setAppState('methodSelection');
         };
 
-        function fetchCurrentSheet() {
-            fetch(`${API_BASE}/current_sheet?admin=${encodeURIComponent(currentAdmin)}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        const newSheet = data.current_sheet;
-                        if (newSheet !== currentSheet) {
-                            currentSheet = newSheet;
-                            console.log("檢測到場次切換:", currentSheet);
-                            initSystem();
-                        }
-                    }
-                })
-                .catch(err => console.error("輪詢場次失敗:", err));
-        }
-
-        function initSystem() {
-            loadSystemConfig();
-            document.title = `${currentSheet || '活動'} - 活動報到系統`;
+        function setAppState(state) {
+            document.querySelectorAll('[id$="State"]').forEach(el => el.classList.add('state-hidden'));
+            const stateEl = document.getElementById(state + 'State');
+            if (stateEl) stateEl.classList.remove('state-hidden');
         }
 
         function startRegistration() {
-            const splash = document.getElementById('splash-screen');
-            splash.style.opacity = '0';
-            splash.style.visibility = 'hidden';
-            setTimeout(() => {
-                splash.style.display = 'none';
-                setAppState('methodSelection'); 
-                document.getElementById('shopBtn').style.display = 'block'; 
-            }, 800);
+            document.getElementById('splash-screen').style.opacity = '0';
+            document.getElementById('splash-screen').style.visibility = 'hidden';
+            setAppState('methodSelection');
         }
 
-        function goToShop() {
-            const splash = document.getElementById('splash-screen');
-            if (splash && splash.style.display !== 'none') {
-                splash.style.display = 'none';
-            }
-            showProducts();
+        function resetToHome() {
+            document.getElementById('splash-screen').style.opacity = '1';
+            document.getElementById('splash-screen').style.visibility = 'visible';
+            setAppState('methodSelection');
         }
 
-        function setAppState(s) {
-            ['methodSelection', 'action', 'groupList', 'meal', 'success', 'product'].forEach(x => {
-                const el = document.getElementById(x+'State');
-                if(el) el.classList.add('state-hidden');
-            });
-            document.getElementById(s+'State').classList.remove('state-hidden');
-            // 每次切換大狀態，預設把臨時額外補單區域藏起來
-            hideTempSection();
-            window.scrollTo(0, 0);
-        }
-
-        function resetToHome() { setAppState('methodSelection'); }
-        
-        function hideTempSection() {
-            const tempSec = document.getElementById('tempRegistrationSection');
-            if(tempSec) tempSec.classList.add('state-hidden');
-        }
-
-        // 👑 臨時額外報到餐點按鈕動態點擊變色
-        function selectTempMeal(el, meal) {
-            window.selectedTempMealChoice = meal;
-            document.querySelectorAll('#tempMealRadioGroup .meal-opt-temp').forEach(btn => {
-                btn.style.borderColor = 'var(--accent-gray)';
-                btn.style.background = 'rgba(0,0,0,0.3)';
-                btn.style.boxShadow = 'none';
-                btn.style.color = '#fff';
-            });
-            el.style.borderColor = '#ffa500';
-            el.style.background = 'rgba(255, 165, 0, 0.2)';
-            el.style.boxShadow = '0 0 10px rgba(255, 165, 0, 0.4)';
-            el.style.color = '#ffa500';
-        }
-
-        // 👑 提交臨時額外補單 API 傳送機制
-        async function submitAddRegistration() {
-            const data = {
-                name: document.getElementById('addName').value.trim(),
-                phone: document.getElementById('addPhone').value.trim(),
-                company: document.getElementById('addCompany').value.trim(),
-                seat: document.getElementById('addSeat').value.trim() || '現場安排',
-                meal: window.selectedTempMealChoice,
-                admin: currentAdmin,
-                sheet: currentSheet
-            };
-            if(!data.name || !data.phone) return alert('❌ 請完整填寫學員姓名與手機核心欄位！');
-            
-            try {
-                const res = await fetch('/api/registrations/add', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(data)
-                });
-                const result = await res.json();
-                if(result.success) {
-                    hideTempSection();
-                    alert(`🎉 臨時補單報到成功！歡迎登機。`);
-                    resetToHome();
-                } else {
-                    alert('報到失敗：' + result.message);
-                }
-            } catch(e) { alert('通訊異常，無法外加名單'); }
-        }
-
-        async function toggleMapModal(show) {
-            const modal = document.getElementById('mapModal');
-            const img = document.getElementById('mapDisplayImage');
-            const frame = document.getElementById('mapDisplayFrame');
-            if (show) {
-                modal.classList.remove('state-hidden');
-                try {
-                    const res = await fetch(`${API_BASE}/config?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}&t=` + new Date().getTime());
-                    const config = await res.json();
-                    let url = config.map_image_url ? config.map_image_url.trim() : '';
-                    if (url) {
-                        const lowerUrl = url.toLowerCase();
-                        const isImage = lowerUrl.endsWith('.png') || lowerUrl.endsWith('.jpg') || lowerUrl.endsWith('.jpeg') || lowerUrl.endsWith('.gif') || lowerUrl.endsWith('.webp') || url.startsWith('data:image/');
-                        if (isImage) {
-                            frame.style.display = 'none'; frame.removeAttribute('src');
-                            img.src = url; img.style.display = 'block';
-                        } else {
-                            img.style.display = 'none'; img.removeAttribute('src');
-                            frame.src = url; frame.style.display = 'block';
-                        }
-                    } else {
-                        alert('後台尚未填寫地圖網址或上傳地圖！');
-                        modal.classList.add('state-hidden');
-                    }
-                } catch(e) { modal.classList.add('state-hidden'); }
-            } else {
-                modal.classList.add('state-hidden'); img.removeAttribute('src'); frame.removeAttribute('src');
-            }
-        }
-
-        function prepareSearch(method, label) {
+        function prepareSearch(method, title) {
             searchMethod = method;
-            document.getElementById('actionTitle').textContent = `請 輸 入 旅 客 ${label}`;
+            document.getElementById('actionTitle').textContent = title + ' 驗 證';
             document.getElementById('actionInput').value = '';
+            document.getElementById('actionInput').placeholder = `請輸入${title}`;
             setAppState('action');
+            setTimeout(() => document.getElementById('actionInput').focus(), 100);
         }
 
-        // 👑 核心調度：搜尋處理，查無資料全自動彈出橘色區塊並主動預填資訊
         async function handleAction() {
-            const val = document.getElementById('actionInput').value.trim();
-            if(!val) return;
-            hideTempSection(); // 每次搜尋前先清空狀態
-            
+            const q = document.getElementById('actionInput').value.trim();
+            if (!q) { alert('請輸入搜尋資訊'); return; }
+
             try {
-                const res = await fetch(`${API_BASE}/search/${searchMethod}?${searchMethod}=${encodeURIComponent(val)}&admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
+                const res = await fetch(`${API_BASE}/search/${searchMethod}?${searchMethod}=${encodeURIComponent(q)}&admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
                 const json = await res.json();
-                if (json.data && json.data.length > 0) {
-                    if (searchMethod === 'company') renderCompanyList(json.data);
-                    else if (json.data.length === 1) { 
-                        const u = json.data[0];
-                        if (u.status === 'checked_in' || u.status === '已報到' || u.status === '替代') {
-                            alert('🛬 旅客已完成登機報到手續！'); return;
-                        }
-                        selectedUser = u; 
-                        renderMealOptions(); 
+                
+                if (!json.success || !json.data || json.data.length === 0) {
+                    if (confirm('查無此人，是否開啟現場補位？')) {
+                        document.getElementById('tempRegistrationSection').classList.remove('state-hidden');
                     }
-                    else { window.tempData = json.data; renderUserList(json.data, '搜尋結果'); }
-                } else {
-                    // 👑 1. 第一步：全面洗滌欄位，防止上一個人的資料殘留污染
-                    document.getElementById('addName').value = '';
-                    document.getElementById('addPhone').value = '';
-                    document.getElementById('addCompany').value = '';
-                    document.getElementById('addSeat').value = '';
-                    
-                    // 預設餐點洗回預設的葷食
-                    const defaultMealBtn = document.querySelector('#tempMealRadioGroup [data-meal="葷食"]');
-                    if(defaultMealBtn) selectTempMeal(defaultMealBtn, '葷食');
-
-                    // 👑 2. 第二步：觸發智慧彈出，讓橘色臨時外加表單區滑現
-                    document.getElementById('tempRegistrationSection').classList.remove('state-hidden');
-                    
-                    // 👑 3. 第三步：精準判斷！根據當前點擊的「搜尋模式」決定把關鍵字填去哪裡
-                    if (searchMethod === 'company') {
-                        // 🏢 如果是「公司報到」查不到，字串精確填入【公司名稱】欄位！
-                        document.getElementById('addCompany').value = val;
-                    } 
-                    else if (searchMethod === 'phone') {
-                        // 📱 如果是「手機報到」查不到，自動代入【行動電話】欄位！
-                        document.getElementById('addPhone').value = val;
-                    } 
-                    else if (searchMethod === 'name') {
-                        // 📝 如果是「姓名報到」查不到，自動代入【旅客姓名】欄位！
-                        document.getElementById('addName').value = val;
-                    }
+                    return;
                 }
-            } catch(e) { alert('通訊異常'); }
-        }   
 
-        function renderCompanyList(companies) {
-            const list = document.getElementById('groupList');
-            list.innerHTML = '';
-            companies.forEach(c => {
-                const div = document.createElement('div'); div.className = 'group-item';
-                div.innerHTML = `<span>🏢 ${c}</span><span>➔</span>`;
-                div.onclick = async () => {
-                    try {
-                        const res = await fetch(`${API_BASE}/search/company_members?name=${encodeURIComponent(c)}&admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
-                        const json = await res.json(); renderUserList(json.data, c);
-                    } catch(e) { alert('無法讀取公司成員資料'); }
-                };
-                list.appendChild(div);
-            });
-            document.getElementById('groupName').textContent = '請 選 擇 所 屬 公 司';
-            setAppState('groupList');
+                if (json.data.length === 1) {
+                    selectedUser = json.data[0];
+                    // 👑 檢查是否已報到
+                    if (selectedUser.status_display === '已報到') {
+                        renderAlreadyCheckedIn(selectedUser);
+                        return;
+                    }
+                    renderMealOptions();
+                } else {
+                    renderGroupList(json.data, searchMethod === 'company' ? '公司' : '姓名');
+                }
+            } catch(e) {
+                alert('搜尋失敗：' + e.message);
+            }
         }
 
-        function renderUserList(users, title) {
+        // 👑 已報到重新顯示資訊
+        function renderAlreadyCheckedIn(user) {
+            document.getElementById('successInfo').innerHTML = `
+                <div class="success-detail-row">
+                    <span class="success-detail-label">姓 名</span>
+                    <span class="success-detail-value">${user.name}</span>
+                </div>
+                <div class="success-detail-row">
+                    <span class="success-detail-label">公 司</span>
+                    <span class="success-detail-value">${user.company || '無'}</span>
+                </div>
+                <div class="success-detail-row">
+                    <span class="success-detail-label">桌 次</span>
+                    <span class="success-detail-value highlight">${user.seat || '現場安排'}</span>
+                </div>
+                <div class="success-detail-row">
+                    <span class="success-detail-label">原報名餐食</span>
+                    <span class="success-detail-value">${user.original_meal || user.meal}</span>
+                </div>
+                <div class="success-detail-row">
+                    <span class="success-detail-label">目前餐食</span>
+                    <span class="success-detail-value">${user.meal}</span>
+                </div>
+                <div class="success-instruction">
+                    <div class="success-instruction-title">請持此畫面至：</div>
+                    <div class="success-instruction-item">① 領識別證</div>
+                    <div class="success-instruction-item">② 領禮品</div>
+                </div>
+            `;
+            setAppState('success');
+        }
+
+        function renderGroupList(users, title) {
             const list = document.getElementById('groupList');
             list.innerHTML = '';
             users.forEach(u => {
-                const div = document.createElement('div'); div.className = 'group-item';
-                const isRegistered = (u.status === 'checked_in' || u.status === '已報到' || u.status === '替代');
+                const div = document.createElement('div');
+                div.className = 'group-item';
+                const isRegistered = (u.status_display === '已報到');
                 const statusTag = isRegistered ? '<span style="color:#f87171; font-weight:bold;">[已報到]</span>' : '<span>➔</span>';
                 div.innerHTML = `<div><div style="font-weight:bold; font-size:1.2rem;">${u.name}</div><div style="font-size:0.9rem; color:#aaa;">${u.company}</div></div>${statusTag}`;
                 div.onclick = () => {
-                    if (isRegistered) { alert('🛬 旅客已完成登機報到手續！'); } 
-                    else { selectedUser = u; renderMealOptions(); }
+                    if (isRegistered) {
+                        renderAlreadyCheckedIn(u);
+                    } else {
+                        selectedUser = u;
+                        renderMealOptions();
+                    }
                 };
                 list.appendChild(div);
             });
@@ -513,11 +436,10 @@
             setAppState('groupList');
         }
 
-        // 👑 本人/替代報到偏好渲染：已追加「不需餐食」高階三欄整合按鈕
+        // 👑 本人報到不選餐食，直接使用原報名餐食
         async function renderMealOptions() {
             const res = await fetch(`${API_BASE}/config?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
             systemConfig = await res.json();
-            if (!systemConfig.show_meal_options) { submitCheckin('不需要'); return; }
             
             const container = document.getElementById('mealOptions');
             container.innerHTML = `
@@ -530,7 +452,7 @@
                     <div id="btnProxy" class="verify-card cyber-card" onclick="toggleIdentity(false)">替 代 報 到</div>
                 </div>
                 <div id="proxyForm" class="state-hidden" style="margin-bottom:2rem; text-align:left; border:1px solid #ffa500; padding:1.5rem; border-radius:1rem;">
-                    <p style="color:#ffa500; margin-bottom:1rem;">請 輸 入 替 代 人 資 訊 ：</p>
+                    <p style="color:#ffa500; margin-bottom:1rem; font-weight:bold;">請 輸 入 替 代 人 資 訊 ：</p>
                     <input type="text" id="proxyName" class="cyber-input" placeholder="替代人姓名" style="margin-bottom:0.8rem;">
                     <input type="text" id="proxyPhone" class="cyber-input" placeholder="替代人手機">
                 </div>
@@ -540,7 +462,8 @@
                     <div class="verify-card cyber-card meal-opt" onclick="selectMeal(this, '不需餐食')" style="padding:1.2rem 0.5rem; font-weight:bold;">❌ 不需餐食</div>
                 </div>
             `;
-            window.selectedMeal = null; window.isOriginal = true;
+            window.selectedMeal = null;
+            window.isOriginal = true;
             document.getElementById('finalBtn').disabled = true;
             setAppState('meal');
         }
@@ -556,13 +479,16 @@
         function selectMeal(el, m) {
             document.querySelectorAll('.meal-opt').forEach(x => x.classList.remove('meal-selected'));
             el.classList.add('meal-selected');
-            window.selectedMeal = m; checkMealReady();
+            window.selectedMeal = m;
+            checkMealReady();
         }
 
-        function checkMealReady() { document.getElementById('finalBtn').disabled = !window.selectedMeal; }
+        function checkMealReady() {
+            document.getElementById('finalBtn').disabled = !window.selectedMeal;
+        }
 
-        async function submitCheckin(autoMeal) {
-            const meal = autoMeal || window.selectedMeal;
+        async function submitCheckin() {
+            const meal = window.selectedMeal;
             const proxyInfo = window.isOriginal ? {} : {
                 name: document.getElementById('proxyName').value.trim(),
                 phone: document.getElementById('proxyPhone').value.trim()
@@ -570,7 +496,8 @@
             if (!window.isOriginal && !proxyInfo.name) { alert('請輸入替代人姓名'); return; }
             
             const btn = document.getElementById('finalBtn');
-            btn.disabled = true; btn.innerHTML = '<span>登 機 核 對 中 ...</span>';
+            btn.disabled = true;
+            btn.innerHTML = '<span>登 機 核 對 中 ...</span>';
             
             try {
                 const res = await fetch(`${API_BASE}/checkin/${selectedUser.id}?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`, {
@@ -579,23 +506,50 @@
                     body: JSON.stringify({ meal, is_original: window.isOriginal, proxy_info: proxyInfo })
                 });
                 const json = await res.json();
+                
                 if (json.success) {
                     const u = json.data;
                     document.getElementById('successInfo').innerHTML = `
-                        <div style="margin-bottom:0.5rem;">旅 客 ： <b>${u.name}</b></div>
-                        <div style="margin-bottom:0.5rem;">單 位 ： ${u.company}</div>
-                        <div style="margin-bottom:0.5rem;">座 位 ： <span style="font-size:1.5rem; color:var(--text-dark); font-weight:bold;">${u.seat || '現 場 安 排'}</span></div>
-                        <div style="margin-bottom:0.5rem;">餐 飲 ： <span style="color:#00e5ff; font-weight:bold;">${meal}</span></div>
-                        <div>時 間 ： ${u.checkedInAt}</div>
+                        <div class="success-detail-row">
+                            <span class="success-detail-label">姓 名</span>
+                            <span class="success-detail-value">${u.name}</span>
+                        </div>
+                        <div class="success-detail-row">
+                            <span class="success-detail-label">公 司</span>
+                            <span class="success-detail-value">${u.company || '無'}</span>
+                        </div>
+                        <div class="success-detail-row">
+                            <span class="success-detail-label">桌 次</span>
+                            <span class="success-detail-value highlight">${u.seat || '現場安排'}</span>
+                        </div>
+                        <div class="success-detail-row">
+                            <span class="success-detail-label">原報名餐食</span>
+                            <span class="success-detail-value">${u.original_meal}</span>
+                        </div>
+                        <div class="success-detail-row">
+                            <span class="success-detail-label">目前餐食</span>
+                            <span class="success-detail-value">${u.meal}</span>
+                        </div>
+                        <div class="success-instruction">
+                            <div class="success-instruction-title">請持此畫面至：</div>
+                            <div class="success-instruction-item">① 領識別證</div>
+                            <div class="success-instruction-item">② 領禮品</div>
+                        </div>
                     `;
                     setAppState('success');
                 } else {
-                    if (json.error === 'already_done') { alert('🛬 旅客已完成登機報到手續！'); } 
-                    else { alert('報 到 失 敗'); }
-                    btn.disabled = false; btn.innerHTML = '<span>確 認 並 核 發 登 機 證</span>';
+                    if (json.error === 'already_done') {
+                        renderAlreadyCheckedIn(json.data);
+                    } else {
+                        alert('報 到 失 敗');
+                    }
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>確 認 並 核 發 登 機 證</span>';
                 }
-            } catch(e) { 
-                alert('網 路 異 常'); btn.disabled = false; btn.innerHTML = '<span>確 認 並 核 發 登 機 證</span>';
+            } catch(e) {
+                alert('網 路 異 常');
+                btn.disabled = false;
+                btn.innerHTML = '<span>確 認 並 核 發 登 機 證</span>';
             }
         }
 
@@ -608,7 +562,8 @@
                 const normals = window.allProducts.filter(p => !p.isGift);
                 const giftsSection = document.getElementById('giftsSection');
                 if (gifts.length > 0) {
-                    giftsSection.classList.remove('state-hidden'); renderGrid('giftsGrid', gifts);
+                    giftsSection.classList.remove('state-hidden');
+                    renderGrid('giftsGrid', gifts);
                 } else giftsSection.classList.add('state-hidden');
                 const categories = ['全 部', ...new Set(normals.map(p => p.category).filter(c => c))];
                 const filterContainer = document.getElementById('categoryFilters');
@@ -616,7 +571,8 @@
                     <button class="ck-tag ${window.currentCategory === c ? 'active' : ''}" 
                          onclick="filterCategory('${c}')">${c}</button>
                 `).join('');
-                filterCategory(window.currentCategory); setAppState('product');
+                filterCategory(window.currentCategory);
+                setAppState('product');
             } catch(e) { alert('無 法 載 入 商 品'); }
         }
 
@@ -660,6 +616,56 @@
                     document.getElementById('banner-container').style.display = 'none';
                 }
             } catch(e) { console.error("加載設定遺失", e); }
+        }
+
+        function toggleMapModal(show) {
+            const modal = document.getElementById('mapModal');
+            if (show) {
+                if (systemConfig && systemConfig.map_image_url) {
+                    document.getElementById('mapDisplayImage').src = systemConfig.map_image_url;
+                    document.getElementById('mapDisplayImage').style.display = 'block';
+                    document.getElementById('mapDisplayFrame').style.display = 'none';
+                }
+                modal.classList.remove('state-hidden');
+            } else {
+                modal.classList.add('state-hidden');
+            }
+        }
+
+        function goToShop() { showProducts(); }
+
+        function selectTempMeal(el, meal) {
+            document.querySelectorAll('.meal-opt-temp').forEach(x => x.classList.remove('temp-meal-selected'));
+            el.classList.add('temp-meal-selected');
+            window.selectedTempMealChoice = meal;
+        }
+
+        function hideTempSection() {
+            document.getElementById('tempRegistrationSection').classList.add('state-hidden');
+        }
+
+        async function submitAddRegistration() {
+            const name = document.getElementById('addName').value.trim();
+            const phone = document.getElementById('addPhone').value.trim();
+            if (!name || !phone) { alert('請填寫姓名與手機'); return; }
+            
+            try {
+                const res = await fetch(`${API_BASE}/registrations/add?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        name,
+                        phone,
+                        company: document.getElementById('addCompany').value.trim(),
+                        seat: document.getElementById('addSeat').value.trim(),
+                        meal: window.selectedTempMealChoice
+                    })
+                });
+                if ((await res.json()).success) {
+                    alert('現場報到成功！');
+                    resetToHome();
+                }
+            } catch(e) { alert('報到失敗'); }
         }
     </script>
 </body>
