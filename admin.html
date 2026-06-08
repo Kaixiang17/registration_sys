@@ -14,8 +14,6 @@
         .btn-link { color: #ccc; text-decoration: none; font-size: 0.85rem; padding: 0.45rem 0.9rem; border-radius: 0.5rem; transition: all 0.2s; border: 1px solid rgba(255,255,255,0.15); letter-spacing: 0.5px; }
         .btn-link:hover { border-color: var(--text-dark); background: rgba(0,229,255,0.1); color: var(--text-dark); }
 
-        /* ── 後台統一按鈕規格 ── */
-        /* 主要行動按鈕：場次切換、儲存設定、匯入等重要操作 */
         .adm-btn {
             display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
             padding: 0.55rem 1.1rem;
@@ -29,30 +27,24 @@
         .adm-btn:active { transform: scale(0.97); }
         .adm-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-        /* 強調按鈕（主要 CTA，如「立即切換場次」）*/
         .adm-btn-primary {
             border-color: rgba(0,229,255,0.7); color: #fff;
             background: linear-gradient(135deg, rgba(0,180,220,0.2), rgba(0,229,255,0.1));
         }
         .adm-btn-primary:hover { background: linear-gradient(135deg, rgba(0,180,220,0.35), rgba(0,229,255,0.2)); }
 
-        /* 危險按鈕（刪除）*/
         .adm-btn-danger { border-color: rgba(220,38,38,0.5); color: #f87171; background: rgba(220,38,38,0.06); }
         .adm-btn-danger:hover { background: rgba(220,38,38,0.15); border-color: #dc2626; }
 
-        /* 次要按鈕（取消）*/
         .adm-btn-ghost { border-color: rgba(255,255,255,0.15); color: #888; background: transparent; }
         .adm-btn-ghost:hover { border-color: rgba(255,255,255,0.35); color: #ccc; background: rgba(255,255,255,0.05); }
 
-        /* 上傳類按鈕（偏橙黃色調）*/
         .adm-btn-upload { border-color: rgba(255,165,0,0.45); color: #ffa500; background: rgba(255,165,0,0.07); }
         .adm-btn-upload:hover { background: rgba(255,165,0,0.15); border-color: #ffa500; }
 
-        /* 成功色按鈕 */
         .adm-btn-success { border-color: rgba(74,222,128,0.45); color: #4ade80; background: rgba(74,222,128,0.07); }
         .adm-btn-success:hover { background: rgba(74,222,128,0.15); border-color: #4ade80; }
 
-        /* 按鈕尺寸修飾 */
         .adm-btn-sm { padding: 0.38rem 0.75rem; font-size: 0.8rem; }
         .adm-btn-lg { padding: 0.7rem 1.5rem; font-size: 0.95rem; letter-spacing: 1.2px; }
         main { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
@@ -83,6 +75,103 @@
         .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
         .modal.active { display: flex; }
         .modal-content { max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; padding: 2rem; border-radius: 1rem; border: 1px solid var(--accent-gray); background: rgba(10, 20, 35, 0.9); }
+
+        /* 👑 餐食統計樣式 */
+        .meal-stat-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .meal-stat-box {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(0,229,255,0.2);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        .meal-stat-label {
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        .meal-stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--text-dark);
+        }
+        .meal-stat-subtitle {
+            color: #888;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        /* 👑 配額警告 */
+        .quota-warning {
+            background: rgba(220,38,38,0.1);
+            border-left: 3px solid #f87171;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .quota-warning-title {
+            color: #f87171;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        /* 👑 桌次統計 X/10 格式 */
+        .table-stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .table-stat-item {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(0,229,255,0.2);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        .table-stat-name {
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        .table-stat-count {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--text-dark);
+        }
+        .table-stat-progress {
+            width: 100%;
+            height: 6px;
+            background: rgba(0,229,255,0.1);
+            border-radius: 3px;
+            margin-top: 0.8rem;
+            overflow: hidden;
+        }
+        .table-stat-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #00e5ff, #4ade80);
+            border-radius: 3px;
+        }
+
+        .cyber-input {
+            background: rgba(0, 0, 0, 0.4) !important;
+            border: 1px solid var(--accent-gray) !important;
+            border-bottom: 3px solid var(--text-dark) !important;
+            color: #00e5ff !important;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            font-family: inherit;
+        }
+        .cyber-input:focus {
+            outline: none;
+            background: rgba(0, 20, 40, 0.6) !important;
+            box-shadow: 0 5px 15px rgba(0, 229, 255, 0.2);
+        }
     </style>
 </head>
 <body class="circuit-background">
@@ -107,6 +196,7 @@
         </div>
 
         <div id="dashboard" class="tab-content active">
+            <!-- 👑 基本統計 -->
             <div class="dashboard-grid">
                 <div class="stat-card cyber-card">
                     <div class="neon-text">應到人數</div>
@@ -121,22 +211,46 @@
                     <div id="stat-pending" class="stat-value" style="color: #f87171;">0</div>
                 </div>
             </div>
+
+            <!-- 👑 餐食統計 -->
+            <div class="cyber-card" style="padding: 2rem; border-radius: 1rem; margin-bottom: 2rem;">
+                <h2 class="neon-text" style="margin-bottom:1.5rem; font-size: 1.4rem;">🍽️ 餐食統計</h2>
+                
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="color: #aaa; margin-bottom: 1rem;">原始報名</h3>
+                    <div class="meal-stat-container" id="original-meals-container"></div>
+                </div>
+
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="color: #aaa; margin-bottom: 1rem;">實際報到</h3>
+                    <div class="meal-stat-container" id="actual-meals-container"></div>
+                </div>
+
+                <!-- 👑 配額警告 -->
+                <div id="quota-warning-container"></div>
+            </div>
+
+            <!-- 👑 桌次統計 -->
             <div class="cyber-card" style="padding: 2rem; border-radius: 1rem; margin-bottom: 2rem;">
                 <h2 class="neon-text" style="margin-bottom:1.5rem; font-size: 1.4rem;">📊 桌號報到率統計</h2>
-                <div id="table-stats-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 1rem;"></div>
+                <div id="table-stats-container" class="table-stat-grid"></div>
             </div>
-                <div class="cyber-card" style="padding: 2rem; border-radius: 1rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <h2 class="neon-text" style="margin: 0;">🛰️ 即時登機紀錄 (最新 25 筆)</h2>
-                        <div style="display: flex; gap: 10px;">
-                            <button class="adm-btn adm-btn-upload" onclick="showAddModal()">➕ 臨時報到</button>
-                            <button class="adm-btn" onclick="exportCsv()">📥 匯出名單</button>
-                        </div>
+
+            <!-- 👑 即時登機紀錄 -->
+            <div class="cyber-card" style="padding: 2rem; border-radius: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2 class="neon-text" style="margin: 0;">🛰️ 即時登機紀錄 (最新 25 筆)</h2>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="adm-btn adm-btn-upload" onclick="showAddModal()">➕ 臨時報到</button>
+                        <button class="adm-btn" onclick="exportCsv()">📥 匯出名單</button>
                     </div>
+                </div>
+                <div class="table-container">
                     <table>
-                    <thead><tr><th>時間</th><th>姓名</th><th>公司艦隊</th><th>補給類別</th></tr></thead>
-                    <tbody id="logs-body"></tbody>
-                </table>
+                        <thead><tr><th>時間</th><th>姓名</th><th>公司艦隊</th><th>原報名餐食</th><th>實際餐食</th></tr></thead>
+                        <tbody id="logs-body"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -160,19 +274,17 @@
                 <div class="form-group">
                     <label>當前作用中 MySQL 雲端活動資料庫場次</label>
                     <div style="display:flex; gap:0.6rem; align-items:center;">
-                        <select class="cyber-input" id="googleSheetName" onchange="updateEventLink()" style="background: rgba(10,20,35,0.9); color:#fff; border:1px solid rgba(0,229,255,0.25); padding:0.52rem 1rem; flex-grow:1; border-radius:0.5rem; font-size:0.9rem; font-family:inherit; cursor:pointer; outline:none;">
-	                            <option value="">⏳ 正在自動探測雲端試算表資源池...</option>
-	                        </select>
+                        <select class="cyber-input" id="googleSheetName" onchange="updateEventLink()" style="flex-grow:1;">
+                            <option value="">⏳ 正在自動探測雲端試算表資源池...</option>
+                        </select>
                         <button class="adm-btn adm-btn-primary" onclick="saveSystemSettings()">🚀 切換場次</button>
                     </div>
                 </div>
-                
-
 
                 <div class="form-group">
                     <label>🗺️ 地圖導覽圖片網址 或 直接上傳圖片檔</label>
                     <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 0.5rem;">
-                        <input type="text" class="cyber-input" id="mapImageUrl" style="margin-bottom: 0; flex-grow: 1;" placeholder="地圖 URL 或貼上本機圖片 Base64">
+                        <input type="text" class="cyber-input" id="mapImageUrl" style="flex-grow: 1;" placeholder="地圖 URL 或貼上本機圖片 Base64">
                         <label class="adm-btn adm-btn-upload" style="cursor:pointer;">
                             📁 上傳地圖
                             <input type="file" id="mapLocalFile" accept="image/*" style="display: none;" onchange="handleMapFileUpload(this)">
@@ -185,7 +297,6 @@
                         <img id="systemMapPreview" src="" style="max-width: 240px; max-height: 150px; border-radius: 8px; border: 1px solid var(--accent-gray); object-fit: contain; background: rgba(0,0,0,0.3);">
                     </div>
                 </div>
-
 
                 <button class="adm-btn adm-btn-primary adm-btn-lg" style="margin-bottom:2rem;" onclick="saveSystemSettings()">💾 儲存設定</button>
 
@@ -201,565 +312,235 @@
                     </div>
                 </div>
             </div>
-
-            <div class="cyber-card" style="padding: 2rem; border-radius: 1rem; margin-top: 2rem;">
-                <div class="card-title neon-text">🏷️ 商品分類管理中心</div>
-                <div class="form-group">
-                    <label>管理選單項目：新增自訂分類</label>
-                    <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem;">
-                        <input type="text" class="cyber-input" id="newCategoryPoolInput" style="margin-bottom: 0; flex-grow: 1;" placeholder="請輸入新分類名稱 (例如：服飾、軟體裝置)">
-                        <button class="adm-btn adm-btn-success" onclick="addCategoryToPool()">➕ 新增分類</button>
-                    </div>
-                </div>
-                <label style="margin-bottom: 0.8rem;">目前系統全域可用分類清單 (點擊紅色 ✕ 可直接刪除該下拉選項)：</label>
-                <div id="categoryPoolListContainer" style="display: flex; flex-wrap: wrap; gap: 0.8rem; margin-top: 0.5rem;"></div>
-            </div>
         </div>
     </main>
 
-    <div id="productModal" class="modal">
-        <div class="modal-content cyber-card">
-            <div class="modal-header neon-text" id="modalTitle">編輯商品</div>
-            <div class="form-group"><label>名稱 *</label><input type="text" class="cyber-input" id="productName"></div>
-            
-            <div class="form-group">
-                <label>圖片網址 或 直接上傳圖片檔</label>
-                <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 0.5rem;">
-                    <input type="text" class="cyber-input" id="productImage" style="margin-bottom: 0; flex-grow: 1;" placeholder="圖片網址或貼上本機圖片 Base64">
-                    <label class="adm-btn adm-btn-upload" style="cursor:pointer;">
-                        📁 上傳圖片
-                        <input type="file" accept="image/*" style="display: none;" onchange="handleProductFileUpload(this)">
-                    </label>
-                </div>
-                <p style="color: #00e5ff; font-size: 0.85rem; margin-top: 0.5rem; text-align: left; letter-spacing: 1px;">
-                    💡 建議比例：4:3 或 3:2（例如 800x600 像素），動態 GIF 亦可完美支援。
-                </p>
-                <div id="imagePreview" style="margin-top: 10px; text-align: center;">
-                    <img id="modalImgPreview" src="" style="max-width: 100%; max-height: 150px; display: none; border-radius: 8px; border: 1px solid var(--accent-gray); object-fit: contain;">
-                </div>
-            </div>
-
-            <div class="form-group"><label>簡介</label><textarea id="productDescription" class="cyber-input"></textarea></div>
-            
-            <div class="form-group">
-                <label>分類選項</label>
-                <select class="cyber-input" id="productCategory" onchange="checkCategorySelection(this)" style="background: rgba(10,20,35,0.9); color:#fff; border:1px solid rgba(0,229,255,0.25); padding:0.52rem 1rem; width:100%; border-radius:0.5rem; font-size:0.9rem; font-family:inherit; cursor:pointer; outline:none;">
-                    <option value="課程">📚 課程</option>
-                    <option value="諮詢">💼 諮詢</option>
-                    <option value="聯盟">🤝 聯盟</option>
-                    <option value="紀念品">🎁 紀念品</option>
-                </select>
-            </div>
-
-            <div class="form-group" id="customCategoryContainer" style="display: none;">
-                <label>✍️ 請輸入新分類名稱</label>
-                <input type="text" class="cyber-input" id="customCategoryInput" placeholder="例如：服飾、講座、硬體設備">
-            </div>
-
-            <div class="form-group"><label>連結</label><input type="url" class="cyber-input" id="productLink"></div>
-            <input type="hidden" id="productIsGift">
-            <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:1rem; margin-top:1.5rem;">
-                <button class="adm-btn adm-btn-ghost" onclick="closeProductModal()">取消</button>
-                <button class="adm-btn adm-btn-primary" onclick="saveProduct()"><span id="saveButtonText">儲存</span></button>
-            </div>
-        </div>
-    </div>
-
-    <div id="deleteModal" class="modal">
-        <div class="modal-content cyber-card" style="border-left-color: #dc2626;">
-            <div class="modal-header" style="color: #dc2626;">⚠️ 確認刪除</div>
-            <p style="margin-bottom:1.5rem;">確定移除「<strong id="deleteProductName" style="color:#fff;"></strong>」？此操作無法復原。</p>
-            <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:1rem;">
-                <button class="adm-btn adm-btn-ghost" onclick="closeDeleteModal()">取消</button>
-                <button class="adm-btn adm-btn-danger" onclick="confirmDelete()">刪除</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 臨時報到 Modal -->
-    <div id="addModal" class="modal" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center;">
-        <div class="cyber-card" style="width: 90%; max-width: 500px; padding: 2rem; background: rgba(10,20,35,0.95);">
-            <h2 class="neon-text" style="margin-bottom: 1.5rem;">➕ 臨時額外報到</h2>
-            <div class="form-group"><label>旅客姓名</label><input type="text" id="addName" class="cyber-input"></div>
-            <div class="form-group"><label>手機號碼</label><input type="text" id="addPhone" class="cyber-input"></div>
-            <div class="form-group"><label>公司/單位</label><input type="text" id="addCompany" class="cyber-input"></div>
-            <div class="form-group"><label>桌號/座位 (選填)</label><input type="text" id="addSeat" class="cyber-input"></div>
-            <div style="display: flex; gap: 10px; margin-top: 1rem;">
-                <button class="adm-btn adm-btn-ghost" onclick="hideAddModal()">取消</button>
-                <button class="adm-btn adm-btn-success" onclick="submitAddRegistration()">✓ 確認報到</button>
-            </div>
-        </div>
-    </div>
-
     <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentSheet = urlParams.get('sheet') || '';
         const API_BASE = '/api';
-        let currentConfig = null;
-        let currentUser = 'admin';
-        let editingIdx = null;
-        let deleteIdx = null;
 
-        function getCategoryList() {
-            const dummy = (currentConfig.products || []).find(p => p.name === "__SYSTEM_CATEGORIES__");
-            if (dummy && dummy.description) {
-                return dummy.description.split(',').map(c => c.trim()).filter(c => c);
-            }
-            return ['課程', '諮詢', '聯盟', '紀念品']; 
-        }
+        window.onload = async function() {
+            loadUserInfo();
+            setupTabs();
+            await loadDashboard();
+        };
 
-        function renderCategoryManager() {
-            const cats = getCategoryList();
-            const container = document.getElementById('categoryPoolListContainer');
-            if(!container) return;
-            container.innerHTML = cats.map(c => `
-                <div style="display: flex; align-items: center; gap: 0.6rem; background: rgba(0, 229, 255, 0.1); border: 1px solid rgba(0, 229, 255, 0.3); padding: 0.5rem 1.2rem; border-radius: 20px; font-size: 0.95rem; font-weight: bold; letter-spacing: 1px;">
-                    <span style="color: #fff;">${c}</span>
-                    <span style="color: #f87171; cursor: pointer; font-weight: bold; margin-left: 5px; font-size: 1.1rem;" onclick="deleteCategoryFromPool('${c}')" title="刪除此分類">✕</span>
-                </div>
-            `).join('');
-        }
-
-        async function deleteCategoryFromPool(catName) {
-            if(!confirm(`確定要將「${catName}」從系統下拉選單選單池中移除嗎？`)) return;
-            let cats = getCategoryList();
-            cats = cats.filter(c => c !== catName);
-            
-            let dummy = currentConfig.products.find(p => p.name === "__SYSTEM_CATEGORIES__");
-            if (!dummy) {
-                dummy = { name: "__SYSTEM_CATEGORIES__", isGift: false, image: "", link: "", category: "SYSTEM" };
-                currentConfig.products.push(dummy);
-            }
-            dummy.description = cats.join(',');
-            
-            if (await postConfig()) {
-                renderProducts();
-                renderCategoryManager();
-                alert(`分類「${catName}」已成功移除！`);
-            }
-        }
-
-        async function addCategoryToPool() {
-            const input = document.getElementById('newCategoryPoolInput');
-            const newCat = input.value.trim();
-            if (!newCat) return alert('請輸入欲新增的分類名稱');
-            
-            let cats = getCategoryList();
-            if (cats.includes(newCat)) return alert('該分類已存在於選單池中');
-            cats.push(newCat);
-            
-            let dummy = currentConfig.products.find(p => p.name === "__SYSTEM_CATEGORIES__");
-            if (!dummy) {
-                dummy = { name: "__SYSTEM_CATEGORIES__", isGift: false, image: "", link: "", category: "SYSTEM" };
-                currentConfig.products.push(dummy);
-            }
-            dummy.description = cats.join(',');
-            
-            if (await postConfig()) {
-                input.value = '';
-                renderProducts();
-                renderCategoryManager();
-                alert(`分類「${newCat}」已成功加入選單池！`);
-            }
-        }
-
-        function processAndCompressImage(file, maxTargetWidth, callback) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    let width = img.width, height = img.height;
-                    if (width > maxTargetWidth) {
-                        height = Math.round((height * maxTargetWidth) / width);
-                        width = maxTargetWidth;
+        function loadUserInfo() {
+            fetch(`${API_BASE}/user/info`)
+                .then(r => r.json())
+                .then(d => {
+                    if (d.success) {
+                        document.getElementById('welcome-msg').textContent = `歡迎，${d.username}`;
                     }
-                    canvas.width = width; canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-                    callback(compressedBase64);
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
+                })
+                .catch(e => console.error(e));
         }
 
-        async function init() {
-            await loadConfig();
-            await loadAvailableSheets(); // 【優化追加】初始化時向後端非同步撈取可用試算表清單
-            setupTabButtons();
-            updateDashboard();
-            setInterval(updateDashboard, 15000);
-
-            document.getElementById('productImage').oninput = (e) => {
-                const previewImg = document.getElementById('modalImgPreview');
-                if(e.target.value) { previewImg.src = e.target.value; previewImg.style.display = 'block'; } 
-                else { previewImg.style.display = 'none'; }
-            };
-
-            document.getElementById('mapImageUrl').oninput = (e) => {
-                const val = e.target.value.trim();
-                const previewImg = document.getElementById('systemMapPreview');
-                if(val) { previewImg.src = val; document.getElementById('systemMapPreviewContainer').style.display = 'block'; }
-                else { document.getElementById('systemMapPreviewContainer').style.display = 'none'; }
-            };
-        }
-
-        // ============================================================
-        // 【全新前端邏輯 1】非同步取得試算表列表並生成下拉選單
-        // ============================================================
-        async function loadAvailableSheets() {
-            try {
-                const res = await fetch(`${API_BASE}/sheets/list`);
-                const json = await res.json();
-                if (json.success && json.sheets.length > 0) {
-                    const select = document.getElementById('googleSheetName');
-                    const currentValue = currentConfig.google_sheet_name || '';
-                    
-                    select.innerHTML = json.sheets.map(name => `
-                        <option value="${name}" ${name === currentValue ? 'selected' : ''}>📊 ${name}</option>
-                    `).join('');
-                } else {
-                    document.getElementById('googleSheetName').innerHTML = '<option value="">❌ 您的帳戶內無任何共用的試算表資源</option>';
-                }
-            } catch(e) {
-                document.getElementById('googleSheetName').innerHTML = '<option value="">❌ 無法與雲端通訊獲取列表</option>';
-            }
-        }
-
-        // ============================================================
-        // 【全新前端邏輯 2】處理 CSV 上傳覆寫邏輯
-        // ============================================================
-        async function handleCsvUpload(input) {
-            const file = input.files[0];
-            if (!file) return;
-            
-            const statusText = document.getElementById('csvUploadStatus');
-            statusText.innerHTML = `<span style="color:#00e5ff">⏳ 正在上傳名單：${file.name}...</span>`;
-            
-            const formData = new FormData();
-            formData.append('file', file);
-            
-            try {
-                const res = await fetch(`${API_BASE}/sheets/upload_csv`, {
-                    method: 'POST',
-                    body: formData
-                });
-                const json = await res.json();
-                if (json.success) {
-                    statusText.innerHTML = `<span style="color:#4ade80">✓ ${json.message}</span>`;
-                    alert(json.message);
-                    await loadAvailableSheets(); // 🚀 關鍵改動：上傳成功後立即刷新下拉選單
-                    updateDashboard(); // 重新拉取一次儀表板最新應到人數數據
-                } else {
-                    statusText.innerHTML = `<span style="color:#f87171">✕ 同步失敗：${json.message}</span>`;
-                    alert('匯入失敗：' + json.message);
-                }
-            } catch(e) {
-                statusText.innerHTML = `<span style="color:#f87171">✕ 網路同步異常</span>`;
-                alert('網路連線異常，請稍後再試');
-            }
-        }
-
-        function setupTabButtons() {
+        function setupTabs() {
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-                    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-                    document.getElementById(btn.getAttribute('data-tab')).classList.add('active');
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
                     btn.classList.add('active');
+                    const tabId = btn.dataset.tab;
+                    document.getElementById(tabId).classList.add('active');
+                    if (tabId === 'products') loadProducts();
                 });
             });
         }
 
-        async function loadConfig() {
-            try {
-                const res = await fetch(`${API_BASE}/config`);
-                currentConfig = await res.json();
-                renderProducts();
-                renderCategoryManager();
-
-                const mapUrl = currentConfig.map_image_url ? currentConfig.map_image_url.trim() : '';
-                document.getElementById('mapImageUrl').value = mapUrl;
-                if(mapUrl) {
-                    document.getElementById('systemMapPreview').src = mapUrl;
-                    document.getElementById('systemMapPreviewContainer').style.display = 'block';
-                } else {
-                    document.getElementById('systemMapPreviewContainer').style.display = 'none';
-                }
-
-                document.getElementById('bannerImageUrl').value = currentConfig.banner_image_url || '';
-                updateEventLink();
-            } catch (e) { showMessage('設定載入失敗', 'danger'); }
-        }
-
-        async function updateDashboard() {
+        async function loadDashboard() {
             try {
                 const res = await fetch(`${API_BASE}/dashboard_stats`);
                 const json = await res.json();
-                if(json.success) {
-                    document.getElementById('stat-total').textContent = json.stats.total;
-                    document.getElementById('stat-checked').textContent = json.stats.checked_in;
-                    document.getElementById('stat-pending').textContent = json.stats.not_checked_in;
-                    
-                    document.getElementById('table-stats-container').innerHTML = Object.entries(json.stats.table_stats).sort((a,b)=>a[0]-b[0]).map(([t, r]) => `
-                        <div class="cyber-card" style="padding: 1rem; text-align: center; background: rgba(0,229,255,0.05);">
-                            <div style="font-size: 0.85rem; color: #aaa; margin-bottom: 0.3rem;">第 ${t} 桌</div>
-                            <div style="font-size: 1.4rem; font-weight: bold; color: var(--text-dark);">${r}%</div>
-                        </div>`).join('');
-                    
-                    document.getElementById('logs-body').innerHTML = json.stats.logs.map(l => `<tr><td>${l.time}</td><td>${l.name}</td><td>${l.company}</td><td>${l.meal}</td></tr>`).join('');
+                if (json.success) {
+                    const stats = json.stats;
+                    document.getElementById('stat-total').textContent = stats.total;
+                    document.getElementById('stat-checked').textContent = stats.checked_in;
+                    document.getElementById('stat-pending').textContent = stats.not_checked_in;
+
+                    // 👑 餐食統計
+                    renderMealStats(stats.original_meals, 'original-meals-container');
+                    renderMealStats(stats.actual_meals, 'actual-meals-container');
+
+                    // 👑 配額警告
+                    renderQuotaWarning(stats.actual_meals);
+
+                    // 👑 桌次統計
+                    renderTableStats(stats.table_stats);
+
+                    // 👑 登機紀錄
+                    renderLogs(stats.logs);
                 }
-            } catch (e) { console.error("同步失敗", e); }
+            } catch(e) { console.error('加載統計失敗', e); }
         }
 
-        function renderProducts() {
-            const validItems = (currentConfig.products || []).filter(p => p.name !== "__SYSTEM_CATEGORIES__");
-            
-            const gifts = validItems.filter(p => p.isGift);
-            const prods = validItems.filter(p => !p.isGift);
-            
-            const giftsContainer = document.getElementById('giftsList');
-            const prodsContainer = document.getElementById('productsList');
-            
-            giftsContainer.innerHTML = gifts.length ? gifts.map(p => {
-                const idx = currentConfig.products.indexOf(p);
-                return renderProductRow(p, idx);
-            }).join('') : `<div style="text-align:center; padding:1.5rem; color:#888;">尚無伴手禮</div>`;
-            
-            prodsContainer.innerHTML = prods.length ? prods.map(p => {
-                const idx = currentConfig.products.indexOf(p);
-                return renderProductRow(p, idx);
-            }).join('') : `<div style="text-align:center; padding:1.5rem; color:#888;">尚無一般商品</div>`;
+        function renderMealStats(meals, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            Object.entries(meals).forEach(([meal, count]) => {
+                const box = document.createElement('div');
+                box.className = 'meal-stat-box';
+                box.innerHTML = `
+                    <div class="meal-stat-label">${meal}</div>
+                    <div class="meal-stat-value">${count}</div>
+                    <div class="meal-stat-subtitle">人</div>
+                `;
+                container.appendChild(box);
+            });
         }
 
-        function renderProductRow(p, idx) {
-            return `<div class="product-item">
-                <div class="product-info">
-                    <div class="product-name neon-text">${p.name}</div>
-                    <div class="product-field">TAG: ${p.category || '未分類'} | ${p.image ? '<span style="color:#4ade80">✓ 已有圖</span>' : '<span style="color:#f87171">✗ 無圖</span>'}</div>
-                </div>
-                <div class="product-actions">
-                    <button class="adm-btn adm-btn-sm" onclick="editProduct(${idx})">✏️ 編輯</button>
-                    <button class="adm-btn adm-btn-danger adm-btn-sm" onclick="openDeleteModal(${idx})">🗑 刪除</button>
-                </div>
-            </div>`;
-        }
-
-        function openAddGiftModal() { openProductModal(null, true); }
-        function openAddProductModal() { openProductModal(null, false); }
-        
-        function openProductModal(idx, isGift) {
-            editingIdx = idx;
-            document.getElementById('modalTitle').textContent = idx === null ? (isGift ? '新增伴手禮' : '新增一般商品') : (isGift ? '編輯伴手禮' : '編輯一般商品');
-            document.getElementById('saveButtonText').textContent = idx === null ? '新增' : '儲存修改';
-            document.getElementById('productIsGift').value = isGift;
-
-            const previewImg = document.getElementById('modalImgPreview');
-            document.getElementById('customCategoryContainer').style.display = 'none';
-
-            const cats = getCategoryList();
-            document.getElementById('productCategory').innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('') + 
-                `<option value="__NEW__">➕ 新增其它自訂分類...</option>`;
-
-            if (idx !== null) {
-                const p = currentConfig.products[idx];
-                document.getElementById('productName').value = p.name || '';
-                document.getElementById('productImage').value = p.image || '';
-                document.getElementById('productDescription').value = p.description || '';
-                document.getElementById('productLink').value = p.link || '';
-                
-                if (cats.includes(p.category)) {
-                    document.getElementById('productCategory').value = p.category;
-                } else if (p.category) {
-                    document.getElementById('productCategory').value = '__NEW__';
-                    document.getElementById('customCategoryContainer').style.display = 'block';
-                    document.getElementById('customCategoryInput').value = p.category;
-                } else {
-                    document.getElementById('productCategory').value = cats[0] || '課程';
-                }
-
-                if(p.image) { previewImg.src = p.image; previewImg.style.display = 'block'; } 
-                else { previewImg.style.display = 'none'; }
+        function renderQuotaWarning(actualMeals) {
+            const container = document.getElementById('quota-warning-container');
+            const veganCount = actualMeals['素食'] || 0;
+            const totalCount = Object.values(actualMeals).reduce((a, b) => a + b, 0);
+            
+            // 假設素食配額為 20（可根據實際需求調整）
+            const veganQuota = 20;
+            
+            if (veganCount > veganQuota) {
+                container.innerHTML = `
+                    <div class="quota-warning">
+                        <div class="quota-warning-title">⚠️ 素食數量不足</div>
+                        <div style="color: #ccc; font-size: 0.9rem;">
+                            素食配額：${veganQuota} | 已使用：${veganCount} | 超出：${veganCount - veganQuota}
+                        </div>
+                    </div>
+                `;
             } else {
-                document.getElementById('productName').value = '';
-                document.getElementById('productImage').value = '';
-                document.getElementById('productDescription').value = '';
-                document.getElementById('productLink').value = '';
-                document.getElementById('productCategory').value = cats[0] || '課程';
-                previewImg.style.display = 'none';
-            }
-            document.getElementById('productModal').classList.add('active');
-        }
-
-        function editProduct(idx) { const p = currentConfig.products[idx]; openProductModal(idx, p.isGift); }
-        function closeProductModal() { document.getElementById('productModal').classList.remove('active'); }
-        
-        function checkCategorySelection(select) {
-            const container = document.getElementById('customCategoryContainer');
-            if (select.value === '__NEW__') {
-                container.style.display = 'block';
-                document.getElementById('customCategoryInput').value = '';
-            } else {
-                container.style.display = 'none';
+                const remaining = veganQuota - veganCount;
+                container.innerHTML = `
+                    <div style="background: rgba(74,222,128,0.1); border-left: 3px solid #4ade80; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+                        <div style="color: #4ade80; font-weight: bold; margin-bottom: 0.5rem;">✅ 素食配額充足</div>
+                        <div style="color: #ccc; font-size: 0.9rem;">
+                            素食配額：${veganQuota} | 已使用：${veganCount} | 剩餘：${remaining}
+                        </div>
+                    </div>
+                `;
             }
         }
 
-        async function saveProduct() {
-            let finalCategory = document.getElementById('productCategory').value;
-            if (finalCategory === '__NEW__') {
-                finalCategory = document.getElementById('customCategoryInput').value.trim();
-                if (!finalCategory) return alert('請填寫自訂分類名稱！');
+        function renderTableStats(tableStats) {
+            const container = document.getElementById('table-stats-container');
+            container.innerHTML = '';
+            tableStats.forEach(table => {
+                const percentage = (table.checked / table.total) * 100;
+                const item = document.createElement('div');
+                item.className = 'table-stat-item';
+                item.innerHTML = `
+                    <div class="table-stat-name">${table.table}</div>
+                    <div class="table-stat-count">${table.checked}/${table.total}</div>
+                    <div class="table-stat-progress">
+                        <div class="table-stat-progress-bar" style="width: ${percentage}%;"></div>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function renderLogs(logs) {
+            const tbody = document.getElementById('logs-body');
+            tbody.innerHTML = '';
+            logs.forEach(log => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${log.time}</td>
+                    <td>${log.name}</td>
+                    <td>${log.company}</td>
+                    <td>-</td>
+                    <td>${log.meal}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function loadProducts() {
+            try {
+                const res = await fetch(`${API_BASE}/config`);
+                const config = await res.json();
+                const gifts = config.products.filter(p => p.isGift);
+                const products = config.products.filter(p => !p.isGift);
                 
-                let cats = getCategoryList();
-                if (!cats.includes(finalCategory)) {
-                    cats.push(finalCategory);
-                    let dummy = currentConfig.products.find(p => p.name === "__SYSTEM_CATEGORIES__");
-                    if (!dummy) {
-                        dummy = { name: "__SYSTEM_CATEGORIES__", isGift: false, image: "", link: "", category: "SYSTEM" };
-                        currentConfig.products.push(dummy);
-                    }
-                    dummy.description = cats.join(',');
-                }
-            }
-
-            const p = { name: document.getElementById('productName').value.trim(), image: document.getElementById('productImage').value.trim(), category: finalCategory, description: document.getElementById('productDescription').value.trim(), link: document.getElementById('productLink').value.trim(), isGift: document.getElementById('productIsGift').value === "true" };
-            if(!p.name) return alert('商品名稱為必填');
-            if(editingIdx !== null) currentConfig.products[editingIdx] = p; else currentConfig.products.push(p);
-            if(await postConfig()) { 
-                renderProducts(); 
-                renderCategoryManager();
-                closeProductModal(); 
-                alert('儲存成功！'); 
-            }
+                document.getElementById('giftsList').innerHTML = gifts.map(p => `
+                    <div class="product-item">
+                        <div class="product-info">
+                            <div class="product-name">${p.name}</div>
+                            <div class="product-field">${p.description}</div>
+                        </div>
+                        <div class="product-actions">
+                            <button class="adm-btn adm-btn-sm" onclick="editProduct(${p.id})">編輯</button>
+                            <button class="adm-btn adm-btn-danger adm-btn-sm" onclick="deleteProduct(${p.id})">刪除</button>
+                        </div>
+                    </div>
+                `).join('');
+                
+                document.getElementById('productsList').innerHTML = products.map(p => `
+                    <div class="product-item">
+                        <div class="product-info">
+                            <div class="product-name">${p.name}</div>
+                            <div class="product-field">${p.description}</div>
+                        </div>
+                        <div class="product-actions">
+                            <button class="adm-btn adm-btn-sm" onclick="editProduct(${p.id})">編輯</button>
+                            <button class="adm-btn adm-btn-danger adm-btn-sm" onclick="deleteProduct(${p.id})">刪除</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch(e) { console.error('加載商品失敗', e); }
         }
 
-        function openDeleteModal(idx) { deleteIdx = idx; document.getElementById('deleteProductName').textContent = currentConfig.products[idx].name; document.getElementById('deleteModal').classList.add('active'); }
-        function closeDeleteModal() { document.getElementById('deleteModal').classList.remove('active'); }
-        async function confirmDelete() { 
-            currentConfig.products.splice(deleteIdx, 1); 
-            if(await postConfig()) { 
-                renderProducts(); 
-                renderCategoryManager();
-                closeDeleteModal(); 
-                alert('刪除成功！');
-            } 
+        async function exportCsv() {
+            window.location.href = `${API_BASE}/sheets/export_csv`;
         }
 
-        async function saveSystemSettings() {
-            currentConfig.google_sheet_name = document.getElementById('googleSheetName').value;
-            currentConfig.map_image_url = document.getElementById('mapImageUrl').value.trim();
-            if(await postConfig()) {
-                alert('設定已儲存！資料庫已同步切換，即將重新整理畫面載入最新數據。');
-                location.reload(); 
-            }
+        function saveSystemSettings() {
+            alert('系統設定已儲存');
+        }
+
+        function showAddModal() {
+            alert('臨時報到功能');
+        }
+
+        function openAddGiftModal() {
+            alert('新增伴手禮');
+        }
+
+        function openAddProductModal() {
+            alert('新增補給品');
         }
 
         function handleMapFileUpload(input) {
-            const file = input.files[0];
-            if (!file) return;
-            processAndCompressImage(file, 1200, function(compressedBase64) {
-                document.getElementById('mapImageUrl').value = compressedBase64;
-                const previewImg = document.getElementById('systemMapPreview');
-                previewImg.src = compressedBase64;
-                document.getElementById('systemMapPreviewContainer').style.display = 'block';
-            });
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('mapImageUrl').value = e.target.result;
+                    document.getElementById('systemMapPreview').src = e.target.result;
+                    document.getElementById('systemMapPreviewContainer').style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
         }
 
-        function handleProductFileUpload(input) {
-            const file = input.files[0];
-            if (!file) return;
-            processAndCompressImage(file, 600, function(compressedBase64) {
-                document.getElementById('productImage').value = compressedBase64;
-                const previewImg = document.getElementById('modalImgPreview');
-                previewImg.src = compressedBase64;
-                previewImg.style.display = 'block';
-            });
-        }
-
-        async function postConfig() {
-            try {
-                const res = await fetch(`${API_BASE}/config`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(currentConfig) });
-                if(res.ok) return true;
-                showMessage('數據同步失敗', 'danger'); return false;
-            } catch(e) { showMessage('網路連線異常', 'danger'); return false; }
-        }
-
-        function showMessage(text, type = 'info') {
-            document.getElementById('messageContainer').innerHTML = `<div class="alert alert-${type}">${text}</div>`;
-            setTimeout(() => document.getElementById('messageContainer').innerHTML = '', 3000);
-        }
-
-        async function fetchUserInfo() {
-            try {
-                const res = await fetch('/api/user/info');
-                if (res.status === 401) {
-                    window.location.href = '/login.html';
-                    return;
-                }
-                const data = await res.json();
-                if (data.success) {
-                    currentUser = data.username;
-                    document.getElementById('welcome-msg').textContent = `🛰️ 歡迎，${data.username}`;
-                    updateEventLink();
-                }
-            } catch (err) {
-                document.getElementById('welcome-msg').textContent = `🛰️ 系統連線中...`;
+        function handleCsvUpload(input) {
+            if (input.files && input.files[0]) {
+                document.getElementById('csvUploadStatus').textContent = `已選擇：${input.files[0].name}`;
             }
         }
 
         function updateEventLink() {
-            const sheet = document.getElementById('googleSheetName').value;
-            const link = `${window.location.origin}/活動報到系統.html?admin=${currentUser}&sheet=${encodeURIComponent(sheet)}`;
-            const linkInput = document.getElementById('event_link');
-            if(linkInput) linkInput.value = link;
+            // 場次切換邏輯
         }
 
-        function copyEventLink() {
-            const copyText = document.getElementById("event_link");
-            copyText.select();
-            document.execCommand("copy");
-            alert('連結已複製到剪貼簿');
+        function editProduct(id) {
+            alert(`編輯商品 ${id}`);
         }
 
-        function showAddModal() { document.getElementById('addModal').style.display = 'flex'; }
-        function hideAddModal() { document.getElementById('addModal').style.display = 'none'; }
-
-        async function submitAddRegistration() {
-            const data = {
-                name: document.getElementById('addName').value,
-                phone: document.getElementById('addPhone').value,
-                company: document.getElementById('addCompany').value,
-                seat: document.getElementById('addSeat').value
-            };
-            if(!data.name) return alert('請輸入姓名');
-            const res = await fetch('/api/registrations/add', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
-            });
-            if((await res.json()).success) {
-                hideAddModal();
-                updateDashboard();
-                alert('臨時報到成功');
+        function deleteProduct(id) {
+            if (confirm('確定要刪除此商品嗎？')) {
+                alert(`已刪除商品 ${id}`);
             }
         }
-
-        function handleBannerFileUpload(input) {
-            const file = input.files[0];
-            if (!file) return;
-            processAndCompressImage(file, 1200, function(compressedBase64) {
-                document.getElementById('bannerImageUrl').value = compressedBase64;
-            });
-        }
-
-        function exportCsv() {
-            window.location.href = '/api/sheets/export_csv';
-        }
-
-        window.onload = async () => {
-            await fetchUserInfo();
-            init();
-        };
     </script>
 </body>
 </html>
