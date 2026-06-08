@@ -8,114 +8,19 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Michroma", "Stick", "PingFang TC", sans-serif; }
-        
-        body {
-            background-color: #030712;
-            color: #fff;
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* 頂部大氣投影標題列 */
-        .dashboard-header {
-            background: rgba(10, 20, 35, 0.85);
-            border-bottom: 2px solid var(--accent-gray);
-            padding: 1.5rem 3rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            backdrop-filter: blur(10px);
-        }
-
-        .live-badge {
-            background: rgba(239, 68, 68, 0.2);
-            border: 1px solid #ef4444;
-            color: #ef4444;
-            padding: 0.4rem 1rem;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: bold;
-            letter-spacing: 2px;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            animation: pulse 2s infinite;
-        }
-
-        /* 主畫面左右對分架構 */
-        .dashboard-container {
-            flex: 1;
-            display: flex;
-            gap: 2.5rem;
-            padding: 2.5rem;
-            height: calc(100vh - 90px);
-        }
-
-        .panel-left, .panel-right {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-
-        .panel-title {
-            font-size: 1.6rem;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-        }
-
-        /* 議程滾動容器優化 */
-        .agenda-box {
-            flex: 1;
-            overflow-y: auto;
-            padding-right: 15px;
-        }
-
-        .agenda-item {
-            display: flex;
-            gap: 2rem;
-            align-items: center;
-            padding: 1.2rem 1rem;
-            border-bottom: 1px solid rgba(0, 229, 255, 0.15);
-            background: rgba(0, 0, 0, 0.2);
-            margin-bottom: 0.8rem;
-            border-radius: 0.5rem;
-            transition: all 0.3s;
-        }
-        
-        .agenda-item:hover {
-            background: rgba(0, 229, 255, 0.05);
-            border-bottom-color: #00e5ff;
-        }
-
-        .agenda-time {
-            font-weight: bold;
-            color: #00e5ff;
-            font-size: 1.4rem;
-            min-width: 100px;
-            text-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
-        }
-
-        .agenda-desc {
-            color: #ffffff;
-            font-size: 1.3rem;
-            font-weight: 600;
-        }
-
-        /* 隱藏原生滾動條維持大螢幕美觀 */
+        body { background-color: #030712; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        .dashboard-header { background: rgba(10, 20, 35, 0.85); border-bottom: 2px solid var(--accent-gray); padding: 1.5rem 3rem; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(10px); }
+        .live-badge { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.9rem; font-weight: bold; letter-spacing: 2px; display: flex; align-items: center; gap: 0.5rem; animation: pulse 2s infinite; }
+        .dashboard-container { flex: 1; display: flex; gap: 2.5rem; padding: 2.5rem; height: calc(100vh - 90px); }
+        .panel-left, .panel-right { flex: 1; display: flex; flex-direction: column; height: 100%; }
+        .panel-title { font-size: 1.6rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.8rem; }
+        .agenda-box { flex: 1; overflow-y: auto; padding-right: 15px; }
+        .agenda-item { display: flex; gap: 2rem; align-items: center; padding: 1.2rem 1rem; border-bottom: 1px solid rgba(0, 229, 255, 0.15); background: rgba(0, 0, 0, 0.2); margin-bottom: 0.8rem; border-radius: 0.5rem; }
+        .agenda-time { font-weight: bold; color: #00e5ff; font-size: 1.4rem; min-width: 100px; text-shadow: 0 0 8px rgba(0, 229, 255, 0.4); }
+        .agenda-desc { color: #ffffff; font-size: 1.3rem; font-weight: 600; }
         .agenda-box::-webkit-scrollbar { width: 6px; }
-        .agenda-box::-webkit-scrollbar-track { background: transparent; }
         .agenda-box::-webkit-scrollbar-thumb { background: rgba(0, 229, 255, 0.3); border-radius: 3px; }
-
-        @keyframes pulse {
-            0% { opacity: 0.6; }
-            50% { opacity: 1; }
-            100% { opacity: 0.6; }
-        }
+        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
     </style>
 </head>
 <body class="circuit-background">
@@ -154,16 +59,16 @@
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
-        const currentSheet = urlParams.get('sheet') || '';
+        // 核心修改：動態獲取投影畫面的管理員與場次
         const currentAdmin = urlParams.get('admin') || 'admin';
+        const currentSheet = urlParams.get('sheet') || '活動報到名單';
         const API_BASE = '/api';
         let pieChartInstance = null;
 
         window.onload = function() {
             loadConfigTitle();
             fetchDashboardData();
-            // 每 10 秒自動抓取資料庫，有人報到圖表立刻同步更新
-            setInterval(fetchDashboardData, 10000);
+            setInterval(fetchDashboardData, 5000); // 縮短至 5 秒自動同步一次
         };
 
         async function loadConfigTitle() {
@@ -184,7 +89,7 @@
                     renderAgenda(data.agenda);
                     renderPieChart(data.industry_stats);
                 }
-            } catch (e) { console.error("同步資料庫失敗", e); }
+            } catch (e) { console.error(e); }
         }
 
         function renderAgenda(agendaList) {
@@ -203,8 +108,6 @@
 
         function renderPieChart(stats) {
             const ctx = document.getElementById('industryPieChart').getContext('2d');
-            
-            // 過濾掉未分類或是 0 的項目讓大螢幕更好看
             const labels = stats.map(s => s.category);
             const dataValues = stats.map(s => s.count);
 
@@ -216,18 +119,14 @@
             }
 
             pieChartInstance = new Chart(ctx, {
-                type: 'pie', // 改用滿版純圓餅圖，投影更清晰
+                type: 'pie',
                 data: {
                     labels: labels,
                     datasets: [{
                         data: dataValues,
                         backgroundColor: [
-                            'rgba(0, 229, 255, 0.85)',
-                            'rgba(74, 222, 128, 0.85)',
-                            'rgba(255, 165, 0, 0.85)',
-                            'rgba(236, 72, 153, 0.85)',
-                            'rgba(168, 85, 247, 0.85)',
-                            'rgba(251, 113, 133, 0.85)'
+                            'rgba(0, 229, 255, 0.85)', 'rgba(74, 222, 128, 0.85)', 'rgba(255, 165, 0, 0.85)',
+                            'rgba(236, 72, 153, 0.85)', 'rgba(168, 85, 247, 0.85)', 'rgba(251, 113, 133, 0.85)'
                         ],
                         borderColor: '#0a1423',
                         borderWidth: 3
@@ -237,14 +136,7 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: {
-                            position: 'right',
-                            labels: {
-                                color: '#ffffff',
-                                padding: 25,
-                                font: { size: 18, weight: 'bold' }
-                            }
-                        }
+                        legend: { position: 'right', labels: { color: '#ffffff', padding: 25, font: { size: 18, weight: 'bold' } } }
                     }
                 }
             });
