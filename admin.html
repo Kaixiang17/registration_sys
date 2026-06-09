@@ -85,7 +85,7 @@
         .modal-content { max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; padding: 2rem; border-radius: 1rem; border: 1px solid var(--accent-gray); background: rgba(10, 20, 35, 0.9); }
 
 
-        /* 後台右上快速導覽：新增商品 / 地圖入口，不改原本 tabs、商品管理、表單或 API */
+        /* 後台右上只保留必要入口：歡迎、地圖、報到首頁、登出；商品/議程/企業留在下方分頁 */
         .admin-quick-actions {
             display: flex;
             align-items: center;
@@ -94,8 +94,6 @@
         @media(max-width: 768px) {
             .header-container { flex-direction: column; align-items: stretch; gap: 0.8rem; }
             .header-actions { flex-wrap: wrap; gap: 0.5rem; justify-content: flex-start; }
-            .admin-quick-actions { width: 100%; gap: 0.5rem; }
-            .admin-quick-actions .adm-btn { flex: 1; }
             .tabs { overflow-x: auto; white-space: nowrap; }
         }
     </style>
@@ -107,12 +105,7 @@
             <div class="header-title neon-text" style="font-size: 1.2rem;">⚙️ 智慧方舟 - 艦橋管理中心</div>
             <div class="header-actions">
                 <span id="welcome-msg" class="neon-text" style="font-size: 0.9rem; margin-right: 1rem; color: #4ade80;">歡迎，載入中...</span>
-                <div class="admin-quick-actions">
-                    <button type="button" class="adm-btn adm-btn-sm" onclick="switchAdminTab('products')">🛒 商品專區</button>
-                    <button type="button" class="adm-btn adm-btn-sm" onclick="switchAdminTab('system')">🗺️ 地圖導覽</button>
-                    <button type="button" class="adm-btn adm-btn-sm" onclick="switchAdminTab('agenda')">📅 議程</button>
-                    <button type="button" class="adm-btn adm-btn-sm" onclick="switchAdminTab('exhibitors')">🏢 企業</button>
-                </div>
+                <button type="button" class="adm-btn adm-btn-sm" onclick="switchAdminTab('system')">🗺️ 地圖</button>
                 <a class="adm-btn adm-btn-sm" href="/">📋 報到首頁</a>
                 <a class="adm-btn adm-btn-ghost adm-btn-sm" href="/api/logout">🚪 登出</a>
             </div>
