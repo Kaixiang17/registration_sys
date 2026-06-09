@@ -1,146 +1,50 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智慧方舟 - 大會即時資訊看板</title>
-    <link rel="stylesheet" href="smart-ark-theme.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Michroma", "Stick", "PingFang TC", sans-serif; }
-        body { background-color: #030712; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
-        .dashboard-header { background: rgba(10, 20, 35, 0.85); border-bottom: 2px solid var(--accent-gray); padding: 1.5rem 3rem; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(10px); }
-        .live-badge { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.9rem; font-weight: bold; letter-spacing: 2px; display: flex; align-items: center; gap: 0.5rem; animation: pulse 2s infinite; }
-        .dashboard-container { flex: 1; display: flex; gap: 2.5rem; padding: 2.5rem; height: calc(100vh - 90px); }
-        .panel-left, .panel-right { flex: 1; display: flex; flex-direction: column; height: 100%; }
-        .panel-title { font-size: 1.6rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.8rem; }
-        .agenda-box { flex: 1; overflow-y: auto; padding-right: 15px; }
-        .agenda-item { display: flex; gap: 2rem; align-items: center; padding: 1.2rem 1rem; border-bottom: 1px solid rgba(0, 229, 255, 0.15); background: rgba(0, 0, 0, 0.2); margin-bottom: 0.8rem; border-radius: 0.5rem; }
-        .agenda-time { font-weight: bold; color: #00e5ff; font-size: 1.4rem; min-width: 100px; text-shadow: 0 0 8px rgba(0, 229, 255, 0.4); }
-        .agenda-desc { color: #ffffff; font-size: 1.3rem; font-weight: 600; }
-        .agenda-box::-webkit-scrollbar { width: 6px; }
-        .agenda-box::-webkit-scrollbar-thumb { background: rgba(0, 229, 255, 0.3); border-radius: 3px; }
-        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
-    </style>
-</head>
-<body class="circuit-background">
-    <div class="ark-background"></div>
+-- 👑 【新增：議程表】
+CREATE TABLE IF NOT EXISTS event_agenda (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    admin_user VARCHAR(100) NOT NULL,
+    event_key VARCHAR(255) NOT NULL,
+    time VARCHAR(10),
+    event VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_agenda (admin_user, event_key, time)
+);
 
-    <header class="dashboard-header">
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <span style="font-size: 2rem;">✈️</span>
-            <h1 id="main-title" class="neon-text" style="font-size: 2rem; letter-spacing: 4px;">智 慧 方 舟 戰 情 中 心</h1>
-        </div>
-        <div class="live-badge">
-            <span style="width: 8px; height: 8px; background-color: #ef4444; border-radius: 50%;"></span>
-            LIVE 即 時 連 線 中
-        </div>
-    </header>
+-- 👑 【新增：企業展示表】
+CREATE TABLE IF NOT EXISTS event_exhibitors (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    admin_user VARCHAR(100) NOT NULL,
+    event_key VARCHAR(255) NOT NULL,
+    company_name VARCHAR(255) NOT NULL,
+    industry VARCHAR(100),
+    logo VARCHAR(500),
+    description TEXT,
+    website VARCHAR(500),
+    contact VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_exhibitor (admin_user, event_key, company_name)
+);
 
-    <main class="dashboard-container">
-        <section class="panel-left">
-            <h2 class="panel-title neon-text">📊 今日參與企業行業分佈</h2>
-            <div class="cyber-card" style="flex: 1; padding: 3rem; border-radius: 1rem; display: flex; align-items: center; justify-content: center; background: rgba(10, 20, 35, 0.75);">
-                <div style="position: relative; height: 90%; width: 90%;">
-                    <canvas id="industryPieChart"></canvas>
-                </div>
-            </div>
-        </section>
+-- 👑 【新增：公司行業對照表】
+CREATE TABLE IF NOT EXISTS company_industry_mapping (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    admin_user VARCHAR(100) NOT NULL,
+    event_key VARCHAR(255) NOT NULL,
+    company_name VARCHAR(255) NOT NULL,
+    industry VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_mapping (admin_user, event_key, company_name)
+);
 
-        <section class="panel-right">
-            <h2 class="panel-title neon-text">🕒 今日活動大會議程</h2>
-            <div class="cyber-card" style="flex: 1; padding: 2.5rem; border-radius: 1rem; display: flex; flex-direction: column; background: rgba(10, 20, 35, 0.75);">
-                <div id="agendaListContainer" class="agenda-box">
-                    <div style="color:#aaa; font-size: 1.2rem; text-align: center; margin-top: 5rem;">📡 正在建構安全同步連線...</div>
-                </div>
-            </div>
-        </section>
-    </main>
+-- 👑 【修改：報到表 - 新增原報名餐食欄位】
+ALTER TABLE event_registrations 
+ADD COLUMN IF NOT EXISTS original_meal_choice VARCHAR(50) DEFAULT '未選擇';
 
-    <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        // 核心修改：動態獲取投影畫面的管理員與場次
-        const currentAdmin = urlParams.get('admin') || 'admin';
-        const currentSheet = urlParams.get('sheet') || '活動報到名單';
-        const API_BASE = '/api';
-        let pieChartInstance = null;
+-- 👑 【修改：配置表 - 新增 Banner 圖片欄位】
+ALTER TABLE event_configs 
+ADD COLUMN IF NOT EXISTS banner_image_url VARCHAR(500) DEFAULT '';
 
-        window.onload = function() {
-            loadConfigTitle();
-            fetchDashboardData();
-            setInterval(fetchDashboardData, 5000); // 縮短至 5 秒自動同步一次
-        };
-
-        async function loadConfigTitle() {
-            try {
-                const res = await fetch(`${API_BASE}/config?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
-                const config = await res.json();
-                if (config && config.google_sheet_name) {
-                    document.getElementById('main-title').textContent = config.google_sheet_name.split('').join(' ') + ' 戰 情 中 心';
-                }
-            } catch(e) {}
-        }
-
-        async function fetchDashboardData() {
-            try {
-                const res = await fetch(`${API_BASE}/public_dashboard?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
-                const data = await res.json();
-                if (data.success) {
-                    renderAgenda(data.agenda);
-                    renderPieChart(data.industry_stats);
-                }
-            } catch (e) { console.error(e); }
-        }
-
-        function renderAgenda(agendaList) {
-            const container = document.getElementById('agendaListContainer');
-            if (!agendaList || agendaList.length === 0) {
-                container.innerHTML = '<div style="color:#aaa; text-align:center; padding-top:5rem; font-size:1.2rem;">歡迎蒞臨大會，目前尚無設定議程資訊</div>';
-                return;
-            }
-            container.innerHTML = agendaList.map(item => `
-                <div class="agenda-item">
-                    <div class="agenda-time">${item.time_str}</div>
-                    <div class="agenda-desc">${item.task_desc}</div>
-                </div>
-            `).join('');
-        }
-
-        function renderPieChart(stats) {
-            const ctx = document.getElementById('industryPieChart').getContext('2d');
-            const labels = stats.map(s => s.category);
-            const dataValues = stats.map(s => s.count);
-
-            if (pieChartInstance) {
-                pieChartInstance.data.labels = labels;
-                pieChartInstance.data.datasets[0].data = dataValues;
-                pieChartInstance.update();
-                return;
-            }
-
-            pieChartInstance = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: dataValues,
-                        backgroundColor: [
-                            'rgba(0, 229, 255, 0.85)', 'rgba(74, 222, 128, 0.85)', 'rgba(255, 165, 0, 0.85)',
-                            'rgba(236, 72, 153, 0.85)', 'rgba(168, 85, 247, 0.85)', 'rgba(251, 113, 133, 0.85)'
-                        ],
-                        borderColor: '#0a1423',
-                        borderWidth: 3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'right', labels: { color: '#ffffff', padding: 25, font: { size: 18, weight: 'bold' } } }
-                    }
-                }
-            });
-        }
-    </script>
-</body>
-</html>
+-- 👑 【查詢：驗證新增欄位】
+DESCRIBE event_registrations;
+DESCRIBE event_agenda;
+DESCRIBE event_exhibitors;
+DESCRIBE company_industry_mapping;
