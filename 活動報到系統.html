@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>智慧方舟 - 航空登機系統</title>
-    <link rel="stylesheet" href="smart-ark-theme.css?v=7">
+    <link rel="stylesheet" href="smart-ark-theme.css?v=9">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     <style>
         /* ============================================================
            電腦版原始樣式
@@ -17,13 +18,38 @@
         .state-hidden { display: none !important; }
         
         .verify-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-top: 2rem; }
-        .verify-card { padding: 2.5rem 1.5rem; text-align: center; cursor: pointer; border-radius: 1rem; }
+        .verify-card { padding: 2.5rem 1.5rem; text-align: center; cursor: pointer; border-radius: 1rem; position: relative; }
+        .verify-card.company-card { position: relative; }
+        .company-card-hint { position: absolute; top: 8px; right: 12px; background: rgba(255,165,0,0.9); color: #000; padding: 0.35rem 0.7rem; border-radius: 0.35rem; font-size: 0.75rem; font-weight: bold; letter-spacing: 0.5px; }
         .form-card { max-width: 600px; margin: 0 auto; padding: 3rem; text-align: center; border-radius: 1.5rem; }
         .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2.5rem; }
         .product-img { width: 100%; height: 220px; object-fit: contain; background: rgba(0,0,0,0.4); border-bottom: 1px solid var(--accent-gray); }
         .btn-back-nav { background: none; border: 1px solid var(--accent-gray); color: var(--text-dark); padding: 0.5rem 1.2rem; border-radius: 0.5rem; cursor: pointer; font-weight: bold; transition: 0.3s; margin-bottom: 1.5rem; display: inline-flex; align-items: center; gap: 0.5rem; }
         .btn-back-nav:hover { border-color: var(--text-dark); background: rgba(0, 229, 255, 0.1); }
         .cyber-input { width: 100%; margin-bottom: 1.5rem; padding: 1.2rem; font-size: 1.2rem; }
+        
+        /* 議程與圓餅圖區域 */
+        .agenda-section { display: grid; grid-template-columns: 1fr 1.5fr; gap: 2rem; margin: 3rem 0; }
+        .pie-chart-container { background: rgba(0,0,0,0.3); border: 1px solid rgba(0,229,255,0.2); border-radius: 1rem; padding: 2rem; text-align: center; }
+        .pie-chart-title { color: var(--text-dark); font-size: 1.2rem; margin-bottom: 1.5rem; font-weight: bold; }
+        .pie-chart-canvas { max-width: 100%; height: 300px; }
+        .agenda-container { background: rgba(0,0,0,0.3); border: 1px solid rgba(0,229,255,0.2); border-radius: 1rem; padding: 2rem; }
+        .agenda-title { color: var(--text-dark); font-size: 1.2rem; margin-bottom: 1.5rem; font-weight: bold; }
+        .agenda-item { display: flex; gap: 1rem; margin-bottom: 1.2rem; padding: 1rem; background: rgba(0,229,255,0.05); border-left: 3px solid var(--text-dark); border-radius: 0.5rem; }
+        .agenda-time { color: var(--text-dark); font-weight: bold; min-width: 70px; }
+        .agenda-event { color: #ccc; flex-grow: 1; }
+        
+        /* 企業展示專區 */
+        .exhibitor-section { margin: 3rem 0; }
+        .exhibitor-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+        .exhibitor-card { background: rgba(0,0,0,0.4); border: 1px solid rgba(0,229,255,0.2); border-radius: 1rem; padding: 1.5rem; cursor: pointer; transition: all 0.3s; }
+        .exhibitor-card:hover { border-color: var(--text-dark); background: rgba(0,229,255,0.1); box-shadow: 0 0 15px rgba(0,229,255,0.2); }
+        .exhibitor-logo { width: 100%; height: 100px; background: rgba(255,255,255,0.05); border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 3rem; margin-bottom: 1rem; }
+        .exhibitor-name { font-size: 1.1rem; font-weight: bold; margin-bottom: 0.5rem; color: var(--text-dark); }
+        .exhibitor-industry { font-size: 0.85rem; color: #aaa; margin-bottom: 1rem; }
+        .exhibitor-desc { font-size: 0.9rem; color: #ccc; margin-bottom: 1.5rem; line-height: 1.4; }
+        .exhibitor-btn { display: inline-block; background: rgba(0,229,255,0.1); border: 1px solid rgba(0,229,255,0.5); color: var(--text-dark); padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; }
+        .exhibitor-btn:hover { background: rgba(0,229,255,0.2); border-color: var(--text-dark); }
         /* .cyber-button overridden by .ck-btn system above */
         .group-item { padding: 1.5rem; border-bottom: 1px solid rgba(0,229,255,0.2); cursor: pointer; transition: 0.3s; text-align: left; display: flex; justify-content: space-between; align-items: center;}
         .group-item:hover { background: rgba(0,229,255,0.1); }
@@ -42,6 +68,15 @@
             box-shadow: 0 0 15px rgba(255, 165, 0, 0.5) !important;
         }
         .info-box { text-align: left; padding: 1.5rem; border-radius: 1rem; margin: 1.5rem 0; background: rgba(0,0,0,0.3); }
+
+        .success-detail-row { display: flex; justify-content: space-between; padding: 0.8rem 0; border-bottom: 1px solid rgba(0,229,255,0.1); font-size: 1rem; }
+        .success-detail-row:last-child { border-bottom: none; }
+        .success-detail-label { color: #aaa; font-weight: 600; }
+        .success-detail-value { color: var(--text-dark); font-weight: bold; text-align: right; }
+        .success-detail-value.highlight { color: #4ade80; font-size: 1.1rem; }
+        .success-instruction { margin-top: 1.5rem; padding: 1rem; background: rgba(74,222,128,0.1); border-left: 3px solid #4ade80; border-radius: 0.5rem; }
+        .success-instruction-title { color: #4ade80; font-weight: bold; margin-bottom: 0.5rem; }
+        .success-instruction-item { color: #ccc; margin: 0.3rem 0; padding-left: 1rem; }
 
         /* ============================================================
            手機端專屬修復
@@ -62,6 +97,8 @@
             #proxyForm { padding: 1rem !important; margin-bottom: 1.2rem !important; }
             #productState > div:first-child { flex-direction: column !important; align-items: center !important; gap: 1rem !important; }
             .products-grid { grid-template-columns: 1fr !important; gap: 1.5rem !important; }
+            .agenda-section { grid-template-columns: 1fr !important; gap: 1rem !important; }
+            .exhibitor-grid { grid-template-columns: 1fr !important; }
             #tempMealRadioGroup { grid-template-columns: 1fr !important; gap: 0.8rem !important; }
         }
 
@@ -187,8 +224,9 @@
                     <div class="verify-card cyber-card cyber-hover" onclick="prepareSearch('email', 'Email')">
                         <div style="font-size:3.5rem;">✉️</div><h3 class="neon-text">Email 報 到</h3>
                     </div>
-                    <div class="verify-card cyber-card cyber-hover" onclick="prepareSearch('company', '公司')">
+                    <div class="verify-card cyber-card cyber-hover company-card" onclick="prepareSearch('company', '公司')">
                         <div style="font-size:3.5rem;">🏢</div><h3 class="neon-text">公 司 報 到</h3>
+                        <div class="company-card-hint">👑 代理人報到</div>
                     </div>
                 </div>
             </div>
@@ -258,9 +296,26 @@
         <div id="successState" class="state-hidden">
             <div class="form-card cyber-card">
                 <div id="successIcon" style="color:var(--text-dark); font-size:6rem;">✅</div>
-                <h2 id="successTitle" class="neon-text">手 續 完 成 ！</h2>
+                <h2 id="successTitle" class="neon-text" style="margin-bottom: 2rem;">報 到 成 功 ！</h2>
                 <div id="successInfo" class="info-box panel-border"></div>
-                <button class="ck-btn ck-btn-ghost" onclick="resetToHome()" style="max-width:260px; margin:0 auto;">← 回 到 大 廳</button>
+                
+                <div class="agenda-section">
+                    <div class="pie-chart-container">
+                        <div class="pie-chart-title">📊 今日行業別統計</div>
+                        <canvas id="industryPieChart" class="pie-chart-canvas"></canvas>
+                    </div>
+                    <div class="agenda-container">
+                        <div class="agenda-title">📅 大會議程</div>
+                        <div id="agendaList"></div>
+                    </div>
+                </div>
+
+                <div class="exhibitor-section">
+                    <h2 class="neon-text" style="margin-bottom: 1.5rem; font-size: 1.4rem;">🏢 今日參與企業</h2>
+                    <div class="exhibitor-grid" id="exhibitorGrid"></div>
+                </div>
+
+                <button class="ck-btn ck-btn-ghost" onclick="resetToHome()" style="max-width:260px; margin:0 auto; margin-top:2rem;">← 回 到 大 廳</button>
             </div>
         </div>
 
@@ -300,6 +355,7 @@
         window.allProducts = [];
         window.currentCategory = '全部';
         window.selectedTempMealChoice = '葷食'; // 臨時餐飲預設值
+        let industryPieChart = null;
 
         window.onload = function() {
             if (!currentSheet) {
@@ -464,7 +520,7 @@
                     else if (json.data.length === 1) { 
                         const u = json.data[0];
                         if (u.status === 'checked_in' || u.status === '已報到' || u.status === '替代') {
-                            alert('🛬 旅客已完成登機報到手續！'); return;
+                            renderAlreadyCheckedIn(u); return;
                         }
                         selectedUser = u; 
                         renderMealOptions(); 
@@ -519,6 +575,39 @@
             setAppState('groupList');
         }
 
+        function renderAlreadyCheckedIn(user) {
+            document.getElementById('successTitle').textContent = '已 完 成 報 到';
+            document.getElementById('successInfo').innerHTML = `
+                <div class="success-detail-row">
+                    <span class="success-detail-label">姓 名</span>
+                    <span class="success-detail-value">${user.name || ''}</span>
+                </div>
+                <div class="success-detail-row">
+                    <span class="success-detail-label">公 司</span>
+                    <span class="success-detail-value">${user.company || '無'}</span>
+                </div>
+                <div class="success-detail-row">
+                    <span class="success-detail-label">桌 次</span>
+                    <span class="success-detail-value highlight">${user.seat || '現場安排'}</span>
+                </div>
+                <div class="success-detail-row">
+                    <span class="success-detail-label">原報名餐食</span>
+                    <span class="success-detail-value">${user.original_meal || user.meal || '未選擇'}</span>
+                </div>
+                <div class="success-detail-row">
+                    <span class="success-detail-label">目前餐食</span>
+                    <span class="success-detail-value">${user.meal || '未選擇'}</span>
+                </div>
+                <div class="success-instruction">
+                    <div class="success-instruction-title">請持此畫面至：</div>
+                    <div class="success-instruction-item">① 領識別證</div>
+                    <div class="success-instruction-item">② 領禮品</div>
+                </div>
+            `;
+            loadAgendaAndExhibitors();
+            setAppState('success');
+        }
+
         function renderUserList(users, title) {
             const list = document.getElementById('groupList');
             list.innerHTML = '';
@@ -528,7 +617,7 @@
                 const statusTag = isRegistered ? '<span style="color:#f87171; font-weight:bold;">[已報到]</span>' : '<span>➔</span>';
                 div.innerHTML = `<div><div style="font-weight:bold; font-size:1.2rem;">${u.name}</div><div style="font-size:0.9rem; color:#aaa;">${u.company}</div></div>${statusTag}`;
                 div.onclick = () => {
-                    if (isRegistered) { alert('🛬 旅客已完成登機報到手續！'); } 
+                    if (isRegistered) { renderAlreadyCheckedIn(u); } 
                     else { selectedUser = u; renderMealOptions(); }
                 };
                 list.appendChild(div);
@@ -605,22 +694,130 @@
                 const json = await res.json();
                 if (json.success) {
                     const u = json.data;
+                    document.getElementById('successTitle').textContent = '報 到 成 功 ！';
                     document.getElementById('successInfo').innerHTML = `
-                        <div style="margin-bottom:0.5rem;">旅 客 ： <b>${u.name}</b></div>
-                        <div style="margin-bottom:0.5rem;">單 位 ： ${u.company}</div>
-                        <div style="margin-bottom:0.5rem;">座 位 ： <span style="font-size:1.5rem; color:var(--text-dark); font-weight:bold;">${u.seat || '現 場 安 排'}</span></div>
-                        <div style="margin-bottom:0.5rem;">餐 飲 ： <span style="color:#00e5ff; font-weight:bold;">${meal}</span></div>
-                        <div>時 間 ： ${u.checkedInAt}</div>
+                        <div class="success-detail-row">
+                            <span class="success-detail-label">姓 名</span>
+                            <span class="success-detail-value">${u.name || selectedUser.name || ''}</span>
+                        </div>
+                        <div class="success-detail-row">
+                            <span class="success-detail-label">公 司</span>
+                            <span class="success-detail-value">${u.company || selectedUser.company || '無'}</span>
+                        </div>
+                        <div class="success-detail-row">
+                            <span class="success-detail-label">桌 次</span>
+                            <span class="success-detail-value highlight">${u.seat || selectedUser.seat || '現場安排'}</span>
+                        </div>
+                        <div class="success-detail-row">
+                            <span class="success-detail-label">原報名餐食</span>
+                            <span class="success-detail-value">${u.original_meal || selectedUser.original_meal || selectedUser.meal || '未選擇'}</span>
+                        </div>
+                        <div class="success-detail-row">
+                            <span class="success-detail-label">目前餐食</span>
+                            <span class="success-detail-value">${u.meal || meal}</span>
+                        </div>
+                        <div class="success-instruction">
+                            <div class="success-instruction-title">請持此畫面至：</div>
+                            <div class="success-instruction-item">① 領識別證</div>
+                            <div class="success-instruction-item">② 領禮品</div>
+                        </div>
                     `;
+                    loadAgendaAndExhibitors();
                     setAppState('success');
                 } else {
-                    if (json.error === 'already_done') { alert('🛬 旅客已完成登機報到手續！'); } 
+                    if (json.error === 'already_done') { renderAlreadyCheckedIn(json.data || selectedUser); } 
                     else { alert('報 到 失 敗'); }
                     btn.disabled = false; btn.innerHTML = '<span>確 認 並 核 發 登 機 證</span>';
                 }
             } catch(e) { 
                 alert('網 路 異 常'); btn.disabled = false; btn.innerHTML = '<span>確 認 並 核 發 登 機 證</span>';
             }
+        }
+
+        async function loadAgendaAndExhibitors() {
+            try {
+                const agendaRes = await fetch(`${API_BASE}/agenda?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
+                const agendaData = await agendaRes.json();
+                renderAgenda(agendaData.data || []);
+
+                const exhibitorRes = await fetch(`${API_BASE}/exhibitors?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
+                const exhibitorData = await exhibitorRes.json();
+                renderExhibitors(exhibitorData.exhibitors || []);
+                updateIndustryPieChart(exhibitorData.industry_stats || {});
+            } catch(e) {
+                console.error('加載議程/企業失敗', e);
+                renderAgenda([]);
+                renderExhibitors([]);
+                updateIndustryPieChart({});
+            }
+        }
+
+        function renderAgenda(items) {
+            const container = document.getElementById('agendaList');
+            if (!container) return;
+            if (!items.length) {
+                container.innerHTML = '<div style="color:#aaa;">後台尚未設定議程，或目前無資料。</div>';
+                return;
+            }
+            container.innerHTML = items.map(item => `
+                <div class="agenda-item">
+                    <div class="agenda-time">${item.time || ''}</div>
+                    <div class="agenda-event">${item.event || ''}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderExhibitors(exhibitors) {
+            const container = document.getElementById('exhibitorGrid');
+            if (!container) return;
+            if (!exhibitors.length) {
+                container.innerHTML = '<div style="color:#aaa;">目前尚無企業展示資料。</div>';
+                return;
+            }
+            container.innerHTML = exhibitors.map(ex => `
+                <div class="exhibitor-card" onclick="viewExhibitor('${String(ex.id || '').replace(/'/g, "\'")}')">
+                    <div class="exhibitor-logo">${ex.logo || '🏢'}</div>
+                    <div class="exhibitor-name">${ex.name || '未命名企業'}</div>
+                    <div class="exhibitor-industry">${ex.industry || '未分類'}</div>
+                    <div class="exhibitor-desc">${ex.description || '暫無介紹'}</div>
+                    <button class="exhibitor-btn" onclick="event.stopPropagation(); viewExhibitor('${String(ex.id || '').replace(/'/g, "\'")}')">查看詳情 →</button>
+                </div>
+            `).join('');
+        }
+
+        function updateIndustryPieChart(stats) {
+            const canvas = document.getElementById('industryPieChart');
+            if (!canvas || typeof Chart === 'undefined') return;
+            const ctx = canvas.getContext('2d');
+            let labels = Object.keys(stats || {});
+            let data = Object.values(stats || {});
+            if (!labels.length) {
+                labels = ['未分類'];
+                data = [1];
+            }
+            const colors = ['#00e5ff', '#4ade80', '#ffa500', '#f87171', '#a78bfa', '#06b6d4', '#f472b6', '#fde047'];
+            if (industryPieChart) industryPieChart.destroy();
+            industryPieChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels,
+                    datasets: [{
+                        data,
+                        backgroundColor: colors.slice(0, labels.length),
+                        borderColor: 'rgba(10, 20, 35, 0.9)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { color: '#ccc', font: { size: 12 } } } }
+                }
+            });
+        }
+
+        function viewExhibitor(id) {
+            alert(`查看企業 ${id} 的詳細資訊`);
         }
 
         async function showProducts() {
