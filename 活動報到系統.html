@@ -184,6 +184,50 @@
                 letter-spacing: 1px !important;
             }
         }
+
+        /* 手機首頁 header：標題與功能按鈕分兩層，避免一開始首頁按鈕擠在一起 */
+        @media(max-width: 640px) {
+            .header-container {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                justify-content: center !important;
+                gap: 0.65rem !important;
+                padding: 0 0.85rem !important;
+            }
+            .header-home-title {
+                justify-content: center !important;
+                width: 100% !important;
+            }
+            .header-action-buttons {
+                width: 100% !important;
+                display: grid !important;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 0.45rem !important;
+            }
+            .header-action-buttons .ck-btn-pill {
+                width: 100% !important;
+                justify-content: center !important;
+                padding: 0.48rem 0.35rem !important;
+                font-size: 0.72rem !important;
+                letter-spacing: 0 !important;
+                line-height: 1.2 !important;
+                white-space: nowrap !important;
+            }
+            .header-action-buttons.with-shop {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+
+        @media(max-width: 370px) {
+            .header-action-buttons .ck-btn-pill {
+                font-size: 0.68rem !important;
+                padding-left: 0.2rem !important;
+                padding-right: 0.2rem !important;
+            }
+            .header-title-text {
+                font-size: 0.86rem !important;
+            }
+        }
     </style>
 </head>
 <body class="circuit-background">
@@ -199,12 +243,13 @@
 
     <header class="panel-border" style="border-top:none; border-left:none; border-right:none; background: rgba(10,20,35,0.8);">
         <div class="header-container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 12px;">
-            <div onclick="resetToHome()" style="cursor:pointer; color:var(--text-dark); font-weight: bold; display: flex; align-items: center; gap: 6px; min-width: 0;">
+            <div class="header-home-title" onclick="resetToHome()" style="cursor:pointer; color:var(--text-dark); font-weight: bold; display: flex; align-items: center; gap: 6px; min-width: 0;">
                 <span style="font-size: 1.3rem;">✈️</span>
                 <span id="header-title" class="header-title-text" style="font-size: 1.15rem; letter-spacing: 2px; white-space: nowrap;">航 班 大 廳</span>
             </div>
             <div class="header-action-buttons">
                 <button id="shopBtn" class="ck-btn-pill" onclick="goToShop()" style="display:none; border-color:rgba(0,229,255,0.5);">🛒 商品專區</button>
+                <button id="dashboardBtn" class="ck-btn-pill" onclick="goToDashboard()" style="border-color:rgba(74,222,128,0.5); color:#4ade80;">📊 儀錶板</button>
                 <button id="mapBtn" class="ck-btn-pill" onclick="toggleMapModal(true)">🗺️ 地圖導覽</button>
             </div>
         </div>
@@ -394,7 +439,8 @@
             setTimeout(() => {
                 splash.style.display = 'none';
                 setAppState('methodSelection'); 
-                document.getElementById('shopBtn').style.display = 'block'; 
+                document.getElementById('shopBtn').style.display = 'inline-flex';
+                document.querySelector('.header-action-buttons')?.classList.add('with-shop');
             }, 800);
         }
 
@@ -404,6 +450,12 @@
                 splash.style.display = 'none';
             }
             showProducts();
+        }
+
+        function goToDashboard() {
+            const sheet = currentSheet || (systemConfig && systemConfig.google_sheet_name) || '活動報到名單';
+            const url = `dashboard.html?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(sheet)}`;
+            window.location.href = url;
         }
 
         function setAppState(s) {
