@@ -11,18 +11,20 @@
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            height: 100vh; 
-            overflow: hidden;
+            min-height: 100vh; 
+            overflow-x: hidden;
             background-color: #030712;
+            padding: 1.5rem;
         }
         
         /* 大氣且極具科技感的玻璃面板控制台 */
         .login-card { 
-            width: 520px; /* 全面放大寬度 */
-            padding: 4rem 3.5rem; /* 加大內部空間 */
+            width: 520px;
+            max-width: 100%;
+            padding: 3.5rem 3.2rem;
             text-align: center; 
             position: relative;
-            background: rgba(10, 20, 35, 0.75) !important;
+            background: rgba(10, 20, 35, 0.82) !important;
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(0, 229, 255, 0.35) !important;
@@ -46,16 +48,65 @@
             opacity: 0.6;
         }
 
+        .login-icon {
+            font-size: 4.2rem;
+            margin-bottom: 0.65rem;
+            filter: drop-shadow(0 0 14px rgba(255, 140, 0, 0.55));
+        }
+
+        /* 修正截圖中標題過黑的問題：標題改用高對比青白色 */
+        .auth-title {
+            margin-bottom: 0.5rem;
+            font-size: 2.35rem;
+            color: #eaffff !important;
+            text-shadow: 0 0 10px rgba(0,229,255,0.7), 0 0 24px rgba(0,229,255,0.28);
+            letter-spacing: 2px;
+            font-weight: 800;
+        }
+
         .tech-sub-title {
-            color: rgba(0, 229, 255, 0.4);
+            color: rgba(0, 229, 255, 0.78);
             font-size: 0.8rem;
             letter-spacing: 4px;
-            margin-bottom: 3rem;
+            margin-bottom: 2.3rem;
             text-transform: uppercase;
             font-weight: bold;
         }
 
-        /* 強制覆寫瀏覽器記憶自動填寫（Autofill）的醜陋底色，維持完美科技透明感 */
+        .auth-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.7rem;
+            margin-bottom: 1.6rem;
+            padding: 0.35rem;
+            border: 1px solid rgba(0,229,255,0.22);
+            border-radius: 0.75rem;
+            background: rgba(0,0,0,0.18);
+        }
+
+        .auth-tab-btn {
+            border: 1px solid transparent;
+            background: transparent;
+            color: #8aa0aa;
+            padding: 0.75rem 0.6rem;
+            border-radius: 0.55rem;
+            cursor: pointer;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            transition: all 0.18s ease;
+        }
+
+        .auth-tab-btn.active {
+            color: #00e5ff;
+            border-color: rgba(0,229,255,0.42);
+            background: rgba(0,229,255,0.11);
+            box-shadow: 0 0 16px rgba(0,229,255,0.12);
+        }
+
+        .auth-form { display: none; }
+        .auth-form.active { display: block; }
+
+        /* 強制覆寫瀏覽器記憶自動填寫底色，維持科技透明感 */
         input:-webkit-autofill,
         input:-webkit-autofill:hover,
         input:-webkit-autofill:focus,
@@ -65,24 +116,22 @@
             transition: background-color 5000s ease-in-out 0s;
         }
 
-        /* 放大輸入框尺寸，加強行高與字體 */
         .cyber-input { 
-            margin-bottom: 1.8rem; 
+            margin-bottom: 1.25rem; 
             width: 100%; 
-            padding: 1.25rem;
-            font-size: 1.2rem;
-            letter-spacing: 2px;
+            padding: 1.15rem 1.2rem;
+            font-size: 1.08rem;
+            letter-spacing: 1.5px;
             border-radius: 0.5rem;
         }
 
-        /* 放大操作按鈕，加強點擊視覺效果 */
         .cyber-button { 
             width: 100%; 
-            margin-top: 1rem; 
-            padding: 1.25rem; 
-            font-size: 1.25rem;
+            margin-top: 0.75rem; 
+            padding: 1.15rem; 
+            font-size: 1.08rem;
             font-weight: bold;
-            letter-spacing: 4px;
+            letter-spacing: 3px;
             border-radius: 0.5rem;
             cursor: pointer;
             display: flex;
@@ -91,20 +140,50 @@
             gap: 0.5rem;
         }
 
-        /* 紅色高警報警戒錯誤提示框 */
-        .err { 
-            color: #ff4d4d; 
-            background: rgba(255, 77, 77, 0.1);
-            border: 1px solid rgba(255, 77, 77, 0.4);
-            font-size: 1rem; 
+        .cyber-button.secondary {
+            border-color: rgba(74,222,128,0.55);
+            color: #4ade80;
+            background: rgba(74,222,128,0.08);
+        }
+
+        .cyber-button.secondary:hover:not(:disabled) {
+            background: rgba(74,222,128,0.18);
+            border-color: #4ade80;
+            box-shadow: 0 0 18px rgba(74,222,128,0.18);
+        }
+
+        .hint-text {
+            color: #8aa0aa;
+            font-size: 0.82rem;
+            line-height: 1.65;
+            margin-top: 1rem;
+            letter-spacing: 0.5px;
+            text-align: left;
+        }
+
+        .message-box { 
+            font-size: 0.95rem; 
             padding: 0.8rem;
             border-radius: 0.5rem;
-            margin-bottom: 1.5rem; 
+            margin-bottom: 1.3rem; 
             display: none; 
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
             animation: shake 0.4s ease;
+            line-height: 1.5;
+        }
+
+        .message-box.error {
+            color: #ff6b6b; 
+            background: rgba(255, 77, 77, 0.1);
+            border: 1px solid rgba(255, 77, 77, 0.4);
+        }
+
+        .message-box.success {
+            color: #4ade80;
+            background: rgba(74,222,128,0.1);
+            border: 1px solid rgba(74,222,128,0.4);
         }
 
         @keyframes panelSlideIn {
@@ -117,32 +196,95 @@
             25% { transform: translateX(-6px); }
             75% { transform: translateX(6px); }
         }
+
+        @media(max-width: 600px) {
+            body { padding: 0.8rem; align-items: flex-start; padding-top: 2rem; }
+            .login-card { padding: 2.4rem 1.35rem; }
+            .login-icon { font-size: 3.4rem; }
+            .auth-title { font-size: 1.8rem; letter-spacing: 1px; }
+            .tech-sub-title { font-size: 0.68rem; letter-spacing: 2.5px; margin-bottom: 1.8rem; }
+            .cyber-input { font-size: 1rem; padding: 1rem; }
+            .cyber-button { font-size: 0.95rem; letter-spacing: 1.5px; }
+            .auth-tab-btn { font-size: 0.85rem; letter-spacing: 1px; }
+        }
     </style>
 </head>
 <body class="circuit-background">
     <div class="ark-background"></div>
     
     <div class="login-card cyber-card">
-        <div style="font-size: 4.5rem; margin-bottom: 0.5rem; text-shadow: 0 0 15px var(--text-glow);">⚡</div>
+        <div class="login-icon">⚡</div>
         
-        <h2 class="neon-text" style="margin-bottom: 0.5rem; font-size: 2.4rem;">艦橋訪問授權</h2>
+        <h2 class="auth-title">艦橋訪問授權</h2>
         <div class="tech-sub-title">Bridge Access Authorization</div>
+
+        <div class="auth-tabs">
+            <button type="button" id="loginTab" class="auth-tab-btn active" onclick="switchAuthMode('login')">登入</button>
+            <button type="button" id="registerTab" class="auth-tab-btn" onclick="switchAuthMode('register')">註冊</button>
+        </div>
         
-        <div id="err" class="err">❌ 授權失敗：存取密鑰核對錯誤</div>
+        <div id="msgBox" class="message-box error">❌ 授權失敗：存取密鑰核對錯誤</div>
         
-        <input type="text" id="u" class="cyber-input" placeholder="系統管理員帳號 (ADMIN ID)">
-        <input type="password" id="p" class="cyber-input" placeholder="安全訪問密鑰 (ACCESS KEY)">
-        
-        <button class="cyber-button" id="loginBtn" onclick="doLogin()">
-            <span>啟動安全驗證 SECURE LOGIN</span>
-        </button>
+        <div id="loginForm" class="auth-form active">
+            <input type="text" id="u" class="cyber-input" placeholder="系統管理員帳號 (ADMIN ID)" autocomplete="username">
+            <input type="password" id="p" class="cyber-input" placeholder="安全訪問密鑰 (ACCESS KEY)" autocomplete="current-password">
+            
+            <button class="cyber-button" id="loginBtn" onclick="doLogin()">
+                <span>啟動安全驗證 SECURE LOGIN</span>
+            </button>
+        </div>
+
+        <div id="registerForm" class="auth-form">
+            <input type="text" id="ru" class="cyber-input" placeholder="建立管理員帳號" autocomplete="username">
+            <input type="password" id="rp" class="cyber-input" placeholder="建立密碼，至少 6 碼" autocomplete="new-password">
+            <input type="password" id="rp2" class="cyber-input" placeholder="再次輸入密碼" autocomplete="new-password">
+            <input type="text" id="revent" class="cyber-input" placeholder="預設活動名稱，例如：活動報到名單" value="活動報到名單">
+            <input type="text" id="rinvite" class="cyber-input" placeholder="註冊邀請碼，可留空">
+
+            <button class="cyber-button secondary" id="registerBtn" onclick="doRegister()">
+                <span>建立管理員帳號 REGISTER</span>
+            </button>
+
+            <div class="hint-text">
+                建立後會自動設定可管理活動。若伺服器有設定 REGISTER_INVITE_CODE，這裡就必須輸入正確邀請碼。
+            </div>
+        </div>
     </div>
 
     <script>
-        // 鍵盤核心監聽：支援按下 Enter 直接提交驗證
+        let authMode = 'login';
+
+        function getMsgBox() {
+            return document.getElementById('msgBox');
+        }
+
+        function showMessage(type, text) {
+            const msgBox = getMsgBox();
+            msgBox.className = `message-box ${type}`;
+            msgBox.innerHTML = text;
+            msgBox.style.display = 'flex';
+        }
+
+        function clearMessage() {
+            const msgBox = getMsgBox();
+            msgBox.style.display = 'none';
+            msgBox.innerHTML = '';
+        }
+
+        function switchAuthMode(mode) {
+            authMode = mode;
+            clearMessage();
+            document.getElementById('loginForm').classList.toggle('active', mode === 'login');
+            document.getElementById('registerForm').classList.toggle('active', mode === 'register');
+            document.getElementById('loginTab').classList.toggle('active', mode === 'login');
+            document.getElementById('registerTab').classList.toggle('active', mode === 'register');
+        }
+
+        // 鍵盤核心監聽：支援按下 Enter 直接提交驗證或註冊
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
-                doLogin();
+                if (authMode === 'login') doLogin();
+                else doRegister();
             }
         });
 
@@ -150,16 +292,13 @@
             const u = document.getElementById('u').value.trim();
             const p = document.getElementById('p').value.trim();
             const btn = document.getElementById('loginBtn');
-            const errBox = document.getElementById('err');
 
             if (!u || !p) {
-                errBox.innerHTML = "❌ 請完整輸入管理員帳號與存取密鑰";
-                errBox.style.display = 'flex';
+                showMessage('error', '❌ 請完整輸入管理員帳號與存取密鑰');
                 return;
             }
 
-            // UI 切換至同步建構狀態
-            errBox.style.display = 'none';
+            clearMessage();
             btn.disabled = true;
             btn.innerHTML = '<span>📡 正在建構安全連線...</span>';
 
@@ -169,6 +308,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username: u, password: p })
                 });
+                const result = await res.json().catch(() => ({}));
                 
                 if (res.ok) { 
                     btn.innerHTML = '<span>🟢 授權成功，跳轉中...</span>';
@@ -180,14 +320,81 @@
                 } else { 
                     btn.disabled = false;
                     btn.innerHTML = '<span>啟動安全驗證 SECURE LOGIN</span>';
-                    errBox.innerHTML = "❌ 授權失敗：管理員身分或密鑰錯誤";
-                    errBox.style.display = 'flex'; 
+                    showMessage('error', `❌ ${result.message || '授權失敗：管理員身分或密鑰錯誤'}`);
                 }
             } catch(e) { 
                 btn.disabled = false;
                 btn.innerHTML = '<span>啟動安全驗證 SECURE LOGIN</span>';
-                errBox.innerHTML = "❌ 連線異常：無法聯絡中央驗證伺服器";
-                errBox.style.display = 'flex';
+                showMessage('error', '❌ 連線異常：無法聯絡中央驗證伺服器');
+            }
+        }
+
+        async function doRegister() {
+            const username = document.getElementById('ru').value.trim();
+            const password = document.getElementById('rp').value.trim();
+            const password2 = document.getElementById('rp2').value.trim();
+            const eventName = document.getElementById('revent').value.trim() || '活動報到名單';
+            const inviteCode = document.getElementById('rinvite').value.trim();
+            const btn = document.getElementById('registerBtn');
+
+            if (!username || !password || !password2) {
+                showMessage('error', '❌ 請完整輸入帳號、密碼與確認密碼');
+                return;
+            }
+
+            if (username.length < 3) {
+                showMessage('error', '❌ 帳號至少需要 3 個字元');
+                return;
+            }
+
+            if (password.length < 6) {
+                showMessage('error', '❌ 密碼至少需要 6 碼');
+                return;
+            }
+
+            if (password !== password2) {
+                showMessage('error', '❌ 兩次輸入的密碼不一致');
+                return;
+            }
+
+            clearMessage();
+            btn.disabled = true;
+            btn.innerHTML = '<span>📡 正在建立管理員...</span>';
+
+            try {
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password,
+                        allowed_events: eventName,
+                        invite_code: inviteCode
+                    })
+                });
+                const result = await res.json().catch(() => ({}));
+
+                if (res.ok && result.success) {
+                    btn.innerHTML = '<span>🟢 建立成功</span>';
+                    showMessage('success', '✅ 管理員建立成功，請使用新帳號登入');
+                    document.getElementById('u').value = username;
+                    document.getElementById('p').value = '';
+                    document.getElementById('rp').value = '';
+                    document.getElementById('rp2').value = '';
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.innerHTML = '<span>建立管理員帳號 REGISTER</span>';
+                        switchAuthMode('login');
+                    }, 900);
+                } else {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>建立管理員帳號 REGISTER</span>';
+                    showMessage('error', `❌ ${result.message || '註冊失敗，請稍後再試'}`);
+                }
+            } catch(e) {
+                btn.disabled = false;
+                btn.innerHTML = '<span>建立管理員帳號 REGISTER</span>';
+                showMessage('error', '❌ 連線異常：無法聯絡註冊伺服器');
             }
         }
     </script>
