@@ -3,17 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智慧方舟 - 艦橋管理中心</title>
+    <title>智慧方舟 - 艦橋管理中心 v2</title>
     <link rel="stylesheet" href="smart-ark-theme.css">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Michroma", "Stick", sans-serif; }
         body { line-height: 1.6; min-height: 100vh; color: #fff; }
         header { background: rgba(10, 20, 35, 0.8); border-bottom: 1px solid var(--accent-gray); padding: 1rem 0; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
         .header-container { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; }
-        .header-actions { display: flex; gap: 1rem; align-items: center; }
-        .btn-link { color: #ccc; text-decoration: none; font-size: 0.85rem; padding: 0.45rem 0.9rem; border-radius: 0.5rem; transition: all 0.2s; border: 1px solid rgba(255,255,255,0.15); letter-spacing: 0.5px; }
-        .btn-link:hover { border-color: var(--text-dark); background: rgba(0,229,255,0.1); color: var(--text-dark); }
-
+        main { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+        .tabs { display: flex; gap: 0.5rem; margin-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.2); }
+        .tab-btn { padding: 1rem 1.5rem; background: none; border: none; border-bottom: 3px solid transparent; font-size: 1rem; font-weight: 600; color: #888; cursor: pointer; transition: all 0.2s; }
+        .tab-btn:hover { color: #fff; background: rgba(255,255,255,0.05); }
+        .tab-btn.active { color: var(--text-dark); border-bottom-color: var(--text-dark); text-shadow: 0 0 8px var(--text-glow); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
         .adm-btn {
             display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
             padding: 0.55rem 1.1rem;
@@ -24,104 +28,56 @@
             text-decoration: none; line-height: 1;
         }
         .adm-btn:hover { background: rgba(0,229,255,0.16); border-color: #00e5ff; box-shadow: 0 0 10px rgba(0,229,255,0.2); }
-        .adm-btn:active { transform: scale(0.97); }
-        .adm-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-        .adm-btn-primary {
-            border-color: rgba(0,229,255,0.7); color: #fff;
-            background: linear-gradient(135deg, rgba(0,180,220,0.2), rgba(0,229,255,0.1));
-        }
+        .adm-btn-primary { border-color: rgba(0,229,255,0.7); color: #fff; background: linear-gradient(135deg, rgba(0,180,220,0.2), rgba(0,229,255,0.1)); }
         .adm-btn-primary:hover { background: linear-gradient(135deg, rgba(0,180,220,0.35), rgba(0,229,255,0.2)); }
-
+        .adm-btn-success { border-color: rgba(74,222,128,0.45); color: #4ade80; background: rgba(74,222,128,0.07); }
+        .adm-btn-success:hover { background: rgba(74,222,128,0.15); border-color: #4ade80; }
         .adm-btn-danger { border-color: rgba(220,38,38,0.5); color: #f87171; background: rgba(220,38,38,0.06); }
         .adm-btn-danger:hover { background: rgba(220,38,38,0.15); border-color: #dc2626; }
 
-        .adm-btn-ghost { border-color: rgba(255,255,255,0.15); color: #888; background: transparent; }
-        .adm-btn-ghost:hover { border-color: rgba(255,255,255,0.35); color: #ccc; background: rgba(255,255,255,0.05); }
-
-        .adm-btn-upload { border-color: rgba(255,165,0,0.45); color: #ffa500; background: rgba(255,165,0,0.07); }
-        .adm-btn-upload:hover { background: rgba(255,165,0,0.15); border-color: #ffa500; }
-
-        .adm-btn-success { border-color: rgba(74,222,128,0.45); color: #4ade80; background: rgba(74,222,128,0.07); }
-        .adm-btn-success:hover { background: rgba(74,222,128,0.15); border-color: #4ade80; }
-
-        .adm-btn-sm { padding: 0.38rem 0.75rem; font-size: 0.8rem; }
-        .adm-btn-lg { padding: 0.7rem 1.5rem; font-size: 0.95rem; letter-spacing: 1.2px; }
-        main { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
-        .tabs { display: flex; gap: 0.5rem; margin-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.2); }
-        .tab-btn { padding: 1rem 1.5rem; background: none; border: none; border-bottom: 3px solid transparent; font-size: 1rem; font-weight: 600; color: #888; cursor: pointer; transition: all 0.2s; }
-        .tab-btn:hover { color: #fff; background: rgba(255,255,255,0.05); }
-        .tab-btn.active { color: var(--text-dark); border-bottom-color: var(--text-dark); text-shadow: 0 0 8px var(--text-glow); }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-        .stat-card { padding: 2rem; text-align: center; border-radius: 1rem; position: relative; border: 1px solid var(--accent-gray); overflow: hidden;}
-        .stat-card::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(45deg, transparent, rgba(0,229,255,0.05), transparent); transform: rotate(45deg); animation: statGlow 4s infinite linear; }
-        .stat-value { font-size: 3.5rem; font-weight: bold; margin-top: 1rem; }
-        @keyframes statGlow { 0% { transform: translate(-50%, -50%) rotate(45deg); } 100% { transform: translate(50%, 50%) rotate(45deg); } }
-        .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 600px; }
-        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid rgba(0,229,255,0.2); }
-        th { color: var(--text-dark); font-weight: bold; }
-        .card-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; }
         .form-group { margin-bottom: 1.25rem; }
         label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: #fff; font-size: 0.95rem; }
-        .product-item { background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(0, 229, 255, 0.2); border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; transition: 0.3s; }
-        .product-item:hover { border-color: var(--text-dark); background: rgba(0, 229, 255, 0.05); }
-        .product-info { display: grid; gap: 0.4rem; }
-        .product-name { font-weight: 700; font-size: 1.1rem; margin-bottom: 0.2rem; }
-        .product-field { font-size: 0.9rem; color: #ccc; }
-        .product-actions { display: flex; gap: 0.5rem; }
-        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-        .modal.active { display: flex; }
-        .modal-content { max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; padding: 2rem; border-radius: 1rem; border: 1px solid var(--accent-gray); background: rgba(10, 20, 35, 0.9); }
-
-        .meal-stat-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-        .meal-stat-box { background: rgba(0,0,0,0.3); border: 1px solid rgba(0,229,255,0.2); border-radius: 0.75rem; padding: 1.5rem; text-align: center; }
-        .meal-stat-label { color: #aaa; font-size: 0.9rem; margin-bottom: 0.5rem; }
-        .meal-stat-value { font-size: 2.5rem; font-weight: bold; color: var(--text-dark); }
-        .meal-stat-subtitle { color: #888; font-size: 0.85rem; margin-top: 0.5rem; }
-
-        .quota-warning { background: rgba(220,38,38,0.1); border-left: 3px solid #f87171; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; }
-        .quota-warning-title { color: #f87171; font-weight: bold; margin-bottom: 0.5rem; }
-
-        .table-stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-        .table-stat-item { background: rgba(0,0,0,0.3); border: 1px solid rgba(0,229,255,0.2); border-radius: 0.75rem; padding: 1.5rem; text-align: center; }
-        .table-stat-name { color: #aaa; font-size: 0.9rem; margin-bottom: 0.5rem; }
-        .table-stat-count { font-size: 1.8rem; font-weight: bold; color: var(--text-dark); }
-        .table-stat-progress { width: 100%; height: 6px; background: rgba(0,229,255,0.1); border-radius: 3px; margin-top: 0.8rem; overflow: hidden; }
-        .table-stat-progress-bar { height: 100%; background: linear-gradient(90deg, #00e5ff, #4ade80); border-radius: 3px; }
-
-        .cyber-input {
-            background: rgba(0, 0, 0, 0.4) !important; border: 1px solid var(--accent-gray) !important;
-            border-bottom: 3px solid var(--text-dark) !important; color: #00e5ff !important;
-            padding: 0.75rem; border-radius: 0.5rem; font-family: inherit;
-        }
+        .cyber-input { background: rgba(0, 0, 0, 0.4) !important; border: 1px solid var(--accent-gray) !important; color: #00e5ff !important; padding: 0.75rem; border-radius: 0.5rem; font-family: inherit; width: 100%; }
         .cyber-input:focus { outline: none; background: rgba(0, 20, 40, 0.6) !important; box-shadow: 0 5px 15px rgba(0, 229, 255, 0.2); }
+        
+        /* 👑 議程管理 */
+        .agenda-item-row { display: grid; grid-template-columns: 1fr 2fr auto; gap: 1rem; margin-bottom: 1rem; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 0.5rem; border: 1px solid rgba(0,229,255,0.2); }
+        .agenda-time-select { background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(0,229,255,0.3); color: #00e5ff; padding: 0.5rem; border-radius: 0.5rem; font-family: inherit; }
+        
+        /* 👑 行業對照表 */
+        .mapping-row { display: grid; grid-template-columns: 1.5fr 1.5fr auto; gap: 1rem; margin-bottom: 1rem; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 0.5rem; border: 1px solid rgba(0,229,255,0.2); }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid rgba(0,229,255,0.2); }
+        th { color: var(--text-dark); font-weight: bold; }
+        
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { padding: 2rem; text-align: center; border-radius: 1rem; position: relative; border: 1px solid var(--accent-gray); }
+        .stat-value { font-size: 3.5rem; font-weight: bold; margin-top: 1rem; }
     </style>
 </head>
 <body class="circuit-background">
     <div class="ark-background"></div>
+
     <header class="panel-border" style="border:none; border-radius: 0;">
         <div class="header-container">
-            <div class="header-title neon-text" style="font-size: 1.2rem;">⚙️ 智慧方舟 - 艦橋管理中心</div>
-            <div class="header-actions">
-                <span id="welcome-msg" class="neon-text" style="font-size: 0.9rem; margin-right: 1rem; color: #4ade80;">歡迎，載入中...</span>
-                <a class="adm-btn adm-btn-sm" href="/">📋 報到首頁</a>
-                <a class="adm-btn adm-btn-ghost adm-btn-sm" href="/api/logout">🚪 登出</a>
+            <div class="header-title neon-text" style="font-size: 1.2rem;">⚙️ 智慧方舟 - 艦橋管理中心 v2</div>
+            <div style="display: flex; gap: 1rem;">
+                <a class="adm-btn" href="/">📋 報到首頁</a>
+                <a class="adm-btn adm-btn-danger" href="/api/logout">🚪 登出</a>
             </div>
         </div>
     </header>
 
     <main>
-        <div id="messageContainer"></div>
         <div class="tabs">
             <button class="tab-btn active" data-tab="dashboard">📊 戰情儀表板</button>
-            <button class="tab-btn" data-tab="products">🛍️ 補給品管理</button>
-            <button class="tab-btn" data-tab="eventInfo">📋 議程與行業設定</button>
-            <button class="tab-btn" data-tab="system">⚙️ 方舟系統設定</button>
+            <button class="tab-btn" data-tab="agenda">📅 議程管理</button>
+            <button class="tab-btn" data-tab="industry">🏭 行業對照表</button>
+            <button class="tab-btn" data-tab="exhibitors">🏢 企業展示</button>
         </div>
 
+        <!-- 👑 儀表板 -->
         <div id="dashboard" class="tab-content active">
             <div class="dashboard-grid">
                 <div class="stat-card cyber-card">
@@ -137,141 +93,63 @@
                     <div id="stat-pending" class="stat-value" style="color: #f87171;">0</div>
                 </div>
             </div>
-
-            <div class="cyber-card" style="padding: 2rem; border-radius: 1rem; margin-bottom: 2rem;">
-                <h2 class="neon-text" style="margin-bottom:1.5rem; font-size: 1.4rem;">🍽️ 餐食統計</h2>
-                <div style="margin-bottom: 2rem;">
-                    <h3 style="color: #aaa; margin-bottom: 1rem;">原始報名</h3>
-                    <div class="meal-stat-container" id="original-meals-container"></div>
-                </div>
-                <div style="margin-bottom: 2rem;">
-                    <h3 style="color: #aaa; margin-bottom: 1rem;">實際報到</h3>
-                    <div class="meal-stat-container" id="actual-meals-container"></div>
-                </div>
-                <div id="quota-warning-container"></div>
-            </div>
-
-            <div class="cyber-card" style="padding: 2rem; border-radius: 1rem; margin-bottom: 2rem;">
-                <h2 class="neon-text" style="margin-bottom:1.5rem; font-size: 1.4rem;">📊 桌號報到率統計</h2>
-                <div id="table-stats-container" class="table-stat-grid"></div>
-            </div>
-
             <div class="cyber-card" style="padding: 2rem; border-radius: 1rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                    <h2 class="neon-text" style="margin: 0;">🛰️ 即時登機紀錄 (最新 25 筆)</h2>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="adm-btn adm-btn-upload" onclick="showAddModal()">➕ 臨時報到</button>
-                        <button class="adm-btn" onclick="exportCsv()">📥 匯出名單</button>
-                    </div>
-                </div>
-                <div class="table-container">
+                <h2 class="neon-text" style="margin-bottom:1.5rem;">🛰️ 即時登機紀錄</h2>
+                <div style="overflow-x: auto;">
                     <table>
-                        <thead><tr><th>時間</th><th>姓名</th><th>公司艦隊</th><th>原報名餐食</th><th>實際餐食</th></tr></thead>
+                        <thead><tr><th>時間</th><th>姓名</th><th>公司</th><th>餐食</th></tr></thead>
                         <tbody id="logs-body"></tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        <div id="products" class="tab-content">
-            <div class="cyber-card" style="padding: 2rem; border-radius: 1rem; margin-bottom: 2rem; border-left: 4px solid var(--text-dark);">
-                <div class="card-title neon-text">🎁 伴手禮管理</div>
-                <div id="giftsList"></div>
-                <button class="adm-btn adm-btn-success" style="margin-top:1rem;" onclick="openAddGiftModal()">🎁 新增伴手禮</button>
-            </div>
+        <!-- 👑 議程管理 -->
+        <div id="agenda" class="tab-content">
             <div class="cyber-card" style="padding: 2rem; border-radius: 1rem;">
-                <div class="card-title neon-text">📦 一般商品列表</div>
-                <div id="productsList"></div>
-                <button class="adm-btn" style="margin-top:1rem;" onclick="openAddProductModal()">➕ 新增補給品</button>
+                <h2 class="neon-text" style="margin-bottom:1.5rem;">📅 大會議程設定</h2>
+                <div id="agendaContainer"></div>
+                <button class="adm-btn adm-btn-success" onclick="addAgendaItem()">➕ 新增議程</button>
+                <button class="adm-btn adm-btn-primary" style="margin-left: 1rem;" onclick="saveAgenda()">💾 儲存議程</button>
             </div>
         </div>
 
-        <div id="eventInfo" class="tab-content">
-            <div class="cyber-card" style="padding: 2rem; border-radius: 1rem; margin-bottom: 2rem;">
-                <div class="card-title neon-text">🕒 大會議程設定</div>
-                <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-                    <input type="text" id="agendaTime" class="cyber-input" placeholder="例如：13:30 或 14:00" style="margin-bottom:0; width: 30%;">
-                    <input type="text" id="agendaTask" class="cyber-input" placeholder="例如：開幕致詞 / 專題演講" style="margin-bottom:0; flex-grow: 1;">
-                    <button class="adm-btn adm-btn-success" onclick="addAgenda()">➕ 新增議程</button>
-                </div>
-                <div class="table-container">
-                    <table>
-                        <thead><tr><th>時間</th><th>議程項目</th><th>操作</th></tr></thead>
-                        <tbody id="agendaTableBody"></tbody>
-                    </table>
-                </div>
-            </div>
-
+        <!-- 👑 行業對照表 -->
+        <div id="industry" class="tab-content">
             <div class="cyber-card" style="padding: 2rem; border-radius: 1rem;">
-                <div class="card-title neon-text">📊 行業類別手動對照表 (前台圓餅圖基礎)</div>
-                <p style="color:#aaa; font-size:0.9rem; margin-bottom:1.5rem;">在此手動輸入公司名稱並指定行業別。系統會以此對照組合，於前台統計已報到「不重複公司」的行業占比比例。</p>
-                <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-                    <input type="text" id="indCompany" class="cyber-input" placeholder="公司完整名稱（需與名單內完全一致）" style="margin-bottom:0; flex-grow: 1;">
-                    <input type="text" id="indCategory" class="cyber-input" placeholder="行業別 (例如: 科技業 / 製造業 / 金融業)" style="margin-bottom:0; width: 30%;">
-                    <button class="adm-btn adm-btn-success" onclick="addIndustry()">💾 儲存綁定</button>
-                </div>
-                <div class="table-container">
-                    <table>
-                        <thead><tr><th>公司名稱</th><th>對應行業別</th><th>操作</th></tr></thead>
-                        <tbody id="industryTableBody"></tbody>
-                    </table>
-                </div>
+                <h2 class="neon-text" style="margin-bottom:1.5rem;">🏭 行業類別手動對照表</h2>
+                <p style="color: #aaa; margin-bottom: 1.5rem;">在此手動輸入公司名稱並指定行業別。系統會以此對照組合，於前台統計已報到「不重複公司」的行業占比比例。</p>
+                <div id="mappingContainer"></div>
+                <button class="adm-btn adm-btn-success" onclick="addMappingItem()">➕ 新增對照</button>
+                <button class="adm-btn adm-btn-primary" style="margin-left: 1rem;" onclick="saveMapping()">💾 儲存對照表</button>
             </div>
         </div>
 
-        <div id="system" class="tab-content">
+        <!-- 👑 企業展示 -->
+        <div id="exhibitors" class="tab-content">
             <div class="cyber-card" style="padding: 2rem; border-radius: 1rem;">
-                <div class="card-title neon-text">🔧 系統基本設定</div>
-                <div class="form-group">
-                    <label>當前作用中 MySQL 雲端活動資料庫場次</label>
-                    <div style="display:flex; gap:0.6rem; align-items:center;">
-                        <select class="cyber-input" id="googleSheetName" onchange="updateEventLink()" style="flex-grow:1;">
-                            <option value="">活動報到名單</option>
-                        </select>
-                        <button class="adm-btn adm-btn-primary" onclick="saveSystemSettings()">🚀 切換場次</button>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>🗺️ 地圖導覽圖片網址 或 直接上傳圖片檔</label>
-                    <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 0.5rem;">
-                        <input type="text" class="cyber-input" id="mapImageUrl" style="flex-grow: 1;" placeholder="地圖 URL 或貼上本機圖片 Base64">
-                        <label class="adm-btn adm-btn-upload" style="cursor:pointer;">
-                            📁 上傳地圖
-                            <input type="file" id="mapLocalFile" accept="image/*" style="display: none;" onchange="handleMapFileUpload(this)">
-                        </label>
-                    </div>
-                    <div id="systemMapPreviewContainer" style="margin-top: 10px; display: none; text-align: left;">
-                        <img id="systemMapPreview" src="" style="max-width: 240px; max-height: 150px; border-radius: 8px; border: 1px solid var(--accent-gray); object-fit: contain; background: rgba(0,0,0,0.3);">
-                    </div>
-                </div>
-                <button class="adm-btn adm-btn-primary adm-btn-lg" style="margin-bottom:2rem;" onclick="saveSystemSettings()">💾 儲存設定</button>
+                <h2 class="neon-text" style="margin-bottom:1.5rem;">🏢 參與企業管理</h2>
+                <p style="color: #aaa; margin-bottom: 1.5rem;">管理今日參與活動的企業資訊，包括公司簡介、行業別、官網等。</p>
+                <div id="exhibitorContainer"></div>
+                <button class="adm-btn adm-btn-success" onclick="addExhibitor()">➕ 新增企業</button>
+                <button class="adm-btn adm-btn-primary" style="margin-left: 1rem;" onclick="saveExhibitors()">💾 儲存企業資訊</button>
             </div>
         </div>
     </main>
 
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        // 核心修改：精準取得並保存當前 URL 的管理員與場次參數
-        const currentAdmin = urlParams.get('admin') || 'admin';
-        const currentSheet = urlParams.get('sheet') || '活動報到名單';
         const API_BASE = '/api';
+        let agendaItems = [];
+        let mappingItems = [];
+        let exhibitorItems = [];
 
-        window.onload = async function() {
-            loadUserInfo();
+        window.onload = function() {
             setupTabs();
-            await loadDashboard();
+            loadDashboard();
+            loadAgenda();
+            loadMapping();
+            loadExhibitors();
         };
-
-        function loadUserInfo() {
-            fetch(`${API_BASE}/user/info`)
-                .then(r => r.json())
-                .then(d => {
-                    if (d.success) {
-                        document.getElementById('welcome-msg').textContent = `歡迎，${d.username}`;
-                    }
-                });
-        }
 
         function setupTabs() {
             document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -281,152 +159,176 @@
                     btn.classList.add('active');
                     const tabId = btn.dataset.tab;
                     document.getElementById(tabId).classList.add('active');
-                    if (tabId === 'products') loadProducts();
-                    if (tabId === 'eventInfo') loadEventInfo();
                 });
             });
         }
 
         async function loadDashboard() {
             try {
-                const res = await fetch(`${API_BASE}/dashboard_stats?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
+                const res = await fetch(`${API_BASE}/dashboard_stats`);
                 const json = await res.json();
                 if (json.success) {
                     const stats = json.stats;
                     document.getElementById('stat-total').textContent = stats.total;
                     document.getElementById('stat-checked').textContent = stats.checked_in;
                     document.getElementById('stat-pending').textContent = stats.not_checked_in;
-                    renderMealStats(stats.original_meals, 'original-meals-container');
-                    renderMealStats(stats.actual_meals, 'actual-meals-container');
-                    renderQuotaWarning(stats.actual_meals);
-                    renderTableStats(stats.table_stats);
-                    renderLogs(stats.logs);
+                    
+                    const tbody = document.getElementById('logs-body');
+                    tbody.innerHTML = stats.logs.map(log => `
+                        <tr>
+                            <td>${log.time}</td>
+                            <td>${log.name}</td>
+                            <td>${log.company}</td>
+                            <td>${log.meal}</td>
+                        </tr>
+                    `).join('');
                 }
-            } catch(e) { console.error(e); }
+            } catch(e) { console.error('加載統計失敗', e); }
         }
 
-        function renderMealStats(meals, containerId) {
-            const container = document.getElementById(containerId);
-            container.innerHTML = '';
-            Object.entries(meals).forEach(([meal, count]) => {
-                const box = document.createElement('div');
-                box.className = 'meal-stat-box';
-                box.innerHTML = `<div class="meal-stat-label">${meal}</div><div class="meal-stat-value">${count}</div><div class="meal-stat-subtitle">人</div>`;
-                container.appendChild(box);
-            });
-        }
-
-        function renderQuotaWarning(actualMeals) {
-            const container = document.getElementById('quota-warning-container');
-            const veganCount = actualMeals['素食'] || 0;
-            container.innerHTML = `<div style="background: rgba(74,222,128,0.1); border-left: 3px solid #4ade80; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;"><div style="color: #4ade80; font-weight: bold; margin-bottom: 0.5rem;">✅ 素食配額狀態</div><div style="color: #ccc; font-size: 0.9rem;">已使用素食餐點：${veganCount} 份</div></div>`;
-        }
-
-        function renderTableStats(tableStats) {
-            const container = document.getElementById('table-stats-container');
-            container.innerHTML = '';
-            tableStats.forEach(table => {
-                const percentage = (table.checked / table.total) * 100;
-                const item = document.createElement('div');
-                item.className = 'table-stat-item';
-                item.innerHTML = `<div class="table-stat-name">${table.table}</div><div class="table-stat-count">${table.checked}/${table.total}</div><div class="table-stat-progress"><div class="table-stat-progress-bar" style="width: ${percentage}%;"></div></div>`;
-                container.appendChild(item);
-            });
-        }
-
-        function renderLogs(logs) {
-            const tbody = document.getElementById('logs-body');
-            tbody.innerHTML = '';
-            logs.forEach(log => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${log.time}</td><td>${log.name}</td><td>${log.company}</td><td>-</td><td>${log.meal}</td>`;
-                tbody.appendChild(tr);
-            });
-        }
-
-        async function loadProducts() {
+        // 👑 議程管理
+        async function loadAgenda() {
             try {
-                const res = await fetch(`${API_BASE}/config?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
-                const config = await res.json();
-                const gifts = config.products.filter(p => p.isGift);
-                const products = config.products.filter(p => !p.isGift);
-                
-                document.getElementById('giftsList').innerHTML = gifts.map(p => `<div class="product-item"><div class="product-info"><div class="product-name">${p.name}</div><div class="product-field">${p.description}</div></div><div class="product-actions"><button class="adm-btn adm-btn-danger adm-btn-sm" onclick="deleteProduct('${p.id}')">刪除</button></div></div>`).join('');
-                document.getElementById('productsList').innerHTML = products.map(p => `<div class="product-item"><div class="product-info"><div class="product-name">${p.name}</div><div class="product-field">${p.description}</div></div><div class="product-actions"><button class="adm-btn adm-btn-danger adm-btn-sm" onclick="deleteProduct('${p.id}')">刪除</button></div></div>`).join('');
-            } catch(e) { console.error(e); }
+                const res = await fetch(`${API_BASE}/agenda`);
+                const json = await res.json();
+                agendaItems = json.data || [];
+                renderAgendaItems();
+            } catch(e) { console.error('加載議程失敗', e); }
         }
 
-        // 重要修正：加載、新增、刪除皆確實附加 admin 及 sheet 參數
-        async function loadEventInfo() {
+        function renderAgendaItems() {
+            const container = document.getElementById('agendaContainer');
+            container.innerHTML = agendaItems.map((item, idx) => `
+                <div class="agenda-item-row">
+                    <select class="agenda-time-select" onchange="agendaItems[${idx}].time = this.value">
+                        <option value="">選擇時間</option>
+                        ${generateTimeOptions(item.time)}
+                    </select>
+                    <input type="text" class="cyber-input" value="${item.event || ''}" onchange="agendaItems[${idx}].event = this.value" placeholder="議程項目">
+                    <button class="adm-btn adm-btn-danger" onclick="removeAgendaItem(${idx})">🗑️ 刪除</button>
+                </div>
+            `).join('');
+        }
+
+        function generateTimeOptions(selected) {
+            const times = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00'];
+            return times.map(t => `<option value="${t}" ${t === selected ? 'selected' : ''}>${t}</option>`).join('');
+        }
+
+        function addAgendaItem() {
+            agendaItems.push({ time: '', event: '' });
+            renderAgendaItems();
+        }
+
+        function removeAgendaItem(idx) {
+            agendaItems.splice(idx, 1);
+            renderAgendaItems();
+        }
+
+        async function saveAgenda() {
             try {
-                let res = await fetch(`${API_BASE}/agenda?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
-                let json = await res.json();
-                document.getElementById('agendaTableBody').innerHTML = (json.data || []).map(item => `
-                    <tr>
-                        <td>${item.time_str}</td>
-                        <td>${item.task_desc}</td>
-                        <td><button class="adm-btn adm-btn-danger adm-btn-sm" onclick="deleteAgenda(${item.id})">刪除</button></td>
-                    </tr>
-                `).join('');
-
-                res = await fetch(`${API_BASE}/industries?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
-                json = await res.json();
-                document.getElementById('industryTableBody').innerHTML = (json.data || []).map(item => `
-                    <tr>
-                        <td>${item.company_name}</td>
-                        <td><span style="color:#00e5ff; font-weight:bold;">${item.industry_category}</span></td>
-                        <td><button class="adm-btn adm-btn-danger adm-btn-sm" onclick="deleteIndustry(${item.id})">刪除</button></td>
-                    </tr>
-                `).join('');
-            } catch(e) { console.error(e); }
+                const res = await fetch(`${API_BASE}/agenda`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ agenda: agendaItems })
+                });
+                const json = await res.json();
+                alert(json.success ? '議程已儲存' : '儲存失敗');
+            } catch(e) { alert('儲存失敗'); }
         }
 
-        async function addAgenda() {
-            const time = document.getElementById('agendaTime').value.trim();
-            const task = document.getElementById('agendaTask').value.trim();
-            if(!time || !task) return alert('請填寫完整時間與議程事項！');
-            await fetch(`${API_BASE}/agenda?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`, {
-                method: 'POST', headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({time_str: time, task_desc: task, admin: currentAdmin, sheet: currentSheet})
-            });
-            document.getElementById('agendaTime').value = '';
-            document.getElementById('agendaTask').value = '';
-            loadEventInfo();
+        // 👑 行業對照表
+        async function loadMapping() {
+            try {
+                const res = await fetch(`${API_BASE}/industry_mapping`);
+                const json = await res.json();
+                mappingItems = json.data || [];
+                renderMappingItems();
+            } catch(e) { console.error('加載對照表失敗', e); }
         }
 
-        async function deleteAgenda(id) {
-            if(!confirm('確定刪除此議程？')) return;
-            await fetch(`${API_BASE}/agenda/${id}?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`, { method: 'DELETE' });
-            loadEventInfo();
+        function renderMappingItems() {
+            const container = document.getElementById('mappingContainer');
+            container.innerHTML = mappingItems.map((item, idx) => `
+                <div class="mapping-row">
+                    <input type="text" class="cyber-input" value="${item.company_name || ''}" onchange="mappingItems[${idx}].company_name = this.value" placeholder="公司完整名稱">
+                    <input type="text" class="cyber-input" value="${item.industry || ''}" onchange="mappingItems[${idx}].industry = this.value" placeholder="行業別 (例: 科技業)">
+                    <button class="adm-btn adm-btn-danger" onclick="removeMapping(${idx})">🗑️ 刪除</button>
+                </div>
+            `).join('');
         }
 
-        async function addIndustry() {
-            const comp = document.getElementById('indCompany').value.trim();
-            const cat = document.getElementById('indCategory').value.trim();
-            if(!comp || !cat) return alert('請填寫完整公司與行業別！');
-            await fetch(`${API_BASE}/industries?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`, {
-                method: 'POST', headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({company_name: comp, industry_category: cat, admin: currentAdmin, sheet: currentSheet})
-            });
-            document.getElementById('indCompany').value = '';
-            document.getElementById('indCategory').value = '';
-            loadEventInfo();
+        function addMappingItem() {
+            mappingItems.push({ company_name: '', industry: '' });
+            renderMappingItems();
         }
 
-        async function deleteIndustry(id) {
-            if(!confirm('確定解除此公司的行業別綁定？')) return;
-            await fetch(`${API_BASE}/industries/${id}?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`, { method: 'DELETE' });
-            loadEventInfo();
+        function removeMapping(idx) {
+            mappingItems.splice(idx, 1);
+            renderMappingItems();
         }
 
-        async function exportCsv() { window.location.href = `${API_BASE}/sheets/export_csv?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`; }
-        function saveSystemSettings() { alert('系統設定已儲存'); }
-        function showAddModal() { alert('請利用CSV名單管理臨時報到'); }
-        function openAddGiftModal() { alert('新增伴手禮功能'); }
-        function openAddProductModal() { alert('新增商品功能'); }
-        function deleteProduct(id) { alert('刪除商品 ' + id); }
-        function handleMapFileUpload(input) {}
-        function updateEventLink() {}
+        async function saveMapping() {
+            try {
+                const res = await fetch(`${API_BASE}/industry_mapping`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ mappings: mappingItems })
+                });
+                const json = await res.json();
+                alert(json.success ? '對照表已儲存' : '儲存失敗');
+            } catch(e) { alert('儲存失敗'); }
+        }
+
+        // 👑 企業展示
+        async function loadExhibitors() {
+            try {
+                const res = await fetch(`${API_BASE}/exhibitors`);
+                const json = await res.json();
+                exhibitorItems = json.exhibitors || [];
+                renderExhibitorItems();
+            } catch(e) { console.error('加載企業失敗', e); }
+        }
+
+        function renderExhibitorItems() {
+            const container = document.getElementById('exhibitorContainer');
+            container.innerHTML = exhibitorItems.map((item, idx) => `
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(0,229,255,0.2); border-radius: 0.5rem; padding: 1.5rem; margin-bottom: 1rem;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <input type="text" class="cyber-input" value="${item.company_name || ''}" onchange="exhibitorItems[${idx}].company_name = this.value" placeholder="公司名稱">
+                        <input type="text" class="cyber-input" value="${item.industry || ''}" onchange="exhibitorItems[${idx}].industry = this.value" placeholder="行業別">
+                    </div>
+                    <textarea class="cyber-input" onchange="exhibitorItems[${idx}].description = this.value" placeholder="公司簡介" style="height: 80px; resize: vertical;">${item.description || ''}</textarea>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                        <input type="text" class="cyber-input" value="${item.website || ''}" onchange="exhibitorItems[${idx}].website = this.value" placeholder="官網">
+                        <input type="text" class="cyber-input" value="${item.contact || ''}" onchange="exhibitorItems[${idx}].contact = this.value" placeholder="聯絡方式">
+                    </div>
+                    <button class="adm-btn adm-btn-danger" style="margin-top: 1rem;" onclick="removeExhibitor(${idx})">🗑️ 刪除</button>
+                </div>
+            `).join('');
+        }
+
+        function addExhibitor() {
+            exhibitorItems.push({ company_name: '', industry: '', description: '', website: '', contact: '' });
+            renderExhibitorItems();
+        }
+
+        function removeExhibitor(idx) {
+            exhibitorItems.splice(idx, 1);
+            renderExhibitorItems();
+        }
+
+        async function saveExhibitors() {
+            try {
+                const res = await fetch(`${API_BASE}/exhibitors`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ exhibitors: exhibitorItems })
+                });
+                const json = await res.json();
+                alert(json.success ? '企業資訊已儲存' : '儲存失敗');
+            } catch(e) { alert('儲存失敗'); }
+        }
     </script>
 </body>
 </html>
