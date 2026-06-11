@@ -89,7 +89,7 @@
             header { padding: 0.8rem 0 !important; }
             .verify-grid { grid-template-columns: 1fr !important; gap: 1.2rem !important; padding: 0 !important; }
             .verify-card { padding: 1.5rem 1rem !important; font-size: 1.1rem !important; }
-            .verify-card div { font-size: 2.2rem !important; }
+            .verify-card > div:not(.company-card-hint) { font-size: 2.2rem !important; }
             #mealOptions > div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; gap: 0.8rem !important; margin-bottom: 1.2rem !important; }
             .meal-opt, #btnOrig, #btnProxy { padding: 1.1rem 1rem !important; font-size: 1.1rem !important; }
             .cyber-input { padding: 0.9rem 1rem !important; font-size: 1.1rem !important; margin-bottom: 1rem !important; }
@@ -184,108 +184,42 @@
                 letter-spacing: 1px !important;
             }
         }
-    
 
 
-        /* 讓報到主畫面也跟開場圖一致：電腦自動 cover，手機保留比例不亂裁 */
-        body.circuit-background {
-            background:
-                linear-gradient(180deg, rgba(3,7,18,0.48), rgba(3,7,18,0.78)),
-                url('main-visual.jpg') center center / cover fixed no-repeat,
-                radial-gradient(circle at center, rgba(0,229,255,.16), rgba(3,7,18,.98)) !important;
-        }
-        .ark-background {
-            background: linear-gradient(135deg, rgba(0,229,255,.05), rgba(255,165,0,.04)) !important;
-        }
+        /* 儀錶板按鈕與手機 header：保持首頁一開始就能進 Dashboard，避免手機擠壓 */
         @media(max-width: 768px) {
-            body.circuit-background {
-                background:
-                    linear-gradient(180deg, rgba(3,7,18,0.40), rgba(3,7,18,0.82)),
-                    url('main-visual.jpg') center top / cover scroll no-repeat,
-                    radial-gradient(circle at center, rgba(0,229,255,.12), rgba(3,7,18,.98)) !important;
-            }
-        }
-
-        /* === Dashboard 按鈕 + 手機首頁穩定排版：依照目前 Render/GitHub 版補上，不改報到/商品/地圖功能 === */
-        #splash-screen {
-            background:
-                linear-gradient(180deg, rgba(3,7,18,0.35), rgba(3,7,18,0.82)),
-                url('main-visual.jpg') center center / cover no-repeat,
-                radial-gradient(circle at center, rgba(0,229,255,.18), rgba(3,7,18,.97));
-        }
-        .dashboard-header-btn { border-color: rgba(74,222,128,0.55) !important; color:#4ade80 !important; background: rgba(74,222,128,0.08) !important; }
-        .dashboard-header-btn:hover { border-color:#4ade80 !important; background: rgba(74,222,128,0.16) !important; }
-        @media(max-width: 768px) {
-            #splash-screen {
-                background:
-                    linear-gradient(180deg, rgba(3,7,18,0.2), rgba(3,7,18,0.86)),
-                    url('main-visual.jpg') center center / contain no-repeat,
-                    radial-gradient(circle at center, rgba(0,229,255,.14), rgba(3,7,18,.98));
-                background-color:#030712;
-            }
-            header { padding: 0.65rem 0 !important; }
             .header-container {
-                flex-direction: column !important;
-                align-items: stretch !important;
-                justify-content: center !important;
-                gap: 0.6rem !important;
-                padding: 0 0.75rem !important;
-            }
-            .header-container > div:first-child {
-                justify-content: center !important;
-                width: 100% !important;
-                overflow: hidden !important;
-            }
-            .header-title-text {
-                max-width: 82vw !important;
-                overflow: hidden !important;
-                text-overflow: ellipsis !important;
-                white-space: nowrap !important;
-                text-align: center !important;
-                font-size: 0.95rem !important;
-                letter-spacing: 1px !important;
+                flex-wrap: wrap !important;
+                align-items: center !important;
             }
             .header-action-buttons {
                 width: 100% !important;
                 display: grid !important;
-                grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)) !important;
-                gap: 0.45rem !important;
-                justify-content: stretch !important;
-                align-items: center !important;
+                grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)) !important;
+                gap: 0.55rem !important;
             }
             .header-action-buttons .ck-btn-pill {
-                width: 100% !important;
-                min-width: 0 !important;
                 justify-content: center !important;
-                padding: 0.48rem 0.45rem !important;
+                width: 100% !important;
+                min-height: 38px !important;
+                padding: 0.42rem 0.55rem !important;
                 font-size: 0.76rem !important;
-                letter-spacing: 0 !important;
-                white-space: nowrap !important;
+                letter-spacing: 0.5px !important;
             }
-            .verify-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-                gap: 0.8rem !important;
-            }
-            .verify-card {
-                min-height: 128px !important;
-                padding: 1rem 0.65rem !important;
-            }
-            .verify-card > div:first-child { font-size: 2.1rem !important; }
             .company-card-hint {
-                position: static !important;
-                display: inline-flex !important;
-                margin-top: 0.45rem !important;
-                padding: 0.22rem 0.5rem !important;
-                font-size: 0.68rem !important;
-                border-radius: 999px !important;
+                top: 8px !important;
+                right: 8px !important;
+                padding: 0.22rem 0.48rem !important;
+                font-size: 0.62rem !important;
+                line-height: 1.1 !important;
                 letter-spacing: 0 !important;
+                border-radius: 999px !important;
+                max-width: 42% !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
             }
         }
-        @media(max-width: 380px) {
-            .header-action-buttons { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-            .header-action-buttons .ck-btn-pill { font-size: 0.72rem !important; padding:0.45rem 0.35rem !important; }
-        }
-
     </style>
 </head>
 <body class="circuit-background">
@@ -307,7 +241,7 @@
             </div>
             <div class="header-action-buttons">
                 <button id="shopBtn" class="ck-btn-pill" onclick="goToShop()" style="display:none; border-color:rgba(0,229,255,0.5);">🛒 商品專區</button>
-                <button id="dashboardBtn" class="ck-btn-pill dashboard-header-btn" onclick="goToDashboard()">📊 儀錶板</button>
+                <button id="dashboardBtn" class="ck-btn-pill" onclick="goToDashboard()" style="border-color:rgba(74,222,128,0.55);">📊 儀錶板</button>
                 <button id="mapBtn" class="ck-btn-pill" onclick="toggleMapModal(true)">🗺️ 地圖導覽</button>
             </div>
         </div>
@@ -503,7 +437,7 @@
 
         function goToDashboard() {
             const sheet = currentSheet || (systemConfig && systemConfig.google_sheet_name) || '活動報到名單';
-            window.location.href = `/dashboard.html?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(sheet)}`;
+            location.href = `/dashboard.html?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(sheet)}`;
         }
 
         function goToShop() {
