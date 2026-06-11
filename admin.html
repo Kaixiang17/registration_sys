@@ -96,6 +96,16 @@
             .header-actions { flex-wrap: wrap; gap: 0.5rem; justify-content: flex-start; }
             .tabs { overflow-x: auto; white-space: nowrap; }
         }
+
+
+        @media(max-width: 768px) {
+            .agenda-row, .industry-row, .exhibitor-row {
+                grid-template-columns: 1fr !important;
+            }
+            .exhibitor-desc-input {
+                grid-column: auto !important;
+            }
+        }
     </style>
 </head>
 <body class="circuit-background">
@@ -350,6 +360,14 @@
         let currentUser = 'admin';
         let editingIdx = null;
         let deleteIdx = null;
+
+
+        function getActiveEventQuery() {
+            const sheetEl = document.getElementById('googleSheetName');
+            const sheet = (sheetEl && sheetEl.value) || (currentConfig && currentConfig.google_sheet_name) || '活動報到名單';
+            return `?admin=${encodeURIComponent(currentUser || 'admin')}&sheet=${encodeURIComponent(sheet)}`;
+        }
+
 
         function getCategoryList() {
             const dummy = (currentConfig.products || []).find(p => p.name === "__SYSTEM_CATEGORIES__");
@@ -826,7 +844,7 @@
         function addAgendaRow(item = {}) { document.getElementById('agendaEditorList').insertAdjacentHTML('beforeend', agendaRowTemplate(item)); }
         async function loadAgenda() {
             try {
-                const res = await fetch('/api/agenda');
+                const res = await fetch(`/api/agenda${getActiveEventQuery()}`);
                 const json = await res.json();
                 const list = document.getElementById('agendaEditorList');
                 if (!list) return;
@@ -840,7 +858,7 @@
                 time: row.querySelector('.agenda-time-input').value.trim(),
                 event: row.querySelector('.agenda-event-input').value.trim()
             })).filter(x => x.time || x.event);
-            const res = await fetch('/api/agenda', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({agenda})});
+            const res = await fetch(`/api/agenda${getActiveEventQuery()}`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({agenda})});
             const json = await res.json();
             alert(json.success ? '議程已儲存' : (json.message || '議程儲存失敗'));
         }
@@ -855,7 +873,7 @@
         function addIndustryRow(item = {}) { document.getElementById('industryMappingList').insertAdjacentHTML('beforeend', industryRowTemplate(item)); }
         async function loadIndustryMappings() {
             try {
-                const res = await fetch('/api/industry_mapping');
+                const res = await fetch(`/api/industry_mapping${getActiveEventQuery()}`);
                 const json = await res.json();
                 const list = document.getElementById('industryMappingList');
                 if (!list) return;
@@ -869,7 +887,7 @@
                 company: row.querySelector('.industry-company-input').value.trim(),
                 industry: row.querySelector('.industry-name-input').value.trim()
             })).filter(x => x.company || x.industry);
-            const res = await fetch('/api/industry_mapping', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({mappings})});
+            const res = await fetch(`/api/industry_mapping${getActiveEventQuery()}`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({mappings})});
             const json = await res.json();
             alert(json.success ? '行業對照已儲存' : (json.message || '行業對照儲存失敗'));
         }
@@ -886,7 +904,7 @@
         function addExhibitorRow(item = {}) { document.getElementById('exhibitorEditorList').insertAdjacentHTML('beforeend', exhibitorRowTemplate(item)); }
         async function loadExhibitors() {
             try {
-                const res = await fetch('/api/exhibitors');
+                const res = await fetch(`/api/exhibitors${getActiveEventQuery()}`);
                 const json = await res.json();
                 const list = document.getElementById('exhibitorEditorList');
                 if (!list) return;
@@ -902,17 +920,17 @@
                 logo: row.querySelector('.exhibitor-logo-input').value.trim(),
                 description: row.querySelector('.exhibitor-desc-input').value.trim()
             })).filter(x => x.name);
-            const res = await fetch('/api/exhibitors', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({exhibitors})});
+            const res = await fetch(`/api/exhibitors${getActiveEventQuery()}`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({exhibitors})});
             const json = await res.json();
             alert(json.success ? '企業資訊已儲存' : (json.message || '企業資訊儲存失敗'));
         }
 
         window.onload = async () => {
             await fetchUserInfo();
-            init();
-            loadAgenda();
-            loadIndustryMappings();
-            loadExhibitors();
+            await init();
+            await loadAgenda();
+            await loadIndustryMappings();
+            await loadExhibitors();
         };
     </script>
 </body>
