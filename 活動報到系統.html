@@ -184,50 +184,108 @@
                 letter-spacing: 1px !important;
             }
         }
+    
 
-        /* 手機首頁 header：標題與功能按鈕分兩層，避免一開始首頁按鈕擠在一起 */
-        @media(max-width: 640px) {
+
+        /* 讓報到主畫面也跟開場圖一致：電腦自動 cover，手機保留比例不亂裁 */
+        body.circuit-background {
+            background:
+                linear-gradient(180deg, rgba(3,7,18,0.48), rgba(3,7,18,0.78)),
+                url('main-visual.jpg') center center / cover fixed no-repeat,
+                radial-gradient(circle at center, rgba(0,229,255,.16), rgba(3,7,18,.98)) !important;
+        }
+        .ark-background {
+            background: linear-gradient(135deg, rgba(0,229,255,.05), rgba(255,165,0,.04)) !important;
+        }
+        @media(max-width: 768px) {
+            body.circuit-background {
+                background:
+                    linear-gradient(180deg, rgba(3,7,18,0.40), rgba(3,7,18,0.82)),
+                    url('main-visual.jpg') center top / cover scroll no-repeat,
+                    radial-gradient(circle at center, rgba(0,229,255,.12), rgba(3,7,18,.98)) !important;
+            }
+        }
+
+        /* === Dashboard 按鈕 + 手機首頁穩定排版：依照目前 Render/GitHub 版補上，不改報到/商品/地圖功能 === */
+        #splash-screen {
+            background:
+                linear-gradient(180deg, rgba(3,7,18,0.35), rgba(3,7,18,0.82)),
+                url('main-visual.jpg') center center / cover no-repeat,
+                radial-gradient(circle at center, rgba(0,229,255,.18), rgba(3,7,18,.97));
+        }
+        .dashboard-header-btn { border-color: rgba(74,222,128,0.55) !important; color:#4ade80 !important; background: rgba(74,222,128,0.08) !important; }
+        .dashboard-header-btn:hover { border-color:#4ade80 !important; background: rgba(74,222,128,0.16) !important; }
+        @media(max-width: 768px) {
+            #splash-screen {
+                background:
+                    linear-gradient(180deg, rgba(3,7,18,0.2), rgba(3,7,18,0.86)),
+                    url('main-visual.jpg') center center / contain no-repeat,
+                    radial-gradient(circle at center, rgba(0,229,255,.14), rgba(3,7,18,.98));
+                background-color:#030712;
+            }
+            header { padding: 0.65rem 0 !important; }
             .header-container {
                 flex-direction: column !important;
                 align-items: stretch !important;
                 justify-content: center !important;
-                gap: 0.65rem !important;
-                padding: 0 0.85rem !important;
+                gap: 0.6rem !important;
+                padding: 0 0.75rem !important;
             }
-            .header-home-title {
+            .header-container > div:first-child {
                 justify-content: center !important;
                 width: 100% !important;
+                overflow: hidden !important;
+            }
+            .header-title-text {
+                max-width: 82vw !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                white-space: nowrap !important;
+                text-align: center !important;
+                font-size: 0.95rem !important;
+                letter-spacing: 1px !important;
             }
             .header-action-buttons {
                 width: 100% !important;
                 display: grid !important;
-                grid-template-columns: repeat(2, minmax(0, 1fr));
+                grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)) !important;
                 gap: 0.45rem !important;
+                justify-content: stretch !important;
+                align-items: center !important;
             }
             .header-action-buttons .ck-btn-pill {
                 width: 100% !important;
+                min-width: 0 !important;
                 justify-content: center !important;
-                padding: 0.48rem 0.35rem !important;
-                font-size: 0.72rem !important;
+                padding: 0.48rem 0.45rem !important;
+                font-size: 0.76rem !important;
                 letter-spacing: 0 !important;
-                line-height: 1.2 !important;
                 white-space: nowrap !important;
             }
-            .header-action-buttons.with-shop {
-                grid-template-columns: repeat(3, minmax(0, 1fr));
+            .verify-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                gap: 0.8rem !important;
             }
+            .verify-card {
+                min-height: 128px !important;
+                padding: 1rem 0.65rem !important;
+            }
+            .verify-card > div:first-child { font-size: 2.1rem !important; }
+            .company-card-hint {
+                position: static !important;
+                display: inline-flex !important;
+                margin-top: 0.45rem !important;
+                padding: 0.22rem 0.5rem !important;
+                font-size: 0.68rem !important;
+                border-radius: 999px !important;
+                letter-spacing: 0 !important;
+            }
+        }
+        @media(max-width: 380px) {
+            .header-action-buttons { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+            .header-action-buttons .ck-btn-pill { font-size: 0.72rem !important; padding:0.45rem 0.35rem !important; }
         }
 
-        @media(max-width: 370px) {
-            .header-action-buttons .ck-btn-pill {
-                font-size: 0.68rem !important;
-                padding-left: 0.2rem !important;
-                padding-right: 0.2rem !important;
-            }
-            .header-title-text {
-                font-size: 0.86rem !important;
-            }
-        }
     </style>
 </head>
 <body class="circuit-background">
@@ -243,13 +301,13 @@
 
     <header class="panel-border" style="border-top:none; border-left:none; border-right:none; background: rgba(10,20,35,0.8);">
         <div class="header-container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 12px;">
-            <div class="header-home-title" onclick="resetToHome()" style="cursor:pointer; color:var(--text-dark); font-weight: bold; display: flex; align-items: center; gap: 6px; min-width: 0;">
+            <div onclick="resetToHome()" style="cursor:pointer; color:var(--text-dark); font-weight: bold; display: flex; align-items: center; gap: 6px; min-width: 0;">
                 <span style="font-size: 1.3rem;">✈️</span>
                 <span id="header-title" class="header-title-text" style="font-size: 1.15rem; letter-spacing: 2px; white-space: nowrap;">航 班 大 廳</span>
             </div>
             <div class="header-action-buttons">
                 <button id="shopBtn" class="ck-btn-pill" onclick="goToShop()" style="display:none; border-color:rgba(0,229,255,0.5);">🛒 商品專區</button>
-                <button id="dashboardBtn" class="ck-btn-pill" onclick="goToDashboard()" style="border-color:rgba(74,222,128,0.5); color:#4ade80;">📊 儀錶板</button>
+                <button id="dashboardBtn" class="ck-btn-pill dashboard-header-btn" onclick="goToDashboard()">📊 儀錶板</button>
                 <button id="mapBtn" class="ck-btn-pill" onclick="toggleMapModal(true)">🗺️ 地圖導覽</button>
             </div>
         </div>
@@ -439,9 +497,13 @@
             setTimeout(() => {
                 splash.style.display = 'none';
                 setAppState('methodSelection'); 
-                document.getElementById('shopBtn').style.display = 'inline-flex';
-                document.querySelector('.header-action-buttons')?.classList.add('with-shop');
+                document.getElementById('shopBtn').style.display = 'block'; 
             }, 800);
+        }
+
+        function goToDashboard() {
+            const sheet = currentSheet || (systemConfig && systemConfig.google_sheet_name) || '活動報到名單';
+            window.location.href = `/dashboard.html?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(sheet)}`;
         }
 
         function goToShop() {
@@ -450,12 +512,6 @@
                 splash.style.display = 'none';
             }
             showProducts();
-        }
-
-        function goToDashboard() {
-            const sheet = currentSheet || (systemConfig && systemConfig.google_sheet_name) || '活動報到名單';
-            const url = `dashboard.html?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(sheet)}`;
-            window.location.href = url;
         }
 
         function setAppState(s) {
