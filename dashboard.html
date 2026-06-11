@@ -3,41 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>活動 Dashboard</title>
-    <link rel="stylesheet" href="smart-ark-theme.css?v=10">
+    <title>與會公司行業比例 / 大會議程</title>
+    <link rel="stylesheet" href="smart-ark-theme.css?v=11">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "PingFang TC", "Michroma", "Stick", sans-serif; }
-        body { min-height: 100vh; color: #fff; line-height: 1.6; }
-        header { position: sticky; top: 0; z-index: 20; padding: 1rem 0; background: rgba(10,20,35,0.86); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(0,229,255,0.22); }
-        .wrap { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }
+        html, body { min-height: 100%; }
+        body { color: #fff; line-height: 1.6; overflow-x: auto; }
+        body.circuit-background {
+            background:
+                radial-gradient(circle at top, rgba(0,229,255,0.18), transparent 34rem),
+                radial-gradient(circle at bottom right, rgba(255,165,0,0.10), transparent 30rem),
+                #030712;
+            background-size: cover;
+            background-position: center;
+        }
+        .ark-background { position: fixed; inset: 0; z-index: -1; background: linear-gradient(135deg, rgba(0,229,255,.05), rgba(255,165,0,.04)); }
+        header { padding: 1rem 0; background: rgba(10,20,35,0.72); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(0,229,255,0.22); }
+        .wrap { width: min(1440px, 100%); margin: 0 auto; padding: 0 1.5rem; }
         .topbar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+        .page-title { color: var(--text-dark); font-size: clamp(1rem, 2vw, 1.45rem); font-weight: 900; letter-spacing: 1.5px; text-shadow: 0 0 10px rgba(0,229,255,0.45); }
         .actions { display:flex; gap:0.65rem; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
         .pill { width:auto; padding:0.42rem 0.9rem; border-radius:999px; border:1px solid rgba(0,229,255,0.35); color:#00e5ff; background:rgba(0,229,255,0.07); text-decoration:none; cursor:pointer; font-weight:700; font-size:0.82rem; }
-        main { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
-        .hero { padding: 2rem; border-radius: 1.2rem; margin-bottom: 2rem; background: rgba(0,0,0,0.28); border: 1px solid rgba(0,229,255,0.22); }
-        .grid { display:grid; grid-template-columns: 1fr 1.35fr; gap: 1.5rem; margin-bottom: 1.5rem; }
-        .card { padding: 1.5rem; border-radius: 1rem; background: rgba(0,0,0,0.32); border: 1px solid rgba(0,229,255,0.22); }
-        .card-title { color: var(--text-dark); font-weight: 800; font-size: 1.2rem; margin-bottom: 1rem; }
-        #industryChart { width:100%; height:320px; }
-        .agenda-item { display:flex; gap:1rem; padding:0.9rem 0; border-bottom:1px solid rgba(0,229,255,0.12); }
-        .agenda-time { min-width:72px; color:var(--text-dark); font-weight:800; }
-        .company-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap:1rem; }
-        .company-card { padding:1.2rem; border-radius:0.9rem; background:rgba(0,229,255,0.05); border:1px solid rgba(0,229,255,0.18); }
-        .company-name { color:var(--text-dark); font-weight:800; font-size:1.05rem; margin-bottom:0.4rem; }
-        .company-industry { color:#ffa500; font-size:0.85rem; margin-bottom:0.75rem; }
+        main { width: min(1440px, 100%); margin: 0 auto; padding: 1.5rem 1.5rem 2rem; }
+        .event-title { margin-bottom: 1.2rem; padding: 1rem 1.25rem; border-radius: 1rem; background: rgba(0,0,0,0.26); border: 1px solid rgba(0,229,255,0.2); }
+        .event-label { color:#aaa; font-size:0.8rem; margin-bottom:0.2rem; }
+        #eventTitle { color:#fff; font-size: clamp(1.25rem, 2.5vw, 2.1rem); }
+        .dashboard-grid { display:grid; grid-template-columns: minmax(360px, 0.9fr) minmax(520px, 1.35fr); gap: 1.35rem; align-items: stretch; min-width: 0; }
+        .card { min-height: 620px; padding: clamp(1.2rem, 2vw, 2rem); border-radius: 1.25rem; background: rgba(0,0,0,0.34); border: 1px solid rgba(0,229,255,0.25); box-shadow: 0 0 26px rgba(0,229,255,0.11); }
+        .card-title { color: var(--text-dark); font-weight: 900; font-size: clamp(1.15rem, 2vw, 1.6rem); margin-bottom: 1.25rem; letter-spacing: 1px; }
+        .chart-shell { position: relative; height: min(58vh, 520px); min-height: 360px; }
+        #industryChart { width:100%; height:100%; }
+        .agenda-list { display:flex; flex-direction:column; gap:0.9rem; max-height: calc(100vh - 250px); overflow-y:auto; padding-right:0.35rem; }
+        .agenda-item { display:grid; grid-template-columns: 96px 1fr; gap:1rem; padding:1rem 1.1rem; border-radius:0.9rem; background:rgba(0,229,255,0.06); border:1px solid rgba(0,229,255,0.16); border-left:4px solid var(--text-dark); }
+        .agenda-time { color:var(--text-dark); font-weight:900; font-size:1.05rem; white-space:nowrap; }
+        .agenda-event { color:#f3fbff; font-size:1.03rem; line-height:1.65; }
         .muted { color:#aaa; }
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
             .wrap, main { padding-left: 0.85rem; padding-right: 0.85rem; }
             .topbar { flex-direction: column; align-items:flex-start; }
             .actions { justify-content:flex-start; }
             .pill { font-size:0.75rem; padding:0.36rem 0.65rem; }
-            .hero { padding:1.25rem; }
-            .grid { grid-template-columns: 1fr; gap:1rem; }
-            .card { padding:1.1rem; }
-            #industryChart { height:280px; }
-            .agenda-item { gap:0.6rem; }
-            .agenda-time { min-width:60px; }
+            .dashboard-grid { grid-template-columns: 1fr; gap: 1rem; }
+            .card { min-height:auto; padding:1.1rem; }
+            .chart-shell { height: 320px; min-height: 280px; }
+            .agenda-list { max-height:none; overflow:visible; }
+            .agenda-item { grid-template-columns: 72px 1fr; gap:0.7rem; padding:0.85rem; }
+            .agenda-time { font-size:0.9rem; }
+            .agenda-event { font-size:0.95rem; }
+        }
+        @media (max-width: 390px) {
+            .page-title { font-size:0.96rem; letter-spacing:0.5px; }
+            .dashboard-grid { min-width: 0; }
+            .agenda-item { grid-template-columns: 1fr; }
+            .agenda-time { font-size:0.95rem; }
         }
     </style>
 </head>
@@ -45,7 +64,7 @@
     <div class="ark-background"></div>
     <header>
         <div class="wrap topbar">
-            <div class="neon-text" style="font-size:1.15rem;font-weight:800;">📊 活動 Dashboard</div>
+            <div class="page-title">📊 與會公司行業比例 / 📅 大會議程</div>
             <div class="actions">
                 <a class="pill" id="frontLink" href="/">✈️ 回報到頁</a>
                 <button class="pill" onclick="reloadDashboard()">🔄 重新整理</button>
@@ -53,24 +72,22 @@
         </div>
     </header>
     <main>
-        <section class="hero">
-            <div class="muted" style="margin-bottom:0.4rem;">目前場次</div>
-            <h1 id="eventTitle" class="neon-text" style="font-size:2rem;">載入中...</h1>
+        <section class="event-title">
+            <div class="event-label">目前場次</div>
+            <h1 id="eventTitle">載入中...</h1>
         </section>
-        <section class="grid">
+        <section class="dashboard-grid">
             <div class="card">
                 <div class="card-title">📊 與會公司行業比例</div>
-                <canvas id="industryChart"></canvas>
-                <div id="chartEmpty" class="muted" style="display:none;text-align:center;padding:2rem 0;">目前沒有行業統計資料</div>
+                <div class="chart-shell">
+                    <canvas id="industryChart"></canvas>
+                    <div id="chartEmpty" class="muted" style="display:none;text-align:center;padding:2rem 0;">目前沒有行業統計資料</div>
+                </div>
             </div>
             <div class="card">
                 <div class="card-title">📅 大會議程</div>
-                <div id="agendaList" class="muted">載入中...</div>
+                <div id="agendaList" class="agenda-list muted">載入中...</div>
             </div>
-        </section>
-        <section class="card">
-            <div class="card-title">🏢 與會公司 / 企業展示</div>
-            <div id="companyGrid" class="company-grid"></div>
         </section>
     </main>
     <script>
@@ -82,7 +99,7 @@
         document.getElementById('frontLink').href = `/?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`;
 
         async function reloadDashboard() {
-            await Promise.all([loadAgenda(), loadExhibitors()]);
+            await Promise.all([loadAgenda(), loadIndustryStats()]);
         }
 
         async function loadAgenda() {
@@ -91,48 +108,34 @@
                 const res = await fetch(`/api/agenda?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}&t=${Date.now()}`);
                 const json = await res.json();
                 const items = json.data || [];
+                box.classList.remove('muted');
                 box.innerHTML = items.length ? items.map(item => `
-                    <div class="agenda-item"><div class="agenda-time">${item.time || ''}</div><div>${item.event || ''}</div></div>
+                    <div class="agenda-item"><div class="agenda-time">${item.time || ''}</div><div class="agenda-event">${item.event || ''}</div></div>
                 `).join('') : '<div class="muted">尚未設定議程</div>';
             } catch(e) { box.innerHTML = '<div class="muted">議程載入失敗</div>'; }
         }
 
-        async function loadExhibitors() {
+        async function loadIndustryStats() {
             try {
                 const res = await fetch(`/api/exhibitors?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}&t=${Date.now()}`);
                 const json = await res.json();
-                renderCompanies(json.exhibitors || []);
                 renderChart(json.industry_stats || {});
-            } catch(e) {
-                document.getElementById('companyGrid').innerHTML = '<div class="muted">企業資料載入失敗</div>';
-                renderChart({});
-            }
-        }
-
-        function renderCompanies(items) {
-            const grid = document.getElementById('companyGrid');
-            grid.innerHTML = items.length ? items.map(ex => `
-                <div class="company-card">
-                    <div class="company-name">${ex.name || ex.company_name || '未命名公司'}</div>
-                    <div class="company-industry">${ex.industry || '未分類'}</div>
-                    <div class="muted" style="font-size:0.9rem;">${ex.description || '尚無介紹'}</div>
-                    ${ex.website ? `<a class="pill" style="display:inline-flex;margin-top:0.9rem;" target="_blank" href="${ex.website}">查看網站 →</a>` : ''}
-                </div>
-            `).join('') : '<div class="muted">尚無企業展示資料</div>';
+            } catch(e) { renderChart({}); }
         }
 
         function renderChart(stats) {
-            const labels = Object.keys(stats).filter(k => stats[k] > 0);
-            const values = labels.map(k => stats[k]);
+            const labels = Object.keys(stats).filter(k => Number(stats[k]) > 0);
+            const values = labels.map(k => Number(stats[k]));
             const empty = document.getElementById('chartEmpty');
             const canvas = document.getElementById('industryChart');
             if (chart) chart.destroy();
             if (!labels.length) { canvas.style.display = 'none'; empty.style.display = 'block'; return; }
             canvas.style.display = 'block'; empty.style.display = 'none';
+            if (typeof Chart === 'undefined') return;
             chart = new Chart(canvas.getContext('2d'), {
                 type: 'doughnut',
                 data: { labels, datasets: [{ data: values, backgroundColor: ['#00e5ff','#4ade80','#ffa500','#f87171','#a78bfa','#06b6d4','#f472b6'], borderColor: 'rgba(10,20,35,0.95)', borderWidth: 2 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position:'bottom', labels: { color:'#ddd', font: { size: 12 } } } } }
+                options: { responsive: true, maintainAspectRatio: false, cutout: '58%', plugins: { legend: { position:'bottom', labels: { color:'#ddd', font: { size: 13 } } } } }
             });
         }
         reloadDashboard();
