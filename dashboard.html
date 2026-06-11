@@ -8,55 +8,54 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "PingFang TC", "Michroma", "Stick", sans-serif; }
-        html, body { min-height: 100%; }
-        body { color: #fff; line-height: 1.6; overflow-x: auto; }
-        body.circuit-background {
-            background:
-                radial-gradient(circle at top, rgba(0,229,255,0.18), transparent 34rem),
-                radial-gradient(circle at bottom right, rgba(255,165,0,0.10), transparent 30rem),
-                #030712;
-            background-size: cover;
-            background-position: center;
-        }
-        .ark-background { position: fixed; inset: 0; z-index: -1; background: linear-gradient(135deg, rgba(0,229,255,.05), rgba(255,165,0,.04)); }
-        header { padding: 1rem 0; background: rgba(10,20,35,0.72); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(0,229,255,0.22); }
-        .wrap { width: min(1440px, 100%); margin: 0 auto; padding: 0 1.5rem; }
+        body { min-height: 100vh; color: #fff; line-height: 1.6; background: #030712; }
+        header { position: sticky; top: 0; z-index: 20; padding: 1rem 0; background: rgba(10,20,35,0.88); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(0,229,255,0.24); }
+        .wrap { max-width: 1280px; margin: 0 auto; padding: 0 1.5rem; }
         .topbar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
-        .page-title { color: var(--text-dark); font-size: clamp(1rem, 2vw, 1.45rem); font-weight: 900; letter-spacing: 1.5px; text-shadow: 0 0 10px rgba(0,229,255,0.45); }
+        .title { color: #00e5ff; font-size: 1.35rem; font-weight: 900; letter-spacing: 2px; text-shadow: 0 0 14px rgba(0,229,255,0.55); }
         .actions { display:flex; gap:0.65rem; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
-        .pill { width:auto; padding:0.42rem 0.9rem; border-radius:999px; border:1px solid rgba(0,229,255,0.35); color:#00e5ff; background:rgba(0,229,255,0.07); text-decoration:none; cursor:pointer; font-weight:700; font-size:0.82rem; }
-        main { width: min(1440px, 100%); margin: 0 auto; padding: 1.5rem 1.5rem 2rem; }
-        .event-title { margin-bottom: 1.2rem; padding: 1rem 1.25rem; border-radius: 1rem; background: rgba(0,0,0,0.26); border: 1px solid rgba(0,229,255,0.2); }
-        .event-label { color:#aaa; font-size:0.8rem; margin-bottom:0.2rem; }
-        #eventTitle { color:#fff; font-size: clamp(1.25rem, 2.5vw, 2.1rem); }
-        .dashboard-grid { display:grid; grid-template-columns: minmax(360px, 0.9fr) minmax(520px, 1.35fr); gap: 1.35rem; align-items: stretch; min-width: 0; }
-        .card { min-height: 620px; padding: clamp(1.2rem, 2vw, 2rem); border-radius: 1.25rem; background: rgba(0,0,0,0.34); border: 1px solid rgba(0,229,255,0.25); box-shadow: 0 0 26px rgba(0,229,255,0.11); }
-        .card-title { color: var(--text-dark); font-weight: 900; font-size: clamp(1.15rem, 2vw, 1.6rem); margin-bottom: 1.25rem; letter-spacing: 1px; }
-        .chart-shell { position: relative; height: min(58vh, 520px); min-height: 360px; }
-        #industryChart { width:100%; height:100%; }
-        .agenda-list { display:flex; flex-direction:column; gap:0.9rem; max-height: calc(100vh - 250px); overflow-y:auto; padding-right:0.35rem; }
-        .agenda-item { display:grid; grid-template-columns: 96px 1fr; gap:1rem; padding:1rem 1.1rem; border-radius:0.9rem; background:rgba(0,229,255,0.06); border:1px solid rgba(0,229,255,0.16); border-left:4px solid var(--text-dark); }
-        .agenda-time { color:var(--text-dark); font-weight:900; font-size:1.05rem; white-space:nowrap; }
-        .agenda-event { color:#f3fbff; font-size:1.03rem; line-height:1.65; }
-        .muted { color:#aaa; }
+        .pill { width:auto; padding:0.48rem 1rem; border-radius:999px; border:1px solid rgba(0,229,255,0.42); color:#00e5ff; background:rgba(0,229,255,0.08); text-decoration:none; cursor:pointer; font-weight:800; font-size:0.84rem; letter-spacing: 0.6px; }
+        .pill:hover { background: rgba(0,229,255,0.16); }
+        main { max-width: 1280px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+        .hero { padding: 1.55rem 1.75rem; border-radius: 1.15rem; margin-bottom: 1.5rem; background: linear-gradient(135deg, rgba(0,229,255,0.11), rgba(10,20,35,0.62)); border: 1px solid rgba(0,229,255,0.24); box-shadow: 0 0 28px rgba(0,229,255,0.08); }
+        .event-label { color: rgba(255,255,255,0.55); font-size: 0.86rem; margin-bottom: 0.35rem; }
+        .event-title { color: #fff; font-size: clamp(1.6rem, 3vw, 2.6rem); font-weight: 900; letter-spacing: 2px; text-shadow: 0 0 18px rgba(0,229,255,0.35); }
+        .main-grid { display:grid; grid-template-columns: minmax(340px, 0.95fr) minmax(420px, 1.35fr); gap: 1.5rem; align-items: stretch; margin-bottom: 1.5rem; }
+        .card { padding: 1.55rem; border-radius: 1.1rem; background: rgba(8,18,32,0.82); border: 1px solid rgba(0,229,255,0.24); box-shadow: inset 0 0 35px rgba(0,229,255,0.04), 0 10px 28px rgba(0,0,0,0.25); }
+        .card-title { color: var(--text-dark); font-weight: 900; font-size: 1.24rem; margin-bottom: 1rem; letter-spacing: 1px; text-shadow: 0 0 10px rgba(0,229,255,0.35); }
+        .chart-wrap { position: relative; width: 100%; min-height: 360px; }
+        #industryChart { width: 100%; height: 360px; }
+        .agenda-list { display: grid; gap: 0.85rem; }
+        .agenda-item { display:grid; grid-template-columns: 84px 1fr; gap:1rem; padding:1rem 1rem; border:1px solid rgba(0,229,255,0.14); background:rgba(0,229,255,0.055); border-left:4px solid rgba(0,229,255,0.74); border-radius:0.85rem; }
+        .agenda-time { color:var(--text-dark); font-weight:900; white-space:nowrap; }
+        .agenda-event { color:#e8faff; font-weight:700; letter-spacing:0.5px; }
+        .company-section { margin-top: 1.5rem; }
+        .company-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap:1rem; }
+        .company-card { padding:1.15rem; border-radius:0.95rem; background:rgba(0,229,255,0.06); border:1px solid rgba(0,229,255,0.2); min-height: 150px; }
+        .company-top { display:flex; gap:0.85rem; align-items:center; margin-bottom:0.75rem; }
+        .company-logo { width:42px; height:42px; flex:0 0 42px; border-radius:0.8rem; background:rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:center; font-size:1.4rem; }
+        .company-name { color:var(--text-dark); font-weight:900; font-size:1.04rem; line-height:1.35; }
+        .company-industry { display:inline-flex; color:#ffa500; font-size:0.78rem; font-weight:800; margin-top:0.25rem; }
+        .company-desc { color:#c8d3dc; font-size:0.9rem; line-height:1.55; }
+        .muted { color:#a8b3bd; }
+        .empty { text-align:center; padding:2rem 1rem; color:#a8b3bd; }
+        @media (min-width: 1500px) {
+            .wrap, main { max-width: 1440px; }
+            .chart-wrap, #industryChart { height: 430px; }
+        }
         @media (max-width: 900px) {
+            .main-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
             .wrap, main { padding-left: 0.85rem; padding-right: 0.85rem; }
             .topbar { flex-direction: column; align-items:flex-start; }
-            .actions { justify-content:flex-start; }
-            .pill { font-size:0.75rem; padding:0.36rem 0.65rem; }
-            .dashboard-grid { grid-template-columns: 1fr; gap: 1rem; }
-            .card { min-height:auto; padding:1.1rem; }
-            .chart-shell { height: 320px; min-height: 280px; }
-            .agenda-list { max-height:none; overflow:visible; }
-            .agenda-item { grid-template-columns: 72px 1fr; gap:0.7rem; padding:0.85rem; }
-            .agenda-time { font-size:0.9rem; }
-            .agenda-event { font-size:0.95rem; }
-        }
-        @media (max-width: 390px) {
-            .page-title { font-size:0.96rem; letter-spacing:0.5px; }
-            .dashboard-grid { min-width: 0; }
-            .agenda-item { grid-template-columns: 1fr; }
-            .agenda-time { font-size:0.95rem; }
+            .actions { width:100%; display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:0.5rem; }
+            .pill { text-align:center; justify-content:center; font-size:0.76rem; padding:0.42rem 0.6rem; }
+            .hero { padding:1.15rem; }
+            .card { padding:1.1rem; }
+            .chart-wrap, #industryChart { height:300px; min-height:300px; }
+            .agenda-item { grid-template-columns: 68px 1fr; gap:0.65rem; padding:0.85rem; }
+            .company-grid { grid-template-columns:1fr; }
         }
     </style>
 </head>
@@ -64,7 +63,7 @@
     <div class="ark-background"></div>
     <header>
         <div class="wrap topbar">
-            <div class="page-title">📊 與會公司行業比例 / 📅 大會議程</div>
+            <div class="title">📊 與會公司行業比例 / 📅 大會議程</div>
             <div class="actions">
                 <a class="pill" id="frontLink" href="/">✈️ 回報到頁</a>
                 <button class="pill" onclick="reloadDashboard()">🔄 重新整理</button>
@@ -72,16 +71,17 @@
         </div>
     </header>
     <main>
-        <section class="event-title">
+        <section class="hero">
             <div class="event-label">目前場次</div>
-            <h1 id="eventTitle">載入中...</h1>
+            <h1 id="eventTitle" class="event-title">載入中...</h1>
         </section>
-        <section class="dashboard-grid">
+
+        <section class="main-grid">
             <div class="card">
                 <div class="card-title">📊 與會公司行業比例</div>
-                <div class="chart-shell">
+                <div class="chart-wrap">
                     <canvas id="industryChart"></canvas>
-                    <div id="chartEmpty" class="muted" style="display:none;text-align:center;padding:2rem 0;">目前沒有行業統計資料</div>
+                    <div id="chartEmpty" class="empty" style="display:none;">目前沒有可統計的行業資料，請先在後台行業對照表或企業展示填入公司行業。</div>
                 </div>
             </div>
             <div class="card">
@@ -89,17 +89,23 @@
                 <div id="agendaList" class="agenda-list muted">載入中...</div>
             </div>
         </section>
+
+        <section class="card company-section">
+            <div class="card-title">🏢 企業展示</div>
+            <div id="companyGrid" class="company-grid"></div>
+        </section>
     </main>
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const currentAdmin = urlParams.get('admin') || 'admin';
         const currentSheet = urlParams.get('sheet') || '活動報到名單';
         let chart = null;
+
         document.getElementById('eventTitle').textContent = currentSheet;
         document.getElementById('frontLink').href = `/?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`;
 
         async function reloadDashboard() {
-            await Promise.all([loadAgenda(), loadIndustryStats()]);
+            await Promise.all([loadAgenda(), loadExhibitors()]);
         }
 
         async function loadAgenda() {
@@ -108,19 +114,49 @@
                 const res = await fetch(`/api/agenda?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}&t=${Date.now()}`);
                 const json = await res.json();
                 const items = json.data || [];
-                box.classList.remove('muted');
                 box.innerHTML = items.length ? items.map(item => `
-                    <div class="agenda-item"><div class="agenda-time">${item.time || ''}</div><div class="agenda-event">${item.event || ''}</div></div>
-                `).join('') : '<div class="muted">尚未設定議程</div>';
-            } catch(e) { box.innerHTML = '<div class="muted">議程載入失敗</div>'; }
+                    <div class="agenda-item">
+                        <div class="agenda-time">${escapeHtml(item.time || '')}</div>
+                        <div class="agenda-event">${escapeHtml(item.event || '')}</div>
+                    </div>
+                `).join('') : '<div class="empty">尚未設定議程，請到後台「議程管理」新增。</div>';
+            } catch(e) {
+                box.innerHTML = '<div class="empty">議程載入失敗，請確認後端 /api/agenda 是否正常。</div>';
+            }
         }
 
-        async function loadIndustryStats() {
+        async function loadExhibitors() {
             try {
                 const res = await fetch(`/api/exhibitors?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}&t=${Date.now()}`);
                 const json = await res.json();
+                renderCompanies(json.exhibitors || []);
                 renderChart(json.industry_stats || {});
-            } catch(e) { renderChart({}); }
+            } catch(e) {
+                document.getElementById('companyGrid').innerHTML = '<div class="empty">企業資料載入失敗，請確認後端 /api/exhibitors 是否正常。</div>';
+                renderChart({});
+            }
+        }
+
+        function renderCompanies(items) {
+            const grid = document.getElementById('companyGrid');
+            grid.innerHTML = items.length ? items.map(ex => {
+                const name = ex.name || ex.company_name || '未命名公司';
+                const industry = ex.industry || '未分類';
+                const logo = ex.logo || '🏢';
+                const desc = ex.description || '尚無介紹';
+                return `
+                    <div class="company-card">
+                        <div class="company-top">
+                            <div class="company-logo">${escapeHtml(logo)}</div>
+                            <div>
+                                <div class="company-name">${escapeHtml(name)}</div>
+                                <div class="company-industry">${escapeHtml(industry)}</div>
+                            </div>
+                        </div>
+                        <div class="company-desc">${escapeHtml(desc)}</div>
+                    </div>
+                `;
+            }).join('') : '<div class="empty">尚無企業展示資料，請到後台「企業展示」新增。</div>';
         }
 
         function renderChart(stats) {
@@ -129,16 +165,42 @@
             const empty = document.getElementById('chartEmpty');
             const canvas = document.getElementById('industryChart');
             if (chart) chart.destroy();
-            if (!labels.length) { canvas.style.display = 'none'; empty.style.display = 'block'; return; }
-            canvas.style.display = 'block'; empty.style.display = 'none';
-            if (typeof Chart === 'undefined') return;
+            if (!labels.length) {
+                canvas.style.display = 'none';
+                empty.style.display = 'block';
+                return;
+            }
+            canvas.style.display = 'block';
+            empty.style.display = 'none';
             chart = new Chart(canvas.getContext('2d'), {
                 type: 'doughnut',
-                data: { labels, datasets: [{ data: values, backgroundColor: ['#00e5ff','#4ade80','#ffa500','#f87171','#a78bfa','#06b6d4','#f472b6'], borderColor: 'rgba(10,20,35,0.95)', borderWidth: 2 }] },
-                options: { responsive: true, maintainAspectRatio: false, cutout: '58%', plugins: { legend: { position:'bottom', labels: { color:'#ddd', font: { size: 13 } } } } }
+                data: {
+                    labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: ['#00e5ff','#4ade80','#ffa500','#f87171','#a78bfa','#06b6d4','#f472b6','#facc15'],
+                        borderColor: 'rgba(10,20,35,0.95)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '58%',
+                    plugins: {
+                        legend: { position:'bottom', labels: { color:'#e5faff', font: { size: 13, weight: 'bold' }, padding: 16 } },
+                        tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw} 人` } }
+                    }
+                }
             });
         }
+
+        function escapeHtml(value) {
+            return String(value).replace(/[&<>"]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s]));
+        }
+
         reloadDashboard();
+        setInterval(reloadDashboard, 10000);
     </script>
 </body>
 </html>
