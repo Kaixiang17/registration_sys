@@ -46,6 +46,106 @@ def get_admin_and_event_context():
     
     return admin_user, event_key
 
+
+# ============================================================
+# 【Dashboard 真實同步資料表保護】
+# 確保議程、行業對照、企業展示資料真的可以寫入資料庫。
+# ============================================================
+
+def _ignore_duplicate_column_error(exc):
+    msg = str(exc).lower()
+    return 'duplicate column' in msg or 'duplicate column name' in msg or '1060' in msg
+
+
+def ensure_dashboard_tables(conn):
+    with conn.cursor() as cursor:
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS event_agenda (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                admin_user VARCHAR(100) NOT NULL,
+                event_key VARCHAR(150) NOT NULL,
+                time VARCHAR(50),
+                event TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_agenda_event (admin_user, event_key)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS company_industry_mapping (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                admin_user VARCHAR(100) NOT NULL,
+                event_key VARCHAR(150) NOT NULL,
+                company_name VARCHAR(255) NOT NULL,
+                industry VARCHAR(100),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_industry_event (admin_user, event_key),
+                INDEX idx_industry_company (company_name)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS event_exhibitors (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                admin_user VARCHAR(100) NOT NULL,
+                event_key VARCHAR(150) NOT NULL,
+                company_name VARCHAR(255) NOT NULL,
+                industry VARCHAR(100),
+                logo TEXT,
+                description TEXT,
+                website TEXT,
+                contact TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_exhibitor_event (admin_user, event_key),
+                INDEX idx_exhibitor_company (company_name)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        """)
+        for table, columns in {
+            'event_exhibitors': {
+                'website': 'TEXT',
+                'contact': 'TEXT',
+                'logo': 'TEXT',
+                'description': 'TEXT',
+                'industry': 'VARCHAR(100)'
+            },
+            'event_agenda': {
+                'time': 'VARCHAR(50)',
+                'event': 'TEXT'
+            },
+            'company_industry_mapping': {
+                'industry': 'VARCHAR(100)'
+            }
+        }.items():
+            for col, definition in columns.items():
+                try:
+                    cursor.execute(f"ALTER TABLE {table} ADD COLUMN {col} {definition}")
+                except Exception as e:
+                    if not _ignore_duplicate_column_error(e):
+                        print(f"⚠️ 欄位檢查略過 {table}.{col}: {e}")
+    conn.commit()
+
+
+def _clean_str(value):
+    if value is None:
+        return ''
+    return str(value)
+
+
+def _to_json_safe_rows(rows):
+    safe = []
+    for row in rows:
+        item = {}
+        for key, value in row.items():
+            if isinstance(value, (datetime,)):
+                item[key] = value.strftime('%Y-%m-%d %H:%M:%S')
+            elif isinstance(value, timedelta):
+                total_seconds = int(value.total_seconds())
+                h = total_seconds // 3600
+                m = (total_seconds % 3600) // 60
+                item[key] = f"{h:02d}:{m:02d}"
+            else:
+                item[key] = value
+        safe.append(item)
+    return safe
+
 # ============================================================
 # 👑 【新增：議程 API】
 # ============================================================
@@ -54,24 +154,37 @@ def get_admin_and_event_context():
 def handle_agenda():
     admin_user, event_key = get_admin_and_event_context()
     conn = get_db_connection()
-    
     try:
+        ensure_dashboard_tables(conn)
         if request.method == 'POST':
-            if not session.get('admin_logged_in'): return jsonify({"success": False}), 403
-            data = request.json
+            if not session.get('admin_logged_in'):
+                return jsonify({"success": False, "message": "未授權的操作"}), 403
+            data = request.json or {}
+            agenda_items = data.get('agenda', [])
             with conn.cursor() as cursor:
                 cursor.execute("DELETE FROM event_agenda WHERE admin_user = %s AND event_key = %s", (admin_user, event_key))
-                for item in data.get('agenda', []):
-                    cursor.execute("INSERT INTO event_agenda (admin_user, event_key, time, event) VALUES (%s, %s, %s, %s)",
-                                   (admin_user, event_key, item['time'], item['event']))
+                for item in agenda_items:
+                    time_text = _clean_str(item.get('time')).strip()
+                    event_text = _clean_str(item.get('event')).strip()
+                    if not time_text and not event_text:
+                        continue
+                    cursor.execute(
+                        "INSERT INTO event_agenda (admin_user, event_key, time, event) VALUES (%s, %s, %s, %s)",
+                        (admin_user, event_key, time_text, event_text)
+                    )
             conn.commit()
-            return jsonify({"success": True})
-        
+            return jsonify({"success": True, "message": "議程已儲存"})
+
         with conn.cursor() as cursor:
-            cursor.execute("SELECT * FROM event_agenda WHERE admin_user = %s AND event_key = %s ORDER BY time", (admin_user, event_key))
-            items = cursor.fetchall()
+            cursor.execute("SELECT id, time, event FROM event_agenda WHERE admin_user = %s AND event_key = %s ORDER BY id ASC", (admin_user, event_key))
+            items = _to_json_safe_rows(cursor.fetchall())
         return jsonify({"success": True, "data": items})
-    finally: conn.close()
+    except Exception as e:
+        print(f"❌ [議程 API 失敗]: {e}")
+        return jsonify({"success": False, "message": str(e), "data": []}), 500
+    finally:
+        conn.close()
+
 
 # ============================================================
 # 👑 【新增：企業展示 & 行業統計 API】
@@ -81,48 +194,85 @@ def handle_agenda():
 def handle_exhibitors():
     admin_user, event_key = get_admin_and_event_context()
     conn = get_db_connection()
-    
     try:
+        ensure_dashboard_tables(conn)
         if request.method == 'POST':
-            if not session.get('admin_logged_in'): return jsonify({"success": False}), 403
-            data = request.json
+            if not session.get('admin_logged_in'):
+                return jsonify({"success": False, "message": "未授權的操作"}), 403
+            data = request.json or {}
+            exhibitors = data.get('exhibitors', [])
             with conn.cursor() as cursor:
                 cursor.execute("DELETE FROM event_exhibitors WHERE admin_user = %s AND event_key = %s", (admin_user, event_key))
-                for ex in data.get('exhibitors', []):
-                    cursor.execute("""INSERT INTO event_exhibitors 
+                for ex in exhibitors:
+                    company_name = _clean_str(ex.get('name') or ex.get('company_name')).strip()
+                    if not company_name:
+                        continue
+                    cursor.execute("""INSERT INTO event_exhibitors
                                       (admin_user, event_key, company_name, industry, logo, description, website, contact)
                                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
-                                   (admin_user, event_key, ex['name'], ex.get('industry'), ex.get('logo'),
-                                    ex.get('description'), ex.get('website'), ex.get('contact')))
+                                   (admin_user, event_key, company_name, _clean_str(ex.get('industry')).strip(),
+                                    _clean_str(ex.get('logo') or '🏢').strip(), _clean_str(ex.get('description')).strip(),
+                                    _clean_str(ex.get('website')).strip(), _clean_str(ex.get('contact')).strip()))
             conn.commit()
-            return jsonify({"success": True})
-        
-        # 👑 GET：返回企業列表 + 行業統計
+            return jsonify({"success": True, "message": "企業資訊已儲存"})
+
         with conn.cursor() as cursor:
-            # 獲取所有企業
-            cursor.execute("SELECT * FROM event_exhibitors WHERE admin_user = %s AND event_key = %s", (admin_user, event_key))
-            exhibitors = cursor.fetchall()
-            
-            # 👑 統計已報到的「不重複公司」的行業別
-            cursor.execute("""
-                SELECT DISTINCT r.company_name, e.industry
-                FROM event_registrations r
-                LEFT JOIN event_exhibitors e ON r.company_name = e.company_name AND r.admin_user = e.admin_user
-                WHERE r.admin_user = %s AND r.event_key = %s AND r.status IN ('checked_in', '已報到', '替代')
-            """, (admin_user, event_key))
-            
-            checked_companies = cursor.fetchall()
-            industry_stats = {}
-            for company in checked_companies:
-                industry = company['industry'] or '未分類'
-                industry_stats[industry] = industry_stats.get(industry, 0) + 1
-        
+            cursor.execute("""SELECT id, company_name, industry, logo, description, website, contact
+                              FROM event_exhibitors
+                              WHERE admin_user = %s AND event_key = %s
+                              ORDER BY id ASC""", (admin_user, event_key))
+            raw_exhibitors = _to_json_safe_rows(cursor.fetchall())
+            exhibitors = []
+            for ex in raw_exhibitors:
+                exhibitors.append({
+                    "id": ex.get("id"),
+                    "name": ex.get("company_name") or "",
+                    "company_name": ex.get("company_name") or "",
+                    "industry": ex.get("industry") or "未分類",
+                    "logo": ex.get("logo") or "🏢",
+                    "description": ex.get("description") or "",
+                    "website": ex.get("website") or "",
+                    "contact": ex.get("contact") or ""
+                })
+
+            # 已報到者優先；如果目前尚無已報到資料，改用整份名單，避免投影頁空白。
+            def load_industry_stats(only_checked):
+                status_sql = "AND r.status IN ('checked_in', '已報到', '替代')" if only_checked else ""
+                cursor.execute(f"""
+                    SELECT COALESCE(NULLIF(TRIM(m.industry), ''), NULLIF(TRIM(e.industry), ''), '未分類') AS industry,
+                           COUNT(*) AS cnt
+                    FROM event_registrations r
+                    LEFT JOIN company_industry_mapping m
+                        ON m.admin_user = r.admin_user
+                       AND m.event_key = r.event_key
+                       AND TRIM(m.company_name) = TRIM(r.company_name)
+                    LEFT JOIN event_exhibitors e
+                        ON e.admin_user = r.admin_user
+                       AND e.event_key = r.event_key
+                       AND TRIM(e.company_name) = TRIM(r.company_name)
+                    WHERE r.admin_user = %s AND r.event_key = %s {status_sql}
+                    GROUP BY industry
+                    ORDER BY cnt DESC
+                """, (admin_user, event_key))
+                return {row['industry'] or '未分類': int(row['cnt'] or 0) for row in cursor.fetchall() if int(row['cnt'] or 0) > 0}
+
+            checked_stats = load_industry_stats(True)
+            all_stats = load_industry_stats(False)
+            industry_stats = checked_stats if checked_stats else all_stats
+
         return jsonify({
             "success": True,
             "exhibitors": exhibitors,
-            "industry_stats": industry_stats
+            "industry_stats": industry_stats,
+            "checked_industry_stats": checked_stats,
+            "registered_industry_stats": all_stats
         })
-    finally: conn.close()
+    except Exception as e:
+        print(f"❌ [企業/行業 API 失敗]: {e}")
+        return jsonify({"success": False, "message": str(e), "exhibitors": [], "industry_stats": {}}), 500
+    finally:
+        conn.close()
+
 
 # ============================================================
 # 👑 【新增：行業對照表 API】
@@ -132,26 +282,37 @@ def handle_exhibitors():
 def handle_industry_mapping():
     admin_user, event_key = get_admin_and_event_context()
     conn = get_db_connection()
-    
     try:
+        ensure_dashboard_tables(conn)
         if request.method == 'POST':
-            if not session.get('admin_logged_in'): return jsonify({"success": False}), 403
-            data = request.json
+            if not session.get('admin_logged_in'):
+                return jsonify({"success": False, "message": "未授權的操作"}), 403
+            data = request.json or {}
+            mappings = data.get('mappings', [])
             with conn.cursor() as cursor:
                 cursor.execute("DELETE FROM company_industry_mapping WHERE admin_user = %s AND event_key = %s", (admin_user, event_key))
-                for mapping in data.get('mappings', []):
-                    cursor.execute("""INSERT INTO company_industry_mapping 
+                for mapping in mappings:
+                    company_name = _clean_str(mapping.get('company') or mapping.get('company_name')).strip()
+                    industry = _clean_str(mapping.get('industry')).strip()
+                    if not company_name:
+                        continue
+                    cursor.execute("""INSERT INTO company_industry_mapping
                                       (admin_user, event_key, company_name, industry)
                                       VALUES (%s, %s, %s, %s)""",
-                                   (admin_user, event_key, mapping['company'], mapping['industry']))
+                                   (admin_user, event_key, company_name, industry or '未分類'))
             conn.commit()
-            return jsonify({"success": True})
-        
+            return jsonify({"success": True, "message": "行業對照已儲存"})
+
         with conn.cursor() as cursor:
-            cursor.execute("SELECT * FROM company_industry_mapping WHERE admin_user = %s AND event_key = %s", (admin_user, event_key))
-            mappings = cursor.fetchall()
+            cursor.execute("SELECT id, company_name, industry FROM company_industry_mapping WHERE admin_user = %s AND event_key = %s ORDER BY id ASC", (admin_user, event_key))
+            mappings = _to_json_safe_rows(cursor.fetchall())
         return jsonify({"success": True, "data": mappings})
-    finally: conn.close()
+    except Exception as e:
+        print(f"❌ [行業對照 API 失敗]: {e}")
+        return jsonify({"success": False, "message": str(e), "data": []}), 500
+    finally:
+        conn.close()
+
 
 # ============================================================
 # 👑 【新增：AI 抓取公司資料 API】
@@ -306,7 +467,6 @@ def checkin(pid):
 
 @app.route('/api/dashboard_stats')
 def get_dashboard_stats():
-    if not session.get('admin_logged_in'): return jsonify({"success": False}), 403
     admin_user, event_key = get_admin_and_event_context()
     conn = get_db_connection()
     try:
@@ -331,8 +491,11 @@ def get_dashboard_stats():
         for r in rows:
             table = r['seating_chart']
             if table:
+                if str(table).strip() in ['', '0', '第0桌', '第 0 桌']:
+                    continue
                 if table not in table_stats:
-                    table_stats[table] = {"total": 10, "checked": 0}
+                    table_stats[table] = {"total": 0, "checked": 0}
+                table_stats[table]["total"] += 1
                 if r['status'] in ['checked_in', '已報到', '替代']:
                     table_stats[table]["checked"] += 1
         
