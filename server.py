@@ -633,6 +633,69 @@ def add_registration():
         return jsonify({"success": True})
     finally: conn.close()
 
+
+@app.route('/api/user/info')
+def user_info():
+    if not session.get('admin_logged_in'):
+        return jsonify({"success": False, "message": "未登入"}), 401
+    return jsonify({
+        "success": True,
+        "username": session.get('username', 'admin'),
+        "allowed_sheets": session.get('allowed_sheets', []),
+        "current_sheet": session.get('current_admin_sheet') or (session.get('allowed_sheets', ['活動報到名單'])[0] if session.get('allowed_sheets') else '活動報到名單')
+    })
+
+
+@app.route('/api/health')
+def api_health():
+    return jsonify({
+        "success": True,
+        "status": "ok",
+        "message": "server is running"
+    })
+
+@app.route('/api/db_check')
+def api_db_check():
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT 1 AS ok")
+            row = cursor.fetchone()
+        conn.close()
+        return jsonify({
+            "success": True,
+            "database": "connected",
+            "result": row
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "database": "error",
+            "message": str(e)
+        }), 500
+
+@app.route('/api/user/info')
+def api_user_info():
+    if not session.get('admin_logged_in'):
+        return jsonify({
+            "success": False,
+            "logged_in": False,
+            "message": "尚未登入"
+        }), 401
+
+    username = session.get('username', 'admin')
+    allowed_sheets = session.get('allowed_sheets', [])
+    current_sheet = session.get('current_admin_sheet') or (allowed_sheets[0] if allowed_sheets else '活動報到名單')
+
+    return jsonify({
+        "success": True,
+        "logged_in": True,
+        "username": username,
+        "allowed_sheets": allowed_sheets,
+        "current_sheet": current_sheet
+    })
+
+
 @app.route('/admin')
 def admin_page():
     if not session.get('admin_logged_in'): return send_from_directory('.', 'login.html')
