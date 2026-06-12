@@ -96,16 +96,51 @@
             .header-actions { flex-wrap: wrap; gap: 0.5rem; justify-content: flex-start; }
             .tabs { overflow-x: auto; white-space: nowrap; }
         }
+    
 
-
-        @media(max-width: 768px) {
-            .agenda-row, .industry-row, .exhibitor-row {
-                grid-template-columns: 1fr !important;
-            }
-            .exhibitor-desc-input {
-                grid-column: auto !important;
-            }
+        /* RWD 後台自適應：不改功能，只讓表單/分頁/表格在各裝置不跑版 */
+        .cyber-card, .modal-content { min-width: 0; }
+        .tabs { scrollbar-width: thin; }
+        .tabs::-webkit-scrollbar { height: 6px; }
+        .tabs::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.35); border-radius: 999px; }
+        @media(max-width: 1024px) {
+            main { padding: 1.5rem 1rem; }
+            .dashboard-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+            .stat-card { padding: 1.4rem 1rem; }
+            .stat-value { font-size: 2.6rem; }
         }
+        @media(max-width: 768px) {
+            header { position: sticky; }
+            .header-container { flex-direction: column; align-items: stretch; gap: 0.8rem; padding: 0 0.85rem; }
+            .header-title { text-align: center; font-size: 1rem !important; }
+            .header-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; width: 100%; }
+            #welcome-msg { grid-column: 1 / -1; text-align: center; margin-right: 0 !important; }
+            .header-actions .adm-btn { width: 100%; justify-content: center; padding-left: 0.45rem; padding-right: 0.45rem; font-size: 0.74rem; }
+            main { padding: 1rem 0.75rem; }
+            .tabs { overflow-x: auto; white-space: nowrap; padding-bottom: 0.25rem; gap: 0.25rem; }
+            .tab-btn { flex: 0 0 auto; padding: 0.8rem 0.95rem; font-size: 0.86rem; }
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .stat-value { font-size: 2.4rem; }
+            .cyber-card { padding: 1rem !important; }
+            .card-title { font-size: 1rem; line-height: 1.4; flex-wrap: wrap; }
+            .form-group > div[style*="display:flex"], .form-group > div[style*="display: flex"] { flex-direction: column; align-items: stretch !important; }
+            .cyber-input, select.cyber-input, textarea.cyber-input { width: 100% !important; font-size: 0.95rem !important; }
+            .adm-btn, .adm-btn-lg { width: 100%; justify-content: center; }
+            .product-item { flex-direction: column; align-items: stretch; gap: 1rem; }
+            .product-actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+            .table-container, table { overflow-x: auto; }
+            table { display: block; min-width: 620px; }
+            .agenda-row, .industry-row, .exhibitor-row { grid-template-columns: 1fr !important; }
+            .exhibitor-desc-input { grid-column: auto !important; }
+            #addModal .cyber-card { width: calc(100vw - 1.5rem) !important; max-height: 88vh; overflow-y: auto; }
+        }
+        @media(max-width: 420px) {
+            .header-actions { grid-template-columns: 1fr; }
+            .tabs { margin-left: -0.2rem; margin-right: -0.2rem; }
+            .tab-btn { font-size: 0.78rem; padding: 0.7rem 0.75rem; }
+            th, td { padding: 0.75rem; }
+        }
+
     </style>
 </head>
 <body class="circuit-background">
@@ -361,14 +396,6 @@
         let editingIdx = null;
         let deleteIdx = null;
 
-
-        function getActiveEventQuery() {
-            const sheetEl = document.getElementById('googleSheetName');
-            const sheet = (sheetEl && sheetEl.value) || (currentConfig && currentConfig.google_sheet_name) || '活動報到名單';
-            return `?admin=${encodeURIComponent(currentUser || 'admin')}&sheet=${encodeURIComponent(sheet)}`;
-        }
-
-
         function getCategoryList() {
             const dummy = (currentConfig.products || []).find(p => p.name === "__SYSTEM_CATEGORIES__");
             if (dummy && dummy.description) {
@@ -578,11 +605,16 @@
                     document.getElementById('stat-checked').textContent = json.stats.checked_in;
                     document.getElementById('stat-pending').textContent = json.stats.not_checked_in;
                     
-                    document.getElementById('table-stats-container').innerHTML = Object.entries(json.stats.table_stats).sort((a,b)=>a[0]-b[0]).map(([t, r]) => `
+                    const tableStats = Array.isArray(json.stats.table_stats) ? json.stats.table_stats : [];
+                    document.getElementById('table-stats-container').innerHTML = tableStats.length ? tableStats.map(r => {
+                        const percent = r.total ? Math.round((r.checked / r.total) * 100) : 0;
+                        return `
                         <div class="cyber-card" style="padding: 1rem; text-align: center; background: rgba(0,229,255,0.05);">
-                            <div style="font-size: 0.85rem; color: #aaa; margin-bottom: 0.3rem;">第 ${t} 桌</div>
-                            <div style="font-size: 1.4rem; font-weight: bold; color: var(--text-dark);">${r}%</div>
-                        </div>`).join('');
+                            <div style="font-size: 0.85rem; color: #aaa; margin-bottom: 0.3rem;">第 ${r.table} 桌</div>
+                            <div style="font-size: 1.4rem; font-weight: bold; color: var(--text-dark);">${percent}%</div>
+                            <div style="font-size: 0.78rem; color:#aaa; margin-top:0.25rem;">${r.checked}/${r.total}</div>
+                        </div>`;
+                    }).join('') : '<div style="color:#888; padding:1rem;">尚無桌號資料</div>';
                     
                     document.getElementById('logs-body').innerHTML = json.stats.logs.map(l => `<tr><td>${l.time}</td><td>${l.name}</td><td>${l.company}</td><td>${l.meal}</td></tr>`).join('');
                 }
@@ -844,7 +876,7 @@
         function addAgendaRow(item = {}) { document.getElementById('agendaEditorList').insertAdjacentHTML('beforeend', agendaRowTemplate(item)); }
         async function loadAgenda() {
             try {
-                const res = await fetch(`/api/agenda${getActiveEventQuery()}`);
+                const res = await fetch('/api/agenda');
                 const json = await res.json();
                 const list = document.getElementById('agendaEditorList');
                 if (!list) return;
@@ -858,7 +890,7 @@
                 time: row.querySelector('.agenda-time-input').value.trim(),
                 event: row.querySelector('.agenda-event-input').value.trim()
             })).filter(x => x.time || x.event);
-            const res = await fetch(`/api/agenda${getActiveEventQuery()}`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({agenda})});
+            const res = await fetch('/api/agenda', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({agenda})});
             const json = await res.json();
             alert(json.success ? '議程已儲存' : (json.message || '議程儲存失敗'));
         }
@@ -873,7 +905,7 @@
         function addIndustryRow(item = {}) { document.getElementById('industryMappingList').insertAdjacentHTML('beforeend', industryRowTemplate(item)); }
         async function loadIndustryMappings() {
             try {
-                const res = await fetch(`/api/industry_mapping${getActiveEventQuery()}`);
+                const res = await fetch('/api/industry_mapping');
                 const json = await res.json();
                 const list = document.getElementById('industryMappingList');
                 if (!list) return;
@@ -887,7 +919,7 @@
                 company: row.querySelector('.industry-company-input').value.trim(),
                 industry: row.querySelector('.industry-name-input').value.trim()
             })).filter(x => x.company || x.industry);
-            const res = await fetch(`/api/industry_mapping${getActiveEventQuery()}`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({mappings})});
+            const res = await fetch('/api/industry_mapping', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({mappings})});
             const json = await res.json();
             alert(json.success ? '行業對照已儲存' : (json.message || '行業對照儲存失敗'));
         }
@@ -904,7 +936,7 @@
         function addExhibitorRow(item = {}) { document.getElementById('exhibitorEditorList').insertAdjacentHTML('beforeend', exhibitorRowTemplate(item)); }
         async function loadExhibitors() {
             try {
-                const res = await fetch(`/api/exhibitors${getActiveEventQuery()}`);
+                const res = await fetch('/api/exhibitors');
                 const json = await res.json();
                 const list = document.getElementById('exhibitorEditorList');
                 if (!list) return;
@@ -920,17 +952,17 @@
                 logo: row.querySelector('.exhibitor-logo-input').value.trim(),
                 description: row.querySelector('.exhibitor-desc-input').value.trim()
             })).filter(x => x.name);
-            const res = await fetch(`/api/exhibitors${getActiveEventQuery()}`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({exhibitors})});
+            const res = await fetch('/api/exhibitors', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({exhibitors})});
             const json = await res.json();
             alert(json.success ? '企業資訊已儲存' : (json.message || '企業資訊儲存失敗'));
         }
 
         window.onload = async () => {
             await fetchUserInfo();
-            await init();
-            await loadAgenda();
-            await loadIndustryMappings();
-            await loadExhibitors();
+            init();
+            loadAgenda();
+            loadIndustryMappings();
+            loadExhibitors();
         };
     </script>
 </body>
