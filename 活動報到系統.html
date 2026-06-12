@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -438,6 +439,46 @@
             .cx-dialog-body { padding: 0.55rem 1rem 1.05rem; font-size: 0.95rem; }
             .cx-dialog-actions { padding: 0 1rem 1rem; }
             .cx-dialog-btn { min-width: 96px; width: 100%; }
+        }
+
+
+
+        /* 手機版專屬背景：桌機沿用原本背景，手機 / 平板改用直式圖 */
+        :root {
+            --ark-mobile-bg: url('smart-ark-mobile-bg.png');
+        }
+
+        @media (max-width: 768px), (orientation: portrait) and (max-width: 1024px) {
+            body.circuit-background {
+                background-image: var(--ark-mobile-bg) !important;
+                background-size: cover !important;
+                background-position: center top !important;
+                background-repeat: no-repeat !important;
+                background-attachment: scroll !important;
+            }
+
+            .ark-background {
+                background-image: var(--ark-mobile-bg) !important;
+                background-size: cover !important;
+                background-position: center top !important;
+                background-repeat: no-repeat !important;
+                background-attachment: scroll !important;
+            }
+
+            #splash-screen {
+                background-image: var(--ark-mobile-bg) !important;
+                background-size: cover !important;
+                background-position: center top !important;
+                background-repeat: no-repeat !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body.circuit-background,
+            .ark-background,
+            #splash-screen {
+                background-position: center top !important;
+            }
         }
 
     </style>
