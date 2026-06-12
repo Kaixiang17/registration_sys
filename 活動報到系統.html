@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -481,9 +480,42 @@
             }
         }
 
+
+
+        /* iPhone 開場頁：未開始報到時完全蓋住 header，避免上方按鈕露出 */
+        #splash-screen {
+            z-index: 5000 !important;
+            position: fixed !important;
+            inset: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            height: 100dvh !important;
+            max-width: none !important;
+        }
+
+        body.splash-active header,
+        body.splash-active main,
+        body.splash-active #banner-container {
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+
+        @media (max-width: 768px), (orientation: portrait) and (max-width: 1024px) {
+            body.splash-active {
+                overflow: hidden !important;
+                height: 100vh !important;
+                height: 100dvh !important;
+            }
+
+            body.splash-active #splash-screen {
+                background-size: cover !important;
+                background-position: center top !important;
+            }
+        }
+
     </style>
 </head>
-<body class="circuit-background">
+<body class="circuit-background splash-active">
     <div class="ark-background"></div>
 
     <div id="splash-screen" onclick="startRegistration()">
@@ -741,12 +773,13 @@
 
         function startRegistration() {
             const splash = document.getElementById('splash-screen');
+            document.body.classList.remove('splash-active');
             splash.style.opacity = '0';
             splash.style.visibility = 'hidden';
             setTimeout(() => {
                 splash.style.display = 'none';
-                setAppState('methodSelection'); 
-                document.getElementById('shopBtn').style.display = 'block'; 
+                setAppState('methodSelection');
+                document.getElementById('shopBtn').style.display = 'block';
             }, 800);
         }
 
