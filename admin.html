@@ -106,6 +106,59 @@
                 grid-column: auto !important;
             }
         }
+
+        /* 每個活動表單專屬分享連結 */
+        .event-link-panel {
+            margin: 1rem 0 1.5rem;
+            padding: 1.1rem;
+            border: 1px solid rgba(0,229,255,0.22);
+            border-radius: 0.9rem;
+            background: rgba(0,229,255,0.045);
+        }
+        .event-link-grid {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 0.65rem;
+            align-items: center;
+            margin-top: 0.65rem;
+        }
+        .event-link-input {
+            width: 100%;
+            min-width: 0;
+            margin: 0 !important;
+            font-size: 0.82rem !important;
+            padding: 0.62rem 0.8rem !important;
+            color: #eaffff !important;
+            background: rgba(0,0,0,0.28) !important;
+            border: 1px solid rgba(0,229,255,0.24) !important;
+            border-radius: 0.5rem !important;
+        }
+        .event-link-list {
+            display: grid;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        .event-link-item {
+            padding: 0.85rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.18);
+        }
+        .event-link-name {
+            color: var(--text-dark);
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.5px;
+        }
+        @media(max-width: 768px) {
+            .event-link-grid {
+                grid-template-columns: 1fr;
+            }
+            .event-link-grid .adm-btn {
+                width: 100%;
+            }
+        }
+
     </style>
 </head>
 <body class="circuit-background">
@@ -192,6 +245,27 @@
 	                        </select>
                         <button class="adm-btn adm-btn-primary" onclick="saveSystemSettings()">🚀 切換場次</button>
                     </div>
+                </div>
+
+                <div class="event-link-panel">
+                    <div class="card-title neon-text" style="font-size:1rem; margin-bottom:0.25rem;">🔗 目前場次專屬分享連結</div>
+                    <p style="color:#aaa; font-size:0.86rem; margin-bottom:0.7rem;">
+                        每一個活動名單都會產生自己的網址，分享時會固定帶入 admin 與 sheet，避免多場活動同時進行時跑錯名單。
+                    </p>
+                    <label style="color:#00e5ff;">報到頁連結</label>
+                    <div class="event-link-grid">
+                        <input id="event_link" class="cyber-input event-link-input" readonly>
+                        <button type="button" class="adm-btn adm-btn-sm" onclick="copySpecificLink('event_link')">📋 複製報到頁</button>
+                    </div>
+
+                    <label style="color:#00e5ff; margin-top:0.9rem;">儀錶板連結</label>
+                    <div class="event-link-grid">
+                        <input id="dashboard_link" class="cyber-input event-link-input" readonly>
+                        <button type="button" class="adm-btn adm-btn-sm" onclick="copySpecificLink('dashboard_link')">📊 複製儀錶板</button>
+                    </div>
+
+                    <div style="margin-top:1rem; color:#aaa; font-size:0.86rem;">可用活動名單快速連結</div>
+                    <div id="eventLinkList" class="event-link-list"></div>
                 </div>
                 
 
@@ -489,11 +563,13 @@
                     select.innerHTML = json.sheets.map(name => `
                         <option value="${name}" ${name === currentValue ? 'selected' : ''}>📊 ${name}</option>
                     `).join('');
+                    renderEventLinkList(json.sheets);
+                    updateEventLink();
                 } else {
-                    document.getElementById('googleSheetName').innerHTML = '<option value="">❌ 您的帳戶內無任何共用的試算表資源</option>';
+                    document.getElementById('googleSheetName').innerHTML = '<option value="">❌ 您的帳戶內無任何共用的試算表資源</option>'; renderEventLinkList([]); updateEventLink();
                 }
             } catch(e) {
-                document.getElementById('googleSheetName').innerHTML = '<option value="">❌ 無法與雲端通訊獲取列表</option>';
+                document.getElementById('googleSheetName').innerHTML = '<option value="">❌ 無法與雲端通訊獲取列表</option>'; renderEventLinkList([]); updateEventLink();
             }
         }
 
@@ -784,18 +860,67 @@
             }
         }
 
+        function buildEventUrl(sheetName, page = 'front') {
+            const encodedAdmin = encodeURIComponent(currentUser || 'admin');
+            const encodedSheet = encodeURIComponent(sheetName || document.getElementById('googleSheetName')?.value || '活動報到名單');
+            if (page === 'dashboard') {
+                return `${window.location.origin}/dashboard.html?admin=${encodedAdmin}&sheet=${encodedSheet}`;
+            }
+            return `${window.location.origin}/?admin=${encodedAdmin}&sheet=${encodedSheet}`;
+        }
+
         function updateEventLink() {
-            const sheet = document.getElementById('googleSheetName').value;
-            const link = `${window.location.origin}/活動報到系統.html?admin=${currentUser}&sheet=${encodeURIComponent(sheet)}`;
+            const sheet = document.getElementById('googleSheetName')?.value || '';
             const linkInput = document.getElementById('event_link');
-            if(linkInput) linkInput.value = link;
+            const dashboardInput = document.getElementById('dashboard_link');
+            if(linkInput) linkInput.value = buildEventUrl(sheet, 'front');
+            if(dashboardInput) dashboardInput.value = buildEventUrl(sheet, 'dashboard');
+        }
+
+        async function copySpecificLink(inputId) {
+            const copyText = document.getElementById(inputId);
+            if (!copyText || !copyText.value) return alert('目前沒有可複製的連結');
+            try {
+                await navigator.clipboard.writeText(copyText.value);
+                alert('專屬連結已複製到剪貼簿');
+            } catch(e) {
+                copyText.select();
+                document.execCommand("copy");
+                alert('專屬連結已複製到剪貼簿');
+            }
         }
 
         function copyEventLink() {
-            const copyText = document.getElementById("event_link");
-            copyText.select();
-            document.execCommand("copy");
-            alert('連結已複製到剪貼簿');
+            copySpecificLink('event_link');
+        }
+
+        function renderEventLinkList(sheets = []) {
+            const box = document.getElementById('eventLinkList');
+            if (!box) return;
+            box.innerHTML = sheets.map(name => `
+                <div class="event-link-item">
+                    <div class="event-link-name">📊 ${name}</div>
+                    <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                        <button type="button" class="adm-btn adm-btn-sm" onclick="copyRawLink('${buildEventUrl(name, 'front').replace(/'/g, "\\'")}')">📋 複製報到頁</button>
+                        <button type="button" class="adm-btn adm-btn-sm" onclick="copyRawLink('${buildEventUrl(name, 'dashboard').replace(/'/g, "\\'")}')">📊 複製儀錶板</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function copyRawLink(link) {
+            try {
+                await navigator.clipboard.writeText(link);
+                alert('專屬連結已複製到剪貼簿');
+            } catch(e) {
+                const temp = document.createElement('input');
+                temp.value = link;
+                document.body.appendChild(temp);
+                temp.select();
+                document.execCommand('copy');
+                temp.remove();
+                alert('專屬連結已複製到剪貼簿');
+            }
         }
 
         function showAddModal() { document.getElementById('addModal').style.display = 'flex'; }
