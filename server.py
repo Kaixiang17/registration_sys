@@ -634,18 +634,6 @@ def add_registration():
     finally: conn.close()
 
 
-@app.route('/api/user/info')
-def user_info():
-    if not session.get('admin_logged_in'):
-        return jsonify({"success": False, "message": "未登入"}), 401
-    return jsonify({
-        "success": True,
-        "username": session.get('username', 'admin'),
-        "allowed_sheets": session.get('allowed_sheets', []),
-        "current_sheet": session.get('current_admin_sheet') or (session.get('allowed_sheets', ['活動報到名單'])[0] if session.get('allowed_sheets') else '活動報到名單')
-    })
-
-
 @app.route('/api/health')
 def api_health():
     return jsonify({
@@ -694,6 +682,64 @@ def api_user_info():
         "allowed_sheets": allowed_sheets,
         "current_sheet": current_sheet
     })
+
+@app.route('/api/sheets/list')
+def api_sheets_list():
+    """
+    後台「MySQL 雲端活動資料庫場次」下拉選單使用。
+    來源：Aiven MySQL 的 admins.allowed_events。
+    這不是 Google Sheets，也不是假資料；每次開後台會重新讀 DB，DBeaver 改 allowed_events 後重新整理即可看到。
+    """
+    if not session.get('admin_logged_in'):
+        return jsonify({
+            "success": False,
+            "message": "尚未登入",
+            "sheets": []
+        }), 401
+
+    username = session.get('username', 'admin')
+    conn = None
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT allowed_events FROM admins WHERE username = %s", (username,))
+            row = cursor.fetchone()
+
+        allowed_text = (row or {}).get('allowed_events') or ''
+        sheets = [s.strip() for s in allowed_text.split(',') if s.strip()]
+        if not sheets:
+            sheets = session.get('allowed_sheets', []) or ['活動報到名單']
+
+        session['allowed_sheets'] = sheets
+        if session.get('current_admin_sheet') not in sheets:
+            session['current_admin_sheet'] = sheets[0]
+
+        return jsonify({
+            "success": True,
+            "source": "aiven_mysql_admins_allowed_events",
+            "username": username,
+            "sheets": sheets,
+            "current_sheet": session.get('current_admin_sheet')
+        })
+    except Exception as e:
+        fallback = session.get('allowed_sheets', [])
+        if fallback:
+            return jsonify({
+                "success": True,
+                "source": "session_fallback",
+                "username": username,
+                "sheets": fallback,
+                "current_sheet": session.get('current_admin_sheet') or fallback[0],
+                "warning": str(e)
+            })
+        return jsonify({
+            "success": False,
+            "message": f"MySQL 場次列表讀取失敗：{e}",
+            "sheets": []
+        }), 500
+    finally:
+        if conn:
+            conn.close()
 
 
 @app.route('/admin')
