@@ -231,52 +231,6 @@
             }
         }
 
-
-        /* 桌號報到率詳情彈窗 */
-        .table-stat-card {
-            padding: 1rem;
-            text-align: center;
-            background: rgba(0,229,255,0.05);
-            cursor: pointer;
-            transition: 0.18s ease;
-        }
-        .table-stat-card:hover {
-            transform: translateY(-2px);
-            border-color: rgba(0,229,255,0.55) !important;
-            box-shadow: 0 0 16px rgba(0,229,255,0.16);
-        }
-        .table-detail-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-        }
-        .table-person-list {
-            max-height: 52vh;
-            overflow: auto;
-            display: grid;
-            gap: 0.55rem;
-            padding-right: 0.25rem;
-        }
-        .table-person-card {
-            border: 1px solid rgba(0,229,255,0.16);
-            background: rgba(0,0,0,0.2);
-            border-radius: 0.65rem;
-            padding: 0.75rem;
-        }
-        .table-person-name {
-            color: #eaffff;
-            font-weight: 800;
-            margin-bottom: 0.2rem;
-        }
-        .table-person-meta {
-            color: #aab7c4;
-            font-size: 0.82rem;
-            line-height: 1.45;
-        }
-        @media(max-width: 768px) {
-            .table-detail-grid { grid-template-columns: 1fr; }
-        }
-
     </style>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
@@ -360,7 +314,7 @@
                     <label>當前作用中 MySQL 雲端活動資料庫場次</label>
                     <div style="display:flex; gap:0.6rem; align-items:center;">
                         <select class="cyber-input" id="googleSheetName" onchange="updateEventLink()" style="background: rgba(10,20,35,0.9); color:#fff; border:1px solid rgba(0,229,255,0.25); padding:0.52rem 1rem; flex-grow:1; border-radius:0.5rem; font-size:0.9rem; font-family:inherit; cursor:pointer; outline:none;">
-	                            <option value="">⏳ 正在自動探測雲端試算表資源池...</option>
+	                            <option value="">⏳ 正在讀取 MySQL 雲端活動場次...</option>
 	                        </select>
                         <button class="adm-btn adm-btn-primary" onclick="saveSystemSettings()">🚀 切換場次</button>
                     </div>
@@ -489,27 +443,6 @@
             </div>
         </div>
     </main>
-
-
-    <div id="tableDetailModal" class="modal">
-        <div class="modal-content cyber-card" style="max-width: 860px;">
-            <div style="display:flex; justify-content:space-between; gap:1rem; align-items:center; margin-bottom:1rem;">
-                <div class="modal-header neon-text" id="tableDetailTitle" style="margin:0;">桌號詳情</div>
-                <button class="adm-btn adm-btn-ghost adm-btn-sm" onclick="closeTableDetailModal()">✕ 關閉</button>
-            </div>
-            <div id="tableDetailSummary" style="color:#aaa; margin-bottom:1rem;"></div>
-            <div class="table-detail-grid">
-                <div>
-                    <h3 style="color:#4ade80; margin-bottom:0.8rem;">✅ 已報到</h3>
-                    <div id="tableCheckedList" class="table-person-list"></div>
-                </div>
-                <div>
-                    <h3 style="color:#f87171; margin-bottom:0.8rem;">⏳ 未報到</h3>
-                    <div id="tablePendingList" class="table-person-list"></div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <div id="productModal" class="modal">
         <div class="modal-content cyber-card">
@@ -707,7 +640,7 @@
         }
 
         // ============================================================
-        // 【全新前端邏輯 1】非同步取得試算表列表並生成下拉選單
+        // 【MySQL 場次下拉】從 Aiven MySQL admins.allowed_events 讀取活動列表
         // ============================================================
         async function loadAvailableSheets() {
             try {
@@ -724,10 +657,10 @@
                     updateEventLink();
                     renderEventQrCode();
                 } else {
-                    document.getElementById('googleSheetName').innerHTML = '<option value="">❌ 您的帳戶內無任何共用的試算表資源</option>'; renderEventLinkList([]); updateEventLink();
+                    document.getElementById('googleSheetName').innerHTML = '<option value="">❌ 您的帳戶尚未設定任何 MySQL 活動場次</option>'; renderEventLinkList([]); updateEventLink();
                 }
             } catch(e) {
-                document.getElementById('googleSheetName').innerHTML = '<option value="">❌ 無法與雲端通訊獲取列表</option>'; renderEventLinkList([]); updateEventLink();
+                document.getElementById('googleSheetName').innerHTML = '<option value="">❌ 無法讀取 MySQL 活動場次列表</option>'; renderEventLinkList([]); updateEventLink();
             }
         }
 
@@ -803,17 +736,6 @@
             } catch (e) { showMessage('設定載入失敗', 'danger'); }
         }
 
-        let latestTableStats = [];
-
-        function escapeAdminHtml(value) {
-            return String(value ?? '').replace(/[&<>"]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s]));
-        }
-
-        function isZeroTableName(tableName) {
-            const t = String(tableName || '').replace(/\s/g, '');
-            return !t || ['0', '第0桌', '第０桌', '0桌', '０桌'].includes(t);
-        }
-
         async function updateDashboard() {
             try {
                 const res = await fetch(`${API_BASE}/dashboard_stats`);
@@ -822,51 +744,16 @@
                     document.getElementById('stat-total').textContent = json.stats.total;
                     document.getElementById('stat-checked').textContent = json.stats.checked_in;
                     document.getElementById('stat-pending').textContent = json.stats.not_checked_in;
-
-                    latestTableStats = (json.stats.table_stats || []).filter(item => !isZeroTableName(item.table));
-                    document.getElementById('table-stats-container').innerHTML = latestTableStats.map((item, index) => {
-                        const percent = Number(item.percent ?? (item.total ? item.checked / item.total * 100 : 0)).toFixed(1).replace('.0','');
-                        return `
-                        <div class="cyber-card table-stat-card" onclick="openTableDetailModal(${index})">
-                            <div style="font-size: 0.85rem; color: #aaa; margin-bottom: 0.3rem;">第 ${escapeAdminHtml(item.table)} 桌</div>
-                            <div style="font-size: 1.4rem; font-weight: bold; color: var(--text-dark);">${percent}%</div>
-                            <div style="font-size:0.78rem; color:#8aa0aa; margin-top:0.25rem;">${item.checked || 0}/${item.total || 0} 已報到</div>
-                            <div style="font-size:0.72rem; color:#00e5ff; margin-top:0.35rem;">點擊查看名單</div>
-                        </div>`;
-                    }).join('') || '<div style="color:#888;">尚無桌號資料</div>';
-
-                    document.getElementById('logs-body').innerHTML = (json.stats.logs || []).map(l => `<tr><td>${escapeAdminHtml(l.time)}</td><td>${escapeAdminHtml(l.name)}</td><td>${escapeAdminHtml(l.company)}</td><td>${escapeAdminHtml(l.meal)}</td></tr>`).join('');
+                    
+                    document.getElementById('table-stats-container').innerHTML = Object.entries(json.stats.table_stats).sort((a,b)=>a[0]-b[0]).map(([t, r]) => `
+                        <div class="cyber-card" style="padding: 1rem; text-align: center; background: rgba(0,229,255,0.05);">
+                            <div style="font-size: 0.85rem; color: #aaa; margin-bottom: 0.3rem;">第 ${t} 桌</div>
+                            <div style="font-size: 1.4rem; font-weight: bold; color: var(--text-dark);">${r}%</div>
+                        </div>`).join('');
+                    
+                    document.getElementById('logs-body').innerHTML = json.stats.logs.map(l => `<tr><td>${l.time}</td><td>${l.name}</td><td>${l.company}</td><td>${l.meal}</td></tr>`).join('');
                 }
             } catch (e) { console.error("同步失敗", e); }
-        }
-
-        function renderPersonList(list, emptyText) {
-            if (!list || !list.length) return `<div style="color:#888;">${emptyText}</div>`;
-            return list.map(p => `
-                <div class="table-person-card">
-                    <div class="table-person-name">${escapeAdminHtml(p.name || '未命名')}</div>
-                    <div class="table-person-meta">
-                        ${escapeAdminHtml(p.company || '無公司')}<br>
-                        ${p.phone ? `手機：${escapeAdminHtml(p.phone)}<br>` : ''}
-                        ${p.meal ? `餐食：${escapeAdminHtml(p.meal)}<br>` : ''}
-                        ${p.checkin_time ? `報到時間：${escapeAdminHtml(p.checkin_time)}` : ''}
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function openTableDetailModal(index) {
-            const item = latestTableStats[index];
-            if (!item) return;
-            document.getElementById('tableDetailTitle').textContent = `第 ${item.table} 桌報到詳情`;
-            document.getElementById('tableDetailSummary').textContent = `已報到 ${item.checked || 0} / 共 ${item.total || 0} 人`;
-            document.getElementById('tableCheckedList').innerHTML = renderPersonList(item.checked_people || [], '目前尚無已報到人員');
-            document.getElementById('tablePendingList').innerHTML = renderPersonList(item.pending_people || [], '此桌已全數報到');
-            document.getElementById('tableDetailModal').classList.add('active');
-        }
-
-        function closeTableDetailModal() {
-            document.getElementById('tableDetailModal').classList.remove('active');
         }
 
         function renderProducts() {
