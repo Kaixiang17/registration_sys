@@ -15,6 +15,8 @@ DB_PASSWORD = os.environ.get('DB_PASSWORD')
 DB_NAME = os.environ.get('DB_NAME', 'defaultdb')
 DB_PORT = int(os.environ.get('DB_PORT', 27632))
 
+_CORE_TABLES_READY = False
+
 def get_db_connection():
     return pymysql.connect(
         host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME, port=DB_PORT,
@@ -49,12 +51,16 @@ def get_admin_and_event_context():
 
 
 
-def ensure_core_tables(conn):
+def ensure_core_tables(conn, force=False):
     """
     保護 Aiven MySQL 核心資料表。
     admin.html 一進後台會先呼叫 /api/config；如果 event_configs / event_products / event_registrations
     不存在或缺少 admin_user、event_key，就會顯示「設定載入失敗」。
     """
+    global _CORE_TABLES_READY
+    if _CORE_TABLES_READY and not force:
+        return
+
     with conn.cursor() as cursor:
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS admins (
@@ -183,6 +189,7 @@ def ensure_core_tables(conn):
         # 如果 event_configs 是舊版只有 event_key 主鍵，補完欄位後不強制改主鍵，避免破壞現有資料。
         # 但查詢會使用 admin_user + event_key，因此舊資料會透過 default admin / 活動報到名單 被保留。
     conn.commit()
+    _CORE_TABLES_READY = True
 
 
 # ============================================================
@@ -662,27 +669,97 @@ def get_dashboard_stats():
         ensure_core_tables(conn)
         with conn.cursor() as cursor:
             cursor.execute("""
-                SELECT id, name, phone, company_name, seating_chart, status, checkin_time, meal_choice
+                SELECT
+                    COUNT(*) AS total,
+                    SUM(CASE WHEN status IN ('checked_in', '已報到', '替代') THEN 1 ELSE 0 END) AS checked_in
                 FROM event_registrations
                 WHERE admin_user = %s AND event_key = %s
-                ORDER BY id ASC
             """, (admin_user, event_key))
+            summary = cursor.fetchone() or {}
+
+            cursor.execute("""
+                SELECT
+                    seating_chart AS table_name,
+                    COUNT(*) AS total,
+                    SUM(CASE WHEN status IN ('checked_in', '已報到', '替代') THEN 1 ELSE 0 END) AS checked
+                FROM event_registrations
+                WHERE admin_user = %s
+                  AND event_key = %s
+                  AND seating_chart IS NOT NULL
+                  AND TRIM(seating_chart) NOT IN ('', '0', '第0桌', '第 0 桌', '第０桌', '0桌', '０桌')
+                GROUP BY seating_chart
+                ORDER BY CAST(REGEXP_REPLACE(seating_chart, '[^0-9]', '') AS UNSIGNED), seating_chart
+            """, (admin_user, event_key))
+            table_rows = cursor.fetchall()
+
+            cursor.execute("""
+                SELECT name, checkin_time, company_name, meal_choice
+                FROM event_registrations
+                WHERE admin_user = %s
+                  AND event_key = %s
+                  AND status IN ('checked_in', '已報到', '替代')
+                ORDER BY checkin_time DESC, id DESC
+                LIMIT 25
+            """, (admin_user, event_key))
+            checked_logs = cursor.fetchall()
+
+        total = int(summary.get("total") or 0)
+        checked_in = int(summary.get("checked_in") or 0)
+
+        table_stats_formatted = []
+        for r in table_rows:
+            table = r.get("table_name") or ""
+            total_table = int(r.get("total") or 0)
+            checked_table = int(r.get("checked") or 0)
+            percent = round((checked_table / total_table * 100), 1) if total_table else 0
+            table_stats_formatted.append({
+                "table": table,
+                "checked": checked_table,
+                "total": total_table,
+                "percent": percent
+            })
+
+        logs = [{
+            "name": r.get('name') or "",
+            "time": r.get('checkin_time').strftime('%H:%M:%S') if r.get('checkin_time') else "",
+            "company": r.get('company_name') or "",
+            "meal": r.get('meal_choice') or ""
+        } for r in checked_logs]
+
+        return jsonify({"success": True, "stats": {
+            "total": total,
+            "checked_in": checked_in,
+            "not_checked_in": total - checked_in,
+            "table_stats": table_stats_formatted,
+            "logs": logs
+        }})
+    finally:
+        conn.close()
+
+@app.route('/api/table_detail')
+def api_table_detail():
+    admin_user, event_key = get_admin_and_event_context()
+    table = (request.args.get('table') or '').strip()
+    if not table:
+        return jsonify({"success": False, "message": "缺少桌號"}), 400
+
+    conn = get_db_connection()
+    try:
+        ensure_core_tables(conn)
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT id, name, phone, company_name, seating_chart, status, checkin_time, meal_choice
+                FROM event_registrations
+                WHERE admin_user = %s AND event_key = %s AND seating_chart = %s
+                ORDER BY
+                    CASE WHEN status IN ('checked_in', '已報到', '替代') THEN 0 ELSE 1 END,
+                    checkin_time DESC,
+                    id ASC
+            """, (admin_user, event_key, table))
             rows = cursor.fetchall()
 
         def is_checked(row):
             return row.get('status') in ['checked_in', '已報到', '替代']
-
-        def normalize_table(value):
-            if value is None:
-                return ''
-            t = str(value).strip()
-            if not t:
-                return ''
-            compact = t.replace(' ', '')
-            zero_values = {'0', '第0桌', '第０桌', '0桌', '０桌', '第 0 桌'}
-            if compact in zero_values:
-                return ''
-            return t
 
         def person_payload(row):
             return {
@@ -697,71 +774,21 @@ def get_dashboard_stats():
                 "checkin_time": row.get("checkin_time").strftime('%H:%M:%S') if row.get("checkin_time") else ""
             }
 
-        total = len(rows)
-        checked = [r for r in rows if is_checked(r)]
+        checked_people = [person_payload(r) for r in rows if is_checked(r)]
+        pending_people = [person_payload(r) for r in rows if not is_checked(r)]
 
-        original_meals = {}
-        actual_meals = {}
-        for r in rows:
-            meal = r.get('meal_choice') or '未選擇'
-            original_meals[meal] = original_meals.get(meal, 0) + 1
-        for r in checked:
-            meal = r.get('meal_choice') or '未選擇'
-            actual_meals[meal] = actual_meals.get(meal, 0) + 1
-
-        table_stats = {}
-        for r in rows:
-            table = normalize_table(r.get('seating_chart'))
-            if not table:
-                continue
-            if table not in table_stats:
-                table_stats[table] = {"total": 0, "checked": 0, "checked_people": [], "pending_people": []}
-            table_stats[table]["total"] += 1
-            if is_checked(r):
-                table_stats[table]["checked"] += 1
-                table_stats[table]["checked_people"].append(person_payload(r))
-            else:
-                table_stats[table]["pending_people"].append(person_payload(r))
-
-        def table_sort_key(item):
-            key = str(item[0])
-            nums = re.findall(r'\d+', key)
-            return (int(nums[0]) if nums else 999999, key)
-
-        table_stats_formatted = []
-        for table, v in sorted(table_stats.items(), key=table_sort_key):
-            percent = round((v["checked"] / v["total"] * 100), 1) if v["total"] else 0
-            table_stats_formatted.append({
-                "table": table,
-                "checked": v["checked"],
-                "total": v["total"],
-                "percent": percent,
-                "checked_people": v["checked_people"],
-                "pending_people": v["pending_people"]
-            })
-
-        logs = []
-        for r in checked[:25]:
-            logs.append({
-                "name": r.get('name') or "",
-                "time": r.get('checkin_time').strftime('%H:%M:%S') if r.get('checkin_time') else "",
-                "company": r.get('company_name') or "",
-                "meal": r.get('meal_choice') or ""
-            })
-
-        return jsonify({"success": True, "stats": {
-            "total": total,
-            "checked_in": len(checked),
-            "not_checked_in": total - len(checked),
-            "original_meals": original_meals,
-            "actual_meals": actual_meals,
-            "table_stats": table_stats_formatted,
-            "logs": logs
-        }})
+        return jsonify({
+            "success": True,
+            "table": table,
+            "total": len(rows),
+            "checked": len(checked_people),
+            "pending": len(pending_people),
+            "checked_people": checked_people,
+            "pending_people": pending_people
+        })
     finally:
         conn.close()
 
-()
 
 @app.route('/api/registrations/add', methods=['POST'])
 def add_registration():
@@ -829,6 +856,65 @@ def api_user_info():
         "current_sheet": current_sheet
     })
 
+
+@app.route('/api/session/sheet', methods=['POST'])
+def api_session_sheet():
+    """
+    快速切換目前作用中的活動場次。
+    只更新 session / admins.current_event，不重寫 event_configs，不刪 products，不 reload 整個後台。
+    """
+    if not session.get('admin_logged_in'):
+        return jsonify({"success": False, "message": "尚未登入"}), 401
+
+    payload = request.get_json(silent=True) or {}
+    sheet = (payload.get('sheet') or request.form.get('sheet') or '').strip()
+    username = session.get('username', 'admin')
+    allowed = session.get('allowed_sheets', [])
+
+    if not allowed:
+        conn = None
+        try:
+            conn = get_db_connection()
+            ensure_core_tables(conn)
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT allowed_events FROM admins WHERE username = %s", (username,))
+                row = cursor.fetchone()
+            allowed_text = (row or {}).get('allowed_events') or ''
+            allowed = [s.strip() for s in allowed_text.split(',') if s.strip()]
+            session['allowed_sheets'] = allowed
+        finally:
+            if conn:
+                conn.close()
+
+    if not sheet:
+        return jsonify({"success": False, "message": "缺少場次名稱"}), 400
+    if allowed and sheet not in allowed:
+        return jsonify({"success": False, "message": "此帳號沒有這個活動場次權限"}), 403
+
+    session['current_admin_sheet'] = sheet
+
+    # 寫回 MySQL，讓重新整理後仍記住目前場次；若 current_event 欄位不存在也不影響切換。
+    conn = None
+    try:
+        conn = get_db_connection()
+        ensure_core_tables(conn)
+        with conn.cursor() as cursor:
+            cursor.execute("UPDATE admins SET current_event = %s WHERE username = %s", (sheet, username))
+        conn.commit()
+    except Exception as e:
+        print(f"⚠️ current_event 寫回失敗，不影響 session 切換: {e}")
+    finally:
+        if conn:
+            conn.close()
+
+    return jsonify({
+        "success": True,
+        "username": username,
+        "current_sheet": sheet,
+        "sheets": allowed
+    })
+
+
 @app.route('/api/sheets/list')
 def api_sheets_list():
     """
@@ -849,7 +935,7 @@ def api_sheets_list():
         conn = get_db_connection()
         ensure_core_tables(conn)
         with conn.cursor() as cursor:
-            cursor.execute("SELECT allowed_events FROM admins WHERE username = %s", (username,))
+            cursor.execute("SELECT allowed_events, current_event FROM admins WHERE username = %s", (username,))
             row = cursor.fetchone()
 
         allowed_text = (row or {}).get('allowed_events') or ''
@@ -858,7 +944,10 @@ def api_sheets_list():
             sheets = session.get('allowed_sheets', []) or ['活動報到名單']
 
         session['allowed_sheets'] = sheets
-        if session.get('current_admin_sheet') not in sheets:
+        db_current = ((row or {}).get('current_event') or '').strip()
+        if db_current in sheets:
+            session['current_admin_sheet'] = db_current
+        elif session.get('current_admin_sheet') not in sheets:
             session['current_admin_sheet'] = sheets[0]
 
         return jsonify({
