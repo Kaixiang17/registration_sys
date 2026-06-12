@@ -1,4 +1,4 @@
-import os, json, time, requests, csv, io
+import os, json, time, requests, csv, io, re
 from datetime import datetime, timedelta
 from flask import Flask, request, jsonify, send_from_directory, session, redirect
 from flask_cors import CORS
@@ -510,47 +510,99 @@ def checkin(pid):
     except Exception as e:
         print(f"❌ [報到失敗]: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
-    finally: conn.close()
-
-@app.route('/api/dashboard_stats')
+    finally: conn.close@app.route('/api/dashboard_stats')
 def get_dashboard_stats():
     admin_user, event_key = get_admin_and_event_context()
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
-            cursor.execute("SELECT * FROM event_registrations WHERE admin_user = %s AND event_key = %s", (admin_user, event_key))
+            cursor.execute("""
+                SELECT id, name, phone, company_name, seating_chart, status, checkin_time, meal_choice
+                FROM event_registrations
+                WHERE admin_user = %s AND event_key = %s
+            """, (admin_user, event_key))
             rows = cursor.fetchall()
-        
+
+        def is_checked(row):
+            return row.get('status') in ['checked_in', '已報到', '替代']
+
+        def normalize_table(value):
+            if value is None:
+                return ''
+            t = str(value).strip()
+            if not t:
+                return ''
+            compact = t.replace(' ', '')
+            zero_values = {'0', '第0桌', '第０桌', '0桌', '０桌', '第 0 桌'}
+            if compact in zero_values:
+                return ''
+            return t
+
+        def person_payload(row):
+            return {
+                "id": row.get("id"),
+                "name": row.get("name") or "",
+                "phone": row.get("phone") or "",
+                "company": row.get("company_name") or "",
+                "seat": row.get("seating_chart") or "",
+                "meal": row.get("meal_choice") or "",
+                "status": row.get("status") or "",
+                "checked": is_checked(row),
+                "checkin_time": row.get("checkin_time").strftime('%H:%M:%S') if row.get("checkin_time") else ""
+            }
+
         total = len(rows)
-        checked = [r for r in rows if r['status'] in ['checked_in', '已報到', '替代']]
-        
+        checked = [r for r in rows if is_checked(r)]
+
         original_meals = {}
         actual_meals = {}
         for r in rows:
-            orig = r.get('original_meal_choice', r['meal_choice'])
-            original_meals[orig] = original_meals.get(orig, 0) + 1
-        
+            meal = r.get('meal_choice') or '未選擇'
+            original_meals[meal] = original_meals.get(meal, 0) + 1
         for r in checked:
-            meal = r['meal_choice']
+            meal = r.get('meal_choice') or '未選擇'
             actual_meals[meal] = actual_meals.get(meal, 0) + 1
-        
+
         table_stats = {}
         for r in rows:
-            table = r['seating_chart']
-            if table:
-                if str(table).strip() in ['', '0', '第0桌', '第 0 桌']:
-                    continue
-                if table not in table_stats:
-                    table_stats[table] = {"total": 0, "checked": 0}
-                table_stats[table]["total"] += 1
-                if r['status'] in ['checked_in', '已報到', '替代']:
-                    table_stats[table]["checked"] += 1
-        
-        sorted_tables = sorted(table_stats.items())
-        table_stats_formatted = [{"table": k, "checked": v["checked"], "total": v["total"]} for k, v in sorted_tables]
-        
-        logs = [{"name": r['name'], "time": r['checkin_time'].strftime('%H:%M:%S') if r['checkin_time'] else "", "company": r['company_name'], "meal": r['meal_choice']} for r in checked[:25]]
-        
+            table = normalize_table(r.get('seating_chart'))
+            if not table:
+                continue
+            if table not in table_stats:
+                table_stats[table] = {"total": 0, "checked": 0, "checked_people": [], "pending_people": []}
+            table_stats[table]["total"] += 1
+            if is_checked(r):
+                table_stats[table]["checked"] += 1
+                table_stats[table]["checked_people"].append(person_payload(r))
+            else:
+                table_stats[table]["pending_people"].append(person_payload(r))
+
+        def table_sort_key(item):
+            key = str(item[0])
+            nums = re.findall(r'\d+', key)
+            return (int(nums[0]) if nums else 999999, key)
+
+        table_stats_formatted = []
+        for table, v in sorted(table_stats.items(), key=table_sort_key):
+            percent = round((v["checked"] / v["total"] * 100), 1) if v["total"] else 0
+            table_stats_formatted.append({
+                "table": table,
+                "checked": v["checked"],
+                "total": v["total"],
+                "percent": percent,
+                "checked_people": v["checked_people"],
+                "pending_people": v["pending_people"]
+            })
+
+        logs = []
+        for r in checked[:25]:
+            logs.append({
+                "name": r.get('name') or "",
+                "time": r.get('checkin_time').strftime('%H:%M:%S') if r.get('checkin_time') else "",
+                "company": r.get('company_name') or "",
+                "meal": r.get('meal_choice') or ""
+            })
+
         return jsonify({"success": True, "stats": {
             "total": total,
             "checked_in": len(checked),
@@ -560,7 +612,10 @@ def get_dashboard_stats():
             "table_stats": table_stats_formatted,
             "logs": logs
         }})
-    finally: conn.close()
+    finally:
+        conn.close()
+
+()
 
 @app.route('/api/registrations/add', methods=['POST'])
 def add_registration():
