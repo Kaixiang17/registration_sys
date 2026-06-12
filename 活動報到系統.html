@@ -277,6 +277,7 @@
             </div>
             <div class="header-action-buttons">
                 <button id="shopBtn" class="ck-btn-pill" onclick="goToShop()" style="display:none; border-color:rgba(0,229,255,0.5);">🛒 商品專區</button>
+                <button id="dashboardBtn" class="ck-btn-pill" onclick="goToDashboard()" style="border-color:rgba(74,222,128,0.55); color:#4ade80;">📊 儀錶板</button>
                 <button id="mapBtn" class="ck-btn-pill" onclick="toggleMapModal(true)">🗺️ 地圖導覽</button>
             </div>
         </div>
@@ -476,6 +477,11 @@
                 splash.style.display = 'none';
             }
             showProducts();
+        }
+
+        function goToDashboard() {
+            const targetSheet = currentSheet || (systemConfig && systemConfig.google_sheet_name) || '活動報到名單';
+            window.location.href = `dashboard.html?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(targetSheet)}`;
         }
 
         function setAppState(s) {
