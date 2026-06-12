@@ -47,6 +47,124 @@ def get_admin_and_event_context():
     return admin_user, event_key
 
 
+
+def ensure_core_tables(conn):
+    """
+    保護 Aiven MySQL 核心資料表。
+    admin.html 一進後台會先呼叫 /api/config；如果 event_configs / event_products / event_registrations
+    不存在或缺少 admin_user、event_key，就會顯示「設定載入失敗」。
+    """
+    with conn.cursor() as cursor:
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS admins (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                username VARCHAR(50) NOT NULL UNIQUE,
+                password VARCHAR(100) NOT NULL,
+                allowed_events VARCHAR(255) DEFAULT '活動報到名單'
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS event_configs (
+                admin_user VARCHAR(100) NOT NULL,
+                event_key VARCHAR(150) NOT NULL,
+                show_meal_options BOOLEAN DEFAULT TRUE,
+                map_image_url LONGTEXT,
+                banner_image_url LONGTEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (admin_user, event_key)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS event_products (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                admin_user VARCHAR(100) NOT NULL,
+                event_key VARCHAR(150) NOT NULL,
+                name VARCHAR(150) NOT NULL,
+                image LONGTEXT,
+                category VARCHAR(50) DEFAULT '課程',
+                description TEXT,
+                link TEXT,
+                is_gift BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_product_event (admin_user, event_key)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS event_registrations (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                admin_user VARCHAR(100) NOT NULL,
+                event_key VARCHAR(150) NOT NULL,
+                name VARCHAR(150) NOT NULL,
+                phone VARCHAR(50),
+                email VARCHAR(150),
+                company_name VARCHAR(255),
+                seating_chart VARCHAR(100),
+                meal_choice VARCHAR(50),
+                original_meal_choice VARCHAR(50),
+                status VARCHAR(50) DEFAULT '未報到',
+                checkin_time DATETIME NULL,
+                proxy_name VARCHAR(150),
+                proxy_phone VARCHAR(50),
+                note TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_registration_event (admin_user, event_key),
+                INDEX idx_registration_name (name),
+                INDEX idx_registration_phone (phone),
+                INDEX idx_registration_company (company_name)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        """)
+
+        # 舊資料表補欄位：Aiven 之前可能已經有舊版 schema，所以不能只靠 CREATE TABLE IF NOT EXISTS。
+        alter_map = {
+            'event_configs': {
+                'admin_user': 'VARCHAR(100) NOT NULL DEFAULT "admin"',
+                'event_key': 'VARCHAR(150) NOT NULL DEFAULT "活動報到名單"',
+                'show_meal_options': 'BOOLEAN DEFAULT TRUE',
+                'map_image_url': 'LONGTEXT',
+                'banner_image_url': 'LONGTEXT'
+            },
+            'event_products': {
+                'admin_user': 'VARCHAR(100) NOT NULL DEFAULT "admin"',
+                'event_key': 'VARCHAR(150) NOT NULL DEFAULT "活動報到名單"',
+                'image': 'LONGTEXT',
+                'category': 'VARCHAR(50) DEFAULT "課程"',
+                'description': 'TEXT',
+                'link': 'TEXT',
+                'is_gift': 'BOOLEAN DEFAULT FALSE'
+            },
+            'event_registrations': {
+                'admin_user': 'VARCHAR(100) NOT NULL DEFAULT "admin"',
+                'event_key': 'VARCHAR(150) NOT NULL DEFAULT "活動報到名單"',
+                'phone': 'VARCHAR(50)',
+                'email': 'VARCHAR(150)',
+                'company_name': 'VARCHAR(255)',
+                'seating_chart': 'VARCHAR(100)',
+                'meal_choice': 'VARCHAR(50)',
+                'original_meal_choice': 'VARCHAR(50)',
+                'status': 'VARCHAR(50) DEFAULT "未報到"',
+                'checkin_time': 'DATETIME NULL',
+                'proxy_name': 'VARCHAR(150)',
+                'proxy_phone': 'VARCHAR(50)',
+                'note': 'TEXT'
+            }
+        }
+        for table, columns in alter_map.items():
+            for col, definition in columns.items():
+                try:
+                    cursor.execute(f"ALTER TABLE {table} ADD COLUMN {col} {definition}")
+                except Exception as e:
+                    if not _ignore_duplicate_column_error(e):
+                        print(f"⚠️ 核心欄位檢查略過 {table}.{col}: {e}")
+
+        # 如果 event_configs 是舊版只有 event_key 主鍵，補完欄位後不強制改主鍵，避免破壞現有資料。
+        # 但查詢會使用 admin_user + event_key，因此舊資料會透過 default admin / 活動報到名單 被保留。
+    conn.commit()
+
+
 # ============================================================
 # 【Dashboard 真實同步資料表保護】
 # 確保議程、行業對照、企業展示資料真的可以寫入資料庫。
@@ -58,6 +176,7 @@ def _ignore_duplicate_column_error(exc):
 
 
 def ensure_dashboard_tables(conn):
+    ensure_core_tables(conn)
     with conn.cursor() as cursor:
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS event_agenda (
@@ -396,6 +515,7 @@ def handle_config():
     admin_user, event_key = get_admin_and_event_context()
     conn = get_db_connection()
     try:
+        ensure_core_tables(conn)
         if request.method == 'POST':
             if not session.get('admin_logged_in'): return jsonify({"success": False, "message": "未授權的操作"}), 403
             payload = request.json
@@ -405,8 +525,8 @@ def handle_config():
                 event_key = new_sheet
             
             with conn.cursor() as cursor:
-                sql_cfg = "REPLACE INTO event_configs (admin_user, event_key, show_meal_options, map_image_url) VALUES (%s, %s, %s, %s)"
-                cursor.execute(sql_cfg, (admin_user, event_key, 1, payload.get("map_image_url", "")))
+                sql_cfg = "REPLACE INTO event_configs (admin_user, event_key, show_meal_options, map_image_url, banner_image_url) VALUES (%s, %s, %s, %s, %s)"
+                cursor.execute(sql_cfg, (admin_user, event_key, 1, payload.get("map_image_url", ""), payload.get("banner_image_url", "")))
                 
                 if "products" in payload:
                     cursor.execute("DELETE FROM event_products WHERE admin_user = %s AND event_key = %s", (admin_user, event_key))
@@ -425,7 +545,8 @@ def handle_config():
             cfg = cursor.fetchone()
             if cfg:
                 config_data["show_meal_options"] = bool(cfg["show_meal_options"])
-                config_data["map_image_url"] = cfg["map_image_url"]
+                config_data["map_image_url"] = cfg.get("map_image_url") or ""
+                config_data["banner_image_url"] = cfg.get("banner_image_url") or ""
                 
             cursor.execute("SELECT * FROM event_products WHERE admin_user = %s AND event_key = %s", (admin_user, event_key))
             prods = cursor.fetchall()
@@ -515,6 +636,7 @@ def get_dashboard_stats():
     admin_user, event_key = get_admin_and_event_context()
     conn = get_db_connection()
     try:
+        ensure_core_tables(conn)
         with conn.cursor() as cursor:
             cursor.execute("""
                 SELECT id, name, phone, company_name, seating_chart, status, checkin_time, meal_choice
@@ -701,6 +823,7 @@ def api_sheets_list():
     conn = None
     try:
         conn = get_db_connection()
+        ensure_core_tables(conn)
         with conn.cursor() as cursor:
             cursor.execute("SELECT allowed_events FROM admins WHERE username = %s", (username,))
             row = cursor.fetchone()
