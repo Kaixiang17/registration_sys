@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>與會公司行業比例 / 大會議程</title>
+    <title>與會公司行業 / 大會議程</title>
     <link rel="stylesheet" href="smart-ark-theme.css?v=11">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     <style>
@@ -38,14 +38,13 @@
             max-height: 390px !important;
         }
         .agenda-list { display: grid; gap: 0.85rem; }
-        .agenda-item { display:grid; grid-template-columns: 84px 1fr; gap:1rem; padding:1rem 1rem; border:1px solid rgba(0,229,255,0.14); background:rgba(0,229,255,0.055); border-left:4px solid rgba(0,229,255,0.74); border-radius:0.85rem; }
-        .agenda-time { color:var(--text-dark); font-weight:900; white-space:nowrap; }
+        .agenda-item { display:grid; grid-template-columns: minmax(128px, auto) 1fr; gap:1rem; padding:1rem 1rem; border:1px solid rgba(0,229,255,0.14); background:rgba(0,229,255,0.055); border-left:4px solid rgba(0,229,255,0.74); border-radius:0.85rem; align-items:center; }
+        .agenda-time { color:var(--text-dark); font-weight:900; white-space:nowrap; min-width:128px; letter-spacing:0.5px; }
         .agenda-event { color:#e8faff; font-weight:700; letter-spacing:0.5px; }
         .company-section { margin-top: 1.5rem; }
         .company-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap:1rem; }
         .company-card { padding:1.15rem; border-radius:0.95rem; background:rgba(0,229,255,0.06); border:1px solid rgba(0,229,255,0.2); min-height: 150px; }
         .company-top { display:flex; gap:0.85rem; align-items:center; margin-bottom:0.75rem; }
-        .company-logo { width:42px; height:42px; flex:0 0 42px; border-radius:0.8rem; background:rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:center; font-size:1.4rem; }
         .company-name { color:var(--text-dark); font-weight:900; font-size:1.04rem; line-height:1.35; }
         .company-industry { display:inline-flex; color:#ffa500; font-size:0.78rem; font-weight:800; margin-top:0.25rem; }
         .company-desc { color:#c8d3dc; font-size:0.9rem; line-height:1.55; }
@@ -66,7 +65,8 @@
             .hero { padding:1.15rem; }
             .card { padding:1.1rem; }
             .chart-wrap, #industryChart { height:300px; min-height:300px; }
-            .agenda-item { grid-template-columns: 68px 1fr; gap:0.65rem; padding:0.85rem; }
+            .agenda-item { grid-template-columns: 1fr; gap:0.35rem; padding:0.85rem; }
+            .agenda-time { min-width:0; }
             .company-grid { grid-template-columns:1fr; }
         }
     
@@ -80,7 +80,7 @@
     <div class="ark-background"></div>
     <header>
         <div class="wrap topbar">
-            <div class="title">📊 與會公司行業比例 / 📅 大會議程</div>
+            <div class="title">📊 與會公司行業 / 📅 大會議程</div>
             <div class="actions">
                 <a class="pill" id="frontLink" href="/">✈️ 回報到頁</a>
                 <button class="pill" onclick="reloadDashboard()">🔄 重新整理</button>
@@ -88,14 +88,9 @@
         </div>
     </header>
     <main>
-        <section class="hero">
-            <div class="event-label">目前場次</div>
-            <h1 id="eventTitle" class="event-title">載入中...</h1>
-        </section>
-
         <section class="main-grid">
             <div class="card">
-                <div class="card-title">📊 與會公司行業比例</div>
+                <div class="card-title">📊 與會公司行業</div>
                 <div class="chart-wrap">
                     <canvas id="industryChart" width="520" height="320"></canvas>
                     <div id="chartEmpty" class="empty" style="display:none;">目前沒有可統計的行業資料，請先在後台行業對照表或企業展示填入公司行業。</div>
@@ -108,7 +103,7 @@
         </section>
 
         <section class="card company-section">
-            <div class="card-title">🏢 企業展示</div>
+            <div class="card-title">企業展示</div>
             <div id="companyGrid" class="company-grid"></div>
         </section>
     </main>
@@ -118,7 +113,6 @@
         const currentSheet = urlParams.get('sheet') || '活動報到名單';
         let chart = null;
 
-        document.getElementById('eventTitle').textContent = currentSheet;
         document.getElementById('frontLink').href = `/?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`;
 
         async function reloadDashboard() {
@@ -160,12 +154,10 @@
             grid.innerHTML = items.length ? items.map(ex => {
                 const name = ex.name || ex.company_name || '未命名公司';
                 const industry = ex.industry || '未分類';
-                const logo = ex.logo || '🏢';
                 const desc = ex.description || '尚無介紹';
                 return `
                     <div class="company-card">
                         <div class="company-top">
-                            <div class="company-logo">${escapeHtml(logo)}</div>
                             <div>
                                 <div class="company-name">${escapeHtml(name)}</div>
                                 <div class="company-industry">${escapeHtml(industry)}</div>
