@@ -159,7 +159,80 @@
             }
         }
 
+
+        /* 專屬報到頁 QR Code 主題卡：放在「地圖導覽 / 系統設定」 */
+        .event-qr-panel {
+            margin-top: 1rem;
+            display: grid;
+            grid-template-columns: 190px 1fr;
+            gap: 1rem;
+            align-items: center;
+            padding: 1rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(0,229,255,0.22);
+            background: linear-gradient(135deg, rgba(0,229,255,0.08), rgba(10,20,35,0.42));
+            box-shadow: inset 0 0 24px rgba(0,229,255,0.05);
+        }
+        .event-qr-box {
+            position: relative;
+            width: 170px;
+            height: 170px;
+            padding: 12px;
+            border-radius: 1rem;
+            background: #f8feff;
+            box-shadow: 0 0 20px rgba(0,229,255,0.20);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .event-qr-box::before {
+            content: '✈';
+            position: absolute;
+            right: 8px;
+            bottom: 4px;
+            color: rgba(0,60,80,0.18);
+            font-size: 1.5rem;
+            pointer-events: none;
+        }
+        #eventQrCode canvas,
+        #eventQrCode img {
+            width: 146px !important;
+            height: 146px !important;
+            display: block;
+        }
+        .event-qr-title {
+            color: #00e5ff;
+            font-weight: 900;
+            font-size: 1.05rem;
+            letter-spacing: 1px;
+            margin-bottom: 0.45rem;
+            text-shadow: 0 0 10px rgba(0,229,255,0.35);
+        }
+        .event-qr-desc {
+            color: #b8c7d1;
+            font-size: 0.86rem;
+            line-height: 1.7;
+            margin-bottom: 0.8rem;
+        }
+        .event-qr-actions {
+            display: flex;
+            gap: 0.65rem;
+            flex-wrap: wrap;
+        }
+        @media(max-width: 768px) {
+            .event-qr-panel {
+                grid-template-columns: 1fr;
+                justify-items: center;
+                text-align: center;
+            }
+            .event-qr-actions {
+                justify-content: center;
+            }
+        }
+
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
 <body class="circuit-background">
     <div class="ark-background"></div>
@@ -262,6 +335,23 @@
                     <div class="event-link-grid">
                         <input id="dashboard_link" class="cyber-input event-link-input" readonly>
                         <button type="button" class="adm-btn adm-btn-sm" onclick="copySpecificLink('dashboard_link')">📊 複製儀錶板</button>
+                    </div>
+
+
+                    <div class="event-qr-panel">
+                        <div class="event-qr-box">
+                            <div id="eventQrCode"></div>
+                        </div>
+                        <div>
+                            <div class="event-qr-title">📱 專屬報到首頁 QR Code</div>
+                            <div class="event-qr-desc">
+                                QR Code 會依照目前選擇的活動名單自動產生，掃描後會直接進入該場次報到首頁，避免多場活動同時進行時連到錯誤名單。
+                            </div>
+                            <div class="event-qr-actions">
+                                <button type="button" class="adm-btn adm-btn-sm" onclick="downloadEventQrCode()">⬇️ 下載 QR Code</button>
+                                <button type="button" class="adm-btn adm-btn-sm" onclick="copySpecificLink('event_link')">📋 複製報到連結</button>
+                            </div>
+                        </div>
                     </div>
 
                     <div style="margin-top:1rem; color:#aaa; font-size:0.86rem;">可用活動名單快速連結</div>
@@ -565,6 +655,7 @@
                     `).join('');
                     renderEventLinkList(json.sheets);
                     updateEventLink();
+                    renderEventQrCode();
                 } else {
                     document.getElementById('googleSheetName').innerHTML = '<option value="">❌ 您的帳戶內無任何共用的試算表資源</option>'; renderEventLinkList([]); updateEventLink();
                 }
@@ -860,6 +951,43 @@
             }
         }
 
+
+        function renderEventQrCode() {
+            const target = document.getElementById('eventQrCode');
+            const linkInput = document.getElementById('event_link');
+            if (!target || !linkInput) return;
+            const link = linkInput.value || buildEventUrl(document.getElementById('googleSheetName')?.value || '', 'front');
+            target.innerHTML = '';
+            if (!link || typeof QRCode === 'undefined') return;
+            new QRCode(target, {
+                text: link,
+                width: 146,
+                height: 146,
+                colorDark: "#061425",
+                colorLight: "#f8feff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+
+        function downloadEventQrCode() {
+            const qrBox = document.getElementById('eventQrCode');
+            const sheet = document.getElementById('googleSheetName')?.value || 'event';
+            if (!qrBox) return alert('QR Code 尚未產生');
+            const canvas = qrBox.querySelector('canvas');
+            const img = qrBox.querySelector('img');
+            let dataUrl = '';
+            if (canvas) dataUrl = canvas.toDataURL('image/png');
+            else if (img) dataUrl = img.src;
+            if (!dataUrl) return alert('QR Code 尚未產生');
+
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = `${sheet}_報到首頁_QRCode.png`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        }
+
         function buildEventUrl(sheetName, page = 'front') {
             const encodedAdmin = encodeURIComponent(currentUser || 'admin');
             const encodedSheet = encodeURIComponent(sheetName || document.getElementById('googleSheetName')?.value || '活動報到名單');
@@ -875,6 +1003,7 @@
             const dashboardInput = document.getElementById('dashboard_link');
             if(linkInput) linkInput.value = buildEventUrl(sheet, 'front');
             if(dashboardInput) dashboardInput.value = buildEventUrl(sheet, 'dashboard');
+            renderEventQrCode();
         }
 
         async function copySpecificLink(inputId) {
