@@ -326,6 +326,120 @@
             .company-card-hint { max-width: 50px !important; font-size: 0.48rem !important; }
         }
 
+
+
+        /* 客戶展示版訊息視窗 */
+        .cx-dialog-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 8, 20, 0.72);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 3000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.25rem;
+        }
+        .cx-dialog-box {
+            width: min(92vw, 520px);
+            background: linear-gradient(180deg, rgba(8,20,42,0.96), rgba(6,16,33,0.97));
+            border: 1px solid rgba(0,229,255,0.28);
+            border-radius: 1.2rem;
+            box-shadow: 0 18px 45px rgba(0,0,0,0.45), 0 0 0 1px rgba(0,229,255,0.08) inset;
+            overflow: hidden;
+        }
+        .cx-dialog-header {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            padding: 1rem 1.2rem 0.5rem;
+        }
+        .cx-dialog-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: bold;
+            flex-shrink: 0;
+            background: rgba(0,229,255,0.14);
+            color: #00e5ff;
+            box-shadow: 0 0 14px rgba(0,229,255,0.18);
+        }
+        .cx-dialog-title-wrap { min-width: 0; }
+        .cx-dialog-title {
+            color: #ecfeff;
+            font-size: 1.2rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin: 0;
+        }
+        .cx-dialog-subtitle {
+            color: #8ddff0;
+            font-size: 0.88rem;
+            margin-top: 0.15rem;
+        }
+        .cx-dialog-body {
+            padding: 0.6rem 1.2rem 1.4rem;
+            color: #e6f7ff;
+            line-height: 1.75;
+            font-size: 1rem;
+            white-space: pre-wrap;
+        }
+        .cx-dialog-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            padding: 0 1.2rem 1.2rem;
+        }
+        .cx-dialog-btn {
+            min-width: 112px;
+            border: 1px solid rgba(0,229,255,0.42);
+            background: rgba(0,229,255,0.14);
+            color: #dffcff;
+            border-radius: 999px;
+            padding: 0.78rem 1.15rem;
+            font-size: 0.98rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.18s ease;
+        }
+        .cx-dialog-btn:hover {
+            background: rgba(0,229,255,0.24);
+            box-shadow: 0 0 12px rgba(0,229,255,0.18);
+        }
+        .cx-dialog-box[data-type="success"] .cx-dialog-icon {
+            background: rgba(74,222,128,0.16);
+            color: #4ade80;
+            box-shadow: 0 0 14px rgba(74,222,128,0.18);
+        }
+        .cx-dialog-box[data-type="success"] .cx-dialog-btn {
+            background: rgba(74,222,128,0.14);
+            border-color: rgba(74,222,128,0.4);
+        }
+        .cx-dialog-box[data-type="warning"] .cx-dialog-icon,
+        .cx-dialog-box[data-type="error"] .cx-dialog-icon {
+            background: rgba(255,165,0,0.16);
+            color: #ffb020;
+            box-shadow: 0 0 14px rgba(255,165,0,0.18);
+        }
+        .cx-dialog-box[data-type="warning"] .cx-dialog-btn,
+        .cx-dialog-box[data-type="error"] .cx-dialog-btn {
+            background: rgba(255,165,0,0.14);
+            border-color: rgba(255,165,0,0.38);
+        }
+        @media(max-width: 640px) {
+            .cx-dialog-overlay { padding: 1rem; }
+            .cx-dialog-box { width: 100%; border-radius: 1rem; }
+            .cx-dialog-header { padding: 0.95rem 1rem 0.45rem; }
+            .cx-dialog-body { padding: 0.55rem 1rem 1.05rem; font-size: 0.95rem; }
+            .cx-dialog-actions { padding: 0 1rem 1rem; }
+            .cx-dialog-btn { min-width: 96px; width: 100%; }
+        }
+
     </style>
 </head>
 <body class="circuit-background">
@@ -489,6 +603,25 @@
         </div>
     </div>
 
+
+
+    <div id="customerDialog" class="cx-dialog-overlay state-hidden" onclick="handleDialogOverlay(event)">
+        <div id="customerDialogBox" class="cx-dialog-box" data-type="info" role="dialog" aria-modal="true" aria-labelledby="customerDialogTitle" aria-describedby="customerDialogMessage">
+            <div class="cx-dialog-header">
+                <div id="customerDialogIcon" class="cx-dialog-icon">ℹ️</div>
+                <div class="cx-dialog-title-wrap">
+                    <h3 id="customerDialogTitle" class="cx-dialog-title">系統提醒</h3>
+                    <div id="customerDialogSubtitle" class="cx-dialog-subtitle">智慧方舟活動服務中心</div>
+                </div>
+            </div>
+            <div id="customerDialogMessage" class="cx-dialog-body"></div>
+            <div class="cx-dialog-actions">
+                <button type="button" class="cx-dialog-btn" onclick="closeCustomerDialog()">我知道了</button>
+            </div>
+        </div>
+    </div>
+
+
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         let currentSheet = urlParams.get('sheet') || '';
@@ -499,6 +632,41 @@
         window.currentCategory = '全部';
         window.selectedTempMealChoice = '葷食'; // 臨時餐飲預設值
         let industryPieChart = null;
+
+        const CUSTOMER_DIALOG_ICONS = {
+            info: 'ℹ️',
+            success: '✅',
+            warning: '⚠️',
+            error: '⚠️'
+        };
+
+        function showCustomerDialog(message, options = {}) {
+            const dialog = document.getElementById('customerDialog');
+            const box = document.getElementById('customerDialogBox');
+            const titleEl = document.getElementById('customerDialogTitle');
+            const subtitleEl = document.getElementById('customerDialogSubtitle');
+            const messageEl = document.getElementById('customerDialogMessage');
+            const iconEl = document.getElementById('customerDialogIcon');
+            const type = options.type || 'info';
+            titleEl.textContent = options.title || '系統提醒';
+            subtitleEl.textContent = options.subtitle || '智慧方舟活動服務中心';
+            messageEl.textContent = String(message || '');
+            iconEl.textContent = options.icon || CUSTOMER_DIALOG_ICONS[type] || 'ℹ️';
+            box.setAttribute('data-type', type);
+            dialog.classList.remove('state-hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeCustomerDialog() {
+            const dialog = document.getElementById('customerDialog');
+            dialog.classList.add('state-hidden');
+            document.body.style.overflow = '';
+        }
+
+        function handleDialogOverlay(event) {
+            if (event.target && event.target.id === 'customerDialog') closeCustomerDialog();
+        }
+
 
         window.onload = function() {
             if (!currentSheet) {
@@ -598,7 +766,7 @@
                 admin: currentAdmin,
                 sheet: currentSheet
             };
-            if(!data.name || !data.phone) return alert('❌ 請完整填寫學員姓名與手機核心欄位！');
+            if(!data.name || !data.phone) return showCustomerDialog('請完整填寫學員姓名與手機核心欄位。', { title: '資料尚未完整', type: 'warning' });
             
             try {
                 const res = await fetch('/api/registrations/add', {
@@ -609,12 +777,12 @@
                 const result = await res.json();
                 if(result.success) {
                     hideTempSection();
-                    alert(`🎉 臨時補單報到成功！歡迎登機。`);
+                    showCustomerDialog('臨時補單報到成功，歡迎登機。', { title: '報到成功', type: 'success' });
                     resetToHome();
                 } else {
-                    alert('報到失敗：' + result.message);
+                    showCustomerDialog('報到失敗：' + result.message, { title: '作業未完成', type: 'error' });
                 }
-            } catch(e) { alert('通訊異常，無法外加名單'); }
+            } catch(e) { showCustomerDialog('通訊異常，暫時無法外加名單。', { title: '系統忙碌中', type: 'error' }); }
         }
 
         async function toggleMapModal(show) {
@@ -638,7 +806,7 @@
                             frame.src = url; frame.style.display = 'block';
                         }
                     } else {
-                        alert('後台尚未填寫地圖網址或上傳地圖！');
+                        showCustomerDialog('目前尚未設定活動地圖，請稍後再試，或洽現場工作人員協助。', { title: '地圖尚未提供', type: 'warning' });
                         modal.classList.add('state-hidden');
                     }
                 } catch(e) { modal.classList.add('state-hidden'); }
@@ -702,7 +870,7 @@
                         document.getElementById('addName').value = val;
                     }
                 }
-            } catch(e) { alert('通訊異常'); }
+            } catch(e) { showCustomerDialog('通訊異常，請稍後再試。', { title: '連線提醒', type: 'error' }); }
         }   
 
         function renderCompanyList(companies) {
@@ -715,7 +883,7 @@
                     try {
                         const res = await fetch(`${API_BASE}/search/company_members?name=${encodeURIComponent(c)}&admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
                         const json = await res.json(); renderUserList(json.data, c);
-                    } catch(e) { alert('無法讀取公司成員資料'); }
+                    } catch(e) { showCustomerDialog('無法讀取公司成員資料，請稍後再試。', { title: '資料讀取失敗', type: 'error' }); }
                 };
                 list.appendChild(div);
             });
@@ -828,7 +996,7 @@
                 name: document.getElementById('proxyName').value.trim(),
                 phone: document.getElementById('proxyPhone').value.trim()
             };
-            if (!window.isOriginal && !proxyInfo.name) { alert('請輸入替代人姓名'); return; }
+            if (!window.isOriginal && !proxyInfo.name) { showCustomerDialog('請輸入替代人姓名。', { title: '資料尚未完整', type: 'warning' }); return; }
             
             const btn = document.getElementById('finalBtn');
             btn.disabled = true; btn.innerHTML = '<span>登 機 核 對 中 ...</span>';
@@ -874,11 +1042,11 @@
                     setAppState('success');
                 } else {
                     if (json.error === 'already_done') { renderAlreadyCheckedIn(json.data || selectedUser); } 
-                    else { alert('報 到 失 敗'); }
+                    else { showCustomerDialog('報到失敗，請稍後再試。', { title: '作業未完成', type: 'error' }); }
                     btn.disabled = false; btn.innerHTML = '<span>確 認 並 核 發 登 機 證</span>';
                 }
             } catch(e) { 
-                alert('網 路 異 常'); btn.disabled = false; btn.innerHTML = '<span>確 認 並 核 發 登 機 證</span>';
+                showCustomerDialog('網路異常，請稍後再試。', { title: '連線提醒', type: 'error' }); btn.disabled = false; btn.innerHTML = '<span>確 認 並 核 發 登 機 證</span>';
             }
         }
 
@@ -965,7 +1133,7 @@
         }
 
         function viewExhibitor(id) {
-            alert(`查看企業 ${id} 的詳細資訊`);
+            showCustomerDialog('企業詳細資訊建置中，請稍後再查看。', { title: '企業資訊', type: 'info' });
         }
 
         async function showProducts() {
@@ -986,7 +1154,7 @@
                          onclick="filterCategory('${c}')">${c}</button>
                 `).join('');
                 filterCategory(window.currentCategory); setAppState('product');
-            } catch(e) { alert('無 法 載 入 商 品'); }
+            } catch(e) { showCustomerDialog('無法載入商品資訊，請稍後再試。', { title: '商品載入失敗', type: 'error' }); }
         }
 
         function filterCategory(cat) {
