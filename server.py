@@ -18,7 +18,8 @@ DB_PORT = int(os.environ.get('DB_PORT', 27632))
 def get_db_connection():
     return pymysql.connect(
         host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME, port=DB_PORT,
-        ssl={"ssl": {}}, cursorclass=pymysql.cursors.DictCursor
+        ssl={"ssl": {}}, cursorclass=pymysql.cursors.DictCursor,
+        connect_timeout=8, read_timeout=20, write_timeout=20, autocommit=False
     )
 
 def get_admin_and_event_context():
@@ -60,7 +61,8 @@ def ensure_core_tables(conn):
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 username VARCHAR(50) NOT NULL UNIQUE,
                 password VARCHAR(100) NOT NULL,
-                allowed_events VARCHAR(255) DEFAULT '活動報到名單'
+                allowed_events VARCHAR(255) DEFAULT '活動報到名單',
+                current_event VARCHAR(150) DEFAULT '活動報到名單'
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         """)
 
@@ -102,6 +104,13 @@ def ensure_core_tables(conn):
                 phone VARCHAR(50),
                 email VARCHAR(150),
                 company_name VARCHAR(255),
+                region VARCHAR(100),
+                training_level VARCHAR(100),
+                contract_period VARCHAR(100),
+                participant_count INT DEFAULT 1,
+                job_title VARCHAR(150),
+                contact_person VARCHAR(150),
+                contact_email VARCHAR(150),
                 seating_chart VARCHAR(100),
                 meal_choice VARCHAR(50),
                 original_meal_choice VARCHAR(50),
@@ -120,6 +129,10 @@ def ensure_core_tables(conn):
 
         # 舊資料表補欄位：Aiven 之前可能已經有舊版 schema，所以不能只靠 CREATE TABLE IF NOT EXISTS。
         alter_map = {
+            'admins': {
+                'allowed_events': 'VARCHAR(255) DEFAULT "活動報到名單"',
+                'current_event': 'VARCHAR(150) DEFAULT "活動報到名單"'
+            },
             'event_configs': {
                 'admin_user': 'VARCHAR(100) NOT NULL DEFAULT "admin"',
                 'event_key': 'VARCHAR(150) NOT NULL DEFAULT "活動報到名單"',
@@ -142,6 +155,13 @@ def ensure_core_tables(conn):
                 'phone': 'VARCHAR(50)',
                 'email': 'VARCHAR(150)',
                 'company_name': 'VARCHAR(255)',
+                'region': 'VARCHAR(100)',
+                'training_level': 'VARCHAR(100)',
+                'contract_period': 'VARCHAR(100)',
+                'participant_count': 'INT DEFAULT 1',
+                'job_title': 'VARCHAR(150)',
+                'contact_person': 'VARCHAR(150)',
+                'contact_email': 'VARCHAR(150)',
                 'seating_chart': 'VARCHAR(100)',
                 'meal_choice': 'VARCHAR(50)',
                 'original_meal_choice': 'VARCHAR(50)',
@@ -631,7 +651,10 @@ def checkin(pid):
     except Exception as e:
         print(f"❌ [報到失敗]: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
-    finally: conn.close@app.route('/api/dashboard_stats')
+    finally:
+        conn.close()
+
+@app.route('/api/dashboard_stats')
 def get_dashboard_stats():
     admin_user, event_key = get_admin_and_event_context()
     conn = get_db_connection()
@@ -642,6 +665,7 @@ def get_dashboard_stats():
                 SELECT id, name, phone, company_name, seating_chart, status, checkin_time, meal_choice
                 FROM event_registrations
                 WHERE admin_user = %s AND event_key = %s
+                ORDER BY id ASC
             """, (admin_user, event_key))
             rows = cursor.fetchall()
 
@@ -872,6 +896,199 @@ def admin_page():
 
 @app.route('/')
 def index(): return send_from_directory('.', '活動報到系統.html')
+
+
+@app.route('/api/sheets/export_csv', methods=['GET'])
+def export_csv():
+    if not session.get('admin_logged_in'):
+        return jsonify({"success": False, "message": "未授權的操作"}), 403
+    admin_user, event_key = get_admin_and_event_context()
+    conn = get_db_connection()
+    try:
+        ensure_core_tables(conn)
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT name, phone, company_name, email, region, training_level, seating_chart,
+                       status, checkin_time, meal_choice, note
+                FROM event_registrations
+                WHERE admin_user = %s AND event_key = %s
+                ORDER BY id ASC
+            """, (admin_user, event_key))
+            rows = cursor.fetchall()
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(["姓名", "手機", "單位/公司", "電子郵件", "地區", "職階", "桌號/座位", "報到狀態", "報到時間", "餐點選擇", "備註"])
+        for r in rows:
+            writer.writerow([
+                r.get('name', ''), r.get('phone', ''), r.get('company_name', ''), r.get('email', ''),
+                r.get('region', ''), r.get('training_level', ''), r.get('seating_chart', ''), r.get('status', ''),
+                r.get('checkin_time').strftime('%Y-%m-%d %H:%M:%S') if r.get('checkin_time') else '未報到',
+                r.get('meal_choice', ''), r.get('note', '')
+            ])
+        response = app.make_response(output.getvalue().encode('utf-8-sig'))
+        response.headers["Content-Disposition"] = f"attachment; filename={event_key}_export.csv"
+        response.headers["Content-type"] = "text/csv; charset=utf-8-sig"
+        return response
+    finally:
+        conn.close()
+
+@app.route('/api/sheets/upload_csv', methods=['POST'])
+def upload_csv_to_sheet():
+    if not session.get('admin_logged_in'):
+        return jsonify({"success": False, "message": "未授權的操作，請重新登入後再上傳 CSV。"}), 403
+    if 'file' not in request.files:
+        return jsonify({"success": False, "message": "找不到檔案，請重新選擇 CSV。"}), 400
+
+    file = request.files['file']
+    admin_user, current_event = get_admin_and_event_context()
+    event_key = (request.form.get('sheet') or request.args.get('sheet') or os.path.splitext(file.filename)[0] or current_event or '活動報到名單').strip()
+    # 避免 Windows 檔名帶副檔名或空白造成錯誤
+    event_key = event_key.replace('.csv', '').replace('.CSV', '').strip() or '活動報到名單'
+
+    def decode_csv(file_bytes):
+        for enc in ['utf-8-sig', 'utf-8', 'big5', 'cp950']:
+            try:
+                return file_bytes.decode(enc), enc
+            except Exception:
+                pass
+        return file_bytes.decode('utf-8', errors='ignore'), 'utf-8-ignore'
+
+    def clean_val(v):
+        if v is None:
+            return ''
+        return str(v).strip().replace('\ufeff', '').replace('，', ',')
+
+    try:
+        file_bytes = file.stream.read()
+        csv_text, encoding_used = decode_csv(file_bytes)
+        stream = io.StringIO(csv_text, newline=None)
+        sample = csv_text[:2048]
+        try:
+            dialect = csv.Sniffer().sniff(sample, delimiters=',\t;')
+            rows = list(csv.reader(stream, dialect))
+        except Exception:
+            stream.seek(0)
+            rows = list(csv.reader(stream))
+
+        rows = [[clean_val(c) for c in row] for row in rows if any(clean_val(c) for c in row)]
+        if not rows:
+            return jsonify({"success": False, "message": "CSV 檔案為空，請確認內容。"}), 400
+
+        # 直式表格救援：如果標題都在第一欄，就轉置
+        first_col = [row[0] for row in rows[:12] if row]
+        header_keywords = ['姓名', '手機', '電話', 'Email', 'email', '公司', '單位']
+        if sum(any(k in c for k in header_keywords) for c in first_col) >= 2 and len(rows[0]) <= 3:
+            max_len = max(len(r) for r in rows)
+            padded = [r + [''] * (max_len - len(r)) for r in rows]
+            rows = list(map(list, zip(*padded)))
+
+        mapping_targets = {
+            'region': ['區', '梯次', '地區', '組別', '分區'],
+            'training_level': ['階', '職階', '等級', '職稱'],
+            'company_name': ['公司', '單位', '機關', '部門', '行號', '社團'],
+            'contract_period': ['合約', '期間', '合約期'],
+            'participant_count': ['人數', '名額', '數量'],
+            'name': ['姓名', '旅客', '學員', '名字', '人員'],
+            'phone': ['手機', '電話', '聯絡電話', '行動電話', '號碼'],
+            'email': ['電子郵件', 'email', '郵件', '信箱', '電郵'],
+            'contact_person': ['窗口', '聯絡人', '負責人'],
+            'contact_email': ['窗口信箱', '聯絡人信箱', '經辦email'],
+            'note': ['備註', '說明'],
+            'seating_chart': ['桌號', '座位', '座次', '桌次'],
+            'meal_choice': ['餐', '便當', '飲食', '葷素']
+        }
+        field_indices = {k: -1 for k in mapping_targets}
+        header_row_idx = -1
+        for r_idx, row in enumerate(rows[:20]):
+            lowered = [c.lower() for c in row]
+            has_name = any(('姓名' in c or '學員' in c or '旅客' in c or '名字' in c) for c in lowered)
+            has_phone = any(('手機' in c or '電話' in c or '聯絡' in c or '號碼' in c) for c in lowered)
+            has_email = any(('email' in c or '郵件' in c or '信箱' in c) for c in lowered)
+            if has_name and (has_phone or has_email or any('公司' in c or '單位' in c for c in lowered)):
+                header_row_idx = r_idx
+                for c_idx, cell in enumerate(lowered):
+                    for key, keywords in mapping_targets.items():
+                        if field_indices[key] == -1 and any(kw.lower() in cell for kw in keywords):
+                            field_indices[key] = c_idx
+                break
+
+        if header_row_idx == -1 or field_indices['name'] == -1:
+            return jsonify({"success": False, "message": "CSV 辨識失敗：找不到『姓名』標題列。請確認第一列附近有姓名/手機/公司等欄位。"}), 400
+
+        conn = get_db_connection()
+        try:
+            ensure_core_tables(conn)
+            with conn.cursor() as cursor:
+                cursor.execute("DELETE FROM event_registrations WHERE admin_user = %s AND event_key = %s", (admin_user, event_key))
+
+                insert_sql = """
+                    INSERT INTO event_registrations
+                    (admin_user, event_key, region, training_level, company_name, contract_period, participant_count,
+                     name, job_title, phone, email, contact_person, contact_email, note, seating_chart,
+                     status, meal_choice, original_meal_choice)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """
+                last_values = {k: '' for k in mapping_targets}
+                success_count = 0
+                skipped_count = 0
+                for row in rows[header_row_idx + 1:]:
+                    if not any(row):
+                        continue
+                    data = {}
+                    for key, idx in field_indices.items():
+                        val = clean_val(row[idx]) if idx != -1 and idx < len(row) else ''
+                        # 公司/地區/桌號常有合併儲存格，允許往下延續；姓名/手機/email 不延續，避免重複人名。
+                        if not val and key in ['region', 'training_level', 'company_name', 'contract_period', 'participant_count', 'seating_chart', 'meal_choice']:
+                            val = last_values.get(key, '')
+                        elif val:
+                            last_values[key] = val
+                        data[key] = val
+
+                    name = data.get('name', '').strip()
+                    if not name or name in ['姓名', '學員', '旅客']:
+                        skipped_count += 1
+                        continue
+                    p_count_raw = (data.get('participant_count') or '1').replace(' ', '')
+                    participant_count = int(p_count_raw) if p_count_raw.isdigit() else 1
+                    meal = data.get('meal_choice') or '未選擇'
+                    cursor.execute(insert_sql, (
+                        admin_user, event_key,
+                        data.get('region', ''), data.get('training_level', ''), data.get('company_name', ''),
+                        data.get('contract_period', ''), participant_count, name, data.get('training_level', ''),
+                        data.get('phone', ''), data.get('email', ''), data.get('contact_person', ''),
+                        data.get('contact_email', ''), data.get('note', ''), data.get('seating_chart', ''),
+                        '未報到', meal, meal
+                    ))
+                    success_count += 1
+
+                cursor.execute("SELECT allowed_events FROM admins WHERE username = %s", (admin_user,))
+                admin_row = cursor.fetchone()
+                allowed = [s.strip() for s in (admin_row or {}).get('allowed_events', '').split(',') if s.strip()]
+                if not allowed:
+                    allowed = ['活動報到名單']
+                if event_key not in allowed:
+                    allowed.append(event_key)
+                cursor.execute("UPDATE admins SET allowed_events = %s, current_event = %s WHERE username = %s", (','.join(allowed), event_key, admin_user))
+                session['allowed_sheets'] = allowed
+                session['current_admin_sheet'] = event_key
+            conn.commit()
+            return jsonify({
+                "success": True,
+                "message": f"CSV 匯入完成：已寫入『{event_key}』共 {success_count} 筆，略過 {skipped_count} 列。",
+                "event_key": event_key,
+                "count": success_count,
+                "encoding": encoding_used
+            })
+        except Exception as e:
+            conn.rollback()
+            print(f"❌ [CSV寫入資料庫失敗]: {e}")
+            return jsonify({"success": False, "message": f"資料庫寫入失敗：{e}"}), 500
+        finally:
+            conn.close()
+    except Exception as e:
+        print(f"❌ [CSV解析失敗]: {e}")
+        return jsonify({"success": False, "message": f"CSV 解析失敗：{e}"}), 500
 
 @app.route('/api/login', methods=['POST'])
 def admin_login():
