@@ -11,17 +11,11 @@ CORS(app)
 
 def get_db_connection():
     return pymysql.connect(
-        host=DB_HOST,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        database=DB_NAME,
-        port=DB_PORT,
-        cursorclass=pymysql.cursors.DictCursor,
-        connect_timeout=8,
-        read_timeout=20,
-        write_timeout=20,
-        autocommit=False
-    )
+        DB_HOST = os.getenv("MYSQLHOST")
+DB_USER = os.getenv("MYSQLUSER")
+DB_PASSWORD = os.getenv("MYSQLPASSWORD")
+DB_NAME = os.getenv("MYSQLDATABASE")
+DB_PORT = int(os.getenv("MYSQLPORT", "3306"))
 
 _CORE_TABLES_READY = False
 
