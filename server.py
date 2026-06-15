@@ -9,11 +9,19 @@ app = Flask(__name__, static_folder='.', static_url_path='')
 app.secret_key = os.environ.get("SECRET_KEY", "rcsa_ark_secure_key_20260508_multitenant") 
 CORS(app)
 
-DB_HOST = os.environ.get('DB_HOST')
-DB_USER = os.environ.get('DB_USER')
-DB_PASSWORD = os.environ.get('DB_PASSWORD')
-DB_NAME = os.environ.get('DB_NAME', 'defaultdb')
-DB_PORT = int(os.environ.get('DB_PORT', 27632))
+def get_db_connection():
+    return pymysql.connect(
+        host=DB_HOST,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        database=DB_NAME,
+        port=DB_PORT,
+        cursorclass=pymysql.cursors.DictCursor,
+        connect_timeout=8,
+        read_timeout=20,
+        write_timeout=20,
+        autocommit=False
+    )
 
 _CORE_TABLES_READY = False
 
