@@ -6,24 +6,33 @@ import pymysql
 import pymysql.cursors
 
 app = Flask(__name__, static_folder='.', static_url_path='')
-app.secret_key = os.environ.get("SECRET_KEY", "rcsa_ark_secure_key_20260508_multitenant") 
+app.secret_key = os.environ.get("SECRET_KEY", "rcsa_ark_secure_key_20260508_multitenant")
 CORS(app)
 
-def get_db_connection():
-    return pymysql.connect(
-        DB_HOST = os.getenv("MYSQLHOST")
-DB_USER = os.getenv("MYSQLUSER")
-DB_PASSWORD = os.getenv("MYSQLPASSWORD")
-DB_NAME = os.getenv("MYSQLDATABASE")
-DB_PORT = int(os.getenv("MYSQLPORT", "3306"))
+# Railway MySQL 優先；保留 DB_* 作為本機/Aiven fallback。
+DB_HOST = os.getenv("MYSQLHOST") or os.getenv("DB_HOST")
+DB_USER = os.getenv("MYSQLUSER") or os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("MYSQLPASSWORD") or os.getenv("DB_PASSWORD")
+DB_NAME = os.getenv("MYSQLDATABASE") or os.getenv("DB_NAME", "railway")
+DB_PORT = int(os.getenv("MYSQLPORT") or os.getenv("DB_PORT", "3306"))
 
 _CORE_TABLES_READY = False
 
 def get_db_connection():
+    if not DB_HOST or not DB_USER or not DB_PASSWORD:
+        raise RuntimeError("資料庫環境變數缺少：請確認 MYSQLHOST / MYSQLUSER / MYSQLPASSWORD / MYSQLDATABASE / MYSQLPORT 已設定在 Railway web service。")
     return pymysql.connect(
-        host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME, port=DB_PORT,
-        ssl={"ssl": {}}, cursorclass=pymysql.cursors.DictCursor,
-        connect_timeout=8, read_timeout=20, write_timeout=20, autocommit=False
+        host=DB_HOST,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        database=DB_NAME,
+        port=DB_PORT,
+        charset="utf8mb4",
+        cursorclass=pymysql.cursors.DictCursor,
+        connect_timeout=8,
+        read_timeout=20,
+        write_timeout=20,
+        autocommit=False
     )
 
 def get_admin_and_event_context():
@@ -55,7 +64,7 @@ def get_admin_and_event_context():
 
 def ensure_core_tables(conn, force=False):
     """
-    保護 Aiven MySQL 核心資料表。
+    保護 Railway/MySQL 核心資料表。
     admin.html 一進後台會先呼叫 /api/config；如果 event_configs / event_products / event_registrations
     不存在或缺少 admin_user、event_key，就會顯示「設定載入失敗」。
     """
@@ -135,7 +144,7 @@ def ensure_core_tables(conn, force=False):
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         """)
 
-        # 舊資料表補欄位：Aiven 之前可能已經有舊版 schema，所以不能只靠 CREATE TABLE IF NOT EXISTS。
+        # 舊資料表補欄位：舊版 schema，所以不能只靠 CREATE TABLE IF NOT EXISTS。
         alter_map = {
             'admins': {
                 'allowed_events': 'VARCHAR(255) DEFAULT "活動報到名單"',
@@ -187,6 +196,17 @@ def ensure_core_tables(conn, force=False):
                 except Exception as e:
                     if not _ignore_duplicate_column_error(e):
                         print(f"⚠️ 核心欄位檢查略過 {table}.{col}: {e}")
+
+
+        # Railway 新資料庫常是空的；建立預設管理員，避免登入/場次下拉抓不到。
+        try:
+            cursor.execute("""
+                INSERT INTO admins (username, password, allowed_events, current_event)
+                VALUES (%s, %s, %s, %s)
+                ON DUPLICATE KEY UPDATE allowed_events = VALUES(allowed_events)
+            """, ('admin', 'admin123', '活動報到名單', '活動報到名單'))
+        except Exception as e:
+            print(f"⚠️ 預設 admin 建立略過: {e}")
 
         # 如果 event_configs 是舊版只有 event_key 主鍵，補完欄位後不強制改主鍵，避免破壞現有資料。
         # 但查詢會使用 admin_user + event_key，因此舊資料會透過 default admin / 活動報到名單 被保留。
@@ -621,7 +641,7 @@ def checkin(pid):
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
-            cursor.execute("SELECT * FROM event_registrations WHERE id = %s AND admin_user = %s", (pid, admin_user))
+            cursor.execute("SELECT * FROM event_registrations WHERE id = %s AND admin_user = %s AND event_key = %s", (pid, admin_user, event_key))
             user = cursor.fetchone()
             
             if not user:
@@ -643,9 +663,24 @@ def checkin(pid):
             
             original_meal = user.get('original_meal_choice', user['meal_choice'])
             
+            proxy_info = data.get('proxy_info') or {}
+            proxy_name = _clean_str(proxy_info.get('name')).strip()
+            proxy_phone = _clean_str(proxy_info.get('phone')).strip()
             cursor.execute(
-                "UPDATE event_registrations SET checkin_time = %s, status = %s, meal_choice = %s, original_meal_choice = %s WHERE id = %s AND admin_user = %s",
-                (datetime.now(), status_val, meal_choice, original_meal, pid, admin_user)
+                """
+                UPDATE event_registrations
+                SET checkin_time = %s,
+                    status = %s,
+                    meal_choice = %s,
+                    original_meal_choice = %s,
+                    proxy_name = %s,
+                    proxy_phone = %s
+                WHERE id = %s AND admin_user = %s AND event_key = %s
+                """,
+                (datetime.now(), status_val, meal_choice, original_meal,
+                 proxy_name if not is_original else None,
+                 proxy_phone if not is_original else None,
+                 pid, admin_user, event_key)
             )
             conn.commit()
             
@@ -809,6 +844,21 @@ def add_registration():
     finally: conn.close()
 
 
+
+@app.route('/api/bootstrap_db')
+def api_bootstrap_db():
+    try:
+        conn = get_db_connection()
+        try:
+            ensure_dashboard_tables(conn)
+            ensure_core_tables(conn, force=True)
+            return jsonify({"success": True, "message": "Railway MySQL 核心資料表已檢查/建立完成"})
+        finally:
+            conn.close()
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
 @app.route('/api/health')
 def api_health():
     return jsonify({
@@ -921,7 +971,7 @@ def api_session_sheet():
 def api_sheets_list():
     """
     後台「MySQL 雲端活動資料庫場次」下拉選單使用。
-    來源：Aiven MySQL 的 admins.allowed_events。
+    來源：Railway MySQL 的 admins.allowed_events。
     這不是 Google Sheets，也不是假資料；每次開後台會重新讀 DB，DBeaver 改 allowed_events 後重新整理即可看到。
     """
     if not session.get('admin_logged_in'):
@@ -954,7 +1004,7 @@ def api_sheets_list():
 
         return jsonify({
             "success": True,
-            "source": "aiven_mysql_admins_allowed_events",
+            "source": "railway_mysql_admins_allowed_events",
             "username": username,
             "sheets": sheets,
             "current_sheet": session.get('current_admin_sheet')
@@ -1193,7 +1243,7 @@ def admin_login():
             if admin:
                 session['admin_logged_in'] = True
                 session['username'] = admin['username']
-                allowed = [s.strip() for s in admin['allowed_events'].split(',') if s.strip()]
+                allowed = [s.strip() for s in (admin.get('allowed_events') or '活動報到名單').split(',') if s.strip()]
                 session['allowed_sheets'] = allowed or ["活動報到名單"]
                 session['current_admin_sheet'] = session['allowed_sheets'][0]
                 return jsonify({"success": True})
