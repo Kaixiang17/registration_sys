@@ -1233,22 +1233,142 @@ def upload_csv_to_sheet():
 
 @app.route('/api/login', methods=['POST'])
 def admin_login():
-    data = request.json
-    u, p = data.get('username'), data.get('password')
-    conn = get_db_connection()
+    """
+    後台登入 API。
+    修正重點：
+    1. 任何錯誤都回 JSON，不再只丟 Flask 500 HTML。
+    2. username/password 自動 strip，避免資料庫或輸入框有空白導致登入失敗。
+    3. 登入前先確保 admins/event_configs 等核心表存在。
+    4. 回傳 debug_message，方便 Railway Logs 之外也能看出錯點。
+    """
+    conn = None
     try:
+        data = request.get_json(silent=True) or {}
+        u = (data.get('username') or '').strip()
+        p = (data.get('password') or '').strip()
+
+        if not u or not p:
+            return jsonify({"success": False, "message": "請輸入帳號與密碼"}), 400
+
+        conn = get_db_connection()
+        ensure_core_tables(conn)
+
         with conn.cursor() as cursor:
-            cursor.execute("SELECT * FROM admins WHERE username = %s AND password = %s", (u, p))
+            cursor.execute("""
+                SELECT id, username, password, allowed_events, current_event
+                FROM admins
+                WHERE TRIM(username) = %s AND TRIM(password) = %s
+                LIMIT 1
+            """, (u, p))
             admin = cursor.fetchone()
-            if admin:
-                session['admin_logged_in'] = True
-                session['username'] = admin['username']
-                allowed = [s.strip() for s in (admin.get('allowed_events') or '活動報到名單').split(',') if s.strip()]
-                session['allowed_sheets'] = allowed or ["活動報到名單"]
-                session['current_admin_sheet'] = session['allowed_sheets'][0]
-                return jsonify({"success": True})
-        return jsonify({"success": False, "message": "帳密錯誤"}), 401
-    finally: conn.close()
+
+        if not admin:
+            return jsonify({"success": False, "message": "帳密錯誤"}), 401
+
+        allowed = [
+            s.strip()
+            for s in (admin.get('allowed_events') or '活動報到名單').split(',')
+            if s.strip()
+        ] or ["活動報到名單"]
+
+        current_event = (admin.get('current_event') or '').strip()
+        if current_event not in allowed:
+            current_event = allowed[0]
+
+        session['admin_logged_in'] = True
+        session['username'] = admin['username']
+        session['allowed_sheets'] = allowed
+        session['current_admin_sheet'] = current_event
+
+        return jsonify({
+            "success": True,
+            "username": admin['username'],
+            "allowed_sheets": allowed,
+            "current_sheet": current_event
+        })
+    except Exception as e:
+        print(f"❌ [登入 API 失敗]: {e}")
+        return jsonify({
+            "success": False,
+            "message": f"登入 API 失敗：{e}"
+        }), 500
+    finally:
+        if conn:
+            conn.close()
+
+@app.route('/api/register', methods=['POST'])
+def admin_register():
+    """
+    login.html 已經有註冊頁籤會呼叫 /api/register。
+    原本 server.py 沒有這支 API，會導致註冊永遠失敗。
+    """
+    conn = None
+    try:
+        data = request.get_json(silent=True) or {}
+        username = (data.get('username') or '').strip()
+        password = (data.get('password') or '').strip()
+        allowed_events = (data.get('allowed_events') or '活動報到名單').strip()
+        invite_code = (data.get('invite_code') or '').strip()
+
+        required_invite = os.getenv("REGISTER_INVITE_CODE", "").strip()
+        if required_invite and invite_code != required_invite:
+            return jsonify({"success": False, "message": "邀請碼錯誤"}), 403
+
+        if len(username) < 3:
+            return jsonify({"success": False, "message": "帳號至少 3 個字元"}), 400
+        if len(password) < 6:
+            return jsonify({"success": False, "message": "密碼至少 6 碼"}), 400
+
+        conn = get_db_connection()
+        ensure_core_tables(conn)
+
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT id FROM admins WHERE username = %s", (username,))
+            if cursor.fetchone():
+                return jsonify({"success": False, "message": "帳號已存在"}), 409
+
+            cursor.execute("""
+                INSERT INTO admins (username, password, allowed_events, current_event)
+                VALUES (%s, %s, %s, %s)
+            """, (username, password, allowed_events, allowed_events.split(',')[0].strip() or '活動報到名單'))
+
+        conn.commit()
+        return jsonify({"success": True, "message": "管理員建立成功"})
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        print(f"❌ [註冊 API 失敗]: {e}")
+        return jsonify({"success": False, "message": f"註冊 API 失敗：{e}"}), 500
+    finally:
+        if conn:
+            conn.close()
+
+@app.route('/api/debug_login')
+def api_debug_login():
+    """
+    臨時檢查 admins 表用。確認成功後可以刪掉。
+    不回傳明文密碼，只回傳密碼長度。
+    """
+    conn = None
+    try:
+        conn = get_db_connection()
+        ensure_core_tables(conn)
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT username,
+                       LENGTH(password) AS password_len,
+                       allowed_events,
+                       current_event
+                FROM admins
+                ORDER BY id ASC
+            """)
+            rows = cursor.fetchall()
+        return jsonify({"success": True, "admins": rows})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if conn:
+            conn.close()
 
 @app.route('/api/logout')
 def logout():
