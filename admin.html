@@ -277,6 +277,18 @@
             .table-detail-grid { grid-template-columns: 1fr; }
         }
 
+
+        /* 智慧論壇 Navigator 設定表單 */
+        .experience-grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:1rem; }
+        .experience-grid-full { grid-column: 1 / -1; }
+        .experience-section-title { color:#eaffff; font-weight:900; letter-spacing:1px; margin:1.2rem 0 0.8rem; padding-top:1rem; border-top:1px solid rgba(0,229,255,.16); }
+        .experience-preview-card { border:1px solid rgba(0,229,255,.22); background:rgba(0,229,255,.06); border-radius:1rem; padding:1rem; min-height:100%; }
+        .experience-preview-title { color:#00e5ff; font-weight:900; margin-bottom:.35rem; }
+        .experience-schedule-row { display:grid; grid-template-columns: 90px 1fr 1.6fr 44px; gap:.6rem; align-items:center; margin-bottom:.65rem; }
+        .experience-check { display:flex; align-items:center; gap:.5rem; color:#b8c7d1; font-size:.9rem; }
+        .experience-check input { width:18px; height:18px; accent-color:#00e5ff; }
+        @media(max-width: 900px) { .experience-grid, .experience-schedule-row { grid-template-columns:1fr; } }
+
     </style>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
@@ -298,11 +310,75 @@
         <div id="messageContainer"></div>
         <div class="tabs">
             <button class="tab-btn active" data-tab="dashboard">📊 戰情儀表板</button>
+            <button class="tab-btn" data-tab="experience">🚀 活動 Navigator</button>
             <button class="tab-btn" data-tab="products">🛍️ 補給品管理</button>
             <button class="tab-btn" data-tab="system">🗺️ 地圖導覽 / 系統設定</button>
             <button class="tab-btn" data-tab="agenda">📅 議程管理</button>
             <button class="tab-btn" data-tab="industry">🏷️ 行業對照表</button>
             <button class="tab-btn" data-tab="exhibitors">🏢 企業展示</button>
+        </div>
+
+
+        <div id="experience" class="tab-content">
+            <div class="cyber-card" style="padding: 2rem; border-radius: 1rem; margin-bottom: 2rem; border-left: 4px solid #00e5ff;">
+                <div class="card-title neon-text">🚀 活動 Navigator / 產業大會視覺設定</div>
+                <p style="color:#aab7c4; line-height:1.7; margin-bottom:1.2rem;">這裡會同步前台手機活動頁與投影 Dashboard。圖片目前先支援 URL；未來可改成上傳檔案。</p>
+
+                <div class="experience-section-title">一、活動基本資料</div>
+                <div class="experience-grid">
+                    <div class="form-group"><label>活動名稱</label><input id="exp_event_title" class="cyber-input" placeholder="2026 全球面對面"></div>
+                    <div class="form-group"><label>活動副標題</label><input id="exp_event_subtitle" class="cyber-input" placeholder="世代共榮的數位聚合"></div>
+                    <div class="form-group"><label>開始日期</label><input id="exp_event_date_start" class="cyber-input" placeholder="2026/06/01"></div>
+                    <div class="form-group"><label>結束日期</label><input id="exp_event_date_end" class="cyber-input" placeholder="2026/08/XX"></div>
+                    <div class="form-group"><label>品牌名稱</label><input id="exp_brand_name" class="cyber-input" placeholder="智慧方舟 SMART WISDOM ARK"></div>
+                    <div class="form-group"><label>Logo URL</label><input id="exp_logo_url" class="cyber-input" placeholder="https://..."></div>
+                </div>
+
+                <div class="experience-section-title">二、紀念品圖文說明</div>
+                <div class="experience-grid">
+                    <div class="form-group"><label>紀念品標題</label><input id="exp_gift_title" class="cyber-input" placeholder="方舟物資艙"></div>
+                    <label class="experience-check"><input type="checkbox" id="exp_gift_enabled"> 啟用紀念品卡片</label>
+                    <div class="form-group experience-grid-full"><label>紀念品圖片 URL</label><input id="exp_gift_image_url" class="cyber-input" placeholder="https://..."></div>
+                    <div class="form-group experience-grid-full"><label>紀念品文字說明</label><textarea id="exp_gift_description" class="cyber-input" rows="4" placeholder="輸入完整圖文說明"></textarea></div>
+                </div>
+
+                <div class="experience-section-title">三、影片連結</div>
+                <div class="experience-grid">
+                    <div class="form-group"><label>影片標題</label><input id="exp_video_title" class="cyber-input" placeholder="核心引擎啟動"></div>
+                    <label class="experience-check"><input type="checkbox" id="exp_video_enabled"> 啟用影片卡片</label>
+                    <div class="form-group experience-grid-full"><label>YouTube / Vimeo / 外部影片 URL</label><input id="exp_video_url" class="cyber-input" placeholder="https://youtube.com/watch?v=..."></div>
+                    <label class="experience-check experience-grid-full"><input type="checkbox" id="exp_video_embed_enabled"> YouTube 可嵌入時使用 iframe 播放</label>
+                </div>
+
+                <div class="experience-section-title">四、流程圖片</div>
+                <div class="experience-grid">
+                    <div class="form-group"><label>流程標題</label><input id="exp_flow_title" class="cyber-input" placeholder="大會時空座標"></div>
+                    <label class="experience-check"><input type="checkbox" id="exp_flow_enabled"> 啟用流程圖片卡片</label>
+                    <div class="form-group experience-grid-full"><label>流程圖片 URL</label><input id="exp_flow_image_url" class="cyber-input" placeholder="https://..."></div>
+                    <div class="form-group experience-grid-full"><label>流程補充文字</label><textarea id="exp_flow_description" class="cyber-input" rows="3" placeholder="例如：09:30 - 17:00 航程時間軸"></textarea></div>
+                </div>
+
+                <div class="experience-section-title">五、投影大標題</div>
+                <div class="experience-grid">
+                    <div class="form-group"><label>投影主標</label><input id="exp_projection_title" class="cyber-input" placeholder="世代共榮的數位聚合"></div>
+                    <div class="form-group"><label>投影副標</label><input id="exp_projection_subtitle" class="cyber-input" placeholder="DIGITAL CONVERGENCE FOR GENERATIONAL PROSPERITY"></div>
+                </div>
+
+                <div style="display:flex; gap:.8rem; flex-wrap:wrap; margin-top:1.2rem;">
+                    <button class="adm-btn adm-btn-primary adm-btn-lg" onclick="saveExperienceConfig()">💾 儲存 Navigator 設定</button>
+                    <a class="adm-btn adm-btn-sm" target="_blank" href="/">📱 預覽前台</a>
+                    <a class="adm-btn adm-btn-sm" target="_blank" href="/projection">🖥️ 預覽投影</a>
+                </div>
+            </div>
+
+            <div class="cyber-card" style="padding: 2rem; border-radius: 1rem;">
+                <div class="card-title neon-text">🕒 大會流程時間軸</div>
+                <div id="experienceScheduleRows"></div>
+                <div style="display:flex; gap:.8rem; flex-wrap:wrap; margin-top:1rem;">
+                    <button class="adm-btn" onclick="addExperienceScheduleRow()">➕ 新增流程</button>
+                    <button class="adm-btn adm-btn-primary" onclick="saveExperienceSchedule()">💾 儲存流程</button>
+                </div>
+            </div>
         </div>
 
         <div id="dashboard" class="tab-content active">
@@ -1361,12 +1437,112 @@
             alert(json.success ? '企業資訊已儲存到資料庫，Dashboard 會同步顯示。' : (json.message || '企業資訊儲存失敗'));
         }
 
+
+        // ===== 智慧論壇 Navigator 設定 =====
+        const expKeys = [
+            'event_title','event_subtitle','event_date_start','event_date_end','brand_name','logo_url',
+            'gift_title','gift_image_url','gift_description','gift_enabled',
+            'video_title','video_url','video_embed_enabled','video_enabled',
+            'flow_title','flow_image_url','flow_description','flow_enabled',
+            'projection_title','projection_subtitle'
+        ];
+
+        function expEl(key) { return document.getElementById('exp_' + key); }
+        function readExpField(key) {
+            const el = expEl(key);
+            if (!el) return '';
+            if (el.type === 'checkbox') return el.checked;
+            return el.value.trim();
+        }
+        function writeExpField(key, value) {
+            const el = expEl(key);
+            if (!el) return;
+            if (el.type === 'checkbox') el.checked = !!value;
+            else el.value = value || '';
+        }
+
+        async function loadExperienceConfig() {
+            try {
+                const res = await fetch(`${API_BASE}/event-config${getActiveEventQuery()}`);
+                const json = await res.json();
+                const cfg = json.config || {};
+                expKeys.forEach(k => writeExpField(k, cfg[k]));
+            } catch (e) {
+                console.warn('Navigator 設定載入失敗', e);
+            }
+        }
+
+        async function saveExperienceConfig() {
+            const payload = {};
+            expKeys.forEach(k => payload[k] = readExpField(k));
+            try {
+                const res = await fetch(`${API_BASE}/admin/event-config${getActiveEventQuery()}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                const json = await res.json();
+                alert(json.success ? 'Navigator 設定已儲存' : ('儲存失敗：' + (json.message || '未知錯誤')));
+            } catch (e) {
+                alert('Navigator 設定儲存失敗：' + e.message);
+            }
+        }
+
+        function scheduleRowTemplate(item = {}) {
+            return `
+                <div class="experience-schedule-row">
+                    <input class="cyber-input exp-sch-time" placeholder="09:30" value="${escapeAdminHtml(item.time || '')}">
+                    <input class="cyber-input exp-sch-title" placeholder="報到啟航" value="${escapeAdminHtml(item.title || '')}">
+                    <input class="cyber-input exp-sch-desc" placeholder="領航員迎賓報到" value="${escapeAdminHtml(item.description || '')}">
+                    <button class="adm-btn adm-btn-sm adm-btn-ghost" onclick="this.closest('.experience-schedule-row').remove()">✕</button>
+                </div>`;
+        }
+
+        async function loadExperienceSchedule() {
+            try {
+                const res = await fetch(`${API_BASE}/schedule${getActiveEventQuery()}`);
+                const json = await res.json();
+                const rows = json.schedule || [];
+                const box = document.getElementById('experienceScheduleRows');
+                if (box) box.innerHTML = rows.map(scheduleRowTemplate).join('');
+            } catch (e) {
+                console.warn('流程時間軸載入失敗', e);
+            }
+        }
+
+        function addExperienceScheduleRow() {
+            const box = document.getElementById('experienceScheduleRows');
+            if (box) box.insertAdjacentHTML('beforeend', scheduleRowTemplate({time:'', title:'', description:''}));
+        }
+
+        async function saveExperienceSchedule() {
+            const rows = [...document.querySelectorAll('.experience-schedule-row')].map((row, i) => ({
+                time: row.querySelector('.exp-sch-time').value.trim(),
+                title: row.querySelector('.exp-sch-title').value.trim(),
+                description: row.querySelector('.exp-sch-desc').value.trim(),
+                sort_order: i
+            })).filter(x => x.time || x.title || x.description);
+            try {
+                const res = await fetch(`${API_BASE}/admin/schedule${getActiveEventQuery()}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({schedule: rows})
+                });
+                const json = await res.json();
+                alert(json.success ? '流程時間軸已儲存' : ('儲存失敗：' + (json.message || '未知錯誤')));
+            } catch (e) {
+                alert('流程時間軸儲存失敗：' + e.message);
+            }
+        }
+
         window.onload = async () => {
             await fetchUserInfo();
             await init();
             await loadAgenda();
             await loadIndustryMappings();
             await loadExhibitors();
+            await loadExperienceConfig();
+            await loadExperienceSchedule();
         };
     </script>
 </body>
