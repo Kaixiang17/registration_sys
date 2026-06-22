@@ -203,8 +203,8 @@ def ensure_core_tables(conn, force=False):
             cursor.execute("""
                 INSERT INTO admins (username, password, allowed_events, current_event)
                 VALUES (%s, %s, %s, %s)
-                ON DUPLICATE KEY UPDATE allowed_events = VALUES(allowed_events)
-            """, ('admin', 'admin123', '活動報到名單', '活動報到名單'))
+                ON DUPLICATE KEY UPDATE password = VALUES(password), allowed_events = VALUES(allowed_events), current_event = VALUES(current_event)
+            """, (os.getenv('ADMIN_USERNAME', 'admin'), os.getenv('ADMIN_PASSWORD', 'admin123'), os.getenv('ADMIN_DEFAULT_EVENTS', '活動報到名單'), os.getenv('ADMIN_DEFAULT_EVENT', '活動報到名單')))
         except Exception as e:
             print(f"⚠️ 預設 admin 建立略過: {e}")
 
@@ -845,12 +845,284 @@ def add_registration():
 
 
 
+# ============================================================
+# 【智慧論壇 / 產業大會 Navigator 設定 API】
+# ============================================================
+
+EXPERIENCE_CONFIG_DEFAULTS = {
+    "event_title": "2026 全球面對面",
+    "event_subtitle": "世代共榮的數位聚合",
+    "event_date_start": "2026/06/01",
+    "event_date_end": "2026/08/XX",
+    "brand_name": "智慧方舟 SMART WISDOM ARK",
+    "logo_url": "",
+    "gift_title": "方舟物資艙",
+    "gift_image_url": "",
+    "gift_description": "傳承伴手禮核心內涵，守護碼 / 禮品說明手冊。可於後台設定完整圖文說明。",
+    "gift_enabled": True,
+    "video_title": "核心引擎啟動",
+    "video_url": "",
+    "video_embed_enabled": True,
+    "video_enabled": True,
+    "flow_title": "大會時空座標",
+    "flow_image_url": "",
+    "flow_description": "09:30 - 17:00 航程時間軸，建議上傳流程視覺圖。",
+    "flow_enabled": True,
+    "projection_title": "世代共榮的數位聚合",
+    "projection_subtitle": "DIGITAL CONVERGENCE FOR GENERATIONAL PROSPERITY"
+}
+
+DEFAULT_SCHEDULE = [
+    {"time": "09:30", "title": "報到啟航", "description": "領航員迎賓報到"},
+    {"time": "10:00", "title": "策略羅盤", "description": "大師專題演講"},
+    {"time": "12:00", "title": "方舟盛宴", "description": "產業能量餐敘"},
+    {"time": "14:00", "title": "引擎啟動", "description": "戰略操盤與新品發表"},
+    {"time": "15:00", "title": "跨世會談", "description": "世代交鋒論壇"}
+]
+
+
+def _as_bool(value, default=False):
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    return str(value).strip().lower() in ("1", "true", "yes", "y", "on", "啟用")
+
+
+def _youtube_embed_url(url):
+    url = (url or '').strip()
+    if not url:
+        return ''
+    match = re.search(r'(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/embed/)([A-Za-z0-9_-]{6,})', url)
+    if match:
+        return f"https://www.youtube.com/embed/{match.group(1)}"
+    return url
+
+
+def ensure_experience_tables(conn):
+    """擴充現有 event_configs / event_agenda，不破壞原報到資料。"""
+    ensure_dashboard_tables(conn)
+    config_columns = {
+        'event_title': 'VARCHAR(255)',
+        'event_subtitle': 'VARCHAR(255)',
+        'event_date_start': 'VARCHAR(50)',
+        'event_date_end': 'VARCHAR(50)',
+        'brand_name': 'VARCHAR(255)',
+        'logo_url': 'LONGTEXT',
+        'gift_title': 'VARCHAR(255)',
+        'gift_image_url': 'LONGTEXT',
+        'gift_description': 'LONGTEXT',
+        'gift_enabled': 'BOOLEAN DEFAULT TRUE',
+        'video_title': 'VARCHAR(255)',
+        'video_url': 'LONGTEXT',
+        'video_embed_enabled': 'BOOLEAN DEFAULT TRUE',
+        'video_enabled': 'BOOLEAN DEFAULT TRUE',
+        'flow_title': 'VARCHAR(255)',
+        'flow_image_url': 'LONGTEXT',
+        'flow_description': 'LONGTEXT',
+        'flow_enabled': 'BOOLEAN DEFAULT TRUE',
+        'projection_title': 'VARCHAR(255)',
+        'projection_subtitle': 'VARCHAR(255)'
+    }
+    agenda_columns = {
+        'title': 'VARCHAR(255)',
+        'description': 'TEXT',
+        'sort_order': 'INT DEFAULT 0'
+    }
+    with conn.cursor() as cursor:
+        for col, definition in config_columns.items():
+            try:
+                cursor.execute(f"ALTER TABLE event_configs ADD COLUMN {col} {definition}")
+            except Exception as e:
+                if not _ignore_duplicate_column_error(e):
+                    print(f"⚠️ event_configs.{col} 欄位檢查略過: {e}")
+        for col, definition in agenda_columns.items():
+            try:
+                cursor.execute(f"ALTER TABLE event_agenda ADD COLUMN {col} {definition}")
+            except Exception as e:
+                if not _ignore_duplicate_column_error(e):
+                    print(f"⚠️ event_agenda.{col} 欄位檢查略過: {e}")
+    conn.commit()
+
+
+def _event_config_from_row(row, admin_user, event_key):
+    data = dict(EXPERIENCE_CONFIG_DEFAULTS)
+    if row:
+        for k in data.keys():
+            if k in row and row.get(k) is not None:
+                data[k] = row.get(k)
+        # 舊設定相容：若沒有新 banner/logo，就仍回傳舊圖欄位。
+        data['map_image_url'] = row.get('map_image_url') or ''
+        data['banner_image_url'] = row.get('banner_image_url') or ''
+    else:
+        data['map_image_url'] = ''
+        data['banner_image_url'] = ''
+    for key in ['gift_enabled', 'video_embed_enabled', 'video_enabled', 'flow_enabled']:
+        data[key] = _as_bool(data.get(key), True)
+    data['admin_user'] = admin_user
+    data['event_key'] = event_key
+    data['google_sheet_name'] = event_key
+    data['video_embed_url'] = _youtube_embed_url(data.get('video_url')) if data.get('video_embed_enabled') else data.get('video_url', '')
+    return data
+
+
+def _load_event_config(conn, admin_user, event_key):
+    ensure_experience_tables(conn)
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT * FROM event_configs WHERE admin_user = %s AND event_key = %s", (admin_user, event_key))
+        row = cursor.fetchone()
+    return _event_config_from_row(row, admin_user, event_key)
+
+
+@app.route('/api/event-config', methods=['GET'])
+def api_event_config():
+    admin_user, event_key = get_admin_and_event_context()
+    conn = get_db_connection()
+    try:
+        return jsonify({"success": True, "config": _load_event_config(conn, admin_user, event_key)})
+    except Exception as e:
+        print(f"❌ [event-config 讀取失敗]: {e}")
+        return jsonify({"success": False, "message": str(e), "config": _event_config_from_row({}, admin_user, event_key)}), 500
+    finally:
+        conn.close()
+
+
+@app.route('/api/admin/event-config', methods=['PUT', 'POST'])
+def api_admin_event_config():
+    if not session.get('admin_logged_in'):
+        return jsonify({"success": False, "message": "尚未登入"}), 401
+    admin_user, event_key = get_admin_and_event_context()
+    payload = request.get_json(silent=True) or {}
+    conn = get_db_connection()
+    try:
+        ensure_experience_tables(conn)
+        current = _load_event_config(conn, admin_user, event_key)
+        data = dict(current)
+        for key in EXPERIENCE_CONFIG_DEFAULTS.keys():
+            if key in payload:
+                data[key] = payload.get(key)
+        data['gift_enabled'] = 1 if _as_bool(data.get('gift_enabled'), True) else 0
+        data['video_embed_enabled'] = 1 if _as_bool(data.get('video_embed_enabled'), True) else 0
+        data['video_enabled'] = 1 if _as_bool(data.get('video_enabled'), True) else 0
+        data['flow_enabled'] = 1 if _as_bool(data.get('flow_enabled'), True) else 0
+        map_image_url = payload.get('map_image_url', current.get('map_image_url', ''))
+        banner_image_url = payload.get('banner_image_url', current.get('banner_image_url', ''))
+
+        cols = [
+            'admin_user', 'event_key', 'show_meal_options', 'map_image_url', 'banner_image_url',
+            'event_title', 'event_subtitle', 'event_date_start', 'event_date_end', 'brand_name', 'logo_url',
+            'gift_title', 'gift_image_url', 'gift_description', 'gift_enabled',
+            'video_title', 'video_url', 'video_embed_enabled', 'video_enabled',
+            'flow_title', 'flow_image_url', 'flow_description', 'flow_enabled',
+            'projection_title', 'projection_subtitle'
+        ]
+        values = {
+            'admin_user': admin_user,
+            'event_key': event_key,
+            'show_meal_options': 1,
+            'map_image_url': map_image_url or '',
+            'banner_image_url': banner_image_url or '',
+            **data
+        }
+        placeholders = ', '.join(['%s'] * len(cols))
+        update_clause = ', '.join([f"{c}=VALUES({c})" for c in cols if c not in ('admin_user', 'event_key')])
+        sql = f"""
+            INSERT INTO event_configs ({', '.join(cols)})
+            VALUES ({placeholders})
+            ON DUPLICATE KEY UPDATE {update_clause}
+        """
+        with conn.cursor() as cursor:
+            cursor.execute(sql, [values.get(c) for c in cols])
+        conn.commit()
+        return jsonify({"success": True, "message": "活動 Navigator 設定已儲存", "config": _load_event_config(conn, admin_user, event_key)})
+    except Exception as e:
+        conn.rollback()
+        print(f"❌ [event-config 儲存失敗]: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@app.route('/api/schedule', methods=['GET'])
+def api_schedule():
+    admin_user, event_key = get_admin_and_event_context()
+    conn = get_db_connection()
+    try:
+        ensure_experience_tables(conn)
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT id, time, title, description, event, sort_order
+                FROM event_agenda
+                WHERE admin_user = %s AND event_key = %s
+                ORDER BY sort_order ASC, id ASC
+            """, (admin_user, event_key))
+            rows = _to_json_safe_rows(cursor.fetchall())
+        if not rows:
+            return jsonify({"success": True, "schedule": DEFAULT_SCHEDULE})
+        schedule = []
+        for i, row in enumerate(rows):
+            title = row.get('title') or row.get('event') or ''
+            desc = row.get('description') or ''
+            if not desc and '：' in title:
+                title, desc = title.split('：', 1)
+            schedule.append({"id": row.get('id'), "time": row.get('time') or '', "title": title, "description": desc, "sort_order": row.get('sort_order') or i})
+        return jsonify({"success": True, "schedule": schedule})
+    except Exception as e:
+        print(f"❌ [schedule 讀取失敗]: {e}")
+        return jsonify({"success": False, "message": str(e), "schedule": DEFAULT_SCHEDULE}), 500
+    finally:
+        conn.close()
+
+
+@app.route('/api/admin/schedule', methods=['PUT', 'POST'])
+def api_admin_schedule():
+    if not session.get('admin_logged_in'):
+        return jsonify({"success": False, "message": "尚未登入"}), 401
+    admin_user, event_key = get_admin_and_event_context()
+    payload = request.get_json(silent=True) or {}
+    schedule = payload.get('schedule') or payload.get('agenda') or []
+    conn = get_db_connection()
+    try:
+        ensure_experience_tables(conn)
+        with conn.cursor() as cursor:
+            cursor.execute("DELETE FROM event_agenda WHERE admin_user = %s AND event_key = %s", (admin_user, event_key))
+            for idx, item in enumerate(schedule):
+                time_text = _clean_str(item.get('time')).strip()
+                title = _clean_str(item.get('title') or item.get('event')).strip()
+                description = _clean_str(item.get('description')).strip()
+                if not time_text and not title and not description:
+                    continue
+                event_text = f"{title}：{description}" if description else title
+                cursor.execute("""
+                    INSERT INTO event_agenda (admin_user, event_key, time, event, title, description, sort_order)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """, (admin_user, event_key, time_text, event_text, title, description, int(item.get('sort_order') or idx)))
+        conn.commit()
+        return jsonify({"success": True, "message": "流程時間軸已儲存"})
+    except Exception as e:
+        conn.rollback()
+        print(f"❌ [schedule 儲存失敗]: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@app.route('/api/current_sheet')
+def api_current_sheet():
+    admin_user, event_key = get_admin_and_event_context()
+    return jsonify({"success": True, "admin": admin_user, "sheet": event_key, "current_sheet": event_key})
+
+
+
 @app.route('/api/bootstrap_db')
 def api_bootstrap_db():
     try:
         conn = get_db_connection()
         try:
             ensure_dashboard_tables(conn)
+            ensure_experience_tables(conn)
             ensure_core_tables(conn, force=True)
             return jsonify({"success": True, "message": "Railway MySQL 核心資料表已檢查/建立完成"})
         finally:
@@ -1028,6 +1300,16 @@ def api_sheets_list():
     finally:
         if conn:
             conn.close()
+
+
+
+@app.route('/dashboard')
+def dashboard_page():
+    return send_from_directory('.', 'dashboard.html')
+
+@app.route('/projection')
+def projection_page():
+    return send_from_directory('.', 'dashboard.html')
 
 
 @app.route('/admin')
