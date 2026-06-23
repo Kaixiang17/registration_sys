@@ -1,11 +1,485 @@
 <!DOCTYPE html>
-<html lang="zh-TW"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>智慧方舟 Projection Dashboard</title><link rel="stylesheet" href="smart-ark-theme.css?v=projection-1"><script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script><style>
-body{overflow:hidden}.projection-shell{width:100vw;height:100vh;padding:3.2vh 3vw;display:grid;grid-template-rows:auto 1fr auto;gap:2vh;background:radial-gradient(circle at 52% 50%,rgba(0,229,255,.13),transparent 26%)}.projection-head{text-align:center}.projection-kicker{font-size:1.5vw;font-weight:900;letter-spacing:.08em;color:#eaffff}.projection-title{font-size:4.2vw;line-height:1.05;margin:.3vh 0;color:#fff;text-shadow:0 0 18px rgba(0,229,255,.6)}.projection-sub{font-size:1.15vw;letter-spacing:.2em;color:#bcefff}.projection-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:1.8vw;min-height:0}.projection-panel{border-radius:1.15vw;padding:1.4vw;border:1px solid rgba(0,229,255,.24);background:linear-gradient(135deg,rgba(8,18,34,.82),rgba(0,31,54,.52));box-shadow:0 0 30px rgba(0,229,255,.12),inset 0 0 30px rgba(0,229,255,.04);min-height:0}.chart-wrap{height:52vh;position:relative;display:grid;grid-template-columns:1fr 1fr;gap:1vw;align-items:center}.chart-box{height:44vh;position:relative}.center-total{position:absolute;left:25%;top:50%;transform:translate(-50%,-50%);text-align:center;color:#fff;pointer-events:none}.center-total b{font-size:2.3vw}.legend-grid{display:grid;gap:.85vh}.legend-item{display:grid;grid-template-columns:1.7vw 1fr auto;gap:.7vw;align-items:center;color:#d9f8ff;font-size:1vw}.dot{width:1vw;height:1vw;border-radius:.25vw}.timeline{display:grid;gap:1.2vh;margin-top:1vh}.timeline-row{display:grid;grid-template-columns:5vw 1fr;gap:1vw;align-items:center}.timeline-time{font-size:1.35vw;color:#00e5ff;font-weight:900}.timeline-card{padding:.9vw 1vw;border-radius:.7vw;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18)}.timeline-card b{font-size:1.1vw;color:#fff}.timeline-card span{display:block;color:#a8bdca;margin-top:.25rem;font-size:.8vw}.projection-bottom{display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:1vw}.mini-title{font-size:1vw;color:#00e5ff;font-weight:900;margin-bottom:.5vh}.mini-box{min-height:12vh}.mini-box img{height:9vh;max-width:100%;object-fit:contain;border-radius:.5vw}.video-chip{display:flex;align-items:center;gap:.8vw}.play{width:3.4vw;height:3.4vw;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(0,229,255,.5);color:#00e5ff;font-size:1.4vw}.flow-strip{display:flex;justify-content:space-between;gap:.5vw;color:#d9f8ff}.flow-step{text-align:center;font-size:.72vw}.flow-step b{display:block;color:#00e5ff;font-size:.86vw}@media(max-aspect-ratio: 4/3){body{overflow:auto}.projection-shell{height:auto}.projection-grid,.projection-bottom{grid-template-columns:1fr}.chart-wrap{grid-template-columns:1fr;height:auto}.chart-box{height:320px}.center-total{display:none}}
-</style></head><body class="circuit-background"><div class="ark-background"></div><main class="projection-shell"><header class="projection-head"><div class="projection-kicker" id="eventKicker">2026 全球面對面　智慧方舟</div><h1 class="projection-title" id="projectionTitle">世代共榮的數位聚合</h1><div class="projection-sub" id="projectionSub">DIGITAL CONVERGENCE FOR GENERATIONAL PROSPERITY</div><div style="color:#eaffff;margin-top:1vh;font-weight:900" id="eventDate">2026/06/01 ~ 2026/08/XX</div></header><section class="projection-grid"><div class="projection-panel"><h2 class="neon-text">【 智匯方舟｜實時登艦產業生態分佈 】</h2><div class="chart-wrap"><div class="chart-box"><canvas id="industryChart"></canvas><div class="center-total"><div>共戰領航員<br>TOTAL NAVIGATORS</div><b id="totalText">XXX</b></div></div><div class="legend-grid" id="legendGrid"></div></div></div><div class="projection-panel"><h2 class="neon-text">【 2026 進化航線｜大會時空座標 】</h2><div class="timeline" id="timeline"></div></div></section><section class="projection-bottom"><div class="projection-panel mini-box"><div class="mini-title">紀念品圖文說明</div><div id="giftPreview">後台可設定紀念品圖片與說明</div></div><div class="projection-panel mini-box"><div class="mini-title">紀念品影片連結</div><div class="video-chip"><div class="play">▶</div><div id="videoPreview">YouTube / Vimeo / 外部連結</div></div></div><div class="projection-panel mini-box"><div class="mini-title">流程希望呈現的圖片</div><div class="flow-strip" id="flowStrip"></div></div></section></main><script>
-const params=new URLSearchParams(location.search);const admin=params.get('admin')||'admin';const sheet=params.get('sheet')||'活動報到名單';const q=`?admin=${encodeURIComponent(admin)}&sheet=${encodeURIComponent(sheet)}`;const colors=['#00e5ff','#4ade80','#ffa500','#f87171','#a78bfa','#06b6d4','#f472b6'];let chart;
-function esc(v){return String(v??'').replace(/[&<>\"]/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[s]))}
-async function boot(){let cfg={};let sch=[];try{const r=await fetch('/api/event-config'+q);cfg=(await r.json()).config||{};}catch(e){}try{const r=await fetch('/api/schedule'+q);sch=(await r.json()).schedule||[];}catch(e){}renderConfig(cfg);renderSchedule(sch);await renderIndustry();}
-function renderConfig(c){document.getElementById('eventKicker').textContent=`${c.event_title||'2026 全球面對面'}　${c.brand_name||'智慧方舟'}`;document.getElementById('projectionTitle').textContent=c.projection_title||c.event_subtitle||'世代共榮的數位聚合';document.getElementById('projectionSub').textContent=c.projection_subtitle||'DIGITAL CONVERGENCE FOR GENERATIONAL PROSPERITY';document.getElementById('eventDate').textContent=`${c.event_date_start||'2026/06/01'} ~ ${c.event_date_end||'2026/08/XX'}`;document.getElementById('giftPreview').innerHTML=c.gift_image_url?`<img src="${esc(c.gift_image_url)}"><div style="color:#b8c7d1;margin-top:.4vh">${esc(c.gift_title||'方舟物資艙')}</div>`:esc(c.gift_description||'後台可設定紀念品圖片與說明');document.getElementById('videoPreview').textContent=c.video_url?'影片連結已設定':'YouTube / Vimeo / 外部連結';}
-function renderSchedule(rows){if(!rows.length)rows=[{time:'09:30',title:'報到啟航',description:'領航員迎賓報到'},{time:'10:00',title:'策略羅盤',description:'大師專題演講'},{time:'12:00',title:'方舟盛宴',description:'產業能量餐敘'},{time:'14:00',title:'引擎啟動',description:'戰略操盤與新品發表'},{time:'15:00',title:'跨世會談',description:'世代交鋒論壇'}];document.getElementById('timeline').innerHTML=rows.map(r=>`<div class="timeline-row"><div class="timeline-time">${esc(r.time)}</div><div class="timeline-card"><b>${esc(r.title)}</b><span>${esc(r.description)}</span></div></div>`).join('');document.getElementById('flowStrip').innerHTML=rows.slice(0,5).map(r=>`<div class="flow-step"><b>${esc(r.time)}</b>${esc(r.title)}</div>`).join('')}
-async function renderIndustry(){let data={'實體工業方舟':28,'民生消費方舟':22,'通路物流方舟':18,'數位新方舟':24,'其他產業':8};try{const r=await fetch('/api/exhibitors'+q);const j=await r.json();if(j.industry_stats&&Object.keys(j.industry_stats).length)data=j.industry_stats;}catch(e){}const labels=Object.keys(data), values=labels.map(k=>Number(data[k]||0)), total=values.reduce((a,b)=>a+b,0)||'XXX';document.getElementById('totalText').textContent=total;document.getElementById('legendGrid').innerHTML=labels.map((l,i)=>`<div class="legend-item"><span class="dot" style="background:${colors[i%colors.length]}"></span><span>${esc(l)}</span><b>${values[i]}</b></div>`).join('');chart=new Chart(document.getElementById('industryChart'),{type:'doughnut',data:{labels,datasets:[{data:values,backgroundColor:colors,borderColor:'rgba(3,10,20,.92)',borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{display:false}}}})}boot();setInterval(()=>renderIndustry(),30000);
-</script></body></html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智慧方舟 Projection Dashboard</title>
+<link rel="stylesheet" href="smart-ark-theme.css?v=projection-progress-1">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0;overflow:hidden}
+body{background:#030916;color:#eaffff}
+.ark-background{opacity:.28}
+
+.projection-shell{
+    width:100vw;
+    height:100vh;
+    padding:2.2vh 3vw 2.4vh;
+    display:grid;
+    grid-template-rows:15vh minmax(0,1fr) 15vh;
+    gap:1.55vh;
+    background:
+      radial-gradient(circle at 52% 43%,rgba(0,229,255,.14),transparent 28%),
+      linear-gradient(180deg,rgba(2,8,20,.1),rgba(2,8,20,.44));
+    position:relative;
+}
+.projection-shell::before{
+    content:"智匯方舟";
+    position:absolute;
+    inset:15vh 0 auto 0;
+    text-align:center;
+    font-size:clamp(5rem,15vw,13rem);
+    font-weight:900;
+    letter-spacing:.04em;
+    color:rgba(170,220,230,.045);
+    -webkit-text-stroke:1px rgba(0,229,255,.07);
+    pointer-events:none;
+    z-index:0;
+}
+.projection-shell>*{position:relative;z-index:1}
+
+.projection-head{
+    text-align:center;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+}
+.projection-kicker{
+    font-size:clamp(1rem,1.65vw,1.75rem);
+    font-weight:900;
+    letter-spacing:.14em;
+    color:#eaffff;
+    line-height:1.05;
+}
+.projection-title{
+    font-size:clamp(2.25rem,4.6vw,4.7rem);
+    line-height:.96;
+    margin:.35vh 0 .25vh;
+    color:#fff;
+    text-shadow:0 0 18px rgba(0,229,255,.65);
+    white-space:nowrap;
+}
+.projection-sub{
+    font-size:clamp(.72rem,1.12vw,1.22rem);
+    letter-spacing:.24em;
+    color:#bcefff;
+    line-height:1.1;
+}
+#eventDate{
+    color:#eaffff;
+    margin-top:.45vh;
+    font-size:clamp(.82rem,1.08vw,1.12rem);
+    font-weight:900;
+    letter-spacing:.06em;
+}
+
+.projection-grid{
+    display:grid;
+    grid-template-columns:minmax(0,7fr) minmax(0,5fr);
+    gap:1.45vw;
+    min-height:0;
+}
+.projection-panel{
+    border-radius:1vw;
+    padding:1.15vw 1.25vw;
+    border:1px solid rgba(0,229,255,.24);
+    background:linear-gradient(135deg,rgba(8,18,34,.76),rgba(0,31,54,.46));
+    box-shadow:0 0 26px rgba(0,229,255,.11),inset 0 0 26px rgba(0,229,255,.045);
+    min-height:0;
+    overflow:hidden;
+}
+.projection-panel h2{
+    margin:0 0 .9vh;
+    font-size:clamp(.9rem,1.25vw,1.45rem);
+    line-height:1.15;
+    letter-spacing:.06em;
+}
+
+.chart-wrap{
+    height:100%;
+    max-height:47vh;
+    position:relative;
+    display:grid;
+    grid-template-columns:minmax(230px,.9fr) minmax(240px,1fr);
+    gap:1.2vw;
+    align-items:center;
+}
+.chart-box{
+    height:min(39vh,340px);
+    min-height:250px;
+    position:relative;
+}
+.center-total{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:48%;
+    text-align:center;
+    color:#fff;
+    pointer-events:none;
+    font-size:clamp(.7rem,.82vw,.95rem);
+    line-height:1.2;
+}
+.center-total b{
+    display:block;
+    font-size:clamp(2.1rem,3.4vw,4rem);
+    margin-top:.25vh;
+}
+.legend-grid{
+    display:grid;
+    gap:.85vh;
+    align-content:center;
+}
+.legend-item{
+    display:grid;
+    grid-template-columns:1.1rem minmax(0,1fr) 2.8rem;
+    gap:.7vw;
+    align-items:center;
+    color:#d9f8ff;
+    font-size:clamp(.82rem,1.02vw,1.15rem);
+    line-height:1.1;
+}
+.legend-item b{
+    text-align:right;
+    font-size:clamp(.95rem,1.3vw,1.55rem);
+    color:#eaffff;
+}
+.dot{width:.75rem;height:.75rem;border-radius:.22rem;box-shadow:0 0 10px currentColor}
+
+.timeline{
+    display:grid;
+    gap:.95vh;
+    margin-top:.2vh;
+}
+.timeline-row{
+    display:grid;
+    grid-template-columns:4.9vw minmax(0,1fr);
+    gap:.85vw;
+    align-items:center;
+}
+.timeline-time{
+    font-size:clamp(1.15rem,1.75vw,2.1rem);
+    color:#00e5ff;
+    font-weight:900;
+    line-height:1;
+    text-align:right;
+}
+.timeline-card{
+    padding:.72vw .95vw;
+    min-height:6.1vh;
+    border-radius:.65vw;
+    background:rgba(0,229,255,.075);
+    border:1px solid rgba(0,229,255,.18);
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    transition:.25s ease;
+}
+.timeline-card b{
+    font-size:clamp(.9rem,1.02vw,1.2rem);
+    color:#fff;
+    line-height:1.1;
+}
+.timeline-card span{
+    display:block;
+    color:#a8bdca;
+    margin-top:.25vh;
+    font-size:clamp(.62rem,.75vw,.82rem);
+    line-height:1.15;
+}
+.timeline-row.active .timeline-time{color:#fff;text-shadow:0 0 14px rgba(0,229,255,.85)}
+.timeline-row.active .timeline-card{
+    background:linear-gradient(90deg,rgba(0,229,255,.28),rgba(0,229,255,.08));
+    border-color:rgba(0,229,255,.68);
+    box-shadow:0 0 24px rgba(0,229,255,.24), inset 0 0 18px rgba(0,229,255,.08);
+}
+.timeline-row.done .timeline-time{color:#7defff;opacity:.72}
+.timeline-row.done .timeline-card{opacity:.62}
+
+.progress-panel{
+    border-radius:1vw;
+    padding:1vw 1.25vw;
+    border:1px solid rgba(0,229,255,.25);
+    background:linear-gradient(135deg,rgba(8,18,34,.78),rgba(0,31,54,.42));
+    box-shadow:0 0 26px rgba(0,229,255,.10),inset 0 0 24px rgba(0,229,255,.04);
+    min-height:0;
+}
+.progress-head{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:1vw;
+    margin-bottom:1vh;
+}
+.progress-title{
+    color:#00e5ff;
+    font-size:clamp(.9rem,1.15vw,1.3rem);
+    font-weight:900;
+    letter-spacing:.08em;
+}
+.progress-now{
+    color:#fff;
+    font-size:clamp(.8rem,1vw,1.1rem);
+    font-weight:800;
+    text-align:right;
+}
+.progress-track{
+    position:relative;
+    height:1.1vh;
+    min-height:10px;
+    border-radius:999px;
+    background:rgba(255,255,255,.1);
+    border:1px solid rgba(0,229,255,.18);
+    overflow:hidden;
+}
+.progress-fill{
+    position:absolute;
+    left:0;top:0;bottom:0;
+    width:0%;
+    background:linear-gradient(90deg,#00e5ff,#4ade80);
+    box-shadow:0 0 18px rgba(0,229,255,.72);
+    transition:width .5s ease;
+}
+.progress-marker{
+    position:absolute;
+    top:50%;
+    width:1.2rem;
+    height:1.2rem;
+    border-radius:50%;
+    transform:translate(-50%,-50%);
+    background:#fff;
+    border:3px solid #00e5ff;
+    box-shadow:0 0 18px rgba(0,229,255,.9);
+    left:0%;
+    transition:left .5s ease;
+}
+.progress-steps{
+    margin-top:.9vh;
+    display:grid;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:.7vw;
+}
+.progress-step{
+    text-align:center;
+    color:#b8c7d1;
+    font-size:clamp(.58rem,.72vw,.78rem);
+    line-height:1.2;
+    min-width:0;
+}
+.progress-step b{
+    display:block;
+    color:#00e5ff;
+    font-size:clamp(.72rem,.95vw,1.05rem);
+    margin-bottom:.1vh;
+}
+.progress-step.active{
+    color:#fff;
+    text-shadow:0 0 10px rgba(0,229,255,.7);
+}
+.progress-step.done{opacity:.58}
+
+@media(max-aspect-ratio: 4/3){
+    html,body{overflow:auto;height:auto}
+    .projection-shell{
+        height:auto;
+        min-height:100vh;
+        grid-template-rows:auto auto auto;
+        padding:1.4rem;
+    }
+    .projection-title{white-space:normal}
+    .projection-grid{grid-template-columns:1fr}
+    .chart-wrap{grid-template-columns:1fr;height:auto;max-height:none}
+    .chart-box{height:320px}
+}
+</style>
+</head>
+<body class="circuit-background">
+<div class="ark-background"></div>
+<main class="projection-shell">
+<header class="projection-head">
+    <div class="projection-kicker" id="eventKicker">2026 全球面對面　智慧方舟</div>
+    <h1 class="projection-title" id="projectionTitle">世代共榮的數位聚合</h1>
+    <div class="projection-sub" id="projectionSub">DIGITAL CONVERGENCE FOR GENERATIONAL PROSPERITY</div>
+    <div id="eventDate">2026/06/01 ~ 2026/08/XX</div>
+</header>
+
+<section class="projection-grid">
+    <div class="projection-panel">
+        <h2 class="neon-text">【 智匯方舟｜實時登艦產業生態分佈 】</h2>
+        <div class="chart-wrap">
+            <div class="chart-box">
+                <canvas id="industryChart"></canvas>
+                <div class="center-total">
+                    <div>共戰領航員<br>TOTAL NAVIGATORS</div>
+                    <b id="totalText">XXX</b>
+                </div>
+            </div>
+            <div class="legend-grid" id="legendGrid"></div>
+        </div>
+    </div>
+
+    <div class="projection-panel">
+        <h2 class="neon-text">【 2026 進化航線｜大會時空座標 】</h2>
+        <div class="timeline" id="timeline"></div>
+    </div>
+</section>
+
+<section class="progress-panel">
+    <div class="progress-head">
+        <div>
+            <div class="progress-title">即時議程進度｜REAL-TIME AGENDA PROGRESS</div>
+            <div style="color:#9fb4c2;font-size:clamp(.62rem,.78vw,.9rem);margin-top:.2vh">依目前裝置時間自動判斷進行中議程</div>
+        </div>
+        <div class="progress-now" id="progressNow">目前時間 --:--｜準備啟航</div>
+    </div>
+    <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+        <div class="progress-marker" id="progressMarker"></div>
+    </div>
+    <div class="progress-steps" id="progressSteps"></div>
+</section>
+</main>
+
+<script>
+const params=new URLSearchParams(location.search);
+const admin=params.get('admin')||'admin';
+const sheet=params.get('sheet')||'活動報到名單';
+const q=`?admin=${encodeURIComponent(admin)}&sheet=${encodeURIComponent(sheet)}`;
+const colors=['#00e5ff','#4ade80','#ffa500','#f87171','#a78bfa','#06b6d4','#f472b6'];
+let chart;
+let scheduleRows=[];
+
+function esc(v){
+    return String(v??'').replace(/[&<>\"]/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[s]))
+}
+function timeToMinutes(t){
+    const m=String(t||'').match(/(\d{1,2})[:：](\d{2})/);
+    if(!m)return null;
+    return Number(m[1])*60+Number(m[2]);
+}
+function nowMinutes(){
+    const d=new Date();
+    return d.getHours()*60+d.getMinutes();
+}
+function pad2(n){return String(n).padStart(2,'0')}
+
+async function boot(){
+    let cfg={};
+    let sch=[];
+    try{
+        const r=await fetch('/api/event-config'+q);
+        cfg=(await r.json()).config||{};
+    }catch(e){}
+    try{
+        const r=await fetch('/api/schedule'+q);
+        sch=(await r.json()).schedule||[];
+    }catch(e){}
+    renderConfig(cfg);
+    renderSchedule(sch);
+    await renderIndustry();
+    updateProgress();
+    setInterval(updateProgress,30000);
+}
+
+function renderConfig(c){
+    document.getElementById('eventKicker').textContent=`${c.event_title||'2026 全球面對面'}　${c.brand_name||'智慧方舟 SMART WISDOM ARK'}`;
+    document.getElementById('projectionTitle').textContent=c.projection_title||c.event_subtitle||'世代共榮的數位聚合';
+    document.getElementById('projectionSub').textContent=c.projection_subtitle||'DIGITAL CONVERGENCE FOR GENERATIONAL PROSPERITY';
+    document.getElementById('eventDate').textContent=`${c.event_date_start||'2026/06/01'} ~ ${c.event_date_end||'2026/08/XX'}`;
+}
+
+function renderSchedule(rows){
+    if(!rows.length)rows=[
+        {time:'09:30',title:'報到啟航',description:'領航員迎賓報到'},
+        {time:'10:00',title:'策略羅盤',description:'大師專題演講'},
+        {time:'12:00',title:'方舟盛宴',description:'產業能量餐敘'},
+        {time:'14:00',title:'引擎啟動',description:'戰略操盤與新品發表'},
+        {time:'15:00',title:'跨世會談',description:'世代交鋒論壇'}
+    ];
+    scheduleRows = rows.slice(0,5).map((r,i)=>({...r, minutes:timeToMinutes(r.time), index:i})).filter(r=>r.minutes!==null);
+    document.getElementById('timeline').innerHTML=scheduleRows.map(r=>`
+        <div class="timeline-row" data-index="${r.index}">
+            <div class="timeline-time">${esc(r.time)}</div>
+            <div class="timeline-card"><b>${esc(r.title)}</b><span>${esc(r.description)}</span></div>
+        </div>
+    `).join('');
+    document.getElementById('progressSteps').innerHTML=scheduleRows.map(r=>`
+        <div class="progress-step" data-index="${r.index}"><b>${esc(r.time)}</b>${esc(r.title)}</div>
+    `).join('');
+}
+
+function findCurrentIndex(now){
+    if(!scheduleRows.length)return -1;
+    if(now < scheduleRows[0].minutes)return -1;
+    for(let i=scheduleRows.length-1;i>=0;i--){
+        if(now >= scheduleRows[i].minutes)return i;
+    }
+    return -1;
+}
+function updateProgress(){
+    if(!scheduleRows.length)return;
+    const now = nowMinutes();
+    const d = new Date();
+    const currentIndex = findCurrentIndex(now);
+    const first = scheduleRows[0].minutes;
+    const last = scheduleRows[scheduleRows.length-1].minutes;
+    const endGuess = last + 90;
+    const totalSpan = Math.max(1,endGuess-first);
+    const pct = Math.max(0, Math.min(100, ((now-first)/totalSpan)*100));
+
+    document.getElementById('progressFill').style.width = `${pct}%`;
+    document.getElementById('progressMarker').style.left = `${pct}%`;
+
+    const current = currentIndex >= 0 ? scheduleRows[currentIndex] : scheduleRows[0];
+    const statusText = currentIndex < 0 ? `目前時間 ${pad2(d.getHours())}:${pad2(d.getMinutes())}｜尚未開始`
+        : now > endGuess ? `目前時間 ${pad2(d.getHours())}:${pad2(d.getMinutes())}｜議程已完成`
+        : `目前時間 ${pad2(d.getHours())}:${pad2(d.getMinutes())}｜進行中：${current.time} ${current.title}`;
+    document.getElementById('progressNow').textContent = statusText;
+
+    document.querySelectorAll('.timeline-row,.progress-step').forEach(el=>{
+        const idx=Number(el.dataset.index);
+        el.classList.toggle('active', idx===currentIndex);
+        el.classList.toggle('done', currentIndex>=0 && idx<currentIndex);
+    });
+}
+
+async function renderIndustry(){
+    let data={'實體工業方舟':28,'民生消費方舟':22,'通路物流方舟':18,'數位新方舟':24,'其他產業':8};
+    try{
+        const r=await fetch('/api/exhibitors'+q);
+        const j=await r.json();
+        if(j.industry_stats&&Object.keys(j.industry_stats).length)data=j.industry_stats;
+    }catch(e){}
+
+    const labels=Object.keys(data);
+    const values=labels.map(k=>Number(data[k]||0));
+    const total=values.reduce((a,b)=>a+b,0)||'XXX';
+    document.getElementById('totalText').textContent=total;
+    document.getElementById('legendGrid').innerHTML=labels.map((l,i)=>`
+        <div class="legend-item">
+            <span class="dot" style="background:${colors[i%colors.length]};color:${colors[i%colors.length]}"></span>
+            <span>${esc(l)}</span>
+            <b>${values[i]}</b>
+        </div>
+    `).join('');
+
+    if(chart) chart.destroy();
+    chart=new Chart(document.getElementById('industryChart'),{
+        type:'doughnut',
+        data:{labels,datasets:[{data:values,backgroundColor:colors,borderColor:'rgba(3,10,20,.92)',borderWidth:3}]},
+        options:{
+            responsive:true,
+            maintainAspectRatio:false,
+            cutout:'61%',
+            animation:{duration:500},
+            plugins:{legend:{display:false},tooltip:{enabled:true}}
+        }
+    });
+}
+boot();
+setInterval(()=>renderIndustry(),30000);
+</script>
+</body>
+</html>
