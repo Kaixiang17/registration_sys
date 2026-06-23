@@ -887,10 +887,118 @@ def api_table_detail():
             "pending_people": pending_people
         })
     finally:
+
+        conn.close()
+
+
+def _table_group_payload(table_text):
+    text = str(table_text or '').strip()
+    normalized = text.replace('第', '').replace('桌', '').replace(' ', '')
+    m = re.match(r'^(\d{1,3})[-_－—](\d{1,3})$', normalized)
+    if m:
+        n = int(m.group(1))
+        return str(n).zfill(2), normalized
+    m2 = re.match(r'^(\d{1,3})$', normalized)
+    if m2:
+        n = int(m2.group(1))
+        return str(n).zfill(2), normalized
+    return normalized, normalized
+
+
+def _chinese_table_name(group_key):
+    try:
+        n = int(str(group_key))
+    except Exception:
+        return f"第 {group_key} 桌"
+
+    zh = ['零','一','二','三','四','五','六','七','八','九','十']
+    if n <= 0:
+        return f"第 {group_key} 桌"
+    if n <= 10:
+        return f"第{zh[n]}桌"
+    if n < 20:
+        return f"第十{zh[n-10]}桌"
+    tens, ones = divmod(n, 10)
+    if tens < len(zh):
+        return f"第{zh[tens]}十{zh[ones] if ones else ''}桌"
+    return f"第 {n} 桌"
+
+
+def _seat_range_label(seats):
+    clean = sorted(set([str(s) for s in seats if s]), key=lambda x: [int(t) if t.isdigit() else t for t in re.split(r'(\\d+)', x)])
+    if not clean:
+        return "尚無座位資料"
+    if len(clean) == 1:
+        return f"座位 {clean[0]}"
+    return f"座位 {clean[0]} ～ {clean[-1]}，共 {len(clean)} 位"
+
+
+@app.route('/api/table_group_detail')
+def api_table_group_detail():
+    admin_user, event_key = get_admin_and_event_context()
+    group = (request.args.get('group') or '').strip()
+    if not group:
+        return jsonify({"success": False, "message": "缺少桌次 group"}), 400
+
+    normalized_group = str(int(group)).zfill(2) if str(group).isdigit() else group
+    conn = get_db_connection()
+
+    try:
+        ensure_core_tables(conn)
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT id, name, phone, company_name, seating_chart, status, checkin_time, meal_choice
+                FROM event_registrations
+                WHERE admin_user = %s AND event_key = %s
+                ORDER BY seating_chart ASC, id ASC
+            """, (admin_user, event_key))
+            all_rows = cursor.fetchall()
+
+        rows = []
+        seats = []
+        for row in all_rows:
+            key, seat_text = _table_group_payload(row.get("seating_chart"))
+            if key == normalized_group:
+                rows.append(row)
+                seats.append(seat_text)
+
+        def is_checked(row):
+            return row.get('status') in ['checked_in', '已報到', '替代']
+
+        def person_payload(row):
+            return {
+                "id": row.get("id"),
+                "name": row.get("name") or "",
+                "phone": row.get("phone") or "",
+                "company": row.get("company_name") or "",
+                "seat": row.get("seating_chart") or "",
+                "meal": row.get("meal_choice") or "",
+                "status": row.get("status") or "",
+                "checked": is_checked(row),
+                "checkin_time": row.get("checkin_time").strftime('%H:%M:%S') if row.get("checkin_time") else ""
+            }
+
+        checked_people = [person_payload(r) for r in rows if is_checked(r)]
+        pending_people = [person_payload(r) for r in rows if not is_checked(r)]
+
+        return jsonify({
+            "success": True,
+            "group": normalized_group,
+            "display_name": _chinese_table_name(normalized_group),
+            "seat_label": _seat_range_label(seats),
+            "total": len(rows),
+            "checked": len(checked_people),
+            "pending": len(pending_people),
+            "checked_people": checked_people,
+            "pending_people": pending_people
+        })
+
+    finally:
         conn.close()
 
 
 @app.route('/api/registrations/add', methods=['POST'])
+
 def add_registration():
     if not session.get('admin_logged_in'): return jsonify({"success": False, "message": "未授權"}), 403
     admin_user, event_key = get_admin_and_event_context()
