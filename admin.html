@@ -56,12 +56,85 @@
         .adm-btn-sm { padding: 0.38rem 0.75rem; font-size: 0.8rem; }
         .adm-btn-lg { padding: 0.7rem 1.5rem; font-size: 0.95rem; letter-spacing: 1.2px; }
         main { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
-        .tabs { display: flex; gap: 0.5rem; margin-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.2); }
+        .tabs { display: none; }
         .tab-btn { padding: 1rem 1.5rem; background: none; border: none; border-bottom: 3px solid transparent; font-size: 1rem; font-weight: 600; color: #888; cursor: pointer; transition: all 0.2s; }
         .tab-btn:hover { color: #fff; background: rgba(255,255,255,0.05); }
         .tab-btn.active { color: var(--text-dark); border-bottom-color: var(--text-dark); text-shadow: 0 0 8px var(--text-glow); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
+
+        /* 後台主選單：把原本很多按鈕整理成群組，功能仍使用同一組 tab / API */
+        .admin-nav-groups {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(190px, 1fr));
+            gap: 0.9rem;
+            margin-bottom: 1.4rem;
+        }
+        .admin-nav-group {
+            border: 1px solid rgba(0,229,255,0.18);
+            background: rgba(5, 15, 30, 0.62);
+            border-radius: 1rem;
+            padding: 0.85rem;
+            box-shadow: inset 0 0 22px rgba(0,229,255,0.045);
+        }
+        .admin-nav-title {
+            color: #00e5ff;
+            font-size: 0.82rem;
+            letter-spacing: 1.4px;
+            font-weight: 900;
+            margin-bottom: 0.65rem;
+            opacity: 0.92;
+        }
+        .admin-nav-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+        }
+        .admin-nav-actions .tab-btn,
+        .admin-nav-actions .nav-link-btn {
+            padding: 0.48rem 0.7rem;
+            border: 1px solid rgba(0,229,255,0.22);
+            border-radius: 999px;
+            background: rgba(0,229,255,0.055);
+            color: #bfefff;
+            font-size: 0.82rem;
+            font-weight: 800;
+            line-height: 1;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(0,229,255,0.22);
+        }
+        .admin-nav-actions .tab-btn:hover,
+        .admin-nav-actions .nav-link-btn:hover {
+            color: #fff;
+            border-color: rgba(0,229,255,0.62);
+            background: rgba(0,229,255,0.14);
+            box-shadow: 0 0 14px rgba(0,229,255,0.16);
+        }
+        .admin-nav-actions .tab-btn.active {
+            color: #06111f;
+            background: linear-gradient(135deg, #00e5ff, #4ade80);
+            border-color: transparent;
+            text-shadow: none;
+            box-shadow: 0 0 18px rgba(0,229,255,0.36);
+        }
+        .admin-sync-panel {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.8rem;
+            margin: -0.2rem 0 1.6rem;
+            padding: 0.85rem 1rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(74,222,128,0.22);
+            background: rgba(74,222,128,0.055);
+            color: #bfefff;
+        }
+        .admin-sync-panel strong { color: #4ade80; }
+        .admin-sync-panel small { color: #8aa0aa; line-height: 1.55; }
+        @media(max-width: 900px) {
+            .admin-nav-groups { grid-template-columns: 1fr; }
+            .admin-sync-panel { flex-direction: column; align-items: flex-start; }
+        }
         .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
         .stat-card { padding: 2rem; text-align: center; border-radius: 1rem; position: relative; border: 1px solid var(--accent-gray); overflow: hidden;}
         .stat-card::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(45deg, transparent, rgba(0,229,255,0.05), transparent); transform: rotate(45deg); animation: statGlow 4s infinite linear; }
@@ -308,7 +381,51 @@
 
     <main>
         <div id="messageContainer"></div>
-        <div class="tabs">
+        <div class="admin-nav-groups">
+            <div class="admin-nav-group">
+                <div class="admin-nav-title">01｜總覽與投影</div>
+                <div class="admin-nav-actions">
+                    <button type="button" class="tab-btn active" data-tab="dashboard">📊 戰情儀表板</button>
+                    <a class="nav-link-btn" href="/dashboard" target="_blank" rel="noopener">📺 大會投影</a>
+                </div>
+            </div>
+
+            <div class="admin-nav-group">
+                <div class="admin-nav-title">02｜活動內容設定</div>
+                <div class="admin-nav-actions">
+                    <button type="button" class="tab-btn" data-tab="experience">🚀 活動 Navigator</button>
+                    <button type="button" class="tab-btn" data-tab="agenda">📅 議程管理</button>
+                    <button type="button" class="tab-btn" data-tab="industry">🏷️ 行業對照</button>
+                </div>
+            </div>
+
+            <div class="admin-nav-group">
+                <div class="admin-nav-title">03｜報到與名單資料</div>
+                <div class="admin-nav-actions">
+                    <button type="button" class="tab-btn" data-tab="products">🛍️ 補給品管理</button>
+                    <button type="button" class="tab-btn" data-tab="system">🗺️ 場次 / 地圖 / 系統</button>
+                </div>
+            </div>
+
+            <div class="admin-nav-group">
+                <div class="admin-nav-title">04｜展示與整合檢查</div>
+                <div class="admin-nav-actions">
+                    <button type="button" class="tab-btn" data-tab="exhibitors">🏢 企業展示</button>
+                    <button type="button" class="nav-link-btn" onclick="runSystemCheck()">✅ 連動檢查</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-sync-panel">
+            <div>
+                <strong>後台資料會連動前台與投影頁</strong>
+                <br>
+                <small>場次切換會呼叫 /api/session/sheet，並重新載入儀表板、議程、行業、企業、Navigator 設定，不是單純切換 HTML。</small>
+            </div>
+            <button type="button" class="adm-btn adm-btn-success adm-btn-sm" onclick="runSystemCheck()">✅ 檢查目前連動狀態</button>
+        </div>
+
+        <div class="tabs" aria-hidden="true">
             <button class="tab-btn active" data-tab="dashboard">📊 戰情儀表板</button>
             <button class="tab-btn" data-tab="experience">🚀 活動 Navigator</button>
             <button class="tab-btn" data-tab="products">🛍️ 補給品管理</button>
@@ -842,14 +959,34 @@
             }
         }
 
-        function switchAdminTab(tabName) {
+        async function preloadTabData(tabName) {
+            try {
+                if (tabName === 'dashboard') await updateDashboard();
+                if (tabName === 'experience') {
+                    await loadExperienceConfig();
+                    await loadExperienceSchedule();
+                }
+                if (tabName === 'products' || tabName === 'system') await loadConfig();
+                if (tabName === 'agenda') await loadAgenda();
+                if (tabName === 'industry') await loadIndustryMappings();
+                if (tabName === 'exhibitors') await loadExhibitors();
+            } catch (e) {
+                console.warn('分頁資料預載失敗：', tabName, e);
+            }
+        }
+
+        async function switchAdminTab(tabName) {
             const target = document.getElementById(tabName);
-            const targetButton = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
-            if (!target || !targetButton) return;
+            const targetButtons = document.querySelectorAll(`.tab-btn[data-tab="${tabName}"]`);
+            if (!target || !targetButtons.length) return;
+
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
             target.classList.add('active');
-            targetButton.classList.add('active');
+            targetButtons.forEach(btn => btn.classList.add('active'));
+
+            await preloadTabData(tabName);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -857,6 +994,36 @@
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.addEventListener('click', () => switchAdminTab(btn.getAttribute('data-tab')));
             });
+        }
+
+        async function runSystemCheck() {
+            try {
+                const res = await fetch(`${API_BASE}/system_check${getActiveEventQuery()}`);
+                const json = await res.json();
+
+                if (!json.success) {
+                    alert('連動檢查失敗：' + (json.message || '未知錯誤'));
+                    return;
+                }
+
+                const checks = json.checks || {};
+                const lines = [
+                    `資料庫：${json.database || '-'}`,
+                    `管理員：${json.admin_user}`,
+                    `目前場次：${json.event_key}`,
+                    `必要資料表：${checks.tables?.ok ? 'OK' : '缺少 ' + (checks.tables?.missing || []).join(', ')}`,
+                    `Admin 帳號：${checks.admin?.ok ? 'OK' : '找不到'}`,
+                    `活動設定：${checks.event_config?.ok ? 'OK' : '尚未儲存設定'}`,
+                    `議程資料：${checks.schedule?.ok ? 'OK（' + checks.schedule.count + ' 筆）' : '尚未建立議程'}`,
+                    `報名資料：${checks.registrations ? checks.registrations.count + ' 筆' : '-'}`,
+                    `API 路由：${checks.routes?.ok ? 'OK' : '缺少 ' + (checks.routes?.missing || []).join(', ')}`
+                ];
+
+                alert(lines.join('\n'));
+                showMessage(json.all_ok ? '後台、前台、投影頁連動檢查通過' : '連動檢查完成，請看彈窗細節', json.all_ok ? 'success' : 'info');
+            } catch (e) {
+                alert('連動檢查失敗：' + e.message);
+            }
         }
 
         async function loadConfig() {
@@ -893,7 +1060,7 @@
 
         async function updateDashboard() {
             try {
-                const res = await fetch(`${API_BASE}/dashboard_stats`);
+                const res = await fetch(`${API_BASE}/dashboard_stats${getActiveEventQuery()}`);
                 const json = await res.json();
                 if(json.success) {
                     document.getElementById('stat-total').textContent = json.stats.total;
@@ -1127,7 +1294,9 @@
                     updateDashboard(),
                     loadAgenda(),
                     loadIndustryMappings(),
-                    loadExhibitors()
+                    loadExhibitors(),
+                    loadExperienceConfig(),
+                    loadExperienceSchedule()
                 ]);
 
                 if (status) status.innerHTML = `<span style="color:#4ade80">✓ 已切換到：${sheet}</span>`;
