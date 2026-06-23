@@ -1715,7 +1715,8 @@
         }
 
         function exportCsv() {
-            window.location.href = '/api/sheets/export_csv';
+            // 匯出目前登入管理員 + 目前切換場次的完整報到名單
+            window.location.href = `/api/sheets/export_csv${getActiveEventQuery()}`;
         }
 
 
