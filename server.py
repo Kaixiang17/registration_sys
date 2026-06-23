@@ -9,24 +9,87 @@ app = Flask(__name__, static_folder='.', static_url_path='')
 app.secret_key = os.environ.get("SECRET_KEY", "rcsa_ark_secure_key_20260508_multitenant")
 CORS(app)
 
-# Railway MySQL 優先；保留 DB_* 作為本機/Aiven fallback。
-DB_HOST = os.getenv("MYSQLHOST") or os.getenv("DB_HOST")
-DB_USER = os.getenv("MYSQLUSER") or os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("MYSQLPASSWORD") or os.getenv("DB_PASSWORD")
-DB_NAME = os.getenv("MYSQLDATABASE") or os.getenv("DB_NAME", "railway")
-DB_PORT = int(os.getenv("MYSQLPORT") or os.getenv("DB_PORT", "3306"))
+# Railway MySQL 連線設定
+# 讀取順序：
+# 1) Railway MySQL service variables: MYSQLHOST / MYSQLUSER / MYSQLPASSWORD / MYSQLDATABASE / MYSQLPORT
+# 2) Railway URL variables: MYSQL_URL / DATABASE_URL
+# 3) 本機或舊環境 fallback: DB_HOST / DB_USER / DB_PASSWORD / DB_NAME / DB_PORT
+from urllib.parse import urlparse, unquote
 
 _CORE_TABLES_READY = False
 
+def _clean_env(value):
+    if value is None:
+        return None
+    value = str(value).strip().strip('"').strip("'")
+    return value or None
+
+def _db_config_from_url(url):
+    if not url:
+        return {}
+    try:
+        parsed = urlparse(url)
+        if not parsed.hostname:
+            return {}
+        return {
+            "host": parsed.hostname,
+            "user": unquote(parsed.username or ""),
+            "password": unquote(parsed.password or ""),
+            "database": (parsed.path or "/railway").lstrip("/") or "railway",
+            "port": parsed.port or 3306,
+        }
+    except Exception as e:
+        print(f"⚠️ DATABASE_URL / MYSQL_URL 解析失敗: {e}")
+        return {}
+
+def _get_db_config():
+    url_cfg = _db_config_from_url(_clean_env(os.getenv("MYSQL_URL")) or _clean_env(os.getenv("DATABASE_URL")))
+
+    host = _clean_env(os.getenv("MYSQLHOST")) or _clean_env(os.getenv("DB_HOST")) or url_cfg.get("host")
+    user = _clean_env(os.getenv("MYSQLUSER")) or _clean_env(os.getenv("DB_USER")) or url_cfg.get("user")
+    password = _clean_env(os.getenv("MYSQLPASSWORD")) or _clean_env(os.getenv("DB_PASSWORD")) or url_cfg.get("password")
+    database = _clean_env(os.getenv("MYSQLDATABASE")) or _clean_env(os.getenv("DB_NAME")) or url_cfg.get("database") or "railway"
+    port_raw = _clean_env(os.getenv("MYSQLPORT")) or _clean_env(os.getenv("DB_PORT")) or url_cfg.get("port") or 3306
+
+    try:
+        port = int(port_raw)
+    except Exception:
+        port = 3306
+
+    return {
+        "host": host,
+        "user": user,
+        "password": password,
+        "database": database,
+        "port": port,
+    }
+
 def get_db_connection():
-    if not DB_HOST or not DB_USER or not DB_PASSWORD:
-        raise RuntimeError("資料庫環境變數缺少：請確認 MYSQLHOST / MYSQLUSER / MYSQLPASSWORD / MYSQLDATABASE / MYSQLPORT 已設定在 Railway web service。")
+    cfg = _get_db_config()
+    missing = [k for k in ["host", "user", "password", "database", "port"] if not cfg.get(k)]
+    if missing:
+        present = {
+            "MYSQLHOST": bool(_clean_env(os.getenv("MYSQLHOST"))),
+            "MYSQLUSER": bool(_clean_env(os.getenv("MYSQLUSER"))),
+            "MYSQLPASSWORD": bool(_clean_env(os.getenv("MYSQLPASSWORD"))),
+            "MYSQLDATABASE": bool(_clean_env(os.getenv("MYSQLDATABASE"))),
+            "MYSQLPORT": bool(_clean_env(os.getenv("MYSQLPORT"))),
+            "MYSQL_URL": bool(_clean_env(os.getenv("MYSQL_URL"))),
+            "DATABASE_URL": bool(_clean_env(os.getenv("DATABASE_URL"))),
+            "DB_HOST": bool(_clean_env(os.getenv("DB_HOST"))),
+            "DB_USER": bool(_clean_env(os.getenv("DB_USER"))),
+            "DB_PASSWORD": bool(_clean_env(os.getenv("DB_PASSWORD"))),
+            "DB_NAME": bool(_clean_env(os.getenv("DB_NAME"))),
+            "DB_PORT": bool(_clean_env(os.getenv("DB_PORT"))),
+        }
+        raise RuntimeError(f"資料庫環境變數缺少或未被 Railway runtime 讀到：missing={missing}, present={present}")
+
     return pymysql.connect(
-        host=DB_HOST,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        database=DB_NAME,
-        port=DB_PORT,
+        host=cfg["host"],
+        user=cfg["user"],
+        password=cfg["password"],
+        database=cfg["database"],
+        port=cfg["port"],
         charset="utf8mb4",
         cursorclass=pymysql.cursors.DictCursor,
         connect_timeout=8,
@@ -1138,6 +1201,188 @@ def api_health():
         "status": "ok",
         "message": "server is running"
     })
+
+
+@app.route('/api/env_check')
+def api_env_check():
+    """
+    檢查 Railway runtime 是否真的讀到資料庫環境變數。
+    不回傳密碼內容，只回傳是否存在與 host/database/port 的非敏感摘要。
+    """
+    cfg = _get_db_config()
+    present = {
+        "MYSQLHOST": bool(_clean_env(os.getenv("MYSQLHOST"))),
+        "MYSQLUSER": bool(_clean_env(os.getenv("MYSQLUSER"))),
+        "MYSQLPASSWORD": bool(_clean_env(os.getenv("MYSQLPASSWORD"))),
+        "MYSQLDATABASE": bool(_clean_env(os.getenv("MYSQLDATABASE"))),
+        "MYSQLPORT": bool(_clean_env(os.getenv("MYSQLPORT"))),
+        "MYSQL_URL": bool(_clean_env(os.getenv("MYSQL_URL"))),
+        "DATABASE_URL": bool(_clean_env(os.getenv("DATABASE_URL"))),
+        "DB_HOST": bool(_clean_env(os.getenv("DB_HOST"))),
+        "DB_USER": bool(_clean_env(os.getenv("DB_USER"))),
+        "DB_PASSWORD": bool(_clean_env(os.getenv("DB_PASSWORD"))),
+        "DB_NAME": bool(_clean_env(os.getenv("DB_NAME"))),
+        "DB_PORT": bool(_clean_env(os.getenv("DB_PORT"))),
+    }
+    return jsonify({
+        "success": True,
+        "present": present,
+        "resolved": {
+            "host_present": bool(cfg.get("host")),
+            "user_present": bool(cfg.get("user")),
+            "password_present": bool(cfg.get("password")),
+            "database": cfg.get("database"),
+            "port": cfg.get("port"),
+        }
+    })
+
+
+
+@app.route('/api/system_check')
+def api_system_check():
+    """
+    系統整合檢查：
+    確認後台、前台、投影頁使用的是同一組 admin_user / event_key / DB tables。
+    不修改資料，只讀取目前狀態。
+    """
+    conn = None
+
+    try:
+        admin_user = request.args.get('admin') or session.get('username') or 'admin'
+        event_key = (
+            request.args.get('sheet')
+            or session.get('current_admin_sheet')
+            or '活動報到名單'
+        )
+
+        conn = get_db_connection()
+        ensure_core_tables(conn)
+
+        result = {
+            "success": True,
+            "admin_user": admin_user,
+            "event_key": event_key,
+            "database": "connected",
+            "checks": {}
+        }
+
+        with conn.cursor() as cursor:
+            cursor.execute("SHOW TABLES")
+            table_rows = cursor.fetchall()
+            existing_tables = set()
+
+            for row in table_rows:
+                existing_tables.add(list(row.values())[0])
+
+            required_tables = [
+                "admins",
+                "event_configs",
+                "event_agenda",
+                "event_registrations",
+                "event_exhibitors",
+                "event_products",
+                "company_industry_mapping"
+            ]
+
+            result["checks"]["tables"] = {
+                "required": required_tables,
+                "existing": sorted(list(existing_tables)),
+                "missing": [t for t in required_tables if t not in existing_tables],
+                "ok": all(t in existing_tables for t in required_tables)
+            }
+
+            cursor.execute("""
+                SELECT username, allowed_events, current_event
+                FROM admins
+                WHERE username = %s
+                LIMIT 1
+            """, (admin_user,))
+            admin_row = cursor.fetchone()
+
+            result["checks"]["admin"] = {
+                "ok": bool(admin_row),
+                "data": admin_row
+            }
+
+            cursor.execute("""
+                SELECT *
+                FROM event_configs
+                WHERE admin_user = %s AND event_key = %s
+                LIMIT 1
+            """, (admin_user, event_key))
+            config_row = cursor.fetchone()
+
+            result["checks"]["event_config"] = {
+                "ok": bool(config_row),
+                "has_event_title": bool(config_row and config_row.get("event_title")),
+                "has_event_subtitle": bool(config_row and config_row.get("event_subtitle")),
+                "has_dates": bool(
+                    config_row and (
+                        config_row.get("event_date_start") or config_row.get("event_date_end")
+                    )
+                )
+            }
+
+            cursor.execute("""
+                SELECT COUNT(*) AS count
+                FROM event_agenda
+                WHERE admin_user = %s AND event_key = %s
+            """, (admin_user, event_key))
+            agenda_count = cursor.fetchone()["count"]
+
+            result["checks"]["schedule"] = {
+                "ok": agenda_count > 0,
+                "count": agenda_count
+            }
+
+            cursor.execute("""
+                SELECT COUNT(*) AS count
+                FROM event_registrations
+                WHERE admin_user = %s AND event_key = %s
+            """, (admin_user, event_key))
+            registration_count = cursor.fetchone()["count"]
+
+            result["checks"]["registrations"] = {
+                "ok": registration_count >= 0,
+                "count": registration_count
+            }
+
+            routes = [str(rule.rule) for rule in app.url_map.iter_rules()]
+            needed_routes = [
+                "/api/login",
+                "/api/event-config",
+                "/api/admin/event-config",
+                "/api/schedule",
+                "/api/admin/schedule",
+                "/api/sheets/list",
+                "/api/db_check",
+                "/dashboard",
+                "/admin"
+            ]
+
+            result["checks"]["routes"] = {
+                "ok": all(r in routes for r in needed_routes),
+                "missing": [r for r in needed_routes if r not in routes]
+            }
+
+        result["all_ok"] = (
+            result["checks"]["tables"]["ok"]
+            and result["checks"]["admin"]["ok"]
+            and result["checks"]["routes"]["ok"]
+        )
+
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+
+    finally:
+        if conn:
+            conn.close()
+
 
 @app.route('/api/db_check')
 def api_db_check():
