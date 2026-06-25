@@ -650,6 +650,29 @@ body{background:#030916;color:#eaffff}
     font-size:clamp(.34rem,.4vw,.48rem) !important;
 }
 
+
+/* ===== 進一步縮小下方留白：stage 從 31vh 降到 25vh ===== */
+.projection-shell{
+    grid-template-rows:13vh minmax(0,45vh) 9.2vh 25vh !important;
+}
+.podium{
+    margin-bottom:2vh !important;
+}
+.stage-area::after{
+    bottom:11.4vh !important;
+}
+.stage-light{
+    bottom:4.4vh !important;
+    height:14.5vh !important;
+}
+.stage-glow{
+    bottom:1.6vh !important;
+    height:8.4vh !important;
+}
+.stage-floor{
+    height:6.3vh !important;
+}
+
 </style>
 </head>
 <body class="circuit-background">
