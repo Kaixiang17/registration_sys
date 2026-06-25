@@ -228,6 +228,90 @@
         }
 
 
+
+        /* 肖像授權同意：放在確認報到前，全文用彈窗，不佔頁面高度 */
+        .portrait-consent-box {
+            margin: 1rem 0 0.75rem;
+            padding: 0.85rem 0.95rem;
+            border: 1px solid rgba(0, 229, 255, 0.22);
+            border-radius: 0.9rem;
+            background: rgba(0, 229, 255, 0.055);
+            text-align: left;
+        }
+        .portrait-consent-check {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.55rem;
+            color: #dffaff;
+            font-size: 0.88rem;
+            line-height: 1.45;
+        }
+        .portrait-consent-check input {
+            margin-top: 0.18rem;
+            width: 18px;
+            height: 18px;
+            flex: 0 0 auto;
+            accent-color: #00e5ff;
+        }
+        .portrait-consent-link {
+            border: none;
+            background: transparent;
+            color: #00e5ff;
+            font-size: 0.82rem;
+            font-weight: 800;
+            text-decoration: underline;
+            cursor: pointer;
+            padding: 0;
+            margin-top: 0.35rem;
+        }
+        .portrait-consent-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.72);
+            backdrop-filter: blur(8px);
+        }
+        .portrait-consent-modal.active {
+            display: flex;
+        }
+        .portrait-consent-card {
+            width: min(92vw, 560px);
+            max-height: 76vh;
+            overflow: auto;
+            padding: 1.2rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(0, 229, 255, 0.35);
+            background: rgba(5, 14, 28, 0.96);
+            color: #eaffff;
+            box-shadow: 0 0 30px rgba(0, 229, 255, 0.22);
+            text-align: left;
+        }
+        .portrait-consent-card h3 {
+            color: #00e5ff;
+            margin: 0 0 0.85rem;
+            padding-right: 2.5rem;
+        }
+        .portrait-consent-card p {
+            color: #c6d7df;
+            line-height: 1.7;
+            font-size: 0.9rem;
+            margin: 0 0 0.75rem;
+        }
+        .portrait-consent-close {
+            float: right;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: rgba(255, 255, 255, 0.06);
+            color: #fff;
+            border-radius: 999px;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+        }
+
         /* ============================================================
            手機端專屬修復
            ============================================================ */
@@ -812,6 +896,13 @@
                     <div class="verify-card cyber-card meal-opt" onclick="selectMeal(this, '素食')" style="padding:1.2rem 0.5rem; font-weight:bold;">🥬 素食</div>
                     <div class="verify-card cyber-card meal-opt" onclick="selectMeal(this, '不需餐食')" style="padding:1.2rem 0.5rem; font-weight:bold;">❌ 不需餐食</div>
                 </div>
+                <div class="portrait-consent-box">
+                    <label class="portrait-consent-check">
+                        <input type="checkbox" id="portraitConsent" onchange="checkMealReady()">
+                        <span>我已閱讀並同意活動拍攝與肖像使用授權條款</span>
+                    </label>
+                    <button type="button" class="portrait-consent-link" onclick="openPortraitConsentModal()">查看完整條款</button>
+                </div>
             `;
             window.selectedMeal = null; window.isOriginal = true;
             document.getElementById('finalBtn').disabled = true;
@@ -832,7 +923,20 @@
             window.selectedMeal = m; checkMealReady();
         }
 
-        function checkMealReady() { document.getElementById('finalBtn').disabled = !window.selectedMeal; }
+        function checkMealReady() {
+            const finalBtn = document.getElementById('finalBtn');
+            const consent = document.getElementById('portraitConsent');
+            const hasConsent = consent ? consent.checked : false;
+            finalBtn.disabled = !(window.selectedMeal && hasConsent);
+        }
+
+        function openPortraitConsentModal() {
+            document.getElementById('portraitConsentModal')?.classList.add('active');
+        }
+
+        function closePortraitConsentModal() {
+            document.getElementById('portraitConsentModal')?.classList.remove('active');
+        }
 
 
 
@@ -906,6 +1010,9 @@
 
         async function submitCheckin(autoMeal) {
             const meal = autoMeal || window.selectedMeal;
+            const consentEl = document.getElementById('portraitConsent');
+            const portraitConsent = consentEl ? consentEl.checked : true;
+            if (!portraitConsent) { alert('請先閱讀並同意活動拍攝與肖像使用授權條款'); return; }
             const proxyInfo = window.isOriginal ? {} : {
                 name: document.getElementById('proxyName').value.trim(),
                 phone: document.getElementById('proxyPhone').value.trim()
@@ -919,7 +1026,7 @@
                 const res = await fetch(`${API_BASE}/checkin/${selectedUser.id}?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ meal, is_original: window.isOriginal, proxy_info: proxyInfo })
+                    body: JSON.stringify({ meal, is_original: window.isOriginal, proxy_info: proxyInfo, portrait_consent: portraitConsent })
                 });
                 const json = await res.json();
                 if (json.success) {
@@ -999,5 +1106,19 @@
             } catch(e) { console.error("加載設定遺失", e); }
         }
     </script>
+
+    <div id="portraitConsentModal" class="portrait-consent-modal" onclick="if(event.target===this) closePortraitConsentModal()">
+        <div class="portrait-consent-card">
+            <button type="button" class="portrait-consent-close" onclick="closePortraitConsentModal()">×</button>
+            <h3>活動拍攝與肖像使用授權同意書</h3>
+            <p>本人茲同意授權主辦單位（聯聖集團）於 2026 年聯聖商會活動中，以拍照及錄影方式記錄活動過程，並同意相關照片與影像作為主辦單位未來品牌宣傳使用。</p>
+            <p>本人了解並同意以下事項：</p>
+            <p>一、聯聖集團將以活動過程紀錄為主，不涉及賓客私人領域。</p>
+            <p>二、相關照片與影像僅作為品牌宣傳使用，不作其他用途。</p>
+            <p>三、本人同意拍攝之肖像歸聯聖集團所有，並得依宣傳需要進行剪輯、製作或加註說明。</p>
+            <p>四、聯聖集團已於活動報到前徵求本人同意，後續使用時不再另行通知。</p>
+        </div>
+    </div>
+
 </body>
 </html>
