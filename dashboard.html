@@ -1558,6 +1558,1811 @@ body{background:#030916;color:#eaffff}
   .stage-area { height: 160px !important; }
 }
 
+
+/* ===== FINAL DASHBOARD STAGE OVERRIDE 2026-06-25 =====
+   直接覆蓋 dashboard.html 用
+   目標：
+   - 中間維持大型投影螢幕
+   - 下方做成完整舞台區，不是只有一小塊講台圖片
+   - 講台圖片融進舞台光影
+===== */
+
+html,
+body {
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    background: #020712 !important;
+}
+
+body {
+    color: #eaffff !important;
+}
+
+.ark-background {
+    opacity: 0.2 !important;
+}
+
+.projection-shell {
+    width: 100vw !important;
+    height: 100vh !important;
+    padding: 1.05vh 3.1vw 0 !important;
+    display: grid !important;
+    grid-template-rows: 13.2vh minmax(0, 53.5vh) 7vh 23.2vh !important;
+    gap: 0.82vh !important;
+    overflow: hidden !important;
+    position: relative !important;
+    background:
+        radial-gradient(circle at 50% 39%, rgba(0, 229, 255, 0.14), transparent 29%),
+        radial-gradient(ellipse at 50% 92%, rgba(0, 150, 255, 0.34), transparent 34%),
+        linear-gradient(180deg, rgba(3, 9, 24, 0.98), rgba(1, 5, 15, 1)) !important;
+}
+
+.projection-shell::before {
+    content: "智匯方舟" !important;
+    position: absolute !important;
+    inset: 15vh 0 auto 0 !important;
+    text-align: center !important;
+    font-size: clamp(4.8rem, 12vw, 11.5rem) !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.04em !important;
+    color: rgba(190, 240, 255, 0.028) !important;
+    -webkit-text-stroke: 1px rgba(0, 229, 255, 0.045) !important;
+    pointer-events: none !important;
+    z-index: 0 !important;
+}
+
+.projection-shell > * {
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+/* 上方標題 */
+.projection-head {
+    text-align: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    padding-top: 0 !important;
+    overflow: visible !important;
+}
+
+.projection-kicker {
+    font-size: clamp(0.68rem, 1vw, 1.12rem) !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.16em !important;
+    line-height: 1.05 !important;
+    color: rgba(234, 255, 255, 0.95) !important;
+    text-shadow: 0 0 12px rgba(0, 229, 255, 0.38) !important;
+}
+
+.projection-title {
+    font-size: clamp(1.95rem, 3.55vw, 4rem) !important;
+    line-height: 0.92 !important;
+    margin: 0.24vh 0 0.16vh !important;
+    letter-spacing: 0.035em !important;
+    white-space: nowrap !important;
+    color: #fff !important;
+    text-shadow:
+        0 0 18px rgba(0, 229, 255, 0.58),
+        0 4px 24px rgba(0, 0, 0, 0.46) !important;
+}
+
+.projection-sub {
+    font-size: clamp(0.52rem, 0.78vw, 0.92rem) !important;
+    letter-spacing: 0.22em !important;
+    line-height: 1.08 !important;
+    color: #dffaff !important;
+}
+
+#eventDate {
+    width: min(38vw, 680px) !important;
+    margin: 0.42vh auto 0 !important;
+    padding-top: 0.32vh !important;
+    border-top: 1px solid rgba(180, 235, 255, 0.42) !important;
+    color: #fff !important;
+    font-size: clamp(0.52rem, 0.74vw, 0.86rem) !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.08em !important;
+}
+
+/* 中央投影螢幕 */
+.projection-grid {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr) !important;
+    gap: 1.28vw !important;
+    padding: 0.95vw 1.1vw 1.02vw !important;
+    min-height: 0 !important;
+    border-radius: 0.38vw !important;
+    border: 1px solid rgba(95, 195, 255, 0.3) !important;
+    background:
+        radial-gradient(circle at 50% 48%, rgba(0, 229, 255, 0.1), transparent 36%),
+        linear-gradient(135deg, rgba(6, 18, 39, 0.88), rgba(2, 10, 25, 0.94)) !important;
+    box-shadow:
+        0 0 0 0.22vw rgba(0, 0, 0, 0.34),
+        0 0 32px rgba(0, 229, 255, 0.14),
+        inset 0 0 42px rgba(0, 229, 255, 0.055) !important;
+    overflow: hidden !important;
+}
+
+.projection-grid::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    background:
+        linear-gradient(115deg, transparent 0 42%, rgba(0, 229, 255, 0.06) 50%, transparent 62%),
+        radial-gradient(circle at 12% 12%, rgba(0, 229, 255, 0.13), transparent 18%),
+        radial-gradient(circle at 86% 14%, rgba(0, 126, 255, 0.14), transparent 18%) !important;
+    opacity: 0.68 !important;
+    pointer-events: none !important;
+}
+
+.projection-grid::after {
+    content: "" !important;
+    position: absolute !important;
+    left: 50% !important;
+    bottom: -1px !important;
+    transform: translateX(-50%) !important;
+    width: 22vw !important;
+    height: 1px !important;
+    background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.82), transparent) !important;
+    box-shadow: 0 0 18px rgba(0, 229, 255, 0.8) !important;
+    pointer-events: none !important;
+}
+
+.projection-panel,
+.screen-panel {
+    position: relative !important;
+    padding: 0.62vw 0.72vw !important;
+    border-radius: 0.55vw !important;
+    border: 1px solid rgba(0, 229, 255, 0.12) !important;
+    background: rgba(2, 15, 34, 0.26) !important;
+    box-shadow: inset 0 0 18px rgba(0, 229, 255, 0.035) !important;
+    overflow: hidden !important;
+}
+
+.projection-panel h2,
+.screen-panel h2 {
+    margin: 0 0 0.72vh !important;
+    font-size: clamp(0.68rem, 0.88vw, 1.02rem) !important;
+    line-height: 1.15 !important;
+    letter-spacing: 0.065em !important;
+    color: #eaffff !important;
+    text-shadow: 0 0 12px rgba(0, 229, 255, 0.56) !important;
+}
+
+/* 左側圓餅圖 */
+.chart-wrap {
+    height: calc(100% - 2.2vh) !important;
+    max-height: none !important;
+    display: grid !important;
+    grid-template-columns: minmax(265px, 0.92fr) minmax(220px, 0.82fr) !important;
+    gap: 1.28vw !important;
+    align-items: center !important;
+}
+
+.chart-box {
+    height: min(37.8vh, 370px) !important;
+    min-height: 275px !important;
+    position: relative !important;
+}
+
+.center-total {
+    font-size: clamp(0.54rem, 0.66vw, 0.82rem) !important;
+    line-height: 1.16 !important;
+    color: #fff !important;
+    text-shadow: 0 0 12px rgba(0, 229, 255, 0.34) !important;
+}
+
+.center-total b {
+    font-size: clamp(1.85rem, 2.82vw, 3.5rem) !important;
+    line-height: 0.95 !important;
+}
+
+.legend-grid {
+    gap: 0.72vh !important;
+}
+
+.legend-item {
+    grid-template-columns: 0.78rem minmax(0, 1fr) 2.4rem !important;
+    gap: 0.62vw !important;
+    font-size: clamp(0.62rem, 0.78vw, 0.92rem) !important;
+    line-height: 1.15 !important;
+    color: #e7fbff !important;
+}
+
+.legend-item b {
+    font-size: clamp(0.7rem, 0.88vw, 1.02rem) !important;
+    text-align: right !important;
+    color: #fff !important;
+}
+
+.dot {
+    width: 0.55rem !important;
+    height: 0.55rem !important;
+    border-radius: 0.16rem !important;
+}
+
+/* 右側議程 */
+.timeline {
+    position: relative !important;
+    display: grid !important;
+    gap: 0.62vh !important;
+    margin-top: 0.04vh !important;
+    padding-left: 0.55vw !important;
+}
+
+.timeline::before {
+    content: "" !important;
+    position: absolute !important;
+    left: 0.1vw !important;
+    top: 0.4vh !important;
+    bottom: 0.4vh !important;
+    width: 1px !important;
+    background: linear-gradient(180deg, transparent, rgba(0, 229, 255, 0.7), transparent) !important;
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.6) !important;
+}
+
+.timeline-row {
+    grid-template-columns: 4.05vw minmax(0, 1fr) !important;
+    gap: 0.78vw !important;
+    align-items: center !important;
+}
+
+.timeline-time {
+    font-size: clamp(0.82rem, 1.16vw, 1.42rem) !important;
+    line-height: 1 !important;
+    color: #7eefff !important;
+    text-align: right !important;
+    font-weight: 900 !important;
+    text-shadow: 0 0 12px rgba(0, 229, 255, 0.42) !important;
+}
+
+.timeline-card {
+    min-height: 4.55vh !important;
+    padding: 0.46vw 0.74vw !important;
+    border-radius: 0.36vw !important;
+    background:
+        linear-gradient(90deg, rgba(0, 88, 150, 0.36), rgba(0, 229, 255, 0.06)) !important;
+    border: 1px solid rgba(0, 229, 255, 0.22) !important;
+    box-shadow: inset 0 0 16px rgba(0, 229, 255, 0.04) !important;
+}
+
+.timeline-card b {
+    font-size: clamp(0.64rem, 0.8vw, 0.96rem) !important;
+    line-height: 1.1 !important;
+    color: #fff !important;
+}
+
+.timeline-card span {
+    font-size: clamp(0.42rem, 0.52vw, 0.62rem) !important;
+    line-height: 1.14 !important;
+    margin-top: 0.16vh !important;
+    color: #aac7d5 !important;
+}
+
+.timeline-row.active .timeline-time {
+    color: #fff !important;
+}
+
+.timeline-row.active .timeline-card {
+    border-color: rgba(0, 229, 255, 0.68) !important;
+    background:
+        linear-gradient(90deg, rgba(0, 229, 255, 0.28), rgba(0, 95, 180, 0.16)) !important;
+    box-shadow:
+        0 0 18px rgba(0, 229, 255, 0.22),
+        inset 0 0 18px rgba(0, 229, 255, 0.08) !important;
+}
+
+/* 進度條壓成輔助列 */
+.progress-panel {
+    padding: 0.38vw 0.78vw !important;
+    border-radius: 0.55vw !important;
+    background: rgba(4, 15, 32, 0.52) !important;
+    border: 1px solid rgba(0, 229, 255, 0.15) !important;
+    box-shadow: inset 0 0 18px rgba(0, 229, 255, 0.03) !important;
+    overflow: hidden !important;
+}
+
+.progress-head {
+    margin-bottom: 0.24vh !important;
+    align-items: center !important;
+}
+
+.progress-title {
+    font-size: clamp(0.5rem, 0.64vw, 0.74rem) !important;
+    line-height: 1.05 !important;
+    letter-spacing: 0.06em !important;
+    color: #00e5ff !important;
+}
+
+.progress-desc,
+.progress-head > div:first-child > div:last-child {
+    font-size: clamp(0.34rem, 0.42vw, 0.5rem) !important;
+    margin-top: 0.06vh !important;
+    color: #86a6b8 !important;
+}
+
+.progress-now {
+    font-size: clamp(0.44rem, 0.56vw, 0.68rem) !important;
+    max-width: 42% !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    color: #fff !important;
+}
+
+.progress-track {
+    height: 0.42vh !important;
+    min-height: 4px !important;
+}
+
+.progress-marker {
+    width: 0.56rem !important;
+    height: 0.56rem !important;
+    border-width: 2px !important;
+}
+
+.progress-steps {
+    height: 1.18vh !important;
+    margin-top: 0.18vh !important;
+}
+
+.progress-step {
+    font-size: clamp(0.28rem, 0.34vw, 0.4rem) !important;
+    line-height: 1.05 !important;
+    min-width: 4.1vw !important;
+}
+
+.progress-step b {
+    font-size: clamp(0.34rem, 0.42vw, 0.52rem) !important;
+}
+
+/* 下方完整舞台區：不是一小塊講台圖 */
+.stage-area {
+    position: relative !important;
+    margin-top: -0.45vh !important;
+    padding-top: 0 !important;
+    min-height: 0 !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    isolation: isolate !important;
+    background:
+        radial-gradient(ellipse at 50% 92%, rgba(0, 229, 255, 0.18), transparent 34%),
+        linear-gradient(180deg, rgba(0, 0, 0, 0), rgba(0, 10, 26, 0.36) 48%, rgba(0, 0, 0, 0.1)) !important;
+}
+
+.stage-area::before {
+    content: "" !important;
+    position: absolute !important;
+    left: 50% !important;
+    bottom: 0.2vh !important;
+    transform: translateX(-50%) perspective(520px) rotateX(62deg) !important;
+    width: 64vw !important;
+    height: 16vh !important;
+    border-radius: 50% 50% 6% 6% !important;
+    background:
+        linear-gradient(180deg, rgba(85, 185, 255, 0.16), rgba(2, 8, 18, 0.88)),
+        radial-gradient(ellipse at center, rgba(0, 229, 255, 0.24), transparent 67%) !important;
+    border-top: 1px solid rgba(155, 230, 255, 0.38) !important;
+    box-shadow:
+        0 -14px 42px rgba(0, 170, 255, 0.18),
+        inset 0 12px 28px rgba(0, 229, 255, 0.06) !important;
+    z-index: 1 !important;
+    pointer-events: none !important;
+}
+
+.stage-area::after {
+    content: "" !important;
+    position: absolute !important;
+    left: 50% !important;
+    bottom: 12.5vh !important;
+    transform: translateX(-50%) !important;
+    width: 48vw !important;
+    height: 6.2vh !important;
+    background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.2), transparent) !important;
+    opacity: 0.38 !important;
+    filter: blur(7px) !important;
+    pointer-events: none !important;
+    z-index: 0 !important;
+}
+
+.stage-glow {
+    position: absolute !important;
+    left: 50% !important;
+    bottom: 1.8vh !important;
+    transform: translateX(-50%) !important;
+    width: 60vw !important;
+    height: 10.5vh !important;
+    border-radius: 50% !important;
+    background: radial-gradient(
+        ellipse at center,
+        rgba(145, 225, 255, 0.38),
+        rgba(0, 130, 255, 0.16) 44%,
+        transparent 74%
+    ) !important;
+    filter: blur(1.8px) !important;
+    opacity: 0.9 !important;
+    z-index: 2 !important;
+    pointer-events: none !important;
+}
+
+.stage-floor {
+    position: absolute !important;
+    left: 50% !important;
+    bottom: 0.4vh !important;
+    transform: translateX(-50%) !important;
+    width: 60vw !important;
+    height: 7.6vh !important;
+    border-radius: 50% 50% 0 0 !important;
+    background:
+        linear-gradient(180deg, rgba(70, 160, 225, 0.18), rgba(2, 8, 18, 0.9)),
+        radial-gradient(ellipse at center, rgba(0, 229, 255, 0.24), transparent 64%) !important;
+    border-top: 1px solid rgba(120, 220, 255, 0.36) !important;
+    box-shadow:
+        0 -10px 34px rgba(0, 160, 255, 0.18),
+        inset 0 8px 24px rgba(0, 229, 255, 0.06) !important;
+    opacity: 0.88 !important;
+    z-index: 3 !important;
+    pointer-events: none !important;
+}
+
+.stage-step {
+    position: absolute !important;
+    bottom: 1.15vh !important;
+    width: 21vw !important;
+    height: 4.2vh !important;
+    background: linear-gradient(180deg, rgba(40, 80, 115, 0.28), rgba(4, 10, 20, 0.82)) !important;
+    border-top: 1px solid rgba(120, 220, 255, 0.2) !important;
+    opacity: 0.42 !important;
+    z-index: 3 !important;
+    pointer-events: none !important;
+}
+
+.stage-step.left {
+    left: 13vw !important;
+    transform: skewX(-18deg) !important;
+}
+
+.stage-step.right {
+    right: 13vw !important;
+    transform: skewX(18deg) !important;
+}
+
+.stage-light {
+    position: absolute !important;
+    bottom: 4.8vh !important;
+    width: 15vw !important;
+    height: 17vh !important;
+    background: linear-gradient(180deg, rgba(150, 230, 255, 0.34), transparent) !important;
+    clip-path: polygon(47% 0, 56% 0, 100% 100%, 0 100%) !important;
+    filter: blur(2px) !important;
+    opacity: 0.38 !important;
+    mix-blend-mode: screen !important;
+    z-index: 2 !important;
+    pointer-events: none !important;
+}
+
+.stage-light.left {
+    left: 32vw !important;
+    transform: rotate(10deg) !important;
+}
+
+.stage-light.right {
+    right: 32vw !important;
+    transform: rotate(-10deg) !important;
+}
+
+/* 講台圖片放大並融進舞台 */
+.podium,
+.podium-photo-wrap {
+    position: relative !important;
+    width: clamp(98px, 6.4vw, 132px) !important;
+    height: clamp(138px, 17vh, 188px) !important;
+    margin: 0.15vh 0 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    display: flex !important;
+    align-items: flex-end !important;
+    justify-content: center !important;
+    z-index: 9 !important;
+}
+
+.podium::before,
+.podium::after {
+    display: none !important;
+}
+
+.podium-photo-wrap::before {
+    content: "" !important;
+    position: absolute !important;
+    left: 50% !important;
+    bottom: -0.55vh !important;
+    transform: translateX(-50%) !important;
+    width: 112% !important;
+    height: 2.4vh !important;
+    border-radius: 50% !important;
+    background: radial-gradient(
+        ellipse at center,
+        rgba(0, 229, 255, 0.42),
+        rgba(0, 229, 255, 0.12) 45%,
+        transparent 78%
+    ) !important;
+    filter: blur(2.5px) !important;
+    pointer-events: none !important;
+    z-index: -1 !important;
+}
+
+.podium-photo-wrap::after {
+    content: "" !important;
+    position: absolute !important;
+    left: 50% !important;
+    bottom: -0.15vh !important;
+    transform: translateX(-50%) !important;
+    width: 82% !important;
+    height: 1vh !important;
+    border-radius: 50% !important;
+    background: rgba(0, 229, 255, 0.18) !important;
+    filter: blur(1px) !important;
+    pointer-events: none !important;
+    z-index: -1 !important;
+}
+
+.podium-photo {
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+    object-fit: contain !important;
+    object-position: center bottom !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    filter:
+        drop-shadow(0 14px 24px rgba(0, 0, 0, 0.62))
+        drop-shadow(0 0 14px rgba(0, 229, 255, 0.18))
+        contrast(1.06)
+        brightness(1.04)
+        saturate(1.06) !important;
+    mix-blend-mode: normal !important;
+}
+
+.podium-logo,
+.podium-title,
+.podium-sub {
+    display: none !important;
+}
+
+/* 窄螢幕保護 */
+@media (max-aspect-ratio: 4/3) {
+    html,
+    body {
+        overflow: auto !important;
+        height: auto !important;
+    }
+
+    .projection-shell {
+        height: auto !important;
+        min-height: 100vh !important;
+        grid-template-rows: auto auto auto auto !important;
+        padding: 1rem !important;
+        gap: 0.9rem !important;
+    }
+
+    .projection-title {
+        white-space: normal !important;
+        font-size: clamp(1.8rem, 8vw, 3rem) !important;
+        line-height: 1 !important;
+    }
+
+    .projection-grid {
+        grid-template-columns: 1fr !important;
+        padding: 1rem !important;
+    }
+
+    .chart-wrap {
+        grid-template-columns: 1fr !important;
+        height: auto !important;
+    }
+
+    .chart-box {
+        height: 300px !important;
+        min-height: 260px !important;
+    }
+
+    .timeline-row {
+        grid-template-columns: 4.8rem minmax(0, 1fr) !important;
+    }
+
+    .timeline-time {
+        font-size: 1.5rem !important;
+    }
+
+    .progress-now {
+        max-width: 100% !important;
+    }
+
+    .stage-area {
+        height: 220px !important;
+        overflow: hidden !important;
+    }
+
+    .podium,
+    .podium-photo-wrap {
+        width: 110px !important;
+        height: 160px !important;
+    }
+}
+
+/* ===== END FINAL DASHBOARD STAGE OVERRIDE 2026-06-25 ===== */
+
+
+
+/* =====================================================
+   Dashboard 修正版｜字體放大、比例調整、舞台講台柔化
+   這段放在所有 CSS 最後，直接覆蓋前面設定
+===================================================== */
+
+.projection-shell {
+  width: 100vw !important;
+  height: 100vh !important;
+  padding: 1.25vh 3.05vw 0.55vh !important;
+  display: grid !important;
+  grid-template-rows: 17vh minmax(0, 53.5vh) 9.2vh 17vh !important;
+  gap: 0.9vh !important;
+  overflow: hidden !important;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(0, 229, 255, 0.12), transparent 33%),
+    radial-gradient(ellipse at 50% 94%, rgba(0, 130, 255, 0.26), transparent 38%),
+    linear-gradient(180deg, rgba(3, 8, 22, 0.98), rgba(1, 5, 14, 1)) !important;
+}
+
+.projection-shell::before {
+  inset: 18vh 0 auto 0 !important;
+  font-size: clamp(4.2rem, 10.5vw, 10.5rem) !important;
+  color: rgba(190, 240, 255, 0.024) !important;
+  -webkit-text-stroke: 1px rgba(0, 229, 255, 0.035) !important;
+}
+
+/* ===== 上方標題：放大但拉開，不擠在一起 ===== */
+.projection-head {
+  justify-content: center !important;
+  padding-top: 0.4vh !important;
+  overflow: visible !important;
+}
+
+.projection-kicker {
+  font-size: clamp(0.9rem, 1.22vw, 1.42rem) !important;
+  letter-spacing: 0.13em !important;
+  line-height: 1.12 !important;
+  color: rgba(234, 255, 255, 0.96) !important;
+  text-shadow: 0 0 12px rgba(0, 229, 255, 0.42) !important;
+}
+
+.projection-title {
+  font-size: clamp(2.35rem, 4.1vw, 4.55rem) !important;
+  line-height: 1.02 !important;
+  margin: 0.5vh 0 0.35vh !important;
+  letter-spacing: 0.02em !important;
+  white-space: nowrap !important;
+  color: #fff !important;
+  text-shadow:
+    0 0 18px rgba(0, 229, 255, 0.58),
+    0 4px 24px rgba(0, 0, 0, 0.46) !important;
+}
+
+.projection-sub {
+  font-size: clamp(0.72rem, 1vw, 1.12rem) !important;
+  letter-spacing: 0.18em !important;
+  line-height: 1.18 !important;
+  color: #dffaff !important;
+}
+
+#eventDate {
+  width: min(46vw, 760px) !important;
+  margin: 0.65vh auto 0 !important;
+  padding-top: 0.45vh !important;
+  border-top: 1px solid rgba(180, 235, 255, 0.4) !important;
+  color: #fff !important;
+  font-size: clamp(0.72rem, 0.94vw, 1.08rem) !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.06em !important;
+}
+
+/* ===== 中央投影螢幕：內容比例放大 ===== */
+.projection-grid {
+  position: relative !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr) !important;
+  gap: 1.35vw !important;
+  padding: 1.05vw 1.18vw !important;
+  min-height: 0 !important;
+  border-radius: 0.44vw !important;
+  border: 1px solid rgba(95, 195, 255, 0.28) !important;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(0, 229, 255, 0.085), transparent 38%),
+    linear-gradient(135deg, rgba(6, 18, 39, 0.88), rgba(2, 10, 25, 0.95)) !important;
+  box-shadow:
+    0 0 0 0.2vw rgba(0, 0, 0, 0.32),
+    0 0 26px rgba(0, 229, 255, 0.13),
+    inset 0 0 38px rgba(0, 229, 255, 0.05) !important;
+  overflow: hidden !important;
+}
+
+.projection-panel,
+.screen-panel {
+  padding: 0.72vw 0.82vw !important;
+  border-radius: 0.55vw !important;
+  border: 1px solid rgba(0, 229, 255, 0.14) !important;
+  background: rgba(2, 15, 34, 0.25) !important;
+  box-shadow: inset 0 0 18px rgba(0, 229, 255, 0.035) !important;
+  overflow: hidden !important;
+}
+
+.projection-panel h2,
+.screen-panel h2 {
+  margin: 0 0 0.9vh !important;
+  font-size: clamp(0.9rem, 1.08vw, 1.28rem) !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0.05em !important;
+  color: #eaffff !important;
+  text-shadow: 0 0 12px rgba(0, 229, 255, 0.56) !important;
+}
+
+/* ===== 圓餅圖與 legend 字體放大 ===== */
+.chart-wrap {
+  height: calc(100% - 2.5vh) !important;
+  max-height: none !important;
+  display: grid !important;
+  grid-template-columns: minmax(285px, 0.92fr) minmax(245px, 0.84fr) !important;
+  gap: 1.35vw !important;
+  align-items: center !important;
+}
+
+.chart-box {
+  height: min(38vh, 380px) !important;
+  min-height: 292px !important;
+}
+
+.center-total {
+  font-size: clamp(0.68rem, 0.82vw, 0.98rem) !important;
+  line-height: 1.22 !important;
+  color: #fff !important;
+  text-shadow: 0 0 12px rgba(0, 229, 255, 0.34) !important;
+}
+
+.center-total b {
+  font-size: clamp(2.25rem, 3.35vw, 4rem) !important;
+  line-height: 0.95 !important;
+}
+
+.legend-grid {
+  gap: 0.88vh !important;
+}
+
+.legend-item {
+  grid-template-columns: 0.9rem minmax(0, 1fr) 2.8rem !important;
+  gap: 0.72vw !important;
+  font-size: clamp(0.78rem, 0.92vw, 1.08rem) !important;
+  line-height: 1.18 !important;
+  color: #e7fbff !important;
+}
+
+.legend-item b {
+  font-size: clamp(0.9rem, 1.08vw, 1.24rem) !important;
+  text-align: right !important;
+  color: #fff !important;
+}
+
+.dot {
+  width: 0.66rem !important;
+  height: 0.66rem !important;
+  border-radius: 0.18rem !important;
+}
+
+/* ===== 右側議程：時間與卡片文字放大 ===== */
+.timeline {
+  gap: 0.74vh !important;
+  margin-top: 0.1vh !important;
+  padding-left: 0.6vw !important;
+}
+
+.timeline-row {
+  grid-template-columns: 4.65vw minmax(0, 1fr) !important;
+  gap: 0.9vw !important;
+  align-items: center !important;
+}
+
+.timeline-time {
+  font-size: clamp(1rem, 1.48vw, 1.78rem) !important;
+  line-height: 1 !important;
+  color: #7eefff !important;
+  text-align: right !important;
+  font-weight: 900 !important;
+  text-shadow: 0 0 12px rgba(0, 229, 255, 0.42) !important;
+}
+
+.timeline-card {
+  min-height: 5.1vh !important;
+  padding: 0.56vw 0.82vw !important;
+  border-radius: 0.42vw !important;
+  background: linear-gradient(90deg, rgba(0, 88, 150, 0.34), rgba(0, 229, 255, 0.06)) !important;
+  border: 1px solid rgba(0, 229, 255, 0.24) !important;
+  box-shadow: inset 0 0 16px rgba(0, 229, 255, 0.04) !important;
+}
+
+.timeline-card b {
+  font-size: clamp(0.82rem, 1vw, 1.14rem) !important;
+  line-height: 1.12 !important;
+  color: #fff !important;
+}
+
+.timeline-card span {
+  font-size: clamp(0.56rem, 0.66vw, 0.78rem) !important;
+  line-height: 1.18 !important;
+  margin-top: 0.22vh !important;
+  color: #b6cfdb !important;
+}
+
+.timeline-row.active .timeline-card {
+  border-color: rgba(0, 229, 255, 0.68) !important;
+  background: linear-gradient(90deg, rgba(0, 229, 255, 0.26), rgba(0, 95, 180, 0.15)) !important;
+  box-shadow:
+    0 0 18px rgba(0, 229, 255, 0.2),
+    inset 0 0 18px rgba(0, 229, 255, 0.08) !important;
+}
+
+/* ===== 進度條：文字放大，不要像註解 ===== */
+.progress-panel {
+  padding: 0.58vw 0.95vw !important;
+  border-radius: 0.62vw !important;
+  background: rgba(4, 15, 32, 0.58) !important;
+  border: 1px solid rgba(0, 229, 255, 0.17) !important;
+  box-shadow: inset 0 0 18px rgba(0, 229, 255, 0.035) !important;
+  overflow: hidden !important;
+}
+
+.progress-head {
+  margin-bottom: 0.42vh !important;
+  align-items: center !important;
+}
+
+.progress-title {
+  font-size: clamp(0.72rem, 0.88vw, 1.02rem) !important;
+  line-height: 1.08 !important;
+  letter-spacing: 0.05em !important;
+  color: #00e5ff !important;
+}
+
+.progress-desc,
+.progress-head > div:first-child > div:last-child {
+  font-size: clamp(0.52rem, 0.62vw, 0.72rem) !important;
+  margin-top: 0.12vh !important;
+  color: #9fb9c8 !important;
+}
+
+.progress-now {
+  font-size: clamp(0.62rem, 0.78vw, 0.9rem) !important;
+  max-width: 46% !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  color: #fff !important;
+  font-weight: 800 !important;
+}
+
+.progress-track {
+  height: 0.68vh !important;
+  min-height: 6px !important;
+}
+
+.progress-marker {
+  width: 0.78rem !important;
+  height: 0.78rem !important;
+  border-width: 2px !important;
+}
+
+.progress-steps {
+  height: 1.95vh !important;
+  margin-top: 0.32vh !important;
+}
+
+.progress-step {
+  font-size: clamp(0.42rem, 0.5vw, 0.6rem) !important;
+  line-height: 1.08 !important;
+  min-width: 4.8vw !important;
+}
+
+.progress-step b {
+  font-size: clamp(0.56rem, 0.68vw, 0.78rem) !important;
+}
+
+/* ===== 舞台與講台：降低突兀感，保留氣氛 ===== */
+.stage-area {
+  position: relative !important;
+  margin-top: -0.25vh !important;
+  padding-top: 0.25vh !important;
+  min-height: 0 !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  isolation: isolate !important;
+}
+
+.stage-area::after {
+  bottom: 6.4vh !important;
+  width: 38vw !important;
+  height: 3.4vh !important;
+  opacity: 0.16 !important;
+  filter: blur(6px) !important;
+}
+
+.stage-glow {
+  bottom: 0.75vh !important;
+  width: 48vw !important;
+  height: 5.8vh !important;
+  opacity: 0.36 !important;
+}
+
+.stage-floor {
+  bottom: -0.25vh !important;
+  width: 52vw !important;
+  height: 4.2vh !important;
+  opacity: 0.46 !important;
+}
+
+.stage-step {
+  bottom: 0.1vh !important;
+  height: 2.1vh !important;
+  opacity: 0.13 !important;
+}
+
+.stage-light {
+  bottom: 1.8vh !important;
+  height: 7.2vh !important;
+  width: 11vw !important;
+  opacity: 0.1 !important;
+  filter: blur(2.4px) !important;
+}
+
+.podium,
+.podium-photo-wrap {
+  position: relative !important;
+  width: clamp(78px, 4.9vw, 102px) !important;
+  height: clamp(112px, 12.4vh, 146px) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: center !important;
+  z-index: 8 !important;
+}
+
+.podium::before,
+.podium::after {
+  display: none !important;
+}
+
+.podium-photo-wrap::before {
+  content: "" !important;
+  position: absolute !important;
+  left: 50% !important;
+  bottom: -0.55vh !important;
+  transform: translateX(-50%) !important;
+  width: 95% !important;
+  height: 1.7vh !important;
+  border-radius: 50% !important;
+  background: radial-gradient(ellipse at center, rgba(0, 229, 255, 0.24), rgba(0, 229, 255, 0.07) 48%, transparent 78%) !important;
+  filter: blur(2.4px) !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
+}
+
+.podium-photo-wrap::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 50% !important;
+  bottom: -0.05vh !important;
+  transform: translateX(-50%) !important;
+  width: 70% !important;
+  height: 0.75vh !important;
+  border-radius: 50% !important;
+  background: rgba(0, 229, 255, 0.11) !important;
+  filter: blur(1.2px) !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
+}
+
+.podium-photo {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  object-fit: contain !important;
+  object-position: center bottom !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  opacity: 0.88 !important;
+  filter:
+    drop-shadow(0 9px 16px rgba(0, 0, 0, 0.55))
+    drop-shadow(0 0 8px rgba(0, 229, 255, 0.12))
+    contrast(1.03)
+    brightness(0.98)
+    saturate(0.96) !important;
+  mix-blend-mode: normal !important;
+}
+
+.podium-logo,
+.podium-title,
+.podium-sub {
+  display: none !important;
+}
+
+@media (max-aspect-ratio: 4/3) {
+  html,
+  body {
+    overflow: auto !important;
+    height: auto !important;
+  }
+
+  .projection-shell {
+    height: auto !important;
+    min-height: 100vh !important;
+    grid-template-rows: auto auto auto auto !important;
+    padding: 1rem !important;
+    gap: 0.9rem !important;
+  }
+
+  .projection-title {
+    white-space: normal !important;
+    font-size: clamp(1.8rem, 8vw, 3rem) !important;
+    line-height: 1.08 !important;
+  }
+
+  .projection-grid {
+    grid-template-columns: 1fr !important;
+    padding: 1rem !important;
+  }
+
+  .chart-wrap {
+    grid-template-columns: 1fr !important;
+    height: auto !important;
+  }
+
+  .chart-box {
+    height: 300px !important;
+    min-height: 260px !important;
+  }
+
+  .timeline-row {
+    grid-template-columns: 4.8rem minmax(0, 1fr) !important;
+  }
+
+  .timeline-time {
+    font-size: 1.5rem !important;
+  }
+
+  .progress-now {
+    max-width: 100% !important;
+  }
+
+  .stage-area {
+    height: 165px !important;
+  }
+}
+
+/* ===== 2026 投影主視覺最終版：參考用戶提供風格圖 ===== */
+.projection-shell {
+  width: 100vw !important;
+  height: 100vh !important;
+  padding: 1.2vh 2.8vw 0.45vh !important;
+  display: grid !important;
+  grid-template-rows: 15.5vh minmax(0, 54vh) 9.5vh 17vh !important;
+  gap: 0.9vh !important;
+  overflow: hidden !important;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(96, 208, 255, 0.15), transparent 24%),
+    radial-gradient(ellipse at 50% 94%, rgba(35, 114, 255, 0.3), transparent 36%),
+    linear-gradient(180deg, rgba(3, 10, 28, 0.98), rgba(2, 7, 19, 1)) !important;
+}
+
+.projection-shell::before {
+  content: "智匯方舟" !important;
+  position: absolute !important;
+  inset: 14.8vh 0 auto 0 !important;
+  text-align: center !important;
+  font-size: clamp(4.6rem, 11.8vw, 11rem) !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.08em !important;
+  color: rgba(224, 244, 255, 0.03) !important;
+  -webkit-text-stroke: 1px rgba(96, 208, 255, 0.045) !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+}
+
+.projection-shell > * { position: relative !important; z-index: 1 !important; }
+
+.projection-head {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  text-align: center !important;
+  padding-top: 0 !important;
+}
+
+.projection-kicker {
+  font-size: clamp(0.82rem, 1.02vw, 1.16rem) !important;
+  line-height: 1.08 !important;
+  letter-spacing: 0.12em !important;
+  color: #aaf3ff !important;
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.26) !important;
+}
+
+.projection-title {
+  font-size: clamp(2.35rem, 4.1vw, 4.5rem) !important;
+  line-height: 0.92 !important;
+  margin: 0.3vh 0 0.18vh !important;
+  white-space: nowrap !important;
+  letter-spacing: 0.02em !important;
+  color: #ffffff !important;
+  text-shadow: 0 0 22px rgba(120, 225, 255, 0.3), 0 6px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+.projection-sub {
+  font-size: clamp(0.72rem, 0.92vw, 1.02rem) !important;
+  line-height: 1.1 !important;
+  letter-spacing: 0.16em !important;
+  color: #ecfbff !important;
+}
+
+#eventDate {
+  width: min(44vw, 760px) !important;
+  margin: 0.6vh auto 0 !important;
+  padding-top: 0.42vh !important;
+  border-top: 1px solid rgba(174, 235, 255, 0.38) !important;
+  font-size: clamp(0.82rem, 0.95vw, 1.05rem) !important;
+  line-height: 1.05 !important;
+  letter-spacing: 0.06em !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+}
+
+.projection-grid {
+  position: relative !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr) !important;
+  gap: 1.35vw !important;
+  padding: 1vw 1.15vw 1.05vw !important;
+  border-radius: 0.2vw !important;
+  border: 1px solid rgba(87, 177, 255, 0.2) !important;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(0, 229, 255, 0.11), transparent 36%),
+    linear-gradient(135deg, rgba(5, 18, 42, 0.92), rgba(1, 9, 24, 0.96)) !important;
+  box-shadow:
+    0 0 0 0.26vw rgba(0, 0, 0, 0.28),
+    0 0 34px rgba(0, 229, 255, 0.08),
+    inset 0 0 44px rgba(120, 225, 255, 0.05) !important;
+  overflow: hidden !important;
+}
+
+.projection-grid::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent 0%, rgba(0, 229, 255, 0.035) 50%, transparent 100%),
+    radial-gradient(circle at 14% 16%, rgba(0, 229, 255, 0.11), transparent 17%),
+    radial-gradient(circle at 84% 16%, rgba(0, 120, 255, 0.11), transparent 18%);
+  pointer-events: none;
+}
+
+.projection-panel,
+.screen-panel {
+  position: relative !important;
+  padding: 0.66vw 0.8vw !important;
+  border-radius: 0.45vw !important;
+  border: 1px solid rgba(0, 229, 255, 0.08) !important;
+  background: rgba(4, 18, 38, 0.24) !important;
+  box-shadow: inset 0 0 18px rgba(120, 225, 255, 0.025) !important;
+  overflow: hidden !important;
+}
+
+.projection-panel h2,
+.screen-panel h2 {
+  margin: 0 0 0.95vh !important;
+  font-size: clamp(1rem, 1.08vw, 1.22rem) !important;
+  line-height: 1.14 !important;
+  letter-spacing: 0.04em !important;
+  color: #ffffff !important;
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.22) !important;
+}
+
+.chart-wrap {
+  height: calc(100% - 2.35vh) !important;
+  max-height: none !important;
+  display: grid !important;
+  grid-template-columns: minmax(300px, 0.95fr) minmax(220px, 0.8fr) !important;
+  gap: 1.2vw !important;
+  align-items: center !important;
+}
+
+.chart-box {
+  height: min(39vh, 410px) !important;
+  min-height: 300px !important;
+}
+
+.center-total {
+  width: 52% !important;
+  font-size: clamp(0.72rem, 0.84vw, 0.96rem) !important;
+  line-height: 1.14 !important;
+  color: #ffffff !important;
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.2) !important;
+}
+
+.center-total b {
+  display: block !important;
+  margin-top: 0.2vh !important;
+  font-size: clamp(2rem, 3.1vw, 4rem) !important;
+  line-height: 0.95 !important;
+}
+
+.legend-grid { gap: 0.78vh !important; }
+
+.legend-item {
+  grid-template-columns: 0.85rem minmax(0, 1fr) 3rem !important;
+  gap: 0.72vw !important;
+  align-items: center !important;
+  font-size: clamp(0.82rem, 0.9vw, 1.02rem) !important;
+  line-height: 1.14 !important;
+  color: #f1fbff !important;
+}
+
+.legend-item b {
+  text-align: right !important;
+  font-size: clamp(0.88rem, 1vw, 1.12rem) !important;
+  color: #ffffff !important;
+}
+
+.dot {
+  width: 0.68rem !important;
+  height: 0.68rem !important;
+  border-radius: 0.18rem !important;
+  box-shadow: 0 0 10px currentColor !important;
+}
+
+.timeline {
+  position: relative !important;
+  display: grid !important;
+  gap: 0.86vh !important;
+  margin-top: 0.1vh !important;
+  padding-left: 0.7vw !important;
+}
+
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 0.16vw;
+  top: 0.55vh;
+  bottom: 0.55vh;
+  width: 2px;
+  background: linear-gradient(180deg, transparent, rgba(118, 234, 255, 0.8), transparent);
+  box-shadow: 0 0 12px rgba(118, 234, 255, 0.45);
+}
+
+.timeline-row {
+  display: grid !important;
+  grid-template-columns: 4.55vw minmax(0, 1fr) !important;
+  gap: 0.8vw !important;
+  align-items: center !important;
+}
+
+.timeline-time {
+  font-size: clamp(1.02rem, 1.4vw, 1.72rem) !important;
+  line-height: 1 !important;
+  font-weight: 900 !important;
+  color: #dffcff !important;
+  text-align: right !important;
+  text-shadow: 0 0 10px rgba(118, 234, 255, 0.34) !important;
+}
+
+.timeline-card {
+  min-height: 5.2vh !important;
+  padding: 0.52vw 0.82vw !important;
+  border-radius: 0.34vw !important;
+  background: linear-gradient(90deg, rgba(15, 78, 145, 0.46), rgba(23, 113, 176, 0.18)) !important;
+  border: 1px solid rgba(111, 210, 255, 0.24) !important;
+  box-shadow: inset 0 0 14px rgba(155, 237, 255, 0.04) !important;
+}
+
+.timeline-card b {
+  font-size: clamp(0.86rem, 0.94vw, 1.06rem) !important;
+  line-height: 1.08 !important;
+  color: #ffffff !important;
+}
+
+.timeline-card span {
+  display: block !important;
+  margin-top: 0.18vh !important;
+  font-size: clamp(0.6rem, 0.64vw, 0.74rem) !important;
+  line-height: 1.14 !important;
+  color: #d6ebf5 !important;
+}
+
+.timeline-row.active .timeline-time { color: #ffffff !important; }
+.timeline-row.active .timeline-card {
+  border-color: rgba(127, 227, 255, 0.68) !important;
+  background: linear-gradient(90deg, rgba(60, 165, 255, 0.48), rgba(24, 118, 180, 0.18)) !important;
+  box-shadow: 0 0 18px rgba(104, 214, 255, 0.16), inset 0 0 16px rgba(173, 240, 255, 0.06) !important;
+}
+
+.progress-panel {
+  padding: 0.68vw 1vw !important;
+  border-radius: 0.55vw !important;
+  background: rgba(5, 19, 38, 0.65) !important;
+  border: 1px solid rgba(110, 204, 255, 0.14) !important;
+  box-shadow: inset 0 0 14px rgba(120, 225, 255, 0.025) !important;
+  overflow: hidden !important;
+}
+
+.progress-head {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 1vw !important;
+  margin-bottom: 0.52vh !important;
+}
+
+.progress-title {
+  font-size: clamp(0.9rem, 1vw, 1.12rem) !important;
+  line-height: 1.06 !important;
+  letter-spacing: 0.04em !important;
+  color: #16e7ff !important;
+  font-weight: 900 !important;
+}
+
+.progress-desc,
+.progress-head > div:first-child > div:last-child {
+  font-size: clamp(0.62rem, 0.68vw, 0.78rem) !important;
+  margin-top: 0.18vh !important;
+  line-height: 1.12 !important;
+  color: #9eb5c6 !important;
+}
+
+.progress-now {
+  font-size: clamp(0.86rem, 0.94vw, 1.04rem) !important;
+  line-height: 1.1 !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  text-align: right !important;
+  max-width: 48% !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.progress-track {
+  position: relative !important;
+  height: 0.92vh !important;
+  min-height: 8px !important;
+  border-radius: 999px !important;
+  background: rgba(255,255,255,0.1) !important;
+  border: 1px solid rgba(0,229,255,0.12) !important;
+  overflow: hidden !important;
+}
+
+.progress-fill {
+  background: linear-gradient(90deg, #18e9ff, #47c9ff, #7ee7b9) !important;
+  box-shadow: 0 0 16px rgba(24, 233, 255, 0.45) !important;
+}
+
+.progress-marker {
+  width: 0.94rem !important;
+  height: 0.94rem !important;
+  border-width: 2px !important;
+  box-shadow: 0 0 14px rgba(24, 233, 255, 0.6) !important;
+}
+
+.progress-steps {
+  margin-top: 0.48vh !important;
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 0.6vw !important;
+}
+
+.progress-step {
+  position: static !important;
+  transform: none !important;
+  min-width: 0 !important;
+  text-align: center !important;
+  font-size: clamp(0.56rem, 0.6vw, 0.7rem) !important;
+  line-height: 1.1 !important;
+  color: #c5d5df !important;
+}
+
+.progress-step b {
+  display: block !important;
+  margin-bottom: 0.1vh !important;
+  font-size: clamp(0.74rem, 0.82vw, 0.92rem) !important;
+  color: #10e5ff !important;
+}
+
+.stage-area {
+  position: relative !important;
+  min-height: 0 !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  overflow: visible !important;
+  margin-top: -0.2vh !important;
+  padding-top: 0 !important;
+  isolation: isolate !important;
+}
+
+.stage-area::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 50% !important;
+  bottom: 5.2vh !important;
+  transform: translateX(-50%) !important;
+  width: 34vw !important;
+  height: 2.8vh !important;
+  background: linear-gradient(90deg, transparent, rgba(100, 223, 255, 0.18), transparent) !important;
+  filter: blur(5px) !important;
+  opacity: 0.28 !important;
+  pointer-events: none !important;
+}
+
+.stage-glow {
+  position: absolute !important;
+  left: 50% !important;
+  bottom: 0.5vh !important;
+  transform: translateX(-50%) !important;
+  width: 46vw !important;
+  height: 5.4vh !important;
+  border-radius: 50% !important;
+  background: radial-gradient(ellipse at center, rgba(132, 225, 255, 0.34), rgba(40, 111, 255, 0.08) 50%, transparent 78%) !important;
+  opacity: 0.52 !important;
+  pointer-events: none !important;
+}
+
+.stage-floor {
+  position: absolute !important;
+  left: 50% !important;
+  bottom: -0.2vh !important;
+  transform: translateX(-50%) !important;
+  width: 52vw !important;
+  height: 4.6vh !important;
+  border-radius: 50% 50% 0 0 !important;
+  background:
+    linear-gradient(180deg, rgba(72, 131, 190, 0.22), rgba(4, 10, 22, 0.88)),
+    radial-gradient(ellipse at center, rgba(154, 228, 255, 0.12), transparent 65%) !important;
+  border-top: 1px solid rgba(177, 232, 255, 0.18) !important;
+  box-shadow: inset 0 8px 18px rgba(155, 237, 255, 0.05) !important;
+  opacity: 0.72 !important;
+  pointer-events: none !important;
+}
+
+.stage-step {
+  position: absolute !important;
+  bottom: 0.2vh !important;
+  width: 14vw !important;
+  height: 2.2vh !important;
+  background: linear-gradient(180deg, rgba(54, 81, 116, 0.18), rgba(5, 11, 22, 0.76)) !important;
+  border-top: 1px solid rgba(142, 221, 255, 0.08) !important;
+  opacity: 0.24 !important;
+  pointer-events: none !important;
+}
+.stage-step.left { left: 11vw !important; transform: skewX(-20deg) !important; }
+.stage-step.right { right: 11vw !important; transform: skewX(20deg) !important; }
+
+.stage-light {
+  position: absolute !important;
+  bottom: 1.3vh !important;
+  width: 11vw !important;
+  height: 7.2vh !important;
+  background: linear-gradient(180deg, rgba(184, 238, 255, 0.24), transparent) !important;
+  clip-path: polygon(47% 0, 56% 0, 100% 100%, 0 100%) !important;
+  filter: blur(2px) !important;
+  opacity: 0.2 !important;
+  mix-blend-mode: screen !important;
+  pointer-events: none !important;
+}
+.stage-light.left { left: 34vw !important; transform: rotate(10deg) !important; }
+.stage-light.right { right: 34vw !important; transform: rotate(-10deg) !important; }
+
+.podium,
+.podium-photo-wrap {
+  position: relative !important;
+  width: clamp(86px, 5.2vw, 110px) !important;
+  height: clamp(120px, 13.2vh, 150px) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: center !important;
+  z-index: 8 !important;
+}
+
+.podium::before,
+.podium::after { display: none !important; }
+
+.podium-photo-wrap::before {
+  content: "" !important;
+  position: absolute !important;
+  left: 50% !important;
+  bottom: -0.55vh !important;
+  transform: translateX(-50%) !important;
+  width: 90% !important;
+  height: 1.9vh !important;
+  border-radius: 50% !important;
+  background: radial-gradient(ellipse at center, rgba(114, 229, 255, 0.36), rgba(0, 229, 255, 0.08) 46%, transparent 78%) !important;
+  filter: blur(2px) !important;
+  z-index: -1 !important;
+}
+
+.podium-photo {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  object-fit: contain !important;
+  object-position: center bottom !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  filter: drop-shadow(0 10px 20px rgba(0,0,0,.55)) drop-shadow(0 0 10px rgba(108,232,255,.12)) contrast(1.03) brightness(1.03) !important;
+}
+
+.podium-logo,
+.podium-title,
+.podium-sub { display: none !important; }
+
+@media (max-aspect-ratio: 4/3) {
+  html, body { overflow: auto !important; height: auto !important; }
+  .projection-shell {
+    height: auto !important;
+    min-height: 100vh !important;
+    grid-template-rows: auto auto auto auto !important;
+    padding: 1rem !important;
+    gap: 0.9rem !important;
+  }
+  .projection-title { white-space: normal !important; font-size: clamp(1.85rem, 8vw, 3rem) !important; }
+  .projection-grid { grid-template-columns: 1fr !important; padding: 1rem !important; }
+  .chart-wrap { grid-template-columns: 1fr !important; height: auto !important; }
+  .chart-box { height: 300px !important; min-height: 260px !important; }
+  .timeline-row { grid-template-columns: 5rem minmax(0, 1fr) !important; }
+  .timeline-time { font-size: 1.5rem !important; }
+  .progress-now { max-width: 100% !important; }
+  .stage-area { height: 160px !important; }
+}
+
+
+/* =====================================================
+   底部融合修正版：取消下方分割感
+   - 進度條改成投影螢幕內的 HUD，不再像獨立卡片
+   - 舞台接在螢幕下方，講台自然融入底部光影
+   - 保留比例與可讀性
+===================================================== */
+
+.projection-shell {
+  padding: 1.15vh 2.8vw 0.25vh !important;
+  grid-template-rows: 15.2vh minmax(0, 65.2vh) 0 17.6vh !important;
+  gap: 0 !important;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(92, 212, 255, 0.14), transparent 28%),
+    radial-gradient(ellipse at 50% 92%, rgba(32, 112, 255, 0.34), transparent 36%),
+    linear-gradient(180deg, rgba(3, 10, 28, 0.98), rgba(1, 5, 14, 1)) !important;
+}
+
+.projection-grid {
+  margin-bottom: -1.25vh !important;
+  padding-bottom: 4.2vh !important;
+  border-radius: 0.28vw 0.28vw 0.08vw 0.08vw !important;
+  box-shadow:
+    0 0 0 0.22vw rgba(0, 0, 0, 0.28),
+    0 0 34px rgba(0, 229, 255, 0.1),
+    0 22px 46px rgba(0, 55, 120, 0.32),
+    inset 0 0 44px rgba(120, 225, 255, 0.055) !important;
+}
+
+.projection-grid::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 50% !important;
+  bottom: -4.8vh !important;
+  transform: translateX(-50%) !important;
+  width: 54vw !important;
+  height: 8vh !important;
+  background:
+    radial-gradient(ellipse at center,
+      rgba(124, 224, 255, 0.2),
+      rgba(35, 120, 255, 0.08) 48%,
+      transparent 76%) !important;
+  filter: blur(3px) !important;
+  box-shadow: none !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+}
+
+.progress-panel {
+  position: absolute !important;
+  left: 4.2vw !important;
+  right: 4.2vw !important;
+  bottom: 16.2vh !important;
+  height: 8.1vh !important;
+  padding: 0.45vw 0.8vw !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: linear-gradient(
+    180deg,
+    rgba(3, 15, 32, 0.02),
+    rgba(3, 15, 32, 0.24)
+  ) !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+  z-index: 4 !important;
+}
+
+.progress-head {
+  margin-bottom: 0.45vh !important;
+  align-items: flex-start !important;
+}
+
+.progress-title {
+  font-size: clamp(0.86rem, 0.98vw, 1.12rem) !important;
+  color: #27eaff !important;
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.36) !important;
+}
+
+.progress-desc,
+.progress-head > div:first-child > div:last-child {
+  font-size: clamp(0.58rem, 0.66vw, 0.76rem) !important;
+  color: rgba(204, 230, 242, 0.72) !important;
+}
+
+.progress-now {
+  font-size: clamp(0.78rem, 0.9vw, 1.02rem) !important;
+  max-width: 45% !important;
+  color: #fff !important;
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.18) !important;
+}
+
+.progress-track {
+  height: 0.86vh !important;
+  min-height: 7px !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  border: 1px solid rgba(126, 230, 255, 0.16) !important;
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.08) !important;
+}
+
+.progress-marker {
+  width: 0.88rem !important;
+  height: 0.88rem !important;
+}
+
+.progress-steps {
+  margin-top: 0.45vh !important;
+}
+
+.progress-step {
+  font-size: clamp(0.52rem, 0.58vw, 0.68rem) !important;
+  color: rgba(222, 242, 250, 0.78) !important;
+}
+
+.progress-step b {
+  font-size: clamp(0.68rem, 0.78vw, 0.9rem) !important;
+  color: #19e7ff !important;
+}
+
+.stage-area {
+  margin-top: -4.4vh !important;
+  padding-top: 0 !important;
+  height: 21.8vh !important;
+  align-items: flex-start !important;
+  overflow: visible !important;
+  z-index: 3 !important;
+}
+
+.stage-area::before {
+  content: "" !important;
+  position: absolute !important;
+  left: 50% !important;
+  top: -1.2vh !important;
+  transform: translateX(-50%) !important;
+  width: 62vw !important;
+  height: 8vh !important;
+  background:
+    linear-gradient(180deg,
+      rgba(10, 27, 55, 0.62),
+      rgba(10, 27, 55, 0.08) 54%,
+      transparent 100%) !important;
+  filter: blur(1.4px) !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+}
+
+.stage-area::after {
+  bottom: 8.2vh !important;
+  width: 42vw !important;
+  height: 3.4vh !important;
+  opacity: 0.2 !important;
+}
+
+.stage-glow {
+  bottom: 2.4vh !important;
+  width: 50vw !important;
+  height: 7.2vh !important;
+  opacity: 0.55 !important;
+}
+
+.stage-floor {
+  bottom: 0.25vh !important;
+  width: 56vw !important;
+  height: 5.6vh !important;
+  opacity: 0.72 !important;
+  background:
+    linear-gradient(180deg, rgba(66, 123, 184, 0.24), rgba(3, 9, 22, 0.86)),
+    radial-gradient(ellipse at center, rgba(140, 230, 255, 0.16), transparent 68%) !important;
+}
+
+.stage-step {
+  bottom: 1.25vh !important;
+  height: 2.6vh !important;
+  opacity: 0.22 !important;
+}
+
+.stage-light {
+  bottom: 3vh !important;
+  height: 8.8vh !important;
+  opacity: 0.2 !important;
+}
+
+.podium,
+.podium-photo-wrap {
+  width: clamp(88px, 5.4vw, 112px) !important;
+  height: clamp(124px, 13.8vh, 156px) !important;
+  margin-top: 1.2vh !important;
+  z-index: 8 !important;
+}
+
+.podium-photo-wrap::before {
+  bottom: -0.45vh !important;
+  width: 105% !important;
+  height: 2.4vh !important;
+  opacity: 0.8 !important;
+}
+
+.podium-photo {
+  filter:
+    drop-shadow(0 12px 22px rgba(0, 0, 0, 0.62))
+    drop-shadow(0 0 12px rgba(125, 230, 255, 0.16))
+    contrast(1.04)
+    brightness(1.03) !important;
+}
+
+.projection-panel,
+.screen-panel {
+  padding-bottom: 1vw !important;
+}
+
 </style>
 </head>
 <body class="circuit-background">
