@@ -673,6 +673,84 @@ body{background:#030916;color:#eaffff}
     height:6.3vh !important;
 }
 
+
+/* ===== 下方舞台留白修正版：把講台與舞台往上收，底部不再空一大塊 ===== */
+.projection-shell {
+    grid-template-rows: 13vh minmax(0, 47vh) 9vh 20vh !important;
+    gap: 1.05vh !important;
+}
+
+.progress-panel {
+    margin-bottom: 0 !important;
+}
+
+.stage-area {
+    margin-top: -2.2vh !important;
+    align-items: flex-start !important;
+    padding-top: 0.2vh !important;
+}
+
+.stage-area::after {
+    bottom: 8.8vh !important;
+    height: 4.8vh !important;
+    opacity: 0.36 !important;
+}
+
+.stage-glow {
+    bottom: 0.8vh !important;
+    height: 6.8vh !important;
+    opacity: 0.65 !important;
+}
+
+.stage-floor {
+    bottom: -0.5vh !important;
+    height: 4.8vh !important;
+    width: 58vw !important;
+    opacity: 0.82 !important;
+}
+
+.stage-step {
+    bottom: -0.1vh !important;
+    height: 2.8vh !important;
+    opacity: 0.34 !important;
+}
+
+.stage-light {
+    bottom: 2.7vh !important;
+    height: 10.8vh !important;
+    opacity: 0.26 !important;
+}
+
+.podium {
+    width: clamp(92px, 6.2vw, 118px) !important;
+    height: clamp(92px, 10.2vh, 124px) !important;
+    margin-bottom: 0 !important;
+    margin-top: 0.2vh !important;
+}
+
+.podium::before {
+    top: -0.62rem !important;
+    height: 0.64rem !important;
+}
+
+.podium::after {
+    bottom: -0.7vh !important;
+    height: 1vh !important;
+}
+
+.podium-logo {
+    font-size: clamp(1.1rem, 1.35vw, 1.55rem) !important;
+}
+
+.podium-title {
+    font-size: clamp(0.55rem, 0.66vw, 0.78rem) !important;
+    margin-top: 0.18vh !important;
+}
+
+.podium-sub {
+    font-size: clamp(0.3rem, 0.35vw, 0.42rem) !important;
+}
+
 </style>
 </head>
 <body class="circuit-background">
