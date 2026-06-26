@@ -1,377 +1,794 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智慧方舟 - 大會即時中控投影看板</title>
-    <link rel="stylesheet" href="smart-ark-theme.css?v=8">
-    <style>
-        /* ============================================================
-           大會中控台看板專屬視覺優化 (Dashboard Layout)
-           ============================================================ */
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "PingFang TC", "Michroma", "Stick", sans-serif; }
-        body { line-height: 1.5; color: #fff; overflow-x: hidden; background-color: #030a16; }
-        
-        /* 頂部控制列優化 */
-        .dash-header {
-            padding: 1rem 2rem;
-            background: rgba(6, 15, 30, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--accent-gray);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        .dash-logo-area { display: flex; align-items: center; gap: 10px; font-weight: bold; color: var(--text-dark); }
-        .dash-title-text { font-size: 1.3rem; letter-spacing: 3px; font-weight: 900; text-shadow: 0 0 10px var(--text-glow); }
-        
-        /* 中控台主版面 */
-        .dash-container {
-            max-width: 1600px;
-            margin: 0 auto;
-            padding: 2.5rem 2rem;
-            display: flex;
-            flex-direction: column;
-            gap: 2.5rem;
-            min-height: calc(100vh - 70px);
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智慧方舟 — 大會投影看板</title>
+<link href="https://fonts.googleapis.com/css2?family=Michroma&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+/* ─── Reset ─── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* 頂部核心關鍵指標數據卡片 (KPI Grid) - 優化對稱性 */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1.5rem;
-        }
-        .stat-card {
-            padding: 2rem 1.5rem;
-            text-align: center;
-            border-radius: 1rem;
-            position: relative;
-            overflow: hidden;
-            background: linear-gradient(135deg, rgba(10, 24, 48, 0.75), rgba(4, 12, 24, 0.85)) !important;
-        }
-        .stat-label {
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.45);
-            letter-spacing: 2px;
-            margin-bottom: 0.5rem;
-            font-weight: bold;
-        }
-        .stat-value {
-            font-size: clamp(2rem, 3.5vw, 3.2rem);
-            font-weight: 900;
-            color: #00e5ff;
-            line-height: 1;
-            text-shadow: 0 0 15px rgba(0, 229, 255, 0.5);
-            font-family: 'Michroma', sans-serif;
-        }
-        .stat-value-sub { color: #4ade80; text-shadow: 0 0 15px rgba(74,222,128,0.4); }
-        .stat-value-warn { color: #ffa500; text-shadow: 0 0 15px rgba(255,165,0,0.4); }
+:root {
+  --bg:         #020c1b;
+  --panel:      rgba(5,15,32,0.75);
+  --card:       rgba(8,22,46,0.65);
+  --accent:     #00e5ff;
+  --adim:       rgba(0,229,255,0.12);
+  --green:      #4ade80;
+  --orange:     #ffa940;
+  --red:        #f87171;
+  --purple:     #a78bfa;
+  --text:       #e8f4ff;
+  --muted:      rgba(200,220,255,0.42);
+  --border:     rgba(0,229,255,0.13);
+  --glow:       0 0 18px rgba(0,229,255,0.32);
+  --r:          16px;
+}
 
-        /* 中段主視窗：左右對稱排版 */
-        .main-dash-grid {
-            display: grid;
-            grid-template-columns: 1fr 1.2fr;
-            gap: 2rem;
-            align-items: start;
-        }
+html, body {
+  width: 100%; height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Noto Sans TC", "PingFang TC", sans-serif;
+  overflow: hidden; /* 全螢幕投影不滾動 */
+}
 
-        /* 看板區塊統一毛玻璃包裝 */
-        .dash-section {
-            border-radius: 1.25rem;
-            padding: 2rem;
-            background: rgba(8, 20, 38, 0.7) !important;
-        }
-        .section-title-area {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            border-bottom: 1px solid rgba(0,229,255,0.15);
-            padding-bottom: 0.75rem;
-        }
-        .section-title {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+/* background mesh */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 55% at 15% 8%,  rgba(0,55,110,0.28) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 45% at 85% 92%, rgba(0,90,170,0.18) 0%, transparent 55%);
+}
 
-        /* 輪播與動態滾動清單優化 */
-        .scroll-list-container {
-            max-height: 520px;
-            overflow-y: auto;
-            padding-right: 0.25rem;
-        }
-        /* 隱藏滾動條但保持功能，或將其美化 */
-        .scroll-list-container::-webkit-scrollbar { width: 6px; }
-        .scroll-list-container::-webkit-scrollbar-track { background: transparent; }
-        .scroll-list-container::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.15); border-radius: 10px; }
-        .scroll-list-container::-webkit-scrollbar-thumb:hover { background: rgba(0,229,255,0.3); }
+/* ═══════════════════════════════════════════
+   HEADER
+══════════════════════════════════════════ */
+.hdr {
+  position: relative; z-index: 10;
+  height: 58px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2rem;
+  background: rgba(2,8,20,0.88);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+}
 
-        .log-item {
-            padding: 1.1rem 1.25rem;
-            border-radius: 0.6rem;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.05);
-            margin-bottom: 0.75rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.2s;
-        }
-        .log-item:hover {
-            background: rgba(0,229,255,0.04);
-            border-color: rgba(0,229,255,0.15);
-        }
-        .log-user { font-weight: bold; font-size: 1.05rem; color: #fff; }
-        .log-company { font-size: 0.85rem; color: #8fa0b0; margin-top: 0.15rem; }
-        .log-meta { text-align: right; }
-        .log-time { font-size: 0.8rem; color: rgba(255,255,255,0.35); font-family: 'Michroma', sans-serif; }
-        .log-status { 
-            font-size: 0.8rem; font-weight: bold; padding: 0.2rem 0.6rem; border-radius: 20px; 
-            display: inline-block; margin-top: 0.25rem;
-        }
-        .status-ok { background: rgba(74,222,128,0.15); color: #4ade80; border: 1px solid rgba(74,222,128,0.2); }
-        .status-proxy { background: rgba(255,165,0,0.15); color: #ffa500; border: 1px solid rgba(255,165,0,0.2); }
+.hdr-brand { display: flex; align-items: center; gap: 10px; }
+.hdr-logo {
+  width: 32px; height: 32px;
+  border: 1.5px solid var(--accent);
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+  box-shadow: var(--glow);
+}
+.hdr-name {
+  font-family: "Michroma", sans-serif;
+  font-size: 0.95rem; letter-spacing: 4px;
+  color: var(--accent); text-shadow: var(--glow);
+}
+.hdr-sub { font-size: 0.70rem; color: var(--muted); letter-spacing: 2px; margin-top: 1px; }
 
-        /* 圖表與分析區塊外觀平衡 */
-        .chart-placeholder {
-            min-height: 320px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0,0,0,0.2);
-            border-radius: 0.75rem;
-            border: 1px dashed rgba(0,229,255,0.15);
-            color: rgba(255,255,255,0.4);
-            font-size: 0.95rem;
-        }
+.hdr-center {
+  text-align: center;
+}
+.hdr-event-title {
+  font-size: 1.08rem; font-weight: 900; letter-spacing: 3px;
+  color: var(--text); text-shadow: 0 0 12px rgba(255,255,255,0.2);
+}
+.hdr-event-sub {
+  font-size: 0.65rem; letter-spacing: 2.5px; color: var(--muted); margin-top: 1px;
+}
 
-        /* 底部全寬巨型狀態區 */
-        .dash-footer-panel {
-            border-top: 1px solid var(--accent-gray);
-            background: rgba(4, 12, 24, 0.8);
-            padding: 1.2rem 2rem;
-            text-align: center;
-            font-size: 0.85rem;
-            color: rgba(255,255,255,0.4);
-            letter-spacing: 1px;
-            border-radius: 1rem 1rem 0 0;
-            margin-top: auto;
-        }
+.hdr-right { display: flex; align-items: center; gap: 10px; }
+.live-badge {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 1px;
+  color: var(--green);
+  background: rgba(74,222,128,0.09);
+  border: 1px solid rgba(74,222,128,0.22);
+  padding: 3px 10px; border-radius: 20px;
+}
+.live-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green);
+  animation: blink 1.4s infinite;
+}
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:.3} }
 
-        /* ============================================================
-           中控台投影/螢幕 RWD 響應式優化
-           ============================================================ */
-        @media(max-width: 1200px) {
-            .stats-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 1.2rem; }
-            .main-dash-grid { grid-template-columns: 1fr !important; gap: 2rem; }
-        }
-        @media(max-width: 768px) {
-            .dash-header { padding: 1rem; }
-            .dash-title-text { font-size: 1.05rem; letter-spacing: 1px; }
-            .dash-container { padding: 1.5rem 1rem; gap: 1.5rem; }
-            .stats-grid { grid-template-columns: 1fr !important; gap: 1rem; }
-            .stat-card { padding: 1.5rem 1rem; }
-            .dash-section { padding: 1.25rem; border-radius: 1rem; }
-        }
-    </style>
+.hdr-clock {
+  font-family: "Michroma", sans-serif;
+  font-size: 0.82rem; color: var(--accent);
+  letter-spacing: 2px;
+}
+
+/* ═══════════════════════════════════════════
+   KPI STRIP
+══════════════════════════════════════════ */
+.kpi-strip {
+  position: relative; z-index: 10;
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 0; border-bottom: 1px solid var(--border);
+  background: rgba(3,10,24,0.70);
+}
+.kpi-cell {
+  padding: 0.7rem 1.5rem;
+  display: flex; flex-direction: column; align-items: center;
+  border-right: 1px solid var(--border);
+  text-align: center;
+  position: relative;
+}
+.kpi-cell:last-child { border-right: none; }
+.kpi-cell::after {
+  content: '';
+  position: absolute; bottom: 0; left: 20%; right: 20%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.25;
+}
+.kpi-l { font-size: 0.62rem; letter-spacing: 2px; color: var(--muted); font-weight: 700; text-transform: uppercase; }
+.kpi-v {
+  font-family: "Michroma", sans-serif;
+  font-size: 1.9rem; font-weight: 900; line-height: 1.1;
+  color: var(--accent); text-shadow: var(--glow);
+}
+.kpi-v.g { color: var(--green); text-shadow: 0 0 14px rgba(74,222,128,0.4); }
+.kpi-v.o { color: var(--orange); text-shadow: 0 0 14px rgba(255,169,64,0.4); }
+.kpi-v.r { color: var(--red); text-shadow: 0 0 14px rgba(248,113,113,0.4); }
+
+/* ═══════════════════════════════════════════
+   MAIN BODY  — 2-column
+══════════════════════════════════════════ */
+.body {
+  position: relative; z-index: 5;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  padding: 1.1rem 1.5rem 1rem;
+  /* fill remaining height after header + kpi + footer */
+  height: calc(100vh - 58px - 52px - 40px);
+  overflow: hidden;
+}
+
+/* ── shared panel ── */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 1.25rem 1.4rem;
+  backdrop-filter: blur(10px);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.panel-hdr {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.panel-title {
+  font-size: 0.88rem; font-weight: 900;
+  letter-spacing: 2px; color: var(--text);
+  display: flex; align-items: center; gap: 6px;
+}
+.panel-tag { font-family: "Michroma", sans-serif; font-size: 0.62rem; letter-spacing: 1.5px; color: var(--muted); }
+
+/* ═══════════════════════════════════════════
+   LEFT — DONUT + LOG LIST
+══════════════════════════════════════════ */
+.left-col { gap: 1.1rem; display: grid; grid-template-rows: auto 1fr; }
+
+/* donut panel */
+.donut-panel { flex-shrink: 0; }
+
+.donut-body {
+  display: flex; align-items: center; gap: 1.5rem;
+}
+
+.donut-wrap {
+  position: relative;
+  width: 160px; height: 160px;
+  flex-shrink: 0;
+}
+.donut-center {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.donut-num {
+  font-family: "Michroma", sans-serif;
+  font-size: 1.65rem; font-weight: 900;
+  color: var(--accent); text-shadow: var(--glow);
+}
+.donut-txt { font-size: 0.60rem; color: var(--muted); letter-spacing: 1px; margin-top: 1px; }
+
+.legend {
+  flex: 1; display: flex; flex-direction: column; gap: 0.48rem;
+}
+.leg-row { display: flex; align-items: center; gap: 7px; }
+.leg-dot { width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0; }
+.leg-name { font-size: 0.78rem; flex: 1; color: var(--text); line-height: 1.3; }
+.leg-pct { font-family: "Michroma", sans-serif; font-size: 0.72rem; color: var(--muted); }
+.leg-bar-wrap { flex: 1; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; }
+.leg-bar { height: 100%; border-radius: 2px; transition: width 1s ease; }
+
+/* log panel */
+.log-panel { flex: 1; min-height: 0; }
+.log-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 0.45rem; }
+.log-scroll::-webkit-scrollbar { width: 3px; }
+.log-scroll::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.18); border-radius: 3px; }
+
+.log-item {
+  display: flex; justify-content: space-between; align-items: center;
+  background: rgba(255,255,255,0.022);
+  border: 1px solid rgba(255,255,255,0.045);
+  border-radius: 9px;
+  padding: 0.65rem 0.9rem;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.log-item:hover { background: rgba(0,229,255,0.04); border-color: rgba(0,229,255,0.14); }
+.log-name { font-weight: 700; font-size: 0.85rem; }
+.log-company { font-size: 0.72rem; color: var(--muted); margin-top: 1px; }
+.log-right { text-align: right; }
+.log-time { font-family: "Michroma", sans-serif; font-size: 0.65rem; color: var(--muted); }
+.log-badge {
+  display: inline-block; margin-top: 3px;
+  font-size: 0.62rem; font-weight: 700;
+  padding: 2px 8px; border-radius: 20px;
+}
+.b-ok     { background: rgba(74,222,128,0.10); color: var(--green); border: 1px solid rgba(74,222,128,0.22); }
+.b-proxy  { background: rgba(255,169,64,0.10); color: var(--orange); border: 1px solid rgba(255,169,64,0.22); }
+
+.empty { text-align: center; padding: 2rem 0; color: var(--muted); font-size: 0.82rem; line-height: 2; }
+
+/* ═══════════════════════════════════════════
+   RIGHT — TIMELINE (vertical)
+══════════════════════════════════════════ */
+.timeline-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 0; }
+.timeline-scroll::-webkit-scrollbar { width: 3px; }
+.timeline-scroll::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.18); border-radius: 3px; }
+
+/* timeline track */
+.tl-track { position: relative; padding-left: 2.2rem; display: flex; flex-direction: column; gap: 0; }
+
+/* vertical line through items */
+.tl-track::before {
+  content: '';
+  position: absolute; top: 14px; bottom: 14px; left: calc(2.2rem - 18px - 1px);
+  width: 1px;
+  background: linear-gradient(to bottom, var(--accent), rgba(0,229,255,0.1));
+  opacity: 0.3;
+}
+
+.tl-item {
+  position: relative;
+  padding: 0 0 1.1rem 1rem;
+  display: flex; flex-direction: column;
+}
+.tl-item:last-child { padding-bottom: 0; }
+
+/* dot on the track line */
+.tl-item::before {
+  content: '';
+  position: absolute;
+  left: calc(-1rem - 8px);
+  top: 5px;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  border: 2px solid rgba(0,229,255,0.3);
+  background: var(--bg);
+  z-index: 1;
+  transition: all 0.3s;
+}
+.tl-item.active::before {
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: 0 0 10px rgba(0,229,255,0.6);
+  width: 12px; height: 12px;
+  left: calc(-1rem - 9px);
+}
+.tl-item.done::before {
+  border-color: var(--green);
+  background: var(--green);
+}
+
+.tl-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.85rem 1.1rem;
+  transition: border-color 0.2s;
+}
+.tl-item.active .tl-card {
+  border-color: rgba(0,229,255,0.4);
+  background: rgba(0,229,255,0.06);
+  box-shadow: 0 0 20px rgba(0,229,255,0.08);
+}
+.tl-item.done .tl-card { opacity: 0.5; }
+
+.tl-time {
+  font-family: "Michroma", sans-serif;
+  font-size: 0.78rem; color: var(--accent);
+  letter-spacing: 1px; font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.tl-item.done .tl-time { color: var(--green); }
+
+.tl-title { font-size: 0.92rem; font-weight: 900; line-height: 1.45; }
+.tl-sub   { font-size: 0.70rem; color: var(--muted); margin-top: 0.2rem; letter-spacing: 0.5px; }
+
+.tl-now-badge {
+  display: inline-block;
+  margin-top: 0.4rem;
+  font-size: 0.60rem; font-weight: 700; letter-spacing: 1px;
+  padding: 2px 8px; border-radius: 20px;
+  color: var(--accent);
+  background: rgba(0,229,255,0.10);
+  border: 1px solid rgba(0,229,255,0.25);
+}
+
+/* ═══════════════════════════════════════════
+   FOOTER
+══════════════════════════════════════════ */
+.ftr {
+  position: relative; z-index: 10;
+  height: 40px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2rem;
+  border-top: 1px solid var(--border);
+  background: rgba(2,8,20,0.80);
+  font-size: 0.65rem;
+  color: var(--muted); letter-spacing: 1.5px;
+}
+.ftr-right { font-family: "Michroma", sans-serif; color: var(--accent); font-size: 0.68rem; }
+
+/* ═══════════════════════════════════════════
+   Responsive fallback (scroll if too small)
+══════════════════════════════════════════ */
+@media (max-width: 900px) {
+  html, body { overflow: auto; }
+  .body { grid-template-columns: 1fr; height: auto; }
+  .kpi-strip { grid-template-columns: 1fr 1fr; }
+}
+</style>
 </head>
-<body class="circuit-background">
-    <div class="ark-background"></div>
+<body>
 
-    <header class="dash-header">
-        <div class="dash-logo-area">
-            <span style="font-size: 1.5rem;">📊</span>
-            <span id="dash-board-title" class="dash-title-text">智慧方舟｜即時中控大看板</span>
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-brand">
+    <div class="hdr-logo">⛵</div>
+    <div>
+      <div class="hdr-name">SMART WISDOM ARK</div>
+      <div class="hdr-sub">智慧方舟 · 大會即時投影看板</div>
+    </div>
+  </div>
+  <div class="hdr-center">
+    <div id="hdr-event-title" class="hdr-event-title">智慧方舟 2026</div>
+    <div id="hdr-event-sub" class="hdr-event-sub">LOADING EVENT CONFIG…</div>
+  </div>
+  <div class="hdr-right">
+    <div class="live-badge"><span class="live-dot"></span> LIVE</div>
+    <div id="clock" class="hdr-clock">--:--:--</div>
+  </div>
+</header>
+
+<!-- KPI STRIP -->
+<div class="kpi-strip">
+  <div class="kpi-cell">
+    <span class="kpi-l">應到 · Total</span>
+    <span id="k-total" class="kpi-v">—</span>
+  </div>
+  <div class="kpi-cell">
+    <span class="kpi-l">已到 · Checked In</span>
+    <span id="k-checked" class="kpi-v g">—</span>
+  </div>
+  <div class="kpi-cell">
+    <span class="kpi-l">未到 · Pending</span>
+    <span id="k-pending" class="kpi-v r">—</span>
+  </div>
+  <div class="kpi-cell">
+    <span class="kpi-l">到場率 · Rate</span>
+    <span id="k-rate" class="kpi-v o">—</span>
+  </div>
+</div>
+
+<!-- MAIN BODY -->
+<div class="body">
+
+  <!-- ── LEFT COL ── -->
+  <div class="left-col">
+
+    <!-- Donut: industry distribution -->
+    <div class="panel donut-panel">
+      <div class="panel-hdr">
+        <div class="panel-title"><span>🌐</span> 登艦產業生態分佈</div>
+        <span class="panel-tag">INDUSTRY BREAKDOWN</span>
+      </div>
+      <div class="donut-body">
+        <div class="donut-wrap">
+          <svg id="donut-svg" viewBox="0 0 160 160" width="160" height="160" style="transform:rotate(-90deg)">
+            <circle cx="80" cy="80" r="56" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="22"/>
+            <!-- segments injected by JS -->
+          </svg>
+          <div class="donut-center">
+            <div class="donut-num" id="donut-num">—</div>
+            <div class="donut-txt">共戰領航員</div>
+          </div>
         </div>
-        <div>
-            <button class="ck-btn-pill" onclick="refreshDashboardData()" style="border-color: rgba(0,229,255,0.4);">🔄 強制重整</button>
+        <div class="legend" id="legend">
+          <!-- injected by JS -->
         </div>
-    </header>
+      </div>
+    </div>
 
-    <main class="dash-container">
-        
-        <section class="stats-grid" aria-label="即時統計數據">
-            <div class="stat-card cyber-card">
-                <div class="stat-label">TOTAL PNEUMATIC / 總旅客數</div>
-                <div id="stat-total" class="stat-value">---</div>
-            </div>
-            <div class="stat-card cyber-card">
-                <div class="stat-label">CHECKED IN / 已報到登機</div>
-                <div id="stat-checked" class="stat-value stat-value-sub">---</div>
-            </div>
-            <div class="stat-card cyber-card">
-                <div class="stat-label">STANDBY / 現場外加補位</div>
-                <div id="stat-temp" class="stat-value stat-value-warn">---</div>
-            </div>
-            <div class="stat-card cyber-card">
-                <div class="stat-label">ATTENDANCE RATE / 當前到場率</div>
-                <div id="stat-rate" class="stat-value">---</div>
-            </div>
-        </section>
+    <!-- Live check-in log -->
+    <div class="panel log-panel">
+      <div class="panel-hdr">
+        <div class="panel-title"><span>⚡</span> 即時登機紀錄</div>
+        <span id="sync-tag" class="panel-tag">● 同步中</span>
+      </div>
+      <div id="log-list" class="log-scroll">
+        <div class="empty">🛰 等待資料同步…</div>
+      </div>
+    </div>
 
-        <div class="main-dash-grid">
-            
-            <section class="dash-section cyber-card" style="border-left-color: #ffa500 !important;">
-                <div class="section-title-area">
-                    <h2 class="section-title" style="color: #ffa500;"><span style="font-size: 1.2rem;">⚡</span> 即時登機動態動態流</h2>
-                    <span id="sync-indicator" style="font-size: 0.8rem; color: #ffa500; background: rgba(255,165,0,0.1); padding: 0.2rem 0.6rem; border-radius: 20px; font-weight: bold;">● LIVE SYNCING</span>
-                </div>
-                <div id="latest-logs-list" class="scroll-list-container">
-                    <div class="chart-placeholder">正在連線方舟核心中樞，載入動態流...</div>
-                </div>
-            </section>
+  </div><!-- /left-col -->
 
-            <section class="dash-section cyber-card">
-                <div class="section-title-area">
-                    <h2 class="section-title" style="color: var(--text-dark);"><span style="font-size: 1.2rem;">🍱</span> 艙等餐飲偏好統計分析</h2>
-                    <span style="font-size: 0.75rem; color: rgba(255,255,255,0.3); font-family: 'Michroma';">ANALYSIS PANEL</span>
-                </div>
-                <div id="meal-analysis-container" style="display: flex; flex-direction: column; gap: 1.5rem;">
-                    <div class="chart-placeholder">
-                        <div style="text-align: center;">
-                            <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📊</div>
-                            <div>餐食分配與座位數據分配圖表預留區</div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+  <!-- ── RIGHT COL — timeline ── -->
+  <div class="panel">
+    <div class="panel-hdr">
+      <div class="panel-title"><span>🗓</span> 大會時空座標 · 議程</div>
+      <span id="agenda-date-tag" class="panel-tag">CONFERENCE TIMELINE</span>
+    </div>
+    <div class="timeline-scroll">
+      <div class="tl-track" id="tl-track">
+        <div class="empty">📡 載入議程中…</div>
+      </div>
+    </div>
+  </div>
 
+</div><!-- /body -->
+
+<!-- FOOTER -->
+<footer class="ftr">
+  <span id="ftr-brand">SMART ARK CONTROL · 聯聖集團 © 2026</span>
+  <span class="ftr-right" id="ftr-right">LOADING…</span>
+</footer>
+
+<script>
+/* ══════════════════════════════════════════════
+   CONFIG — read URL params (same as admin.html)
+══════════════════════════════════════════════ */
+const params   = new URLSearchParams(location.search);
+const ADMIN    = params.get('admin') || 'admin';
+let   SHEET    = params.get('sheet') || '';
+const API      = '/api';
+
+/* ══════════════════════════════════════════════
+   PALETTE — for donut segments + legend
+══════════════════════════════════════════════ */
+const PALETTE = [
+  '#00b4d8','#f72585','#7209b7','#4cc9f0','#3a0ca3',
+  '#06d6a0','#ffd166','#ef476f','#118ab2','#073b4c',
+];
+
+/* ══════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════ */
+let state = {
+  config: null,          // /api/config
+  stats:  null,          // /api/dashboard_stats
+  industryMap: {},       // company → industry label
+  agenda: [],            // [{time, title, subtitle}]
+};
+
+/* ══════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════ */
+window.onload = async () => {
+  tickClock();
+  setInterval(tickClock, 1000);
+
+  if (!SHEET) {
+    // try to get current sheet from server if not in URL
+    try {
+      const r = await fetch(`${API}/current_sheet?admin=${enc(ADMIN)}`);
+      const d = await r.json();
+      if (d.success && d.current_sheet) SHEET = d.current_sheet;
+    } catch { /* ignore */ }
+  }
+
+  await syncAll();
+  setInterval(syncAll, 15000);
+};
+
+async function syncAll() {
+  await Promise.all([fetchConfig(), fetchStats()]);
+  render();
+}
+
+/* ── fetch config (agenda, industry_mappings, event info) ── */
+async function fetchConfig() {
+  try {
+    const qs = SHEET ? `?sheet=${enc(SHEET)}&admin=${enc(ADMIN)}` : `?admin=${enc(ADMIN)}`;
+    const r  = await fetch(`${API}/config${qs}`);
+    const d  = await r.json();
+    if (d) {
+      state.config = d;
+      // build industry map: {company_keyword → category_label}
+      state.industryMap = {};
+      const mappings = d.industry_mappings || [];
+      for (const m of mappings) {
+        if (m.keyword && m.category) state.industryMap[m.keyword.trim()] = m.category.trim();
+      }
+      // agenda
+      state.agenda = Array.isArray(d.agenda) ? d.agenda : [];
+    }
+  } catch (e) { console.warn('config fetch failed', e); }
+}
+
+/* ── fetch dashboard stats ── */
+async function fetchStats() {
+  try {
+    const qs = SHEET ? `?sheet=${enc(SHEET)}&admin=${enc(ADMIN)}` : `?admin=${enc(ADMIN)}`;
+    const r  = await fetch(`${API}/dashboard_stats${qs}`);
+    const d  = await r.json();
+    if (d.success) state.stats = d.stats;
+    setSyncTag('● LIVE', '#4ade80');
+  } catch {
+    setSyncTag('● OFFLINE', '#f87171');
+  }
+}
+
+/* ══════════════════════════════════════════════
+   RENDER
+══════════════════════════════════════════════ */
+function render() {
+  renderHeader();
+  renderKPIs();
+  renderDonut();
+  renderLogs();
+  renderTimeline();
+  renderFooter();
+}
+
+/* ── header event info ── */
+function renderHeader() {
+  const cfg = state.config;
+  if (!cfg) return;
+  const title = cfg.exp_event_title || cfg.event_title || '智慧方舟 2026';
+  const sub   = cfg.exp_event_subtitle || cfg.event_subtitle || '世代共榮的數位聚合';
+  const ds    = cfg.exp_event_date_start || cfg.date_start || '';
+  const de    = cfg.exp_event_date_end   || cfg.date_end   || '';
+  setText('hdr-event-title', title);
+  setText('hdr-event-sub',   sub + (ds || de ? `　${ds}${de ? ' — ' + de : ''}` : ''));
+  setText('agenda-date-tag', ds ? `${ds}${de ? ' → ' + de : ''}` : 'CONFERENCE TIMELINE');
+  const brand = cfg.exp_brand_name || '聯聖集團';
+  setText('ftr-brand', `SMART ARK CONTROL · ${brand} © 2026`);
+}
+
+/* ── KPIs ── */
+function renderKPIs() {
+  const s = state.stats;
+  if (!s) return;
+  const total   = s.total       ?? 0;
+  const checked = s.checked_in  ?? 0;
+  const pending = s.not_checked_in ?? (total - checked);
+  const rate    = total > 0 ? Math.round(checked / total * 100) : 0;
+  setText('k-total',   total);
+  setText('k-checked', checked);
+  setText('k-pending', pending);
+  setText('k-rate',    rate + '%');
+  setText('donut-num', total);
+}
+
+/* ── Donut ── */
+function renderDonut() {
+  const s = state.stats;
+  if (!s) return;
+  const logs = s.logs || [];
+  const total = s.total ?? 0;
+
+  // count by industry category using industryMap
+  const counter = {};
+  for (const log of logs) {
+    const company = log.company || '';
+    let cat = '其他';
+    for (const [kw, label] of Object.entries(state.industryMap)) {
+      if (company.includes(kw)) { cat = label; break; }
+    }
+    counter[cat] = (counter[cat] || 0) + 1;
+  }
+
+  // If no industry mappings, just show checked_in vs pending
+  let segments;
+  const hasMap = Object.keys(state.industryMap).length > 0 && Object.keys(counter).length > 0;
+  if (hasMap) {
+    segments = Object.entries(counter)
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, count], i) => ({
+        name,
+        count,
+        pct: total > 0 ? Math.round(count / total * 100) : 0,
+        color: PALETTE[i % PALETTE.length],
+      }));
+  } else {
+    // fallback: checked vs not checked
+    const checked = s.checked_in ?? 0;
+    const pending = (s.not_checked_in ?? (total - checked));
+    segments = [
+      { name: '已報到', count: checked, pct: total > 0 ? Math.round(checked/total*100) : 0, color: '#4ade80' },
+      { name: '未報到', count: pending, pct: total > 0 ? Math.round(pending/total*100) : 0, color: '#f87171' },
+    ].filter(s => s.count > 0);
+  }
+
+  drawDonut(segments, total);
+  renderLegend(segments, total);
+}
+
+function drawDonut(segs, total) {
+  const svg = document.getElementById('donut-svg');
+  // remove old segs (keep track circle)
+  svg.querySelectorAll('.ds').forEach(el => el.remove());
+
+  const C = 2 * Math.PI * 56; // circumference
+  let offset = 0;
+
+  for (const seg of segs) {
+    const len = (seg.pct / 100) * C;
+    const el = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    el.setAttribute('class', 'ds');
+    el.setAttribute('cx', '80'); el.setAttribute('cy', '80'); el.setAttribute('r', '56');
+    el.setAttribute('fill', 'none');
+    el.setAttribute('stroke', seg.color);
+    el.setAttribute('stroke-width', '22');
+    el.setAttribute('stroke-dasharray', `0 ${C}`);
+    el.setAttribute('stroke-dashoffset', -offset);
+    svg.appendChild(el);
+    // animate after paint
+    requestAnimationFrame(() => {
+      setTimeout(() => { el.setAttribute('stroke-dasharray', `${len} ${C - len}`); el.style.transition = 'stroke-dasharray 0.9s ease'; }, 60);
+    });
+    offset += len;
+  }
+}
+
+function renderLegend(segs, total) {
+  const el = document.getElementById('legend');
+  if (!segs.length) { el.innerHTML = '<div style="color:var(--muted);font-size:.8rem;">載入行業對照中…</div>'; return; }
+  el.innerHTML = segs.map(s => `
+    <div class="leg-row">
+      <div class="leg-dot" style="background:${s.color};"></div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
+          <span class="leg-name">${esc(s.name)}</span>
+          <span class="leg-pct">${s.pct}%</span>
         </div>
+        <div class="leg-bar-wrap">
+          <div class="leg-bar" data-w="${s.pct}" style="width:0%;background:${s.color};"></div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  requestAnimationFrame(() => {
+    el.querySelectorAll('.leg-bar').forEach(b => {
+      setTimeout(() => { b.style.width = b.dataset.w + '%'; b.style.transition = 'width 0.9s ease'; }, 120);
+    });
+  });
+}
 
-    </main>
+/* ── Logs ── */
+function renderLogs() {
+  const s = state.stats;
+  const el = document.getElementById('log-list');
+  if (!s || !s.logs || !s.logs.length) {
+    el.innerHTML = '<div class="empty">🛰 尚無報到紀錄</div>';
+    return;
+  }
+  el.innerHTML = s.logs.slice(0, 20).map(log => {
+    const proxy = (log.name || '').includes('(替代)');
+    const name  = esc((log.name || '').replace('(替代)', '').trim());
+    const time  = esc(log.time ? log.time.slice(-8) : '—');
+    const co    = esc(log.company || '個人旅客');
+    return `<div class="log-item">
+      <div>
+        <div class="log-name">${name}</div>
+        <div class="log-company">${co}</div>
+      </div>
+      <div class="log-right">
+        <div class="log-time">${time}</div>
+        <span class="log-badge ${proxy ? 'b-proxy' : 'b-ok'}">${proxy ? '替代登機' : '本人登機'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
 
-    <footer class="dash-footer-panel">
-        <div>SMART ARK CONTROL TERMINAL SYSTEM © 2026 聯聖集團 版權所有</div>
-    </footer>
+/* ── Timeline (from agenda config) ── */
+function renderTimeline() {
+  const track = document.getElementById('tl-track');
 
-    <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const currentAdmin = urlParams.get('admin') || 'admin';
-        let currentSheet = urlParams.get('sheet') || '';
-        const API_BASE = '/api';
+  // parse agenda
+  const agenda = state.agenda;
 
-        window.onload = function() {
-            if (!currentSheet) {
-                fetchCurrentSheetName();
-            } else {
-                initDashboard();
-            }
-            // 每 10 秒自動同步後端核心數據
-            setInterval(syncDashboardData, 10000);
-        };
+  if (!agenda.length) {
+    track.innerHTML = '<div class="empty">📡 後台尚未設定議程<br>請至 admin → 議程管理 新增</div>';
+    return;
+  }
 
-        function fetchCurrentSheetName() {
-            fetch(`${API_BASE}/current_sheet?admin=${encodeURIComponent(currentAdmin)}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success && data.current_sheet) {
-                        currentSheet = data.current_sheet;
-                        initDashboard();
-                    }
-                })
-                .catch(err => console.error("無法同步目前場次名稱:", err));
-        }
+  // detect current session based on clock
+  const nowMin = nowMinutes();
+  let activeIdx = -1;
+  // find the session happening now: last session whose time <= now
+  for (let i = 0; i < agenda.length; i++) {
+    const m = parseTime(agenda[i].time || agenda[i].start_time || '');
+    if (m !== null && m <= nowMin) activeIdx = i;
+  }
 
-        function initDashboard() {
-            const titleEl = document.getElementById('dash-board-title');
-            if (titleEl && currentSheet) {
-                titleEl.textContent = `${currentSheet} ｜ 大會即時中控看板`;
-            }
-            syncDashboardData();
-        }
+  track.innerHTML = agenda.map((item, i) => {
+    const time  = esc(item.time || item.start_time || '');
+    const title = esc(item.title || item.name || '—');
+    const sub   = esc(item.subtitle || item.description || '');
+    const isDone   = i < activeIdx;
+    const isActive = i === activeIdx;
+    return `<div class="tl-item${isActive ? ' active' : isDone ? ' done' : ''}">
+      <div class="tl-card">
+        <div class="tl-time">${time}</div>
+        <div class="tl-title">${title}</div>
+        ${sub ? `<div class="tl-sub">${sub}</div>` : ''}
+        ${isActive ? '<div class="tl-now-badge">▶ 進行中</div>' : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
 
-        function refreshDashboardData() {
-            const indicator = document.getElementById('sync-indicator');
-            if (indicator) { indicator.textContent = '🔄 REFRESHING'; indicator.style.color = '#00e5ff'; }
-            syncDashboardData();
-        }
+/* ── footer right ── */
+function renderFooter() {
+  const s = state.stats;
+  const rate = s
+    ? `到場率 ${s.total > 0 ? Math.round((s.checked_in ?? 0) / s.total * 100) : 0}%`
+    : '同步中…';
+  setText('ftr-right', rate);
+}
 
-        // 核心調度：同步後台 Google 試算表與即時報到人數狀態
-        async function syncDashboardData() {
-            if (!currentSheet) return;
-            try {
-                const res = await fetch(`${API_BASE}/config?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}&t=` + new Date().getTime());
-                const config = await res.json();
-                
-                // 這裡假設後端會回傳對應的統計資訊，若後端未包含，請依 server.py 的實際回傳欄位調整
-                // 範例更新 KPI 數字
-                if (config.stats) {
-                    document.getElementById('stat-total').textContent = config.stats.total || 0;
-                    document.getElementById('stat-checked').textContent = config.stats.checked || 0;
-                    document.getElementById('stat-temp').textContent = config.stats.temp || 0;
-                    document.getElementById('stat-rate').textContent = (config.stats.rate || '0') + '%';
-                }
+/* ══════════════════════════════════════════════
+   CLOCK
+══════════════════════════════════════════════ */
+function tickClock() {
+  const now = new Date();
+  setText('clock', now.toTimeString().slice(0,8));
+}
 
-                // 異步渲染即時登機清單
-                await fetchLatestLogs();
+/* ══════════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════════ */
+function setSyncTag(txt, color) {
+  const el = document.getElementById('sync-tag');
+  if (el) { el.textContent = txt; el.style.color = color; }
+}
+function setText(id, v) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = v ?? '—';
+}
+function esc(v) {
+  return String(v ?? '').replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+}
+function enc(v) { return encodeURIComponent(v); }
 
-                const indicator = document.getElementById('sync-indicator');
-                if (indicator) { indicator.textContent = '● LIVE SYNCING'; indicator.style.color = '#ffa500'; }
-            } catch (e) {
-                console.error("看板同步異常:", e);
-                const indicator = document.getElementById('sync-indicator');
-                if (indicator) { indicator.textContent = '● SYNC FAILED'; indicator.style.color = '#f87171'; }
-            }
-        }
-
-        // 抓取最新報到名冊紀錄並渲染
-        async function fetchLatestLogs() {
-            try {
-                // 根據真實情況向 search 或特定看板專用即時 API 索取前 20 筆報到名單
-                const res = await fetch(`${API_BASE}/search/name?name=&admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
-                const json = await res.json();
-                
-                const container = document.getElementById('latest-logs-list');
-                if (!json.data || json.data.length === 0) {
-                    container.innerHTML = '<div class="chart-placeholder">目前尚無旅客完成登機報到。</div>';
-                    return;
-                }
-
-                // 過濾出已報到的名單並按時間或順序排列
-                const checkedUsers = json.data.filter(u => u.status === 'checked_in' || u.status === '已報到' || u.status === '替代');
-                
-                if (checkedUsers.length === 0) {
-                    container.innerHTML = '<div class="chart-placeholder">目前尚無旅客完成登機報到。</div>';
-                    return;
-                }
-
-                container.innerHTML = checkedUsers.map(u => {
-                    const isProxy = u.status === '替代';
-                    return `
-                        <div class="log-item">
-                            <div>
-                                <div class="log-user">${escapeHtml(u.name)}</div>
-                                <div class="log-company">${escapeHtml(u.company || '個人旅客')}</div>
-                            </div>
-                            <div class="log-meta">
-                                <div class="log-time">${escapeHtml(u.seat || '已配位')}</div>
-                                <span class="log-status ${isProxy ? 'status-proxy' : 'status-ok'}">
-                                    ${isProxy ? '替代登機' : '本人登機'}
-                                </span>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-
-            } catch (e) {
-                console.error("名單渲染失敗:", e);
-            }
-        }
-
-        function escapeHtml(value) {
-            return String(value ?? '').replace(/[&<>"']/g, function(ch) {
-                return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[ch];
-            });
-        }
-    </script>
+function nowMinutes() {
+  const now = new Date();
+  return now.getHours() * 60 + now.getMinutes();
+}
+function parseTime(str) {
+  // accepts "09:30", "9:30", "09:30 AM" etc.
+  const m = String(str).match(/(\d{1,2}):(\d{2})/);
+  if (!m) return null;
+  return parseInt(m[1]) * 60 + parseInt(m[2]);
+}
+</script>
 </body>
 </html>
