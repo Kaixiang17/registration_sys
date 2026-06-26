@@ -34,13 +34,13 @@ body {
   line-height: 1.6;
 }
 
-/* mesh background */
+/* 融合概念新圖的光暈 mesh background */
 body::before {
   content: '';
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
   background:
-    radial-gradient(ellipse 75% 55% at 10% 5%,  rgba(0,55,110,0.28) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 45% at 90% 90%, rgba(0,90,170,0.18) 0%, transparent 55%);
+    radial-gradient(ellipse 85% 60% at 50% 10%,  rgba(0,80,160,0.32) 0%, transparent 70%),
+    radial-gradient(ellipse 70% 50% at 90% 90%, rgba(0,110,210,0.22) 0%, transparent 60%);
 }
 
 /* ═══════════════════════════════
@@ -51,11 +51,11 @@ body::before {
   background: rgba(2, 8, 20, 0.92);
   border-bottom: 1px solid var(--border);
   backdrop-filter: blur(14px);
-  padding: 0 1.5rem;
+  padding: 0 1.25rem;
 }
 .hdr-inner {
   max-width: 1440px; margin: 0 auto;
-  height: 60px;
+  height: 65px;
   display: flex; align-items: center; justify-content: space-between;
   gap: 1rem;
 }
@@ -71,18 +71,18 @@ body::before {
 }
 .hdr-name {
   font-family: "Michroma", sans-serif;
-  font-size: 0.85rem; letter-spacing: 3px;
+  font-size: 0.85rem; letter-spacing: 2px;
   color: var(--accent); text-shadow: var(--glow);
 }
 .hdr-sub { font-size: 0.65rem; color: var(--muted); letter-spacing: 1.5px; }
 
 .hdr-center { text-align: center; min-width: 0; flex: 1; }
 .hdr-event {
-  font-size: clamp(0.9rem, 2vw, 1.1rem);
-  font-weight: 900; letter-spacing: 3px;
+  font-size: clamp(0.95rem, 2.5vw, 1.2rem);
+  font-weight: 900; letter-spacing: 2px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.hdr-dates { font-size: 0.65rem; color: var(--muted); letter-spacing: 2px; margin-top: 1px; }
+.hdr-dates { font-size: 0.68rem; color: var(--muted); letter-spacing: 1px; margin-top: 1px; }
 
 .hdr-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .live-pill {
@@ -91,7 +91,7 @@ body::before {
   color: var(--green);
   background: rgba(74,222,128,0.08);
   border: 1px solid rgba(74,222,128,0.22);
-  padding: 3px 10px; border-radius: 20px;
+  padding: 4px 10px; border-radius: 20px;
 }
 .live-dot {
   width: 6px; height: 6px; border-radius: 50%;
@@ -102,7 +102,7 @@ body::before {
 .hdr-clock {
   font-family: "Michroma", sans-serif;
   font-size: 0.85rem; color: var(--accent); letter-spacing: 2px;
-  display: none; /* shown on wider screens */
+  display: none;
 }
 
 /* ═══════════════════════════════
@@ -113,12 +113,12 @@ body::before {
   max-width: 1440px; margin: 0 auto;
   padding: 1.5rem 1.25rem 2rem;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.25rem;
-  min-height: calc(100vh - 60px);
+  grid-template-columns: 1fr 1fr; /* 電腦版雙欄 */
+  gap: 1.5rem;
+  min-height: calc(100vh - 65px);
 }
 
-/* ─── shared panel ─── */
+/* ── shared panel ── */
 .panel {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -129,24 +129,24 @@ body::before {
 }
 
 .panel-head {
-  padding: 1.1rem 1.4rem 0.9rem;
+  padding: 1.2rem 1.4rem 1rem;
   border-bottom: 1px solid var(--border);
   display: flex; align-items: center; justify-content: space-between;
   flex-shrink: 0;
 }
 .panel-title {
-  font-size: 0.88rem; font-weight: 900;
-  letter-spacing: 2px; color: var(--text);
+  font-size: 0.95rem; font-weight: 900;
+  letter-spacing: 1.5px; color: var(--text);
   display: flex; align-items: center; gap: 6px;
 }
 .panel-tag {
   font-family: "Michroma", sans-serif;
-  font-size: 0.60rem; letter-spacing: 1.5px; color: var(--muted);
+  font-size: 0.65rem; letter-spacing: 1px; color: var(--muted);
 }
 
 .panel-body {
   flex: 1;
-  padding: 1.25rem 1.4rem;
+  padding: 1.5rem 1.4rem;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -159,15 +159,14 @@ body::before {
 .donut-layout {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.75rem;
 }
 
-/* donut + legend row */
 .donut-row {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 2rem;
+  gap: 2.5rem;
   flex-wrap: wrap;
 }
 
@@ -183,26 +182,32 @@ body::before {
 }
 .donut-num {
   font-family: "Michroma", sans-serif;
-  font-size: 2.2rem; font-weight: 900;
+  font-size: 2.4rem; font-weight: 900;
   color: var(--accent); text-shadow: var(--glow);
   line-height: 1;
 }
-.donut-lbl { font-size: 0.62rem; color: var(--muted); letter-spacing: 1px; margin-top: 3px; }
+.donut-lbl { font-size: 0.65rem; color: var(--muted); letter-spacing: 1px; margin-top: 4px; }
 
 /* legend list */
-.legend { display: flex; flex-direction: column; gap: 0.65rem; min-width: 150px; }
-.leg { display: flex; align-items: center; gap: 8px; }
+.legend { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 0.75rem; 
+  flex: 1;
+  min-width: 160px; 
+}
+.leg { display: flex; align-items: center; gap: 10px; }
 .leg-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
-.leg-name { font-size: 0.80rem; color: var(--text); flex: 1; line-height: 1.35; }
-.leg-num  { font-family: "Michroma", sans-serif; font-size: 0.72rem; color: var(--muted); }
+.leg-name { font-size: 0.85rem; color: var(--text); flex: 1; line-height: 1.35; }
+.leg-num  { font-family: "Michroma", sans-serif; font-size: 0.75rem; color: var(--muted); }
 
 /* bar list */
-.bars { display: flex; flex-direction: column; gap: 0.6rem; }
-.bar-row { display: flex; flex-direction: column; gap: 0.3rem; }
+.bars { display: flex; flex-direction: column; gap: 0.75rem; }
+.bar-row { display: flex; flex-direction: column; gap: 0.35rem; }
 .bar-meta { display: flex; justify-content: space-between; align-items: center; }
-.bar-name { font-size: 0.77rem; }
-.bar-pct  { font-family: "Michroma", sans-serif; font-size: 0.72rem; color: var(--muted); }
-.bar-track { height: 5px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+.bar-name { font-size: 0.8rem; font-weight: 700; }
+.bar-pct  { font-family: "Michroma", sans-serif; font-size: 0.75rem; color: var(--muted); }
+.bar-track { height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
 .bar-fill  { height: 100%; border-radius: 3px; width: 0; transition: width 1.1s cubic-bezier(.4,0,.2,1); }
 
 .empty-state { text-align: center; padding: 3rem 0; color: var(--muted); font-size: 0.85rem; line-height: 2; }
@@ -214,8 +219,8 @@ body::before {
 
 .tl-item {
   display: flex;
-  gap: 1rem;
-  padding: 0.9rem 0;
+  gap: 1.25rem;
+  padding: 1rem 0;
   border-bottom: 1px solid rgba(255,255,255,0.04);
   position: relative;
 }
@@ -225,7 +230,7 @@ body::before {
 .tl-item::before {
   content: '';
   position: absolute;
-  left: 44px; top: 0; bottom: 0;
+  left: 50px; top: 0; bottom: 0;
   width: 1px;
   background: var(--border);
 }
@@ -234,9 +239,9 @@ body::before {
 
 /* time column */
 .tl-time-col {
-  width: 44px; flex-shrink: 0;
+  width: 50px; flex-shrink: 0;
   display: flex; flex-direction: column; align-items: center;
-  gap: 4px; padding-top: 2px;
+  gap: 6px; padding-top: 4px;
 }
 .tl-dot {
   width: 10px; height: 10px; border-radius: 50%;
@@ -255,11 +260,11 @@ body::before {
 
 .tl-time {
   font-family: "Michroma", sans-serif;
-  font-size: 0.70rem; color: var(--muted);
-  letter-spacing: 1px; margin-top: 3px;
+  font-size: 0.75rem; color: var(--muted);
+  letter-spacing: 0.5px; margin-top: 2px;
   text-align: center;
 }
-.tl-item.active .tl-time { color: var(--accent); }
+.tl-item.active .tl-time { color: var(--accent); font-weight: bold; }
 .tl-item.done   .tl-time { color: var(--green); }
 
 /* card */
@@ -268,22 +273,22 @@ body::before {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 0.85rem 1rem;
+  padding: 1rem;
   transition: border-color 0.2s;
 }
 .tl-item.active .tl-card {
   border-color: rgba(0,229,255,0.40);
-  background: rgba(0,229,255,0.055);
-  box-shadow: 0 0 18px rgba(0,229,255,0.07);
+  background: rgba(0,229,255,0.06);
+  box-shadow: 0 0 18px rgba(0,229,255,0.08);
 }
 .tl-item.done .tl-card { opacity: 0.45; }
 
-.tl-title { font-size: 0.92rem; font-weight: 900; line-height: 1.45; }
-.tl-sub   { font-size: 0.72rem; color: var(--muted); margin-top: 0.2rem; }
+.tl-title { font-size: 0.95rem; font-weight: 900; line-height: 1.45; }
+.tl-sub   { font-size: 0.75rem; color: var(--muted); margin-top: 0.3rem; }
 .tl-now {
-  display: inline-block; margin-top: 0.35rem;
-  font-size: 0.62rem; font-weight: 700; letter-spacing: 1px;
-  padding: 2px 9px; border-radius: 20px;
+  display: inline-block; margin-top: 0.5rem;
+  font-size: 0.65rem; font-weight: 700; letter-spacing: 1px;
+  padding: 3px 10px; border-radius: 20px;
   color: var(--accent);
   background: rgba(0,229,255,0.10);
   border: 1px solid rgba(0,229,255,0.25);
@@ -296,53 +301,59 @@ body::before {
   position: relative; z-index: 10;
   border-top: 1px solid var(--border);
   background: rgba(2,8,20,0.85);
-  padding: 0.7rem 1.5rem;
+  padding: 0.8rem 1.5rem;
   display: flex; justify-content: space-between; align-items: center;
-  font-size: 0.65rem; color: var(--muted); letter-spacing: 1.5px;
+  font-size: 0.68rem; color: var(--muted); letter-spacing: 1px;
 }
-.ftr-right { font-family: "Michroma", sans-serif; color: var(--accent); font-size: 0.68rem; }
+.ftr-right { font-family: "Michroma", sans-serif; color: var(--accent); font-size: 0.7rem; }
 
 /* ═══════════════════════════════
-   RESPONSIVE
+   手機/平板 RWD 響應式優化設計
 ═══════════════════════════════ */
 @media (min-width: 900px) {
   .hdr-clock { display: block; }
 }
 
 @media (max-width: 768px) {
-  .hdr-name { letter-spacing: 2px; font-size: 0.78rem; }
+  .hdr-brand { gap: 6px; }
+  .hdr-logo { width: 30px; height: 30px; font-size: 0.9rem; }
+  .hdr-name { letter-spacing: 1px; font-size: 0.78rem; }
   .hdr-sub  { display: none; }
-  .hdr-event { font-size: 0.85rem; letter-spacing: 1.5px; }
+  .hdr-event { font-size: 0.9rem; letter-spacing: 1px; }
 
+  /* 關鍵：手機版強制轉換成單欄，填滿螢幕 */
   .wrap {
     grid-template-columns: 1fr;
-    padding: 1rem 0.85rem 1.5rem;
-    gap: 1rem;
+    padding: 1rem 0.75rem 1.5rem;
+    gap: 1.25rem;
     min-height: unset;
   }
 
-  .panel-head { padding: 0.9rem 1.1rem 0.75rem; }
-  .panel-body { padding: 1rem 1.1rem; }
+  .panel-head { padding: 1rem 1.2rem 0.85rem; }
+  .panel-body { padding: 1.25rem 1.2rem; }
 
-  .donut-wrap { width: 160px; height: 160px; }
-  .donut-num  { font-size: 1.8rem; }
+  .donut-wrap { width: 170px; height: 170px; }
+  .donut-num  { font-size: 2rem; }
 
-  .donut-row { gap: 1.25rem; }
-  .legend { gap: 0.5rem; }
-
-  .tl-card { padding: 0.7rem 0.85rem; }
-  .tl-title { font-size: 0.88rem; }
+  .donut-row { gap: 1.5rem; }
+  .legend { gap: 0.6rem; width: 100%; }
+  
+  .tl-item::before { left: 44px; }
+  .tl-time-col { width: 44px; }
+  .tl-time { font-size: 0.7rem; }
+  .tl-card { padding: 0.85rem; }
+  .tl-title { font-size: 0.9rem; }
 }
 
-@media (max-width: 420px) {
-  .donut-row { flex-direction: column; align-items: center; }
+@media (max-width: 480px) {
+  /* 極小手機螢幕時，將圓餅圖與標籤清單強制轉垂直，避免擠壓跑版 */
+  .donut-row { flex-direction: column; align-items: center; gap: 1.25rem; }
   .legend { width: 100%; }
 }
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <header class="hdr">
   <div class="hdr-inner">
     <div class="hdr-brand">
@@ -363,10 +374,8 @@ body::before {
   </div>
 </header>
 
-<!-- MAIN: 2-col grid -->
 <div class="wrap">
 
-  <!-- ── LEFT: Industry Donut ── -->
   <div class="panel">
     <div class="panel-head">
       <div class="panel-title">🌐 登艦產業生態分佈</div>
@@ -375,15 +384,12 @@ body::before {
     <div class="panel-body">
       <div class="donut-layout">
 
-        <!-- donut + legend -->
         <div class="donut-row">
           <div class="donut-wrap">
             <svg id="donut-svg" viewBox="0 0 200 200" width="200" height="200"
                  style="transform:rotate(-90deg); display:block;">
-              <!-- track ring -->
               <circle cx="100" cy="100" r="70" fill="none"
                       stroke="rgba(255,255,255,0.05)" stroke-width="28"/>
-              <!-- segments injected by JS -->
             </svg>
             <div class="donut-center">
               <div class="donut-num" id="donut-num">—</div>
@@ -395,16 +401,13 @@ body::before {
           </div>
         </div>
 
-        <!-- bar breakdown -->
         <div class="bars" id="bars">
-          <!-- injected by JS -->
-        </div>
+          </div>
 
       </div>
     </div>
   </div>
 
-  <!-- ── RIGHT: Agenda ── -->
   <div class="panel">
     <div class="panel-head">
       <div class="panel-title">🗓 大會議程</div>
@@ -417,45 +420,31 @@ body::before {
     </div>
   </div>
 
-</div><!-- /wrap -->
+</div>
 
-<!-- FOOTER -->
 <footer class="ftr">
   <span id="ftr-left">SMART ARK CONTROL · 聯聖集團 © 2026</span>
   <span id="ftr-right" class="ftr-right">同步中…</span>
 </footer>
 
 <script>
-/* ══════════════════════════════════════
-   URL PARAMS (same as 活動報到系統.html)
-══════════════════════════════════════ */
 const urlParams  = new URLSearchParams(location.search);
-let   currentSheet = urlParams.get('sheet') || '';
+let    currentSheet = urlParams.get('sheet') || '';
 const currentAdmin = urlParams.get('admin') || 'admin';
 const API_BASE     = '/api';
 
-/* ══════════════════════════════════════
-   PALETTE
-══════════════════════════════════════ */
 const PALETTE = [
   '#00e5ff','#f72585','#7209b7','#4cc9f0','#3a0ca3',
   '#06d6a0','#ffd166','#ef476f','#118ab2','#a78bfa',
 ];
 
-/* ══════════════════════════════════════
-   STATE
-══════════════════════════════════════ */
-let cfg    = null;   // from /api/config
-let stats  = null;   // from /api/dashboard_stats
+let cfg    = null;   
+let stats  = null;   
 
-/* ══════════════════════════════════════
-   BOOT
-══════════════════════════════════════ */
 window.onload = async () => {
   tickClock();
   setInterval(tickClock, 1000);
 
-  // if no sheet in URL, ask server for current sheet
   if (!currentSheet) {
     try {
       const r = await fetch(`${API_BASE}/current_sheet?admin=${enc(currentAdmin)}`);
@@ -473,7 +462,6 @@ async function syncAll() {
   renderAll();
 }
 
-/* ── Config ── */
 async function loadConfig() {
   try {
     const qs = `?admin=${enc(currentAdmin)}&sheet=${enc(currentSheet)}&t=${Date.now()}`;
@@ -482,7 +470,6 @@ async function loadConfig() {
   } catch (e) { console.warn('config error', e); }
 }
 
-/* ── Dashboard stats ── */
 async function loadStats() {
   try {
     const qs = `?admin=${enc(currentAdmin)}&sheet=${enc(currentSheet)}`;
@@ -497,9 +484,6 @@ async function loadStats() {
   }
 }
 
-/* ══════════════════════════════════════
-   RENDER ALL
-══════════════════════════════════════ */
 function renderAll() {
   renderHeader();
   renderDonut();
@@ -507,7 +491,6 @@ function renderAll() {
   renderFooter();
 }
 
-/* ── Header ── */
 function renderHeader() {
   if (!cfg) return;
   const title = cfg.event_title || cfg.exp_event_title || cfg.google_sheet_name || '智慧方舟 2026';
@@ -515,7 +498,7 @@ function renderHeader() {
   const de    = cfg.event_end_date   || cfg.exp_event_date_end   || cfg.date_end   || '';
   const sub   = cfg.event_subtitle   || cfg.exp_event_subtitle   || '';
   setText('hdr-event', title);
-  setText('hdr-dates', [sub, ds && de ? `${ds} — ${de}` : (ds || de)].filter(Boolean).join('　') || 'SMART WISDOM ARK');
+  setText('hdr-dates', [sub, ds && de ? `${ds} — ${de}` : (ds || de)].filter(Boolean).join(' ') || 'SMART WISDOM ARK');
   const brand = cfg.exp_brand_name || cfg.brand_name || '聯聖集團';
   setText('ftr-left', `SMART ARK CONTROL · ${brand} © 2026`);
   if (cfg.agenda && cfg.agenda.length) {
@@ -525,14 +508,12 @@ function renderHeader() {
   }
 }
 
-/* ── Donut ── */
 function renderDonut() {
   const total = (stats?.total) ?? 0;
   setText('donut-num', total || '—');
 
-  // build industry counter from logs + industry_mappings
   const logs      = stats?.logs || [];
-  const mappings  = cfg?.industry_mappings || [];  // [{keyword, category}]
+  const mappings  = cfg?.industry_mappings || [];  
   const counter   = {};
 
   for (const log of logs) {
@@ -546,7 +527,6 @@ function renderDonut() {
     counter[cat] = (counter[cat] || 0) + 1;
   }
 
-  // fallback: checked vs unchecked
   let segs;
   if (Object.keys(counter).length > 0) {
     segs = Object.entries(counter)
@@ -580,7 +560,7 @@ function renderDonut() {
 function drawDonut(segs) {
   const svg = document.getElementById('donut-svg');
   svg.querySelectorAll('.ds').forEach(el => el.remove());
-  const C = 2 * Math.PI * 70; // circumference for r=70
+  const C = 2 * Math.PI * 70; 
   let offset = 0;
   for (const seg of segs) {
     const len = (seg.pct / 100) * C;
@@ -632,7 +612,6 @@ function drawBars(segs) {
   });
 }
 
-/* ── Timeline ── */
 function renderTimeline() {
   const tl = document.getElementById('tl-list');
   const agenda = cfg?.agenda || [];
@@ -669,23 +648,16 @@ function renderTimeline() {
   }).join('');
 }
 
-/* ── Footer ── */
 function renderFooter() {
   if (!cfg) return;
   const brand = cfg.exp_brand_name || cfg.brand_name || '聯聖集團';
   setText('ftr-left', `SMART ARK CONTROL · ${brand} © 2026`);
 }
 
-/* ══════════════════════════════════════
-   CLOCK
-══════════════════════════════════════ */
 function tickClock() {
   setText('clock', new Date().toTimeString().slice(0,8));
 }
 
-/* ══════════════════════════════════════
-   HELPERS
-══════════════════════════════════════ */
 function nowMinutes() {
   const n = new Date(); return n.getHours() * 60 + n.getMinutes();
 }
