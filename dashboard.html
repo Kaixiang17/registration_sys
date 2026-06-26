@@ -438,8 +438,13 @@ const PALETTE = [
   '#06d6a0','#ffd166','#ef476f','#118ab2','#a78bfa',
 ];
 
-let cfg    = null;   
-let stats  = null;   
+let cfg    = null;
+let stats  = null;
+let lastCheckinSignature = '';
+let lastCheckedCount = -1;
+let industryRenderedOnce = false;
+let checkinWatcher = null;
+let dashboardChannel = null;
 
 window.onload = async () => {
   tickClock();
@@ -453,14 +458,19 @@ window.onload = async () => {
     } catch {}
   }
 
-  await syncAll();
-  setInterval(syncAll, 15000);
-};
+  await loadConfig();
+  await loadStats();
 
-async function syncAll() {
-  await Promise.all([loadConfig(), loadStats()]);
-  renderAll();
-}
+  renderHeader();
+  renderTimeline();
+  renderFooter();
+  renderDonut({ force: true });
+
+  lastCheckinSignature = buildCheckinSignature(stats);
+  lastCheckedCount = getCheckedCount(stats);
+
+  setupCheckinSuccessListeners();
+};
 
 async function loadConfig() {
   try {
@@ -472,23 +482,87 @@ async function loadConfig() {
 
 async function loadStats() {
   try {
-    const qs = `?admin=${enc(currentAdmin)}&sheet=${enc(currentSheet)}`;
+    const qs = `?admin=${enc(currentAdmin)}&sheet=${enc(currentSheet)}&t=${Date.now()}`;
     const r  = await fetch(`${API_BASE}/dashboard_stats${qs}`);
     const d  = await r.json();
     if (d.success) stats = d.stats;
     setText('ftr-right', '● LIVE');
-    document.getElementById('ftr-right').style.color = '#4ade80';
+    const ftr = document.getElementById('ftr-right');
+    if (ftr) ftr.style.color = '#4ade80';
+    return true;
   } catch {
     setText('ftr-right', '● OFFLINE');
-    document.getElementById('ftr-right').style.color = '#f87171';
+    const ftr = document.getElementById('ftr-right');
+    if (ftr) ftr.style.color = '#f87171';
+    return false;
   }
 }
 
-function renderAll() {
-  renderHeader();
-  renderDonut();
-  renderTimeline();
-  renderFooter();
+function setupCheckinSuccessListeners() {
+  // 不再整頁定時刷新；只有收到報到成功事件，或偵測到報到資料變動時才重畫圓餅圖。
+  // 若報到頁之後有加入 localStorage / BroadcastChannel 通知，Dashboard 會立即更新。
+  window.addEventListener('storage', e => {
+    if (e.key === 'smartArkCheckinSuccess' || e.key === 'arkCheckinSuccess') {
+      refreshIndustryIfCheckinChanged();
+    }
+  });
+
+  if ('BroadcastChannel' in window) {
+    try {
+      dashboardChannel = new BroadcastChannel('smart-ark-dashboard');
+      dashboardChannel.onmessage = e => {
+        const type = e?.data?.type || e?.data;
+        if (type === 'checkin-success' || type === 'checked_in') {
+          refreshIndustryIfCheckinChanged();
+        }
+      };
+    } catch {}
+  }
+
+  // 跨裝置投影時，沒有瀏覽器事件可接收，所以只做「輕量變動監看」。
+  // 這裡只比對報到 signature；沒有新增報到就不重畫圖、不重排版。
+  checkinWatcher = setInterval(refreshIndustryIfCheckinChanged, 5000);
+}
+
+async function refreshIndustryIfCheckinChanged() {
+  const prevSignature = lastCheckinSignature;
+  const prevChecked = lastCheckedCount;
+
+  const ok = await loadStats();
+  if (!ok) return;
+
+  const nextSignature = buildCheckinSignature(stats);
+  const nextChecked = getCheckedCount(stats);
+
+  if (!industryRenderedOnce || nextSignature !== prevSignature || nextChecked !== prevChecked) {
+    renderDonut({ force: true });
+    renderFooter();
+    lastCheckinSignature = nextSignature;
+    lastCheckedCount = nextChecked;
+    industryRenderedOnce = true;
+  }
+}
+
+function buildCheckinSignature(s) {
+  const logs = Array.isArray(s?.logs) ? s.logs : [];
+  const checked = getCheckedCount(s);
+  const companySig = logs
+    .filter(isCheckedInLog)
+    .map(l => [
+      l.id || l.row_id || l.name || l.姓名 || '',
+      l.company || l.company_name || l['公司'] || l['所屬公司'] || l.organization || '',
+      l.status || l.checkin_status || l['報到狀態'] || '',
+      l.checkin_time || l.checked_at || l.time || l.created_at || ''
+    ].join('::'))
+    .join('|');
+  return `${checked}__${companySig}`;
+}
+
+function getCheckedCount(s) {
+  const n = Number(s?.checked_in ?? s?.checkedIn ?? s?.checked ?? NaN);
+  if (Number.isFinite(n)) return n;
+  const logs = Array.isArray(s?.logs) ? s.logs : [];
+  return logs.filter(isCheckedInLog).length;
 }
 
 function renderHeader() {
@@ -508,77 +582,123 @@ function renderHeader() {
   }
 }
 
-function renderDonut() {
-  const total = (stats?.total) ?? 0;
-  setText('donut-num', total || '—');
+function renderDonut(options = {}) {
+  const checkedTotal = getCheckedCount(stats);
+  setText('donut-num', checkedTotal || '0');
+  const lbl = document.querySelector('.donut-lbl');
+  if (lbl) lbl.textContent = '已報到領航員';
 
-  const logs      = stats?.logs || [];
-  const mappings  = cfg?.industry_mappings || [];  
-  const counter   = {};
-
-  for (const log of logs) {
-    const company = String(log.company || '');
-    let   cat     = '其他';
-    for (const m of mappings) {
-      if (m.keyword && company.includes(m.keyword.trim())) {
-        cat = m.category.trim(); break;
-      }
-    }
-    counter[cat] = (counter[cat] || 0) + 1;
-  }
-
-  let segs;
-  if (Object.keys(counter).length > 0) {
-    segs = Object.entries(counter)
-      .sort((a, b) => b[1] - a[1])
-      .map(([name, count], i) => ({
-        name, count,
-        pct: total > 0 ? +(count / total * 100).toFixed(1) : 0,
-        color: PALETTE[i % PALETTE.length],
-      }));
-  } else {
-    const checked = stats?.checked_in ?? 0;
-    const pending = total - checked;
-    segs = [
-      { name: '已報到', count: checked, pct: total > 0 ? +(checked/total*100).toFixed(1) : 0, color: '#4ade80' },
-      { name: '未報到', count: pending, pct: total > 0 ? +(pending/total*100).toFixed(1) : 0, color: '#f87171' },
-    ].filter(s => s.count > 0);
-  }
+  const segs = getCheckedIndustrySegments();
 
   if (!segs.length) {
-    document.getElementById('legend').innerHTML = '<div class="empty-state" style="padding:1rem 0;">🛰 尚無報到資料</div>';
+    drawDonut([{ name: '等待報到', count: 1, pct: 100, displayPct: 0, color: 'rgba(0,229,255,0.18)' }]);
+    document.getElementById('legend').innerHTML = '<div class="empty-state" style="padding:1rem 0;">🛰 尚無已報到產業資料</div>';
     document.getElementById('bars').innerHTML = '';
+    setText('donut-tag', '已報到產業占比');
+    industryRenderedOnce = true;
     return;
   }
 
   drawDonut(segs);
   drawLegend(segs);
   drawBars(segs);
-  setText('donut-tag', `共 ${segs.length} 個行業類別`);
+  setText('donut-tag', `已報到產業占比 · ${checkedTotal} 人`);
+  industryRenderedOnce = true;
+}
+
+function getCheckedIndustrySegments() {
+  const logs = Array.isArray(stats?.logs) ? stats.logs : [];
+  const checkedLogs = logs.filter(isCheckedInLog);
+  const counter = {};
+
+  for (const log of checkedLogs) {
+    const company = getCompanyName(log);
+    const cat = classifyCompany(company);
+    counter[cat] = (counter[cat] || 0) + 1;
+  }
+
+  // 若後端已有整理好的 industry_counts，也可以直接吃，但仍以已報到資料為主。
+  if (!Object.keys(counter).length && stats?.industry_counts && typeof stats.industry_counts === 'object') {
+    for (const [name, count] of Object.entries(stats.industry_counts)) {
+      const n = Number(count || 0);
+      if (n > 0) counter[name || '未分類'] = n;
+    }
+  }
+
+  const denominator = Object.values(counter).reduce((a, b) => a + Number(b || 0), 0);
+  if (!denominator) return [];
+
+  return Object.entries(counter)
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, count], i) => {
+      const pct = +(Number(count) / denominator * 100).toFixed(1);
+      return {
+        name,
+        count: Number(count),
+        pct,
+        displayPct: pct,
+        color: PALETTE[i % PALETTE.length],
+      };
+    });
+}
+
+function isCheckedInLog(log) {
+  const status = String(log?.status ?? log?.checkin_status ?? log?.['報到狀態'] ?? '').trim();
+  if (!status) {
+    // dashboard_stats.logs 多數情況本身就是報到紀錄；沒有 status 時視為已報到 log。
+    return true;
+  }
+  return ['checked_in', '已報到', '替代', 'success', 'done', '完成報到'].includes(status);
+}
+
+function getCompanyName(log) {
+  return String(
+    log?.company ||
+    log?.company_name ||
+    log?.organization ||
+    log?.org ||
+    log?.['公司'] ||
+    log?.['所屬公司'] ||
+    log?.['單位'] ||
+    ''
+  ).trim();
+}
+
+function classifyCompany(company) {
+  const text = String(company || '').trim();
+  const mappings = Array.isArray(cfg?.industry_mappings) ? cfg.industry_mappings : [];
+
+  for (const m of mappings) {
+    const keyword = String(m.keyword || m.key || m.company_keyword || '').trim();
+    const category = String(m.category || m.industry || m.name || '').trim();
+    if (keyword && category && text.includes(keyword)) return category;
+  }
+
+  return text ? '未分類' : '未分類';
 }
 
 function drawDonut(segs) {
   const svg = document.getElementById('donut-svg');
   svg.querySelectorAll('.ds').forEach(el => el.remove());
-  const C = 2 * Math.PI * 70; 
+
+  const C = 2 * Math.PI * 70;
+  const totalCount = segs.reduce((sum, seg) => sum + Number(seg.count || 0), 0) || 1;
   let offset = 0;
+
   for (const seg of segs) {
-    const len = (seg.pct / 100) * C;
+    const len = (Number(seg.count || 0) / totalCount) * C;
     const el  = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     el.setAttribute('class', 'ds');
-    el.setAttribute('cx', '100'); el.setAttribute('cy', '100'); el.setAttribute('r', '70');
+    el.setAttribute('cx', '100');
+    el.setAttribute('cy', '100');
+    el.setAttribute('r', '70');
     el.setAttribute('fill', 'none');
     el.setAttribute('stroke', seg.color);
     el.setAttribute('stroke-width', '28');
-    el.setAttribute('stroke-dasharray', `0 ${C}`);
+    el.setAttribute('stroke-linecap', 'butt');
+    el.setAttribute('stroke-dasharray', `${len} ${C - len}`);
     el.setAttribute('stroke-dashoffset', String(-offset));
     svg.appendChild(el);
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        el.style.transition = 'stroke-dasharray 1s cubic-bezier(.4,0,.2,1)';
-        el.setAttribute('stroke-dasharray', `${len} ${C - len}`);
-      }, 80);
-    });
     offset += len;
   }
 }
@@ -588,7 +708,7 @@ function drawLegend(segs) {
     <div class="leg">
       <div class="leg-dot" style="background:${s.color};"></div>
       <div class="leg-name">${esc(s.name)}</div>
-      <div class="leg-num">${s.count}人</div>
+      <div class="leg-num">${formatPct(s.displayPct ?? s.pct)}%</div>
     </div>
   `).join('');
 }
@@ -598,18 +718,13 @@ function drawBars(segs) {
     <div class="bar-row">
       <div class="bar-meta">
         <span class="bar-name" style="color:${s.color}">${esc(s.name)}</span>
-        <span class="bar-pct">${s.pct}%</span>
+        <span class="bar-pct">${formatPct(s.displayPct ?? s.pct)}%</span>
       </div>
       <div class="bar-track">
-        <div class="bar-fill" data-w="${s.pct}" style="background:${s.color};"></div>
+        <div class="bar-fill" style="width:${Number(s.pct || 0)}%; background:${s.color};"></div>
       </div>
     </div>
   `).join('');
-  requestAnimationFrame(() => {
-    document.querySelectorAll('.bar-fill').forEach(b => {
-      setTimeout(() => { b.style.width = b.dataset.w + '%'; }, 100);
-    });
-  });
 }
 
 function renderTimeline() {
@@ -651,7 +766,11 @@ function renderTimeline() {
 function renderFooter() {
   if (!cfg) return;
   const brand = cfg.exp_brand_name || cfg.brand_name || '聯聖集團';
+  const checked = getCheckedCount(stats);
   setText('ftr-left', `SMART ARK CONTROL · ${brand} © 2026`);
+  setText('ftr-right', `● LIVE · 已報到 ${checked} 人`);
+  const ftr = document.getElementById('ftr-right');
+  if (ftr) ftr.style.color = '#4ade80';
 }
 
 function tickClock() {
@@ -674,6 +793,10 @@ function esc(v) {
     ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 }
 function enc(v) { return encodeURIComponent(v); }
+function formatPct(v) {
+  const n = Number(v || 0);
+  return Number.isInteger(n) ? String(n) : n.toFixed(1).replace(/\.0$/, '');
+}
 </script>
 </body>
 </html>
