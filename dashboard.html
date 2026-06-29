@@ -385,8 +385,8 @@ body::after {
                     stroke="rgba(255,255,255,0.05)" stroke-width="32"/>
           </svg>
           <div class="donut-center">
-            <div class="donut-num" id="donut-num">—</div>
-            <div class="donut-lbl">到場率</div>
+            <div class="donut-num" id="donut-num" style="font-size:1.4rem;line-height:1.2"></div>
+            <div class="donut-lbl" id="donut-lbl"></div>
           </div>
         </div>
         <div class="legend" id="legend">
@@ -481,8 +481,11 @@ async function poll() {
     // fingerprint = total + checked_in
     const fingerprint = (s.total ?? 0) * 100000 + (s.checked_in ?? 0);
 
-    const rate = s.total > 0 ? Math.round((s.checked_in ?? 0) / s.total * 100) : 0;
-    setText('donut-num', s.total > 0 ? rate + '%' : '—');
+    
+    const checked = s.checked_in ?? 0;
+    const tot = s.total ?? 0;
+    setText('donut-num', tot > 0 ? checked + ' / ' + tot : '—');
+    setText('donut-lbl', tot > 0 ? '人已報到' : '');
 
     if (fingerprint !== lastCheckCount) {
       lastCheckCount = fingerprint;
