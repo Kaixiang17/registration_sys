@@ -602,11 +602,9 @@
         }
 
         async function submitAddRegistration() {
+            // 不強制同意，portrait_consent 狀態隨 checkbox 值傳送
             const consentTemp = document.getElementById('portraitConsentTemp');
-            if (consentTemp && !consentTemp.checked) {
-                openPortraitConsentModal();
-                return;
-            }
+            const portraitConsentValue = consentTemp ? consentTemp.checked : false;
             const data = {
                 name: document.getElementById('addName').value.trim(),
                 phone: document.getElementById('addPhone').value.trim(),
@@ -856,7 +854,8 @@
             closePortraitConsentModal();
         }
         function disagreePortraitConsent() {
-            // 不同意：取消勾選並關閉 modal
+            // 不同意：記錄不同意狀態，關閉 modal，不阻擋報到
+            window.portraitConsentDeclined = true;
             const cb = document.getElementById('portraitConsent');
             if (cb) { cb.checked = false; checkMealReady(); }
             const cbTemp = document.getElementById('portraitConsentTemp');
@@ -943,8 +942,9 @@
         async function submitCheckin(autoMeal) {
             const meal = autoMeal || window.selectedMeal;
             const consentEl = document.getElementById('portraitConsent');
+            // 不同意也可以繼續，portrait_consent 傳 false 讓後台記錄
             const portraitConsent = consentEl ? consentEl.checked : true;
-            if (!portraitConsent) { alert('請先閱讀並同意活動拍攝與肖像使用授權條款'); return; }
+            // 移除原本的 if (!portraitConsent) return 阻擋邏輯
             const proxyInfo = window.isOriginal ? {} : {
                 name: document.getElementById('proxyName').value.trim(),
                 phone: document.getElementById('proxyPhone').value.trim()
