@@ -837,9 +837,8 @@
 
         function checkMealReady() {
             const finalBtn = document.getElementById('finalBtn');
-            const consent = document.getElementById('portraitConsent');
-            const hasConsent = consent ? consent.checked : false;
-            finalBtn.disabled = !(window.selectedMeal && hasConsent);
+            // 條款同意與否不阻擋報到，只需選餐即可送出
+            finalBtn.disabled = !window.selectedMeal;
         }
 
         function openPortraitConsentModal() {
