@@ -372,7 +372,14 @@
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <div class="portrait-consent-box" style="margin-bottom:1.5rem;">
+                    <label class="portrait-consent-check" onclick="event.preventDefault(); openPortraitConsentModal();" style="cursor:pointer;">
+                        <input type="checkbox" id="portraitConsentTemp" onclick="event.stopPropagation();">
+                        <span>我已閱讀並同意活動拍攝與肖像使用授權條款</span>
+                    </label>
+                    <button type="button" class="portrait-consent-link" onclick="openPortraitConsentModal()">📄 查看完整條款（含不同意選項）</button>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 0;">
                     <button class="ck-btn ck-btn-warn" onclick="submitAddRegistration()" style="margin-top:0;">✓ 確認外加報到</button>
                     <button class="ck-btn ck-btn-ghost" onclick="hideTempSection()" style="margin-top:0;">取消</button>
                 </div>
@@ -479,6 +486,28 @@
         </div>
     </main>
 
+    <!-- 肖像授權條款 Modal -->
+    <div id="portraitConsentModal" class="portrait-consent-modal">
+        <div class="portrait-consent-card">
+            <button class="portrait-consent-close" onclick="closePortraitConsentModal()">✕</button>
+            <h3>📸 活動拍攝與肖像使用授權條款</h3>
+            <p>本人同意主辦單位（以下簡稱「主辦方」）於本次活動期間，對本人進行拍攝、錄影及錄音，並授權主辦方將相關影像、照片及聲音（以下簡稱「影像資料」）用於以下用途：</p>
+            <p><strong style="color:#00e5ff;">一、授權使用範圍</strong><br>
+            活動紀錄與存檔、官方網站、社群媒體（Facebook、Instagram、YouTube 等）、宣傳素材、新聞稿及媒體發布、內部教育訓練及企業簡報。</p>
+            <p><strong style="color:#00e5ff;">二、授權期間</strong><br>
+            本授權自本人簽署同意起，永久有效，且不限地域範圍。</p>
+            <p><strong style="color:#00e5ff;">三、免責聲明</strong><br>
+            主辦方保證影像資料之使用不涉及任何誹謗、損害本人名譽或違法之行為。如有任何疑慮，請於報到前向工作人員提出。</p>
+            <p><strong style="color:#00e5ff;">四、不同意之處理</strong><br>
+            若本人不同意上述條款，請告知現場工作人員，主辦方將盡力安排避免拍攝，但仍可正常參與活動。</p>
+            <p style="color: rgba(255,255,255,0.5); font-size: 0.82rem; margin-top: 1rem;">如對本條款有任何疑問，請洽詢現場工作人員或主辦方聯絡窗口。</p>
+            <div style="display:flex; gap:1rem; margin-top:1.5rem;">
+                <button class="ck-btn ck-btn-confirm" style="font-size:0.95rem;" onclick="agreePortraitConsent()">✓ 我已閱讀並同意</button>
+                <button class="ck-btn ck-btn-ghost" style="font-size:0.95rem;" onclick="disagreePortraitConsent()">✕ 不同意</button>
+            </div>
+        </div>
+    </div>
+
     <div id="mapModal" class="state-hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
         <div style="position: relative; width: 90%; height: 85vh; max-width: 1200px; display: flex; flex-direction: column;">
             <button onclick="toggleMapModal(false)" style="align-self: flex-end; margin-bottom: 12px; background: #00e5ff; color: #000; border: none; padding: 10px 24px; border-radius: 30px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 15px rgba(0,229,255,0.3); transition: 0.2s;">✕ 關 閉 地 圖</button>
@@ -573,6 +602,11 @@
         }
 
         async function submitAddRegistration() {
+            const consentTemp = document.getElementById('portraitConsentTemp');
+            if (consentTemp && !consentTemp.checked) {
+                openPortraitConsentModal();
+                return;
+            }
             const data = {
                 name: document.getElementById('addName').value.trim(),
                 phone: document.getElementById('addPhone').value.trim(),
@@ -648,18 +682,42 @@
                 const res = await fetch(`${API_BASE}/search/${searchMethod}?${searchMethod}=${encodeURIComponent(val)}&admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
                 const json = await res.json();
                 if (json.data && json.data.length > 0) {
-                    if (searchMethod === 'company') renderUserList(json.data, '請 選 擇 旅 客');
+                    if (searchMethod === 'company') {
+                        const first = json.data[0];
+                        const looksLikePassengerRows = (typeof first === 'object' && first !== null) && (
+                            'id' in first || 'phone' in first || 'email' in first || 'seat' in first || 'status' in first ||
+                            ('name' in first && ('company' in first || '公司' in first || '公司名稱' in first))
+                        );
+
+                        if (looksLikePassengerRows) {
+                            if (json.data.length === 1) {
+                                const u = json.data[0];
+                                if (u.status === 'checked_in' || u.status === '已報到' || u.status === '替代') {
+                                    selectedUser = u;
+                                    renderArkTerminalFromUser(u);
+                                    setAppState('success');
+                                    return;
+                                }
+                                selectedUser = u;
+                                renderMealOptions();
+                            } else {
+                                renderUserList(json.data, `請 選 擇 ${val} 的 旅 客`);
+                            }
+                        } else {
+                            renderCompanyList(json.data);
+                        }
+                    }
                     else if (json.data.length === 1) { 
-        const u = json.data[0];
-        if (u.status === 'checked_in' || u.status === '已報到' || u.status === '替代') {
-            selectedUser = u;
-            renderArkTerminalFromUser(u);
-            setAppState('success');
-            return;
-        }
-        selectedUser = u; 
-        renderMealOptions(); 
-    }
+                        const u = json.data[0];
+                        if (u.status === 'checked_in' || u.status === '已報到' || u.status === '替代') {
+                            selectedUser = u;
+                            renderArkTerminalFromUser(u);
+                            setAppState('success');
+                            return;
+                        }
+                        selectedUser = u; 
+                        renderMealOptions(); 
+                    }
                     else { window.tempData = json.data; renderUserList(json.data, '搜尋結果'); }
                 } else {
                     document.getElementById('addName').value = '';
@@ -685,7 +743,7 @@
             companies.forEach(c => {
                 // c 可能是字串或物件，統一取名稱
                 const companyName = (typeof c === 'object' && c !== null)
-                    ? (c.name || c['公司'] || c['company'] || c['公司名稱'] || JSON.stringify(c))
+                    ? (c.company || c['公司'] || c['公司名稱'] || c.name || JSON.stringify(c))
                     : String(c);
                 const div = document.createElement('div'); div.className = 'group-item';
                 div.innerHTML = `<span>🏢 ${escapeHtml(companyName)}</span><span style="color: var(--text-dark)">➔</span>`;
@@ -708,7 +766,9 @@
                 const div = document.createElement('div'); div.className = 'group-item';
                 const isRegistered = (u.status === 'checked_in' || u.status === '已報到' || u.status === '替代');
                 const statusTag = isRegistered ? '<span style="color:#f87171; font-weight:bold;">[已報到]</span>' : '<span style="color: var(--text-dark)">➔</span>';
-                div.innerHTML = `<div><div style="font-weight:bold; font-size:1.15rem; color:#fff;">${u.name}</div><div style="font-size:0.85rem; color:#8fa0b0; margin-top:0.2rem;">${u.company}</div></div>${statusTag}`;
+                const userName = escapeHtml(u.name || u['姓名'] || '未命名旅客');
+                const userCompany = escapeHtml(u.company || u['公司'] || u['公司名稱'] || '');
+                div.innerHTML = `<div><div style="font-weight:bold; font-size:1.15rem; color:#fff;">${userName}</div><div style="font-size:0.85rem; color:#8fa0b0; margin-top:0.2rem;">${userCompany}</div></div>${statusTag}`;
                 div.onclick = () => {
                     if (isRegistered) {
                         selectedUser = u;
@@ -749,11 +809,11 @@
                     <div class="verify-card cyber-card meal-opt" onclick="selectMeal(this, '不需餐食')" style="padding:1.2rem 0.5rem; font-weight:bold;">❌ 不需餐食</div>
                 </div>
                 <div class="portrait-consent-box">
-                    <label class="portrait-consent-check">
-                        <input type="checkbox" id="portraitConsent" onchange="checkMealReady()">
+                    <label class="portrait-consent-check" onclick="event.preventDefault(); openPortraitConsentModal();" style="cursor:pointer;">
+                        <input type="checkbox" id="portraitConsent" onchange="checkMealReady()" onclick="event.stopPropagation();">
                         <span>我已閱讀並同意活動拍攝與肖像使用授權條款</span>
                     </label>
-                    <button type="button" class="portrait-consent-link" onclick="openPortraitConsentModal()">查看完整條款</button>
+                    <button type="button" class="portrait-consent-link" onclick="openPortraitConsentModal()">📄 查看完整條款（含不同意選項）</button>
                 </div>
             `;
             window.selectedMeal = null; window.isOriginal = true;
@@ -782,8 +842,28 @@
             finalBtn.disabled = !(window.selectedMeal && hasConsent);
         }
 
-        function openPortraitConsentModal() { document.getElementById('portraitConsentModal')?.classList.add('active'); }
-        function closePortraitConsentModal() { document.getElementById('portraitConsentModal')?.classList.remove('active'); }
+        function openPortraitConsentModal() {
+            document.getElementById('portraitConsentModal').classList.add('active');
+        }
+        function closePortraitConsentModal() {
+            document.getElementById('portraitConsentModal').classList.remove('active');
+        }
+        function agreePortraitConsent() {
+            // 同意：勾選所有報到流程的 checkbox 並關閉 modal
+            const cb = document.getElementById('portraitConsent');
+            if (cb) { cb.checked = true; checkMealReady(); }
+            const cbTemp = document.getElementById('portraitConsentTemp');
+            if (cbTemp) { cbTemp.checked = true; }
+            closePortraitConsentModal();
+        }
+        function disagreePortraitConsent() {
+            // 不同意：取消勾選並關閉 modal
+            const cb = document.getElementById('portraitConsent');
+            if (cb) { cb.checked = false; checkMealReady(); }
+            const cbTemp = document.getElementById('portraitConsentTemp');
+            if (cbTemp) { cbTemp.checked = false; }
+            closePortraitConsentModal();
+        }
 
         function escapeHtml(value) {
             return String(value ?? '').replace(/[&<>"']/g, function(ch) {
