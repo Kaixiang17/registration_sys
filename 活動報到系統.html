@@ -648,7 +648,7 @@
                 const res = await fetch(`${API_BASE}/search/${searchMethod}?${searchMethod}=${encodeURIComponent(val)}&admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
                 const json = await res.json();
                 if (json.data && json.data.length > 0) {
-                    if (searchMethod === 'company') renderCompanyList(json.data);
+                    if (searchMethod === 'company') renderUserList(json.data, '請 選 擇 旅 客');
                     else if (json.data.length === 1) { 
         const u = json.data[0];
         if (u.status === 'checked_in' || u.status === '已報到' || u.status === '替代') {
