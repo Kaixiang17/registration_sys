@@ -198,6 +198,9 @@ def ensure_core_tables(conn, force=False):
                 checkin_time DATETIME NULL,
                 proxy_name VARCHAR(150),
                 proxy_phone VARCHAR(50),
+                portrait_consent TINYINT(1) DEFAULT NULL,
+                portrait_consent_status VARCHAR(20),
+                portrait_consent_time DATETIME NULL,
                 note TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 INDEX idx_registration_event (admin_user, event_key),
@@ -249,6 +252,9 @@ def ensure_core_tables(conn, force=False):
                 'checkin_time': 'DATETIME NULL',
                 'proxy_name': 'VARCHAR(150)',
                 'proxy_phone': 'VARCHAR(50)',
+                'portrait_consent': 'TINYINT(1) DEFAULT NULL',
+                'portrait_consent_status': 'VARCHAR(20)',
+                'portrait_consent_time': 'DATETIME NULL',
                 'note': 'TEXT'
             }
         }
@@ -702,9 +708,13 @@ def checkin(pid):
     admin_user, event_key = get_admin_and_event_context()
     data = request.json or {}
     conn = get_db_connection()
+
     try:
         with conn.cursor() as cursor:
-            cursor.execute("SELECT * FROM event_registrations WHERE id = %s AND admin_user = %s AND event_key = %s", (pid, admin_user, event_key))
+            cursor.execute(
+                "SELECT * FROM event_registrations WHERE id = %s AND admin_user = %s AND event_key = %s",
+                (pid, admin_user, event_key)
+            )
             user = cursor.fetchone()
             
             if not user:
@@ -717,25 +727,26 @@ def checkin(pid):
                     "seat": user['seating_chart'],
                     "meal": user['meal_choice'],
                     "original_meal": user.get('original_meal_choice', user['meal_choice']),
-                    "checkedInAt": user['checkin_time'].strftime('%H:%M:%S') if user['checkin_time'] else ""
+                    "checkedInAt": user['checkin_time'].strftime('%H:%M:%S') if user['checkin_time'] else "",
+                    "portrait_consent": bool(user.get('portrait_consent')) if user.get('portrait_consent') is not None else None,
+                    "portrait_consent_status": user.get('portrait_consent_status') or ""
                 }}), 200
             
             is_original = data.get('is_original', True)
             meal_choice = user['meal_choice'] if is_original else data.get('meal', user['meal_choice'])
             status_val = 'checked_in' if is_original else '替代'
-            
             original_meal = user.get('original_meal_choice', user['meal_choice'])
             
             proxy_info = data.get('proxy_info') or {}
             proxy_name = _clean_str(proxy_info.get('name')).strip()
             proxy_phone = _clean_str(proxy_info.get('phone')).strip()
+
             portrait_consent = bool(data.get('portrait_consent', False))
             portrait_consent_status = _clean_str(data.get('portrait_consent_status')).strip()
-
             if portrait_consent_status not in ['同意', '不同意']:
                 portrait_consent_status = '同意' if portrait_consent else '不同意'
 
-            portrait_consent_time = datetime.now()
+            now = datetime.now()
             cursor.execute(
                 """
                 UPDATE event_registrations
@@ -744,13 +755,26 @@ def checkin(pid):
                     meal_choice = %s,
                     original_meal_choice = %s,
                     proxy_name = %s,
-                    proxy_phone = %s
+                    proxy_phone = %s,
+                    portrait_consent = %s,
+                    portrait_consent_status = %s,
+                    portrait_consent_time = %s
                 WHERE id = %s AND admin_user = %s AND event_key = %s
                 """,
-                (datetime.now(), status_val, meal_choice, original_meal,
-                 proxy_name if not is_original else None,
-                 proxy_phone if not is_original else None,
-                 pid, admin_user, event_key)
+                (
+                    now,
+                    status_val,
+                    meal_choice,
+                    original_meal,
+                    proxy_name if not is_original else None,
+                    proxy_phone if not is_original else None,
+                    1 if portrait_consent else 0,
+                    portrait_consent_status,
+                    now,
+                    pid,
+                    admin_user,
+                    event_key
+                )
             )
             conn.commit()
             
@@ -760,9 +784,12 @@ def checkin(pid):
                 "seat": user['seating_chart'],
                 "meal": meal_choice,
                 "original_meal": original_meal,
-                "checkedInAt": datetime.now().strftime('%H:%M:%S')
+                "checkedInAt": now.strftime('%H:%M:%S'),
+                "portrait_consent": portrait_consent,
+                "portrait_consent_status": portrait_consent_status
             }})
     except Exception as e:
+        conn.rollback()
         print(f"❌ [報到失敗]: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
     finally:
@@ -1005,21 +1032,70 @@ def api_table_group_detail():
 
 
 @app.route('/api/registrations/add', methods=['POST'])
-
 def add_registration():
-    if not session.get('admin_logged_in'): return jsonify({"success": False, "message": "未授權"}), 403
+    if not session.get('admin_logged_in'):
+        return jsonify({"success": False, "message": "未授權"}), 403
+
     admin_user, event_key = get_admin_and_event_context()
-    data = request.json
+    data = request.json or {}
     conn = get_db_connection()
+
     try:
         meal = data.get('meal', '未選擇')
+        portrait_consent = bool(data.get('portrait_consent', False))
+        portrait_consent_status = _clean_str(data.get('portrait_consent_status')).strip()
+        if portrait_consent_status not in ['同意', '不同意']:
+            portrait_consent_status = '同意' if portrait_consent else '不同意'
+
+        now = datetime.now()
         with conn.cursor() as cursor:
-            sql = """INSERT INTO event_registrations (admin_user, event_key, name, phone, company_name, seating_chart, status, checkin_time, meal_choice, original_meal_choice, note) 
-                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
-            cursor.execute(sql, (admin_user, event_key, data.get('name'), data.get('phone'), data.get('company'), data.get('seat', '現場安排'), '已報到', datetime.now(), meal, meal, '現場臨時報到'))
+            sql = """
+                INSERT INTO event_registrations (
+                    admin_user,
+                    event_key,
+                    name,
+                    phone,
+                    company_name,
+                    seating_chart,
+                    status,
+                    checkin_time,
+                    meal_choice,
+                    original_meal_choice,
+                    portrait_consent,
+                    portrait_consent_status,
+                    portrait_consent_time,
+                    note
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(sql, (
+                admin_user,
+                event_key,
+                data.get('name'),
+                data.get('phone'),
+                data.get('company'),
+                data.get('seat', '現場安排'),
+                '已報到',
+                now,
+                meal,
+                meal,
+                1 if portrait_consent else 0,
+                portrait_consent_status,
+                now,
+                '現場臨時報到'
+            ))
         conn.commit()
-        return jsonify({"success": True})
-    finally: conn.close()
+        return jsonify({
+            "success": True,
+            "portrait_consent": portrait_consent,
+            "portrait_consent_status": portrait_consent_status
+        })
+    except Exception as e:
+        conn.rollback()
+        print(f"❌ [外加報到失敗]: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        conn.close()
 
 
 
@@ -1746,6 +1822,9 @@ def export_csv():
                 "substitute_email",
                 "proxy_name",
                 "proxy_phone",
+                "portrait_consent",
+                "portrait_consent_status",
+                "portrait_consent_time",
                 "note",
                 "created_at",
                 "updated_at"
@@ -1797,6 +1876,9 @@ def export_csv():
             "替代人Email",
             "代理人姓名",
             "代理人電話",
+            "肖像授權",
+            "肖像授權狀態",
+            "肖像授權時間",
             "備註",
             "建立時間",
             "更新時間"
@@ -1834,6 +1916,9 @@ def export_csv():
                 r.get("substitute_email", ""),
                 proxy_name,
                 r.get("proxy_phone", ""),
+                "同意" if r.get("portrait_consent") in [1, True, "1"] else ("不同意" if r.get("portrait_consent") in [0, False, "0"] else ""),
+                r.get("portrait_consent_status", ""),
+                fmt_dt(r.get("portrait_consent_time")),
                 r.get("note", ""),
                 fmt_dt(r.get("created_at")),
                 fmt_dt(r.get("updated_at"))
