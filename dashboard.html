@@ -519,11 +519,12 @@ function buildDonut(logs, total) {
     if (pk) counter['未報到'] = pk;
   }
 
+  const logTotal = Object.values(counter).reduce((a,b) => a+b, 0) || 1;
   const segs = Object.entries(counter)
     .sort((a,b) => b[1]-a[1])
     .map(([name, count], i) => ({
       name, count,
-      pct: total > 0 ? +(count/total*100).toFixed(1) : 0,
+      pct: +(count/logTotal*100).toFixed(1),
       color: PALETTE[i % PALETTE.length],
     }));
 
