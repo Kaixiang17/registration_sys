@@ -650,13 +650,16 @@
                 if (json.data && json.data.length > 0) {
                     if (searchMethod === 'company') renderCompanyList(json.data);
                     else if (json.data.length === 1) { 
-                        const u = json.data[0];
-                        if (u.status === 'checked_in' || u.status === '已報到' || u.status === '替代') {
-                            alert('🛬 旅客已完成登機報到手續！'); return;
-                        }
-                        selectedUser = u; 
-                        renderMealOptions(); 
-                    }
+        const u = json.data[0];
+        if (u.status === 'checked_in' || u.status === '已報到' || u.status === '替代') {
+            selectedUser = u;
+            renderArkTerminalFromUser(u);
+            setAppState('success');
+            return;
+        }
+        selectedUser = u; 
+        renderMealOptions(); 
+    }
                     else { window.tempData = json.data; renderUserList(json.data, '搜尋結果'); }
                 } else {
                     document.getElementById('addName').value = '';
