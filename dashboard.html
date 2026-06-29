@@ -484,8 +484,8 @@ async function poll() {
     
     const checked = s.checked_in ?? 0;
     const tot = s.total ?? 0;
-    setText('donut-num', tot > 0 ? checked + ' / ' + tot : '—');
-    setText('donut-lbl', tot > 0 ? '人已報到' : '');
+    setText('donut-num', checked > 0 ? '100%' : '—');
+    setText('donut-lbl', checked > 0 ? '已報到' : '');
 
     if (fingerprint !== lastCheckCount) {
       lastCheckCount = fingerprint;
