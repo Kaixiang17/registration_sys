@@ -386,7 +386,7 @@ body::after {
           </svg>
           <div class="donut-center">
             <div class="donut-num" id="donut-num">—</div>
-            <div class="donut-lbl">共戰領航員</div>
+            <div class="donut-lbl">到場率</div>
           </div>
         </div>
         <div class="legend" id="legend">
@@ -481,7 +481,8 @@ async function poll() {
     // fingerprint = total + checked_in
     const fingerprint = (s.total ?? 0) * 100000 + (s.checked_in ?? 0);
 
-    setText('donut-num', s.total ?? '—');
+    const rate = s.total > 0 ? Math.round((s.checked_in ?? 0) / s.total * 100) : 0;
+    setText('donut-num', s.total > 0 ? rate + '%' : '—');
 
     if (fingerprint !== lastCheckCount) {
       lastCheckCount = fingerprint;
@@ -511,13 +512,6 @@ function buildDonut(logs, total) {
     counter[cat] = (counter[cat] || 0) + 1;
   }
 
-  // fallback if no mappings
-  if (!Object.keys(counter).length) {
-    const ck = logs.filter(l => ['checked_in','已報到','替代'].includes(l.status)).length;
-    const pk = Math.max(0, total - ck);
-    if (ck) counter['已報到'] = ck;
-    if (pk) counter['未報到'] = pk;
-  }
 
   const logTotal = Object.values(counter).reduce((a,b) => a+b, 0) || 1;
   const segs = Object.entries(counter)
@@ -560,7 +554,7 @@ function drawDonut(segs, total) {
 function drawLegend(segs) {
   const el = document.getElementById('legend');
   if (!segs.length) {
-    el.innerHTML = '<div class="empty-msg" style="padding:.5rem 0">🛰 尚無產業資料</div>';
+    el.innerHTML = '<div class="empty-msg" style="padding:.5rem 0">⚙️ 請至後台設定行業分類對照表</div>';
     return;
   }
   el.innerHTML = segs.map(s => `
