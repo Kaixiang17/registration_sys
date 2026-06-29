@@ -377,7 +377,7 @@
                         <input type="checkbox" id="portraitConsentTemp" onclick="event.stopPropagation();">
                         <span>我已閱讀並同意活動拍攝與肖像使用授權條款</span>
                     </label>
-                    <button type="button" class="portrait-consent-link" onclick="openPortraitConsentModal()">📄 查看完整條款（含不同意選項）</button>
+                    <button type="button" class="portrait-consent-link" onclick="openPortraitConsentModal()">📄 查看完整條款 / 選擇不同意</button>
                 </div>
                 <div style="display: flex; gap: 1rem; margin-top: 0;">
                     <button class="ck-btn ck-btn-warn" onclick="submitAddRegistration()" style="margin-top:0;">✓ 確認外加報到</button>
@@ -611,6 +611,7 @@
                 company: document.getElementById('addCompany').value.trim(),
                 seat: document.getElementById('addSeat').value.trim() || '現場安排',
                 meal: window.selectedTempMealChoice,
+                portrait_consent: portraitConsentValue,
                 admin: currentAdmin,
                 sheet: currentSheet
             };
@@ -811,7 +812,7 @@
                         <input type="checkbox" id="portraitConsent" onchange="checkMealReady()" onclick="event.stopPropagation();">
                         <span>我已閱讀並同意活動拍攝與肖像使用授權條款</span>
                     </label>
-                    <button type="button" class="portrait-consent-link" onclick="openPortraitConsentModal()">📄 查看完整條款（含不同意選項）</button>
+                    <button type="button" class="portrait-consent-link" onclick="openPortraitConsentModal()">📄 查看完整條款 / 選擇不同意</button>
                 </div>
             `;
             window.selectedMeal = null; window.isOriginal = true;
