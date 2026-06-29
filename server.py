@@ -700,7 +700,7 @@ def search(method):
 @app.route('/api/checkin/<pid>', methods=['POST'])
 def checkin(pid):
     admin_user, event_key = get_admin_and_event_context()
-    data = request.json
+    data = request.json or {}
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
@@ -729,6 +729,13 @@ def checkin(pid):
             proxy_info = data.get('proxy_info') or {}
             proxy_name = _clean_str(proxy_info.get('name')).strip()
             proxy_phone = _clean_str(proxy_info.get('phone')).strip()
+            portrait_consent = bool(data.get('portrait_consent', False))
+            portrait_consent_status = _clean_str(data.get('portrait_consent_status')).strip()
+
+            if portrait_consent_status not in ['同意', '不同意']:
+                portrait_consent_status = '同意' if portrait_consent else '不同意'
+
+            portrait_consent_time = datetime.now()
             cursor.execute(
                 """
                 UPDATE event_registrations
