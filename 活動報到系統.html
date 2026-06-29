@@ -710,7 +710,11 @@
                 const statusTag = isRegistered ? '<span style="color:#f87171; font-weight:bold;">[已報到]</span>' : '<span style="color: var(--text-dark)">➔</span>';
                 div.innerHTML = `<div><div style="font-weight:bold; font-size:1.15rem; color:#fff;">${u.name}</div><div style="font-size:0.85rem; color:#8fa0b0; margin-top:0.2rem;">${u.company}</div></div>${statusTag}`;
                 div.onclick = () => {
-                    if (isRegistered) { alert('🛬 旅客已完成登機報到手續！'); } 
+                    if (isRegistered) {
+                        selectedUser = u;
+                        renderArkTerminalFromUser(u);
+                        setAppState('success');
+                    } 
                     else { selectedUser = u; renderMealOptions(); }
                 };
                 list.appendChild(div);
@@ -814,6 +818,23 @@
                     <div class="ark-meta-value">${seat}｜${mealText}</div>
                 </div>
             `;
+        }
+
+        // 已報到者直接跳終端機畫面（不重新打 check-in API）
+        function renderArkTerminalFromUser(user) {
+            if (!systemConfig) {
+                // 如果 config 還沒載入，先載入再顯示
+                fetch(`${API_BASE}/config?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`)
+                    .then(r => r.json())
+                    .then(cfg => { 
+                        systemConfig = cfg; 
+                        renderArkTerminal(user, user.meal || ''); 
+                    })
+                    .catch(() => renderArkTerminal(user, user.meal || ''));
+                return;
+            }
+
+            renderArkTerminal(user, user.meal || '');
         }
 
         function openArkMap() { if (typeof toggleMapModal === 'function') return toggleMapModal(true); alert('✨ 產業星圖正由方舟中樞更新載入中。'); }
