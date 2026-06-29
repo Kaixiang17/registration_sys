@@ -679,16 +679,20 @@
             } catch(e) { alert('通訊矩陣連線中斷'); }
         }   
 
-        function renderCompanyList(companies) {
+         function renderCompanyList(companies) {
             const list = document.getElementById('groupList');
             list.innerHTML = '';
             companies.forEach(c => {
+                // c 可能是字串或物件，統一取名稱
+                const companyName = (typeof c === 'object' && c !== null)
+                    ? (c.name || c['公司'] || c['company'] || c['公司名稱'] || JSON.stringify(c))
+                    : String(c);
                 const div = document.createElement('div'); div.className = 'group-item';
-                div.innerHTML = `<span>🏢 ${c}</span><span style="color: var(--text-dark)">➔</span>`;
+                div.innerHTML = `<span>🏢 ${escapeHtml(companyName)}</span><span style="color: var(--text-dark)">➔</span>`;
                 div.onclick = async () => {
                     try {
-                        const res = await fetch(`${API_BASE}/search/company_members?name=${encodeURIComponent(c)}&admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
-                        const json = await res.json(); renderUserList(json.data, c);
+                        const res = await fetch(`${API_BASE}/search/company_members?name=${encodeURIComponent(companyName)}&admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
+                        const json = await res.json(); renderUserList(json.data, companyName);
                     } catch(e) { alert('無法讀取數據結構'); }
                 };
                 list.appendChild(div);
