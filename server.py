@@ -711,7 +711,14 @@ def handle_config():
             return jsonify({"success": True, "message": "設定儲存成功"})
 
         config_data = {
-            "show_meal_options": True, "google_sheet_name": event_key, "map_image_url": "", "banner_image_url": "", "products": [],
+            "show_meal_options": True,
+            "google_sheet_name": event_key,
+            "map_image_url": "",
+            "banner_image_url": "",
+            "products": [],
+            # 給投影 Dashboard 使用：公司名稱關鍵字 -> 行業類別
+            # 舊版 dashboard 會讀 cfg.industry_mappings 來把公司歸類，沒有這個就會全部落到「其他」。
+            "industry_mappings": [],
             "excel_columns": {"id": 1, "name": 1, "phone": 1, "company": 1, "email": 1, "qrCode": 1, "registeredAt": 1, "checkedInAt": 1, "status": 1, "meal": 1}
         }
         with conn.cursor() as cursor:
@@ -729,6 +736,31 @@ def handle_config():
                     "name": r["name"], "image": r["image"], "category": r["category"],
                     "description": r["description"], "link": r["link"], "isGift": bool(r["is_gift"])
                 })
+
+            # 讓投影頁可同步行業對照表。
+            # 支援兩種常見格式：
+            # 1) keyword/category：舊版 renderDonut() 會用公司名稱 includes(keyword) 配對
+            # 2) company_name/industry：新版或其他元件可直接讀
+            try:
+                cursor.execute("""
+                    SELECT company_name, industry
+                    FROM company_industry_mapping
+                    WHERE admin_user = %s AND event_key = %s
+                    ORDER BY id ASC
+                """, (admin_user, event_key))
+                mapping_rows = cursor.fetchall()
+                config_data["industry_mappings"] = [
+                    {
+                        "keyword": (m.get("company_name") or "").strip(),
+                        "category": (m.get("industry") or "未分類").strip() or "未分類",
+                        "company_name": (m.get("company_name") or "").strip(),
+                        "industry": (m.get("industry") or "未分類").strip() or "未分類"
+                    }
+                    for m in mapping_rows
+                    if (m.get("company_name") or "").strip()
+                ]
+            except Exception as e:
+                print(f"⚠️ 行業對照載入到 config 略過: {e}")
         return jsonify(config_data)
     except Exception as e: return jsonify({"success": False, "message": str(e)}), 500
     finally: conn.close()
@@ -883,15 +915,51 @@ def get_dashboard_stats():
             table_rows = cursor.fetchall()
 
             cursor.execute("""
-                SELECT name, checkin_time, company_name, meal_choice
-                FROM event_registrations
-                WHERE admin_user = %s
-                  AND event_key = %s
-                  AND status IN ('checked_in', '已報到', '替代')
-                ORDER BY checkin_time DESC, id DESC
-                LIMIT 25
+                SELECT
+                    r.id,
+                    r.name,
+                    r.status,
+                    r.checkin_time,
+                    r.company_name,
+                    r.meal_choice,
+                    COALESCE(NULLIF(TRIM(m.industry), ''), NULLIF(TRIM(e.industry), ''), '其他') AS industry
+                FROM event_registrations r
+                LEFT JOIN company_industry_mapping m
+                    ON m.admin_user = r.admin_user
+                   AND m.event_key = r.event_key
+                   AND TRIM(m.company_name) = TRIM(r.company_name)
+                LEFT JOIN event_exhibitors e
+                    ON e.admin_user = r.admin_user
+                   AND e.event_key = r.event_key
+                   AND TRIM(e.company_name) = TRIM(r.company_name)
+                WHERE r.admin_user = %s
+                  AND r.event_key = %s
+                  AND r.status IN ('checked_in', '已報到', '替代')
+                ORDER BY r.checkin_time DESC, r.id DESC
+                LIMIT 200
             """, (admin_user, event_key))
             checked_logs = cursor.fetchall()
+
+            cursor.execute("""
+                SELECT
+                    COALESCE(NULLIF(TRIM(m.industry), ''), NULLIF(TRIM(e.industry), ''), '其他') AS industry,
+                    COUNT(*) AS cnt
+                FROM event_registrations r
+                LEFT JOIN company_industry_mapping m
+                    ON m.admin_user = r.admin_user
+                   AND m.event_key = r.event_key
+                   AND TRIM(m.company_name) = TRIM(r.company_name)
+                LEFT JOIN event_exhibitors e
+                    ON e.admin_user = r.admin_user
+                   AND e.event_key = r.event_key
+                   AND TRIM(e.company_name) = TRIM(r.company_name)
+                WHERE r.admin_user = %s
+                  AND r.event_key = %s
+                  AND r.status IN ('checked_in', '已報到', '替代')
+                GROUP BY industry
+                ORDER BY cnt DESC
+            """, (admin_user, event_key))
+            checked_industry_rows = cursor.fetchall()
 
         total = int(summary.get("total") or 0)
         checked_in = int(summary.get("checked_in") or 0)
@@ -910,18 +978,31 @@ def get_dashboard_stats():
             })
 
         logs = [{
+            "id": r.get('id'),
             "name": r.get('name') or "",
+            "status": r.get('status') or "",
             "time": r.get('checkin_time').strftime('%H:%M:%S') if r.get('checkin_time') else "",
+            "checkin_time": r.get('checkin_time').strftime('%H:%M:%S') if r.get('checkin_time') else "",
             "company": r.get('company_name') or "",
+            "company_name": r.get('company_name') or "",
+            "industry": r.get('industry') or "其他",
             "meal": r.get('meal_choice') or ""
         } for r in checked_logs]
+
+        industry_counts = {
+            (row.get('industry') or '其他'): int(row.get('cnt') or 0)
+            for row in checked_industry_rows
+            if int(row.get('cnt') or 0) > 0
+        }
 
         return jsonify({"success": True, "stats": {
             "total": total,
             "checked_in": checked_in,
             "not_checked_in": total - checked_in,
             "table_stats": table_stats_formatted,
-            "logs": logs
+            "logs": logs,
+            "industry_counts": industry_counts,
+            "checked_industry_stats": industry_counts
         }})
     finally:
         conn.close()
