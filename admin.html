@@ -2035,17 +2035,40 @@
         }
 
         async function saveExhibitors() {
-            const exhibitors = [...document.querySelectorAll('.exhibitor-row')].map(row => ({
-                name: row.querySelector('.exhibitor-name-input').value.trim(),
-                industry: row.querySelector('.exhibitor-industry-input').value.trim(),
-                image_url: row.querySelector('.exhibitor-image-input') ? row.querySelector('.exhibitor-image-input').value.trim() : '',
-                website: row.querySelector('.exhibitor-website-input') ? row.querySelector('.exhibitor-website-input').value.trim() : '',
-                contact: row.querySelector('.exhibitor-contact-input') ? row.querySelector('.exhibitor-contact-input').value.trim() : '',
-                description: row.querySelector('.exhibitor-desc-input').value.trim()
-            })).filter(x => x.name);
-            const res = await fetch(`/api/exhibitors${getActiveEventQuery()}`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({exhibitors})});
-            const json = await res.json();
-            alert(json.success ? '企業資訊已儲存到資料庫，Dashboard 下方企業展示會同步顯示。' : (json.message || '企業資訊儲存失敗'));
+            try {
+                const exhibitors = [...document.querySelectorAll('.exhibitor-row')].map(row => ({
+                    name: row.querySelector('.exhibitor-name-input').value.trim(),
+                    industry: row.querySelector('.exhibitor-industry-input').value.trim(),
+                    image_url: row.querySelector('.exhibitor-image-input') ? row.querySelector('.exhibitor-image-input').value.trim() : '',
+                    website: row.querySelector('.exhibitor-website-input') ? row.querySelector('.exhibitor-website-input').value.trim() : '',
+                    contact: row.querySelector('.exhibitor-contact-input') ? row.querySelector('.exhibitor-contact-input').value.trim() : '',
+                    description: row.querySelector('.exhibitor-desc-input').value.trim()
+                })).filter(x => x.name);
+
+                const res = await fetch(`/api/exhibitors${getActiveEventQuery()}`, {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({exhibitors})
+                });
+
+                let json = {};
+                try { json = await res.json(); } catch(e) {}
+
+                if (!res.ok || !json.success) {
+                    throw new Error(json.message || `HTTP ${res.status}，企業資訊儲存失敗`);
+                }
+
+                alert('企業資訊已儲存到資料庫，Dashboard 下方企業展示會同步顯示。');
+
+                // 存完立即重讀後台清單，確認 image_url / 介紹都有真的從資料庫回來。
+                await loadExhibitors();
+
+                // 通知同瀏覽器其他 dashboard 分頁重新讀取。
+                localStorage.setItem('dashboard_refresh_signal', String(Date.now()));
+            } catch (e) {
+                console.error('企業資訊儲存失敗', e);
+                alert('企業資訊儲存失敗：' + (e.message || e));
+            }
         }
 
         // ===== 智慧論壇 Navigator 設定 =====
