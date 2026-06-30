@@ -458,13 +458,7 @@
                         </div>
                     </div>
                 </div>
-                <nav class="ark-terminal-footer" aria-label="方舟終端機導覽">
-                    <button type="button" class="ark-bottom-item active" onclick="setAppState('success')"><span class="ark-bottom-icon">⌂</span><span>首頁</span></button>
-                    <button type="button" class="ark-bottom-item" onclick="openArkMap()"><span class="ark-bottom-icon">◇</span><span>星圖</span></button>
-                    <button type="button" class="ark-bottom-item" onclick="openArkGift()"><span class="ark-bottom-icon">▣</span><span>物資</span></button>
-                    <button type="button" class="ark-bottom-item" onclick="openArkVideo()"><span class="ark-bottom-icon">▶</span><span>引擎</span></button>
-                    <button type="button" class="ark-bottom-item" onclick="openArkFlow()"><span class="ark-bottom-icon">☷</span><span>會議</span></button>
-                </nav>
+
                 <button class="ck-btn ck-btn-ghost" onclick="resetToHome()" style="max-width:280px; margin:2rem auto 0; font-size: 0.95rem;">← 回 到 報 到 首 頁</button>
             </section>
         </div>
@@ -874,9 +868,11 @@
             const company = escapeHtml(user?.company || selectedUser?.company || '智慧方舟');
             const seat = escapeHtml(user?.seat || selectedUser?.seat || '現場安排');
             const mealText = escapeHtml(meal || user?.meal || selectedUser?.meal || '未選擇');
-            const eventName = escapeHtml((systemConfig && (systemConfig.event_title || systemConfig.google_sheet_name)) || currentSheet || '2026 全球面對面');
-            const startDate = escapeHtml((systemConfig && (systemConfig.event_start_date || systemConfig.date_start)) || '2026/06/01');
-            const endDate = escapeHtml((systemConfig && (systemConfig.event_end_date || systemConfig.date_end)) || '2026/08/XX');
+            const eventName = escapeHtml((systemConfig && (systemConfig.event_title || systemConfig.google_sheet_name)) || currentSheet || '活動報到名單');
+            const startRaw = systemConfig && (systemConfig.event_date_start || systemConfig.event_start_date || systemConfig.date_start || systemConfig.exp_event_date_start || '');
+            const endRaw = systemConfig && (systemConfig.event_date_end || systemConfig.event_end_date || systemConfig.date_end || systemConfig.exp_event_date_end || '');
+            const startDate = escapeHtml(startRaw || '未設定');
+            const endDate = escapeHtml(endRaw || '');
             document.getElementById('arkGreeting').innerHTML = `您好，領航員 ${name}`;
             document.getElementById('arkTerminalInfo').innerHTML = `
                 <div class="ark-meta-chip">
@@ -885,7 +881,7 @@
                 </div>
                 <div class="ark-meta-chip">
                     <div class="ark-meta-label">DATE</div>
-                    <div class="ark-meta-value">${startDate} ~ ${endDate}</div>
+                    <div class="ark-meta-value">${endDate ? `${startDate} ~ ${endDate}` : startDate}</div>
                 </div>
                 <div class="ark-meta-chip">
                     <div class="ark-meta-label">COMPANY</div>
@@ -1031,8 +1027,10 @@
             try {
                 const res = await fetch(`${API_BASE}/config?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
                 systemConfig = await res.json();
-                if(systemConfig && systemConfig.google_sheet_name) {
-                    document.getElementById('header-title').textContent = systemConfig.google_sheet_name.split('').join(' ');
+                if(systemConfig) {
+                    const displayTitle = systemConfig.event_title || systemConfig.google_sheet_name || currentSheet || '活動報到名單';
+                    document.getElementById('header-title').textContent = displayTitle.split('').join(' ');
+                    document.title = `${displayTitle} - 活動報到系統`;
                 }
                 const banner = document.getElementById('event-banner');
                 if(systemConfig && systemConfig.banner_image_url) {
