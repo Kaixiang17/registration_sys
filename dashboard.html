@@ -344,7 +344,7 @@ body::after {
 }
 .enterprise-card {
   display: grid;
-  grid-template-columns: 108px 1fr auto;
+  grid-template-columns: 108px 1fr;
   gap: 1rem;
   align-items: center;
   padding: 1rem;
@@ -398,24 +398,9 @@ body::after {
   font-size: 0.82rem;
   line-height: 1.55;
 }
-.enterprise-side {
-  min-width: 120px;
-  text-align: right;
-  color: var(--muted);
-  font-family: "Michroma", sans-serif;
-  font-size: 0.62rem;
-  letter-spacing: 1px;
-}
-.enterprise-side strong {
-  display:block;
-  color: var(--cyan);
-  font-size: 1.15rem;
-  margin-bottom: 0.18rem;
-}
 @media (max-width: 760px) {
   .enterprise-card { grid-template-columns: 80px 1fr; }
   .enterprise-img { width: 80px; height: 64px; }
-  .enterprise-side { grid-column: 1 / -1; text-align: left; }
 }
 
 /* ── FOOTER ── */
@@ -736,11 +721,11 @@ async function renderEnterprises(force=false) {
   try {
     const json = await get(`${API}/exhibitors?admin=${enc(ADMIN)}&sheet=${enc(SHEET)}`);
     if (!json.success) throw new Error(json.message || '企業資料載入失敗');
-    const items = (json.exhibitors || json.participating_companies || [])
+    const items = (json.exhibitors || [])
       .filter(x => (x.name || x.company_name || '').trim())
       .slice(0, 18);
     if (!items.length) {
-      list.innerHTML = '<div class="empty-msg">後台尚未設定參與企業，或目前表單沒有公司資料。</div>';
+      list.innerHTML = '<div class="empty-msg">後台尚未新增參與企業。請到後台「企業展示」手動新增，或按「帶入全部表單公司」後再儲存。</div>';
       return;
     }
     list.innerHTML = items.map(item => {
@@ -748,8 +733,6 @@ async function renderEnterprises(force=false) {
       const industry = esc(item.industry || '未分類');
       const desc = esc(item.description || '尚未設定公司簡介，可於後台「企業展示」補上介紹與圖片。');
       const img = item.image_url || item.image || '';
-      const count = Number(item.people_count || 0);
-      const checked = Number(item.checked_count || 0);
       return `
         <div class="enterprise-card">
           <div class="enterprise-img">${img ? `<img src="${esc(img)}" alt="${name}">` : `<span>${name.slice(0,1) || '企'}</span>`}</div>
@@ -757,10 +740,6 @@ async function renderEnterprises(force=false) {
             <div class="enterprise-name">${name}</div>
             <div class="enterprise-industry">${industry}</div>
             <div class="enterprise-desc">${desc}</div>
-          </div>
-          <div class="enterprise-side">
-            <strong>${checked || count || '—'}</strong>
-            ${checked ? '已報到' : count ? '報名人員' : 'PARTNER'}
           </div>
         </div>`;
     }).join('');
