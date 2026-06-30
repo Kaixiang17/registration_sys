@@ -3,858 +3,893 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智慧方舟 - 航空登機系統</title>
-    <link rel="stylesheet" href="smart-ark-theme.css?v=9">
+    <title>智慧方舟 - 艦橋管理中心</title>
+    <link rel="stylesheet" href="smart-ark-theme.css">
     <style>
-        /* ============================================================
-           電腦版基礎與框架優化
-           ============================================================ */
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "PingFang TC", "Michroma", "Stick", sans-serif; }
-        body { line-height: 1.6; color: #fff; overflow-x: hidden; }
-        
-        header { 
-            padding: 1rem 0; 
-            position: sticky; 
-            top: 0; 
-            z-index: 100; 
-            border-bottom: 1px solid var(--accent-gray); 
-            background: rgba(8, 16, 28, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-        }
-        .header-container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; display: flex; justify-content: space-between; align-items: center; }
-        main { max-width: 1200px; margin: 0 auto; padding: 2.5rem 2rem 5rem; min-height: calc(100vh - 80px); }
-        .state-hidden { display: none !important; }
-        
-        .verify-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem; margin-top: 2.5rem; }
-        .verify-card { 
-            padding: 2.5rem 2rem; 
-            text-align: center; 
-            cursor: pointer; 
-            border-radius: 1rem; 
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .form-card { max-width: 600px; margin: 0 auto; padding: 3.5rem 3rem; text-align: center; border-radius: 1.5rem; }
-        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2.5rem; }
-        .product-img { width: 100%; height: 220px; object-fit: contain; background: rgba(0,0,0,0.4); border-bottom: 1px solid var(--accent-gray); }
-        
-        .btn-back-nav { 
-            background: transparent; 
-            border: 1px solid var(--accent-gray); 
-            color: var(--text-dark); 
-            padding: 0.6rem 1.4rem; 
-            border-radius: 0.5rem; 
-            cursor: pointer; 
-            font-weight: bold; 
-            transition: 0.2s; 
-            margin-bottom: 2rem; 
-            display: inline-flex; 
-            align-items: center; 
-            gap: 0.5rem; 
-        }
-        .btn-back-nav:hover { border-color: var(--text-dark); background: rgba(0, 229, 255, 0.08); transform: translateX(-2px); }
-        .cyber-input { width: 100%; margin-bottom: 1.5rem; padding: 1.2rem; font-size: 1.1rem; border-radius: 0.6rem; }
-        
-        .group-item { padding: 1.5rem; border-bottom: 1px solid rgba(0,229,255,0.15); cursor: pointer; transition: 0.2s; text-align: left; display: flex; justify-content: space-between; align-items: center;}
-        .group-item:hover { background: rgba(0,229,255,0.08); }
-        
-        .meal-selected, .is-original-selected { 
-            border-color: #00e5ff !important; 
-            background: rgba(0, 229, 255, 0.25) !important;
-            box-shadow: 0 0 20px rgba(0, 229, 255, 0.4), inset 0 0 10px rgba(0, 229, 255, 0.2) !important;
-            font-weight: bold !important;
-            transform: translateY(-2px);
-        }
-        .proxy-selected { 
-            border-color: #ffa500 !important; 
-            background: rgba(255, 165, 0, 0.2) !important;
-            box-shadow: 0 0 20px rgba(255, 165, 0, 0.3) !important;
-            transform: translateY(-2px);
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Michroma", "Stick", sans-serif; }
+        body { line-height: 1.6; min-height: 100vh; color: #fff; }
+        header { background: rgba(10, 20, 35, 0.8); border-bottom: 1px solid var(--accent-gray); padding: 1rem 0; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
+        .header-container { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+        .header-actions { display: flex; gap: 1rem; align-items: center; }
+        .btn-link { color: #ccc; text-decoration: none; font-size: 0.85rem; padding: 0.45rem 0.9rem; border-radius: 0.5rem; transition: all 0.2s; border: 1px solid rgba(255,255,255,0.15); letter-spacing: 0.5px; }
+        .btn-link:hover { border-color: var(--text-dark); background: rgba(0,229,255,0.1); color: var(--text-dark); }
 
-        /* ============================================================
-           方舟終端機 ARK TERMINAL
-           ============================================================ */
-        .ark-terminal-shell {
-            max-width: 560px;
-            margin: 0 auto;
-            padding: 1rem 1rem 6rem;
-            min-height: calc(100vh - 140px);
-            position: relative;
+        /* ── 後台統一按鈕規格 ── */
+        /* 主要行動按鈕：場次切換、儲存設定、匯入等重要操作 */
+        .adm-btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+            padding: 0.55rem 1.1rem;
+            font-family: inherit; font-size: 0.88rem; font-weight: 600; letter-spacing: 0.8px;
+            border-radius: 0.5rem; border: 1px solid rgba(0,229,255,0.45);
+            color: #00e5ff; background: rgba(0,229,255,0.07);
+            cursor: pointer; white-space: nowrap; transition: all 0.18s ease;
+            text-decoration: none; line-height: 1;
         }
-        .ark-terminal-panel {
-            position: relative;
-            overflow: hidden;
-            border-radius: 1.8rem;
-            padding: 1.75rem;
-            background: linear-gradient(180deg, rgba(6, 22, 46, 0.94), rgba(3, 10, 26, 0.98));
-            border: 1px solid rgba(0,229,255,.3);
-            box-shadow: 0 15px 35px rgba(0,0,0,.4), 0 0 30px rgba(0,229,255,.15);
+        .adm-btn:hover { background: rgba(0,229,255,0.16); border-color: #00e5ff; box-shadow: 0 0 10px rgba(0,229,255,0.2); }
+        .adm-btn:active { transform: scale(0.97); }
+        .adm-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* 強調按鈕（主要 CTA，如「立即切換場次」）*/
+        .adm-btn-primary {
+            border-color: rgba(0,229,255,0.7); color: #fff;
+            background: linear-gradient(135deg, rgba(0,180,220,0.2), rgba(0,229,255,0.1));
         }
-        .ark-terminal-panel::before {
-            content: '';
-            position: absolute;
-            inset: -40%;
-            background:
-                radial-gradient(circle at 25% 20%, rgba(0,229,255,.18), transparent 30%),
-                radial-gradient(circle at 85% 8%, rgba(81,169,255,.15), transparent 26%);
-            pointer-events: none;
-        }
-        .ark-terminal-content { position: relative; z-index: 1; }
-        .ark-brand-kicker {
-            display: flex;
-            justify-content: space-between;
-            gap: .75rem;
-            align-items: center;
-            color: rgba(203,246,255,.7);
-            font-size: .75rem;
-            letter-spacing: .1em;
-            text-transform: uppercase;
-            margin-bottom: 1.2rem;
-            border-bottom: 1px solid rgba(0,229,255,0.15);
-            padding-bottom: 0.75rem;
-        }
-        .ark-logo-mark {
-            width: 38px;
-            height: 38px;
-            border-radius: 10px;
-            border: 1px solid rgba(0,229,255,.3);
-            background: rgba(0,229,255,.05);
+        .adm-btn-primary:hover { background: linear-gradient(135deg, rgba(0,180,220,0.35), rgba(0,229,255,0.2)); }
+
+        /* 危險按鈕（刪除）*/
+        .adm-btn-danger { border-color: rgba(220,38,38,0.5); color: #f87171; background: rgba(220,38,38,0.06); }
+        .adm-btn-danger:hover { background: rgba(220,38,38,0.15); border-color: #dc2626; }
+
+        /* 次要按鈕（取消）*/
+        .adm-btn-ghost { border-color: rgba(255,255,255,0.15); color: #888; background: transparent; }
+        .adm-btn-ghost:hover { border-color: rgba(255,255,255,0.35); color: #ccc; background: rgba(255,255,255,0.05); }
+
+        /* 上傳類按鈕（偏橙黃色調）*/
+        .adm-btn-upload { border-color: rgba(255,165,0,0.45); color: #ffa500; background: rgba(255,165,0,0.07); }
+        .adm-btn-upload:hover { background: rgba(255,165,0,0.15); border-color: #ffa500; }
+
+        /* 成功色按鈕 */
+        .adm-btn-success { border-color: rgba(74,222,128,0.45); color: #4ade80; background: rgba(74,222,128,0.07); }
+        .adm-btn-success:hover { background: rgba(74,222,128,0.15); border-color: #4ade80; }
+
+        /* 按鈕尺寸修飾 */
+        .adm-btn-sm { padding: 0.38rem 0.75rem; font-size: 0.8rem; }
+        .adm-btn-lg { padding: 0.7rem 1.5rem; font-size: 0.95rem; letter-spacing: 1.2px; }
+        main { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+        .tabs { display: none; }
+        .tab-btn { padding: 1rem 1.5rem; background: none; border: none; border-bottom: 3px solid transparent; font-size: 1rem; font-weight: 600; color: #888; cursor: pointer; transition: all 0.2s; }
+        .tab-btn:hover { color: #fff; background: rgba(255,255,255,0.05); }
+        .tab-btn.active { color: var(--text-dark); border-bottom-color: var(--text-dark); text-shadow: 0 0 8px var(--text-glow); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* 後台主選單：把原本很多按鈕整理成群組，功能仍使用同一組 tab / API */
+        .admin-nav-groups {
             display: grid;
-            place-items: center;
-            font-size: 1.2rem;
+            grid-template-columns: repeat(4, minmax(190px, 1fr));
+            gap: 0.9rem;
+            margin-bottom: 1.4rem;
         }
-        .ark-terminal-title {
-            font-size: clamp(2rem, 6vw, 2.8rem);
-            line-height: 1.1;
-            letter-spacing: .06em;
-            color: #f4ffff;
-            text-shadow: 0 0 12px rgba(0,229,255,.6);
-            font-weight: 900;
-            margin-bottom: .25rem;
-        }
-        .ark-terminal-subtitle {
-            color: rgba(0, 229, 255, 0.8);
-            font-size: .88rem;
-            letter-spacing: .1em;
-            margin-bottom: 1.5rem;
-        }
-        .ark-user-greeting {
-            padding: 1rem 1.25rem;
-            border-radius: 0.75rem;
-            background: rgba(0,229,255,.06);
-            border: 1px solid rgba(0,229,255,.2);
-            color: #eaffff;
-            font-weight: bold;
-            font-size: 1.1rem;
-            letter-spacing: .05em;
-            margin-bottom: 1.25rem;
-        }
-        .ark-mission-meta {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: .8rem;
-            margin-bottom: 1.5rem;
-        }
-        .ark-meta-chip {
-            border-radius: .75rem;
-            border: 1px solid rgba(255,255,255,.08);
-            background: rgba(255,255,255,.03);
-            padding: .8rem 1rem;
-        }
-        .ark-meta-label { color: rgba(255,255,255,0.45); font-size: .7rem; letter-spacing: .05em; margin-bottom: 0.15rem; }
-        .ark-meta-value { color: #00e5ff; font-weight: bold; font-size: .95rem; word-break: break-word; }
-        
-        .ark-terminal-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
-        .ark-nav-card {
+        .admin-nav-group {
+            border: 1px solid rgba(0,229,255,0.18);
+            background: rgba(5, 15, 30, 0.62);
             border-radius: 1rem;
-            padding: 1.1rem;
-            border: 1px solid rgba(0,229,255,.25);
-            background: linear-gradient(135deg, rgba(0,229,255,.06), rgba(5,15,35,.5));
-            display: grid;
-            grid-template-columns: 44px 1fr auto;
-            gap: 1rem;
+            padding: 0.85rem;
+            box-shadow: inset 0 0 22px rgba(0,229,255,0.045);
+        }
+        .admin-nav-title {
+            color: #00e5ff;
+            font-size: 0.82rem;
+            letter-spacing: 1.4px;
+            font-weight: 900;
+            margin-bottom: 0.65rem;
+            opacity: 0.92;
+        }
+        .admin-nav-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+        }
+        .admin-nav-actions .tab-btn,
+        .admin-nav-actions .nav-link-btn {
+            padding: 0.48rem 0.7rem;
+            border: 1px solid rgba(0,229,255,0.22);
+            border-radius: 999px;
+            background: rgba(0,229,255,0.055);
+            color: #bfefff;
+            font-size: 0.82rem;
+            font-weight: 800;
+            line-height: 1;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(0,229,255,0.22);
+        }
+        .admin-nav-actions .tab-btn:hover,
+        .admin-nav-actions .nav-link-btn:hover {
+            color: #fff;
+            border-color: rgba(0,229,255,0.62);
+            background: rgba(0,229,255,0.14);
+            box-shadow: 0 0 14px rgba(0,229,255,0.16);
+        }
+        .admin-nav-actions .tab-btn.active {
+            color: #06111f;
+            background: linear-gradient(135deg, #00e5ff, #4ade80);
+            border-color: transparent;
+            text-shadow: none;
+            box-shadow: 0 0 18px rgba(0,229,255,0.36);
+        }
+        .admin-sync-panel {
+            display: flex;
             align-items: center;
-            cursor: pointer;
-            transition: all .2s ease;
-            text-align: left;
-            color: inherit;
-            width: 100%;
+            justify-content: space-between;
+            gap: 0.8rem;
+            margin: -0.2rem 0 1.6rem;
+            padding: 0.85rem 1rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(74,222,128,0.22);
+            background: rgba(74,222,128,0.055);
+            color: #bfefff;
         }
-        .ark-nav-card:hover {
-            transform: translateY(-2px);
-            border-color: rgba(0,229,255,.7);
-            box-shadow: 0 5px 15px rgba(0,229,255,.1);
+        .admin-sync-panel strong { color: #4ade80; }
+        .admin-sync-panel small { color: #8aa0aa; line-height: 1.55; }
+        @media(max-width: 900px) {
+            .admin-nav-groups { grid-template-columns: 1fr; }
+            .admin-sync-panel { flex-direction: column; align-items: flex-start; }
         }
-        .ark-card-icon {
-            width: 44px; height: 44px; border-radius: 12px;
-            display: grid; place-items: center;
-            background: rgba(0,229,255,.1); border: 1px solid rgba(0,229,255,.25);
-            color: #00e5ff; font-size: 1.3rem;
-        }
-        .ark-card-title { color: #f4ffff; font-weight: bold; font-size: 1rem; }
-        .ark-card-sub { color: #00e5ff; font-weight: 600; font-size: .85rem; margin-top: .1rem; }
-        .ark-card-desc { color: rgba(255,255,255,0.5); font-size: .75rem; margin-top: .2rem; line-height: 1.4; }
-        .ark-card-arrow { color: rgba(0,229,255,.6); font-size: 1.2rem; transition: 0.2s; }
-        .ark-nav-card:hover .ark-card-arrow { color: #00e5ff; transform: translateX(2px); }
-        
-        .ark-terminal-footer {
-            position: sticky; bottom: 1rem; margin: 1.5rem auto 0; max-width: 560px;
-            display: grid; grid-template-columns: repeat(5,1fr); gap: .4rem; padding: .5rem;
-            border-radius: 1.25rem; background: rgba(4, 12, 24, 0.9);
-            border: 1px solid rgba(0,229,255,.2); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            box-shadow: 0 10px 30px rgba(0,0,0,.5);
-        }
-        .ark-bottom-item {
-            border: 0; background: transparent; color: rgba(255,255,255,0.6);
-            display: grid; place-items: center; gap: .2rem; padding: .5rem .2rem;
-            border-radius: .75rem; cursor: pointer; font-size: .7rem; transition: 0.2s;
-        }
-        .ark-bottom-item.active, .ark-bottom-item:hover { color: #00e5ff; background: rgba(0,229,255,.08); }
-        .ark-bottom-icon { font-size: 1.1rem; line-height: 1; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { padding: 2rem; text-align: center; border-radius: 1rem; position: relative; border: 1px solid var(--accent-gray); overflow: hidden;}
+        .stat-card::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(45deg, transparent, rgba(0,229,255,0.05), transparent); transform: rotate(45deg); animation: statGlow 4s infinite linear; }
+        .stat-value { font-size: 3.5rem; font-weight: bold; margin-top: 1rem; }
+        @keyframes statGlow { 0% { transform: translate(-50%, -50%) rotate(45deg); } 100% { transform: translate(50%, 50%) rotate(45deg); } }
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid rgba(0,229,255,0.2); }
+        th { color: var(--text-dark); font-weight: bold; }
+        .card-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; }
+        .form-group { margin-bottom: 1.25rem; }
+        label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: #fff; font-size: 0.95rem; }
+        .product-item { background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(0, 229, 255, 0.2); border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; transition: 0.3s; }
+        .product-item:hover { border-color: var(--text-dark); background: rgba(0, 229, 255, 0.05); }
+        .product-info { display: grid; gap: 0.4rem; }
+        .product-name { font-weight: 700; font-size: 1.1rem; margin-bottom: 0.2rem; }
+        .product-field { font-size: 0.9rem; color: #ccc; }
+        .product-actions { display: flex; gap: 0.5rem; }
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .modal.active { display: flex; }
+        .modal-content { max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; padding: 2rem; border-radius: 1rem; border: 1px solid var(--accent-gray); background: rgba(10, 20, 35, 0.9); }
 
-        @media(min-width: 760px) {
-            .ark-terminal-shell { max-width: 720px; }
-            .ark-terminal-grid { grid-template-columns: 1fr 1fr; }
-            .ark-terminal-footer { max-width: 720px; }
+
+        /* 後台右上只保留必要入口：歡迎、地圖、報到首頁、登出；商品/議程/企業留在下方分頁 */
+        .admin-quick-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        @media(max-width: 768px) {
+            .header-container { flex-direction: column; align-items: stretch; gap: 0.8rem; }
+            .header-actions { flex-wrap: wrap; gap: 0.5rem; justify-content: flex-start; }
+            .tabs { overflow-x: auto; white-space: nowrap; }
         }
 
-        /* 肖像授權同意 */
-        .portrait-consent-box { margin: 1.5rem 0 1.2rem; padding: 1rem; border: 1px solid rgba(0, 229, 255, 0.15); border-radius: 0.75rem; background: rgba(0, 229, 255, 0.03); text-align: left; }
-        .portrait-consent-check { display: flex; align-items: flex-start; gap: 0.6rem; color: #dffaff; font-size: 0.9rem; line-height: 1.5; cursor: pointer; }
-        .portrait-consent-check input { margin-top: 0.2rem; width: 16px; height: 16px; flex: 0 0 auto; accent-color: #00e5ff; }
-        .portrait-consent-link { border: none; background: transparent; color: #00e5ff; font-size: 0.85rem; font-weight: bold; text-decoration: underline; cursor: pointer; padding: 0; margin-top: 0.4rem; display: inline-block; }
-        
-        .portrait-consent-modal { position: fixed; inset: 0; z-index: 9999; display: none; align-items: center; justify-content: center; padding: 1.5rem; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-        .portrait-consent-modal.active { display: flex; }
-        .portrait-consent-card { width: min(92vw, 540px); max-height: 75vh; overflow-y: auto; padding: 2rem; border-radius: 1.25rem; border: 1px solid rgba(0, 229, 255, 0.3); background: rgba(6, 15, 30, 0.98); color: #eaffff; box-shadow: 0 20px 40px rgba(0,0,0,0.5); text-align: left; }
-        .portrait-consent-card h3 { color: #00e5ff; margin-bottom: 1rem; font-size: 1.3rem; }
-        .portrait-consent-card p { color: rgba(255,255,255,0.7); line-height: 1.6; font-size: 0.9rem; margin-bottom: 0.8rem; }
-        .portrait-consent-close { float: right; border: 1px solid rgba(255,255,255,0.2); background: rgba(255, 255, 255, 0.05); color: #fff; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-
-        /* ── 前台報到按鈕系統 ── */
-        .ck-btn {
-            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
-            width: 100%; padding: 1rem 1.5rem; font-family: inherit; font-size: 1.05rem; font-weight: bold;
-            letter-spacing: 2px; border-radius: 0.6rem; border: 1px solid rgba(0,229,255,0.4); color: #00e5ff;
-            background: rgba(0,229,255,0.06); cursor: pointer; transition: all 0.2s ease; text-decoration: none;
-        }
-        .ck-btn:hover:not(:disabled) { background: rgba(0,229,255,0.15); border-color: #00e5ff; box-shadow: 0 0 15px rgba(0,229,255,0.2); }
-        .ck-btn:active:not(:disabled) { transform: scale(0.99); }
-        .ck-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-
-        .ck-btn-confirm { border-color: rgba(74,222,128,0.5); color: #4ade80; background: rgba(74,222,128,0.08); font-size: 1.1rem; }
-        .ck-btn-confirm:hover:not(:disabled) { background: rgba(74,222,128,0.18); border-color: #4ade80; box-shadow: 0 0 15px rgba(74,222,128,0.25); }
-        .ck-btn-warn { border-color: rgba(255,165,0,0.5); color: #ffa500; background: rgba(255,165,0,0.06); }
-        .ck-btn-warn:hover:not(:disabled) { background: rgba(255,165,0,0.15); border-color: #ffa500; }
-        .ck-btn-ghost { border-color: rgba(255,255,255,0.15); color: #aaa; background: transparent; }
-        .ck-btn-ghost:hover:not(:disabled) { border-color: rgba(255,255,255,0.3); color: #fff; background: rgba(255,255,255,0.05); }
-
-        .ck-btn-pill {
-            width: auto; padding: 0.45rem 1.1rem; font-size: 0.85rem; letter-spacing: 1px;
-            border-radius: 30px; border: 1px solid rgba(0,229,255,0.3); color: #00e5ff; background: rgba(0,229,255,0.05);
-            cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.4rem; font-family: inherit; font-weight: 600; text-decoration: none;
-        }
-        .ck-btn-pill:hover { background: rgba(0,229,255,0.15); border-color: #00e5ff; }
-        .ck-tag { padding: 0.4rem 1.2rem; border-radius: 30px; font-size: 0.85rem; font-weight: 600; border: 1px solid rgba(0,229,255,0.2); color: #aaa; background: transparent; cursor: pointer; transition: all 0.18s; font-family: inherit; }
-        .ck-tag:hover, .ck-tag.active { border-color: #00e5ff; color: #00e5ff; background: rgba(0,229,255,0.08); }
-
-        .header-action-buttons { display: flex; align-items: center; justify-content: flex-end; gap: 12px; flex-shrink: 0; }
 
         @media(max-width: 768px) {
-            .header-container { padding: 0 1rem; gap: 8px; }
-            .header-action-buttons { gap: 6px; }
-            .header-action-buttons .ck-btn-pill { padding: 0.4rem 0.75rem !important; font-size: 0.75rem !important; white-space: nowrap; }
-            .header-title-text { font-size: 1rem !important; letter-spacing: 1px !important; }
-            
-            main { padding: 1.5rem 1rem 4rem !important; }
-            .form-card { padding: 2.5rem 1.5rem !important; border-radius: 1rem; }
-            h2.neon-text { font-size: 1.6rem !important; text-align: center; line-height: 1.3; }
-            #actionState h2.neon-text { font-size: 1.8rem !important; margin-bottom: 2rem !important; }
-            
-            .verify-grid { grid-template-columns: 1fr !important; gap: 1rem !important; margin-top: 1.5rem; }
-            .verify-card { padding: 1.75rem 1.25rem !important; }
-            
-            #mealOptions > div[style*="grid-template-columns"], 
-            #tempMealRadioGroup { grid-template-columns: 1fr !important; gap: 0.75rem !important; }
-            
-            #productState > div:first-child { flex-direction: column !important; align-items: stretch !important; gap: 1rem !important; margin-bottom: 2rem !important; }
-            #productState h1.neon-text { font-size: 1.8rem !important; text-align: left; }
-            .products-grid { grid-template-columns: 1fr !important; gap: 1.5rem !important; }
-            
-            .ark-terminal-panel { padding: 1.25rem; border-radius: 1.25rem; }
-            .ark-nav-card { grid-template-columns: 40px 1fr auto; gap: .75rem; padding: .9rem; }
-            .ark-card-icon { width: 40px; height: 40px; font-size: 1.15rem; }
-            .ark-mission-meta { grid-template-columns: 1fr; gap: 0.5rem; }
+            .agenda-row, .industry-row, .exhibitor-row {
+                grid-template-columns: 1fr !important;
+            }
+            .exhibitor-desc-input {
+                grid-column: auto !important;
+            }
         }
+
+        /* 每個活動表單專屬分享連結 */
+        .event-link-panel {
+            margin: 1rem 0 1.5rem;
+            padding: 1.1rem;
+            border: 1px solid rgba(0,229,255,0.22);
+            border-radius: 0.9rem;
+            background: rgba(0,229,255,0.045);
+        }
+        .event-link-grid {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 0.65rem;
+            align-items: center;
+            margin-top: 0.65rem;
+        }
+        .event-link-input {
+            width: 100%;
+            min-width: 0;
+            margin: 0 !important;
+            font-size: 0.82rem !important;
+            padding: 0.62rem 0.8rem !important;
+            color: #eaffff !important;
+            background: rgba(0,0,0,0.28) !important;
+            border: 1px solid rgba(0,229,255,0.24) !important;
+            border-radius: 0.5rem !important;
+        }
+        .event-link-list {
+            display: grid;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        .event-link-item {
+            padding: 0.85rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.18);
+        }
+        .event-link-name {
+            color: var(--text-dark);
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.5px;
+        }
+        @media(max-width: 768px) {
+            .event-link-grid {
+                grid-template-columns: 1fr;
+            }
+            .event-link-grid .adm-btn {
+                width: 100%;
+            }
+        }
+
+
+        /* 專屬報到頁 QR Code 主題卡：放在「地圖導覽 / 系統設定」 */
+        .event-qr-panel {
+            margin-top: 1rem;
+            display: grid;
+            grid-template-columns: 190px 1fr;
+            gap: 1rem;
+            align-items: center;
+            padding: 1rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(0,229,255,0.22);
+            background: linear-gradient(135deg, rgba(0,229,255,0.08), rgba(10,20,35,0.42));
+            box-shadow: inset 0 0 24px rgba(0,229,255,0.05);
+        }
+        .event-qr-box {
+            position: relative;
+            width: 170px;
+            height: 170px;
+            padding: 12px;
+            border-radius: 1rem;
+            background: #f8feff;
+            box-shadow: 0 0 20px rgba(0,229,255,0.20);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .event-qr-box::before {
+            content: '✈';
+            position: absolute;
+            right: 8px;
+            bottom: 4px;
+            color: rgba(0,60,80,0.18);
+            font-size: 1.5rem;
+            pointer-events: none;
+        }
+        #eventQrCode canvas,
+        #eventQrCode img {
+            width: 146px !important;
+            height: 146px !important;
+            display: block;
+        }
+        .event-qr-title {
+            color: #00e5ff;
+            font-weight: 900;
+            font-size: 1.05rem;
+            letter-spacing: 1px;
+            margin-bottom: 0.45rem;
+            text-shadow: 0 0 10px rgba(0,229,255,0.35);
+        }
+        .event-qr-desc {
+            color: #b8c7d1;
+            font-size: 0.86rem;
+            line-height: 1.7;
+            margin-bottom: 0.8rem;
+        }
+        .event-qr-actions {
+            display: flex;
+            gap: 0.65rem;
+            flex-wrap: wrap;
+        }
+        @media(max-width: 768px) {
+            .event-qr-panel {
+                grid-template-columns: 1fr;
+                justify-items: center;
+                text-align: center;
+            }
+            .event-qr-actions {
+                justify-content: center;
+            }
+        }
+
+
+        /* 桌號報到率詳情彈窗：改成桌群統計，不再一個座位一張卡 */
+        .table-group-toolbar {
+            display:flex;
+            justify-content:space-between;
+            align-items:flex-end;
+            gap:1rem;
+            flex-wrap:wrap;
+            margin-bottom:1rem;
+        }
+        .table-group-toolbar small {
+            color:#9fb4c2;
+            line-height:1.55;
+        }
+        .table-stat-card {
+            padding: 1.05rem;
+            text-align: left;
+            background: linear-gradient(135deg, rgba(0,229,255,0.075), rgba(4,13,27,0.48));
+            cursor: pointer;
+            transition: 0.18s ease;
+            min-height: 156px;
+            display:flex;
+            flex-direction:column;
+            justify-content:space-between;
+            position:relative;
+            overflow:hidden;
+        }
+        .table-stat-card::after {
+            content:"";
+            position:absolute;
+            right:-24px;
+            top:-24px;
+            width:88px;
+            height:88px;
+            border-radius:999px;
+            background:radial-gradient(circle, rgba(0,229,255,0.16), transparent 65%);
+            pointer-events:none;
+        }
+        .table-stat-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(0,229,255,0.55) !important;
+            box-shadow: 0 0 16px rgba(0,229,255,0.16);
+        }
+        .table-stat-card-title {
+            color:#eaffff;
+            font-size:1.08rem;
+            font-weight:900;
+            letter-spacing:1px;
+        }
+        .table-stat-card-sub {
+            color:#8aa0aa;
+            font-size:.78rem;
+            margin-top:.2rem;
+            line-height:1.35;
+        }
+        .table-stat-card-main {
+            display:flex;
+            align-items:flex-end;
+            justify-content:space-between;
+            gap:.75rem;
+            margin:.8rem 0 .4rem;
+        }
+        .table-stat-percent {
+            color:#00e5ff;
+            font-size:2.05rem;
+            font-weight:900;
+            line-height:1;
+            text-shadow:0 0 14px rgba(0,229,255,.28);
+        }
+        .table-stat-count {
+            color:#bfefff;
+            text-align:right;
+            font-size:.86rem;
+            line-height:1.5;
+        }
+        .table-stat-foot {
+            color:#00e5ff;
+            font-size:.78rem;
+            font-weight:800;
+        }
+        .table-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .table-person-list {
+            max-height: 52vh;
+            overflow: auto;
+            display: grid;
+            gap: 0.55rem;
+            padding-right: 0.25rem;
+        }
+        .table-person-card {
+            border: 1px solid rgba(0,229,255,0.16);
+            background: rgba(0,0,0,0.2);
+            border-radius: 0.65rem;
+            padding: 0.75rem;
+            border-left:4px solid rgba(148,163,184,.7);
+        }
+        .table-person-card.checked {
+            border-left-color:#4ade80;
+            background:rgba(74,222,128,.06);
+        }
+        .table-person-card.pending {
+            border-left-color:#f87171;
+            background:rgba(248,113,113,.045);
+        }
+        .table-person-name {
+            color: #eaffff;
+            font-weight: 800;
+            margin-bottom: 0.2rem;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:.5rem;
+        }
+        .person-status-badge {
+            font-size:.72rem;
+            padding:.16rem .46rem;
+            border-radius:999px;
+            border:1px solid rgba(255,255,255,.16);
+            white-space:nowrap;
+        }
+        .person-status-badge.checked {
+            color:#4ade80;
+            border-color:rgba(74,222,128,.28);
+            background:rgba(74,222,128,.08);
+        }
+        .person-status-badge.pending {
+            color:#f87171;
+            border-color:rgba(248,113,113,.28);
+            background:rgba(248,113,113,.08);
+        }
+        .table-person-meta {
+            color: #aab7c4;
+            font-size: 0.82rem;
+            line-height: 1.45;
+        }
+        @media(max-width: 768px) {
+            .table-detail-grid { grid-template-columns: 1fr; }
+        }
+
+
+        /* 智慧論壇 Navigator 設定表單 */
+        .experience-grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:1rem; }
+        .experience-grid-full { grid-column: 1 / -1; }
+        .experience-section-title { color:#eaffff; font-weight:900; letter-spacing:1px; margin:1.2rem 0 0.8rem; padding-top:1rem; border-top:1px solid rgba(0,229,255,.16); }
+        .experience-preview-card { border:1px solid rgba(0,229,255,.22); background:rgba(0,229,255,.06); border-radius:1rem; padding:1rem; min-height:100%; }
+        .experience-preview-title { color:#00e5ff; font-weight:900; margin-bottom:.35rem; }
+        .experience-schedule-row { display:grid; grid-template-columns: 90px 1fr 1.6fr 44px; gap:.6rem; align-items:center; margin-bottom:.65rem; }
+        .experience-check { display:flex; align-items:center; gap:.5rem; color:#b8c7d1; font-size:.9rem; }
+        .experience-check input { width:18px; height:18px; accent-color:#00e5ff; }
+        @media(max-width: 900px) { .experience-grid, .experience-schedule-row { grid-template-columns:1fr; } }
+
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
 <body class="circuit-background">
     <div class="ark-background"></div>
-
-    <div id="splash-screen" onclick="startRegistration()">
-        <div class="click-hint">點 擊 畫 面 開 始 報 名</div>
-    </div>
-
-    <div id="banner-container" style="width: 100%; max-width: 1200px; margin: 0 auto; display: none;">
-        <img id="event-banner" src="" style="width: 100%; border-radius: 0 0 15px 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);">
-    </div>
-
-    <header>
+    <header class="panel-border" style="border:none; border-radius: 0;">
         <div class="header-container">
-            <div onclick="resetToHome()" style="cursor:pointer; display: flex; align-items: center; gap: 8px; min-width: 0;">
-                <span style="font-size: 1.3rem;">✈️</span>
-                <span id="header-title" class="header-title-text" style="font-size: 1.2rem; letter-spacing: 2px; white-space: nowrap; font-weight: bold; color: var(--text-dark);">航 班 大 廳</span>
-            </div>
-            <div class="header-action-buttons">
-                <a id="projectionBtn" class="ck-btn-pill" href="/dashboard" target="_blank" rel="noopener" style="border-color:rgba(74,222,128,0.4); color:#4ade80; background:rgba(74,222,128,0.05);">📺 大會投影</a>
-                <button id="shopBtn" class="ck-btn-pill" onclick="goToShop()" style="display:none;">🛒 商品專區</button>
-                <button id="mapBtn" class="ck-btn-pill" onclick="toggleMapModal(true)">🗺️ 地圖導覽</button>
+            <div class="header-title neon-text" style="font-size: 1.2rem;">⚙️ 智慧方舟 - 艦橋管理中心</div>
+            <div class="header-actions">
+                <span id="welcome-msg" class="neon-text" style="font-size: 0.9rem; margin-right: 1rem; color: #4ade80;">歡迎，載入中...</span>
+                <button type="button" class="adm-btn adm-btn-sm" onclick="switchAdminTab('system')">🗺️ 地圖</button>
+                <a class="adm-btn adm-btn-sm" href="/">📋 報到首頁</a>
+                <a class="adm-btn adm-btn-ghost adm-btn-sm" href="/api/logout">🚪 登出</a>
             </div>
         </div>
     </header>
 
     <main>
-        <div id="methodSelectionState" class="state-hidden">
-            <div style="max-width:800px; margin: 0 auto;">
-                <div style="text-align: center;"><h2 class="neon-text" style="font-size: 2.2rem;">請 選 擇 登 機 方 式</h2></div>
-                <div class="verify-grid">
-                    <div class="verify-card cyber-card" onclick="prepareSearch('name', '姓名')">
-                        <div style="font-size:3rem; margin-bottom: 0.5rem;">📝</div><h3 class="neon-text">姓 名 報 到</h3>
-                    </div>
-                    <div class="verify-card cyber-card" onclick="prepareSearch('phone', '手機')">
-                        <div style="font-size:3rem; margin-bottom: 0.5rem;">📱</div><h3 class="neon-text">手 機 報 到</h3>
-                    </div>
-                    <div class="verify-card cyber-card" onclick="prepareSearch('email', 'Email')">
-                        <div style="font-size:3rem; margin-bottom: 0.5rem;">✉️</div><h3 class="neon-text">Email 報 到</h3>
-                    </div>
-                    <div class="verify-card cyber-card" onclick="prepareSearch('company', '公司')">
-                        <div style="font-size:3rem; margin-bottom: 0.5rem;">🏢</div><h3 class="neon-text">公 司 報 到</h3>
-                    </div>
+        <div id="messageContainer"></div>
+        <div class="admin-nav-groups">
+            <div class="admin-nav-group">
+                <div class="admin-nav-title">01｜總覽與投影</div>
+                <div class="admin-nav-actions">
+                    <button type="button" class="tab-btn active" data-tab="dashboard">📊 戰情儀表板</button>
+                    <a class="nav-link-btn" href="/dashboard" target="_blank" rel="noopener">📺 大會投影</a>
+                </div>
+            </div>
+
+            <div class="admin-nav-group">
+                <div class="admin-nav-title">02｜活動內容設定</div>
+                <div class="admin-nav-actions">
+                    <button type="button" class="tab-btn" data-tab="experience">🚀 活動 Navigator</button>
+                    <button type="button" class="tab-btn" data-tab="agenda">📅 議程管理</button>
+                    <button type="button" class="tab-btn" data-tab="industry">🏷️ 行業對照</button>
+                </div>
+            </div>
+
+            <div class="admin-nav-group">
+                <div class="admin-nav-title">03｜報到與名單資料</div>
+                <div class="admin-nav-actions">
+                    <button type="button" class="tab-btn" data-tab="products">🛍️ 補給品管理</button>
+                    <button type="button" class="tab-btn" data-tab="system">🗺️ 場次 / 地圖 / 系統</button>
+                </div>
+            </div>
+
+            <div class="admin-nav-group">
+                <div class="admin-nav-title">04｜展示與整合檢查</div>
+                <div class="admin-nav-actions">
+                    <button type="button" class="tab-btn" data-tab="exhibitors">🏢 企業展示</button>
+                    <button type="button" class="nav-link-btn" onclick="runSystemCheck()">✅ 連動檢查</button>
                 </div>
             </div>
         </div>
 
-        <div id="actionState" class="state-hidden">
-            <button class="btn-back-nav" onclick="setAppState('methodSelection')">← 重新選擇方式</button>
-            <div class="form-card cyber-card">
-                <h2 id="actionTitle" class="neon-text" style="margin-bottom: 2.5rem; font-size: 2.2rem;">登 機 驗 證</h2>
-                <input type="text" id="actionInput" class="cyber-input" placeholder="請輸入資訊">
-                <button class="ck-btn" onclick="handleAction()" style="letter-spacing:3px;">🔍 開 始 驗 證</button>
+        <div class="admin-sync-panel">
+            <div>
+                <strong>後台資料會連動前台與投影頁</strong>
+                <br>
+                <small>場次切換會呼叫 /api/session/sheet，並重新載入儀表板、議程、行業、企業、Navigator 設定，不是單純切換 HTML。</small>
+            </div>
+            <button type="button" class="adm-btn adm-btn-success adm-btn-sm" onclick="runSystemCheck()">✅ 檢查目前連動狀態</button>
+        </div>
+
+        <div class="tabs" aria-hidden="true">
+            <button class="tab-btn active" data-tab="dashboard">📊 戰情儀表板</button>
+            <button class="tab-btn" data-tab="experience">🚀 活動 Navigator</button>
+            <button class="tab-btn" data-tab="products">🛍️ 補給品管理</button>
+            <button class="tab-btn" data-tab="system">🗺️ 地圖導覽 / 系統設定</button>
+            <button class="tab-btn" data-tab="agenda">📅 議程管理</button>
+            <button class="tab-btn" data-tab="industry">🏷️ 行業對照表</button>
+            <button class="tab-btn" data-tab="exhibitors">🏢 企業展示</button>
+        </div>
+
+
+        <div id="experience" class="tab-content">
+            <div class="cyber-card" style="padding: 2rem; border-radius: 1rem; margin-bottom: 2rem; border-left: 4px solid #00e5ff;">
+                <div class="card-title neon-text">🚀 活動 Navigator / 產業大會視覺設定</div>
+                <p style="color:#aab7c4; line-height:1.7; margin-bottom:1.2rem;">這裡會同步前台手機活動頁與投影 Dashboard。圖片目前先支援 URL；未來可改成上傳檔案。</p>
+
+                <div class="experience-section-title">一、活動基本資料</div>
+                <div class="experience-grid">
+                    <div class="form-group"><label>活動名稱</label><input id="exp_event_title" class="cyber-input" placeholder="2026 全球面對面"></div>
+                    <div class="form-group"><label>活動副標題</label><input id="exp_event_subtitle" class="cyber-input" placeholder="世代共榮的數位聚合"></div>
+                    <div class="form-group"><label>開始日期</label><input id="exp_event_date_start" class="cyber-input" placeholder="2026/06/01"></div>
+                    <div class="form-group"><label>結束日期</label><input id="exp_event_date_end" class="cyber-input" placeholder="2026/08/XX"></div>
+                    <div class="form-group"><label>品牌名稱</label><input id="exp_brand_name" class="cyber-input" placeholder="智慧方舟 SMART WISDOM ARK"></div>
+                    <div class="form-group"><label>Logo URL</label><input id="exp_logo_url" class="cyber-input" placeholder="https://..."></div>
+                </div>
+
+                <div class="experience-section-title">二、紀念品圖文說明</div>
+                <div class="experience-grid">
+                    <div class="form-group"><label>紀念品標題</label><input id="exp_gift_title" class="cyber-input" placeholder="方舟物資艙"></div>
+                    <label class="experience-check"><input type="checkbox" id="exp_gift_enabled"> 啟用紀念品卡片</label>
+                    <div class="form-group experience-grid-full"><label>紀念品圖片 URL</label><input id="exp_gift_image_url" class="cyber-input" placeholder="https://..."></div>
+                    <div class="form-group experience-grid-full"><label>紀念品文字說明</label><textarea id="exp_gift_description" class="cyber-input" rows="4" placeholder="輸入完整圖文說明"></textarea></div>
+                </div>
+
+                <div class="experience-section-title">三、影片連結</div>
+                <div class="experience-grid">
+                    <div class="form-group"><label>影片標題</label><input id="exp_video_title" class="cyber-input" placeholder="核心引擎啟動"></div>
+                    <label class="experience-check"><input type="checkbox" id="exp_video_enabled"> 啟用影片卡片</label>
+                    <div class="form-group experience-grid-full"><label>YouTube / Vimeo / 外部影片 URL</label><input id="exp_video_url" class="cyber-input" placeholder="https://youtube.com/watch?v=..."></div>
+                    <label class="experience-check experience-grid-full"><input type="checkbox" id="exp_video_embed_enabled"> YouTube 可嵌入時使用 iframe 播放</label>
+                </div>
+
+                <div class="experience-section-title">四、流程圖片</div>
+                <div class="experience-grid">
+                    <div class="form-group"><label>流程標題</label><input id="exp_flow_title" class="cyber-input" placeholder="大會時空座標"></div>
+                    <label class="experience-check"><input type="checkbox" id="exp_flow_enabled"> 啟用流程圖片卡片</label>
+                    <div class="form-group experience-grid-full"><label>流程圖片 URL</label><input id="exp_flow_image_url" class="cyber-input" placeholder="https://..."></div>
+                    <div class="form-group experience-grid-full"><label>流程補充文字</label><textarea id="exp_flow_description" class="cyber-input" rows="3" placeholder="例如：09:30 - 17:00 航程時間軸"></textarea></div>
+                </div>
+
+                <div class="experience-section-title">五、投影大標題</div>
+                <div class="experience-grid">
+                    <div class="form-group"><label>投影主標</label><input id="exp_projection_title" class="cyber-input" placeholder="世代共榮的數位聚合"></div>
+                    <div class="form-group"><label>投影副標</label><input id="exp_projection_subtitle" class="cyber-input" placeholder="DIGITAL CONVERGENCE FOR GENERATIONAL PROSPERITY"></div>
+                </div>
+
+                <div style="display:flex; gap:.8rem; flex-wrap:wrap; margin-top:1.2rem;">
+                    <button class="adm-btn adm-btn-primary adm-btn-lg" onclick="saveExperienceConfig()">💾 儲存 Navigator 設定</button>
+                    <a class="adm-btn adm-btn-sm" target="_blank" href="/">📱 預覽前台</a>
+                    <a class="adm-btn adm-btn-sm" target="_blank" href="/projection">🖥️ 預覽投影</a>
+                </div>
             </div>
 
-            <div id="tempRegistrationSection" class="form-card cyber-card state-hidden" style="margin-top: 2.5rem; border: 1px solid #ffa500 !important; box-shadow: 0 0 25px rgba(255, 165, 0, 0.2); background: rgba(12, 22, 38, 0.95); text-align: left;">
-                <h3 style="color: #ffa500; font-size: 1.25rem; margin-bottom: 1.5rem; text-shadow: 0 0 10px rgba(255,165,0,0.3); font-weight: bold; text-align: center; line-height: 1.4;">⚠️ 查無此旅客登機紀錄！<br>是否開啟現場補位功能？</h3>
+            <!-- 大會流程時間軸已移除：流程統一到「議程管理」維護，避免後台重複設定。 -->
+        </div>
+
+        <div id="dashboard" class="tab-content active">
+            <div class="dashboard-grid">
+                <div class="stat-card cyber-card">
+                    <div class="neon-text">應到人數</div>
+                    <div id="stat-total" class="stat-value" style="color: #aaa;">0</div>
+                </div>
+                <div class="stat-card cyber-card" style="border-color:#16a34a;">
+                    <div class="neon-text" style="color:#4ade80;">已報到人員</div>
+                    <div id="stat-checked" class="stat-value" style="color: #4ade80;">0</div>
+                </div>
+                <div class="stat-card cyber-card" style="border-color:#dc2626;">
+                    <div class="neon-text" style="color:#f87171;">未到人員</div>
+                    <div id="stat-pending" class="stat-value" style="color: #f87171;">0</div>
+                </div>
+            </div>
+            <div class="cyber-card" style="padding: 2rem; border-radius: 1rem; margin-bottom: 2rem;">
+                <div class="table-group-toolbar">
+                    <div>
+                        <h2 class="neon-text" style="margin:0 0 .35rem; font-size: 1.4rem;">📊 桌次報到率統計</h2>
+                        <small>已改成「第一桌、第二桌…」彙整顯示；點進去可看到該桌所有座位人員、誰來了、誰還沒來。</small>
+                    </div>
+                    <button class="adm-btn adm-btn-sm" onclick="updateDashboard()">🔄 重新整理</button>
+                </div>
+                <div id="table-stats-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem;"></div>
+            </div>
+                <div class="cyber-card" style="padding: 2rem; border-radius: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2 class="neon-text" style="margin: 0;">🛰️ 即時登機紀錄 (最新 25 筆)</h2>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="adm-btn adm-btn-upload" onclick="showAddModal()">➕ 臨時報到</button>
+                            <button class="adm-btn" onclick="exportCsv()">📥 匯出名單</button>
+                        </div>
+                    </div>
+                    <table>
+                    <thead><tr><th>時間</th><th>姓名</th><th>公司艦隊</th><th>補給類別</th></tr></thead>
+                    <tbody id="logs-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="products" class="tab-content">
+            <div class="cyber-card" style="padding: 2rem; border-radius: 1rem; margin-bottom: 2rem; border-left: 4px solid var(--text-dark);">
+                <div class="card-title neon-text">🎁 伴手禮管理</div>
+                <div id="giftsList"></div>
+                <button class="adm-btn adm-btn-success" style="margin-top:1rem;" onclick="openAddGiftModal()">🎁 新增伴手禮</button>
+            </div>
+            <div class="cyber-card" style="padding: 2rem; border-radius: 1rem;">
+                <div class="card-title neon-text">📦 一般商品列表</div>
+                <div id="productsList"></div>
+                <button class="adm-btn" style="margin-top:1rem;" onclick="openAddProductModal()">➕ 新增補給品</button>
+            </div>
+        </div>
+
+        <div id="system" class="tab-content">
+            <div class="cyber-card" style="padding: 2rem; border-radius: 1rem;">
+                <div class="card-title neon-text">🔧 系統基本設定</div>
                 
-                <div style="margin-bottom: 1.2rem;">
-                    <label style="color: #ffa500; display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: bold;">旅客姓名 *</label>
-                    <input type="text" id="addName" class="cyber-input" placeholder="請輸入姓名" style="margin-bottom: 0;">
-                </div>
-                <div style="margin-bottom: 1.2rem;">
-                    <label style="color: #ffa500; display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: bold;">行動電話 *</label>
-                    <input type="text" id="addPhone" class="cyber-input" placeholder="請輸入手機" style="margin-bottom: 0;">
-                </div>
-                <div style="margin-bottom: 1.2rem;">
-                    <label style="color: #8fa0b0; display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">服務單位 / 公司名稱</label>
-                    <input type="text" id="addCompany" class="cyber-input" placeholder="請輸入公司名稱" style="margin-bottom: 0;">
-                </div>
-                <div style="margin-bottom: 1.5rem;">
-                    <label style="color: #8fa0b0; display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">桌號 / 座位安排</label>
-                    <input type="text" id="addSeat" class="cyber-input" placeholder="例如: 08桌 (留空則現場安排)" style="margin-bottom: 0;">
-                </div>
-
-                <div style="margin-bottom: 1.5rem;">
-                    <label style="color: #8fa0b0; display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">當日餐飲偏好</label>
-                    <div id="tempMealRadioGroup" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem;">
-                        <button type="button" class="verify-card cyber-card meal-opt-temp temp-meal-selected" data-meal="葷食" onclick="selectTempMeal(this, '葷食')" style="padding: 1rem 0.5rem; font-size: 0.95rem; font-weight: bold; border-radius: 0.5rem; cursor: pointer; background: rgba(0,0,0,0.3); border: 1px solid var(--accent-gray); color: #fff;">🥩 葷食</button>
-                        <button type="button" class="verify-card cyber-card meal-opt-temp" data-meal="素食" onclick="selectTempMeal(this, '素食')" style="padding: 1rem 0.5rem; font-size: 0.95rem; font-weight: bold; border-radius: 0.5rem; cursor: pointer; background: rgba(0,0,0,0.3); border: 1px solid var(--accent-gray); color: #fff;">🥬 素食</button>
-                        <button type="button" class="verify-card cyber-card meal-opt-temp" data-meal="不需餐食" onclick="selectTempMeal(this, '不需餐食')" style="padding: 1rem 0.5rem; font-size: 0.95rem; font-weight: bold; border-radius: 0.5rem; cursor: pointer; background: rgba(0,0,0,0.3); border: 1px solid var(--accent-gray); color: #fff;">❌ 不需餐食</button>
+                <div class="form-group">
+                    <label>當前作用中 MySQL 雲端活動資料庫場次</label>
+                    <div style="display:flex; gap:0.6rem; align-items:center;">
+                        <select class="cyber-input" id="googleSheetName" onchange="updateEventLink()" style="background: rgba(10,20,35,0.9); color:#fff; border:1px solid rgba(0,229,255,0.25); padding:0.52rem 1rem; flex-grow:1; border-radius:0.5rem; font-size:0.9rem; font-family:inherit; cursor:pointer; outline:none;">
+	                            <option value="">⏳ 正在讀取 MySQL 雲端活動場次...</option>
+	                        </select>
+                        <button class="adm-btn adm-btn-primary" onclick="switchActiveSheet()">⚡ 快速切換</button>
                     </div>
+                    <div id="sheetSwitchStatus" style="font-size:0.82rem; color:#8aa0aa; margin-top:0.45rem;">切換場次只會切換目前作用中的 MySQL 活動，不會重整整個後台。</div>
                 </div>
 
-                <div class="portrait-consent-box" style="margin-bottom:1.5rem;">
-                    <label class="portrait-consent-check" onclick="event.preventDefault(); openPortraitConsentModal();" style="cursor:pointer;">
-                        <input type="checkbox" id="portraitConsentTemp" onclick="event.stopPropagation();">
-                        <span>我已閱讀並同意活動拍攝與肖像使用授權條款<br><small style="color:rgba(255,255,255,0.45);">未勾選代表不同意，仍可完成報到並由系統記錄</small></span>
-                    </label>
-                    <button type="button" class="portrait-consent-link" onclick="openPortraitConsentModal()">📄 查看完整條款（含不同意選項）</button>
-                </div>
-                <div style="display: flex; gap: 1rem; margin-top: 0;">
-                    <button class="ck-btn ck-btn-warn" onclick="submitAddRegistration()" style="margin-top:0;">✓ 確認外加報到</button>
-                    <button class="ck-btn ck-btn-ghost" onclick="hideTempSection()" style="margin-top:0;">取消</button>
-                </div>
-            </div>
-        </div>
+                <div class="event-link-panel">
+                    <div class="card-title neon-text" style="font-size:1rem; margin-bottom:0.25rem;">🔗 目前場次專屬分享連結</div>
+                    <p style="color:#aaa; font-size:0.86rem; margin-bottom:0.7rem;">
+                        每一個活動名單都會產生自己的網址，分享時會固定帶入 admin 與 sheet，避免多場活動同時進行時跑錯名單。
+                    </p>
+                    <label style="color:#00e5ff;">報到頁連結</label>
+                    <div class="event-link-grid">
+                        <input id="event_link" class="cyber-input event-link-input" readonly>
+                        <button type="button" class="adm-btn adm-btn-sm" onclick="copySpecificLink('event_link')">📋 複製報到頁</button>
+                    </div>
 
-        <div id="groupListState" class="state-hidden">
-            <button class="btn-back-nav" onclick="setAppState('action')">← 重新搜尋</button>
-            <div class="form-card cyber-card" style="max-width: 700px;">
-                <h2 id="groupName" class="neon-text" style="margin-bottom: 2rem;">請 選 擇 旅 客</h2>
-                <div id="groupList" class="panel-border" style="background: rgba(4,10,20,0.4); border-radius: 1rem; overflow: hidden;"></div>
-            </div>
-        </div>
+                    <label style="color:#00e5ff; margin-top:0.9rem;">儀錶板連結</label>
+                    <div class="event-link-grid">
+                        <input id="dashboard_link" class="cyber-input event-link-input" readonly>
+                        <button type="button" class="adm-btn adm-btn-sm" onclick="copySpecificLink('dashboard_link')">📊 複製儀錶板</button>
+                    </div>
 
-        <div id="mealState" class="state-hidden">
-            <button class="btn-back-nav" onclick="resetToHome()">← 取消</button>
-            <div class="form-card cyber-card">
-                <h2 class="neon-text" style="margin-bottom:2rem;">🍽️ 機 上 餐 飲 偏 好</h2>
-                <div id="mealOptions"></div>
-                <button id="finalBtn" class="ck-btn ck-btn-confirm" disabled onclick="submitCheckin()">✈️ 確 認 並 核 發 登 機 證</button>
-            </div>
-        </div>
 
-        <div id="successState" class="state-hidden">
-            <section class="ark-terminal-shell">
-                <div id="arkTerminalPanel" class="ark-terminal-panel">
-                    <div class="ark-terminal-content">
-                        <div class="ark-brand-kicker">
-                            <div>
-                                <div>方舟終端機</div>
-                                <div>ARK TERMINAL</div>
+                    <div class="event-qr-panel">
+                        <div class="event-qr-box">
+                            <div id="eventQrCode"></div>
+                        </div>
+                        <div>
+                            <div class="event-qr-title">📱 專屬報到首頁 QR Code</div>
+                            <div class="event-qr-desc">
+                                QR Code 會依照目前選擇的活動名單自動產生，掃描後會直接進入該場次報到首頁，避免多場活動同時進行時連到錯誤名單。
                             </div>
-                            <div class="ark-logo-mark">⚓</div>
+                            <div class="event-qr-actions">
+                                <button type="button" class="adm-btn adm-btn-sm" onclick="downloadEventQrCode()">⬇️ 下載 QR Code</button>
+                                <button type="button" class="adm-btn adm-btn-sm" onclick="copySpecificLink('event_link')">📋 複製報到連結</button>
+                            </div>
                         </div>
-                        <div class="ark-terminal-title">智慧方舟</div>
-                        <div class="ark-terminal-subtitle">SMART WISDOM ARK｜世代共榮的數位聚合</div>
-                        <div id="arkGreeting" class="ark-user-greeting">您好，領航員</div>
-                        <div id="arkTerminalInfo" class="ark-mission-meta"></div>
-                        <div class="ark-terminal-grid">
-                            <button type="button" class="ark-nav-card" onclick="openArkMap()">
-                                <div class="ark-card-icon">🧭</div>
-                                <div>
-                                    <div class="ark-card-title">【2026 產業星圖】</div>
-                                    <div class="ark-card-sub">領航員名冊與每攤機會</div>
-                                    <div class="ark-card-desc">A-MALL.png / Navigator Directory</div>
-                                </div>
-                                <div class="ark-card-arrow">›</div>
-                            </button>
-                            <button type="button" class="ark-nav-card" onclick="openArkGift()">
-                                <div class="ark-card-icon">🎁</div>
-                                <div>
-                                    <div class="ark-card-title">【方舟物資艙】</div>
-                                    <div class="ark-card-sub">傳承伴手禮核心內涵</div>
-                                    <div class="ark-card-desc">守護碼 / 禮品說明手冊</div>
-                                </div>
-                                <div class="ark-card-arrow">›</div>
-                            </button>
-                            <button type="button" class="ark-nav-card" onclick="openArkVideo()">
-                                <div class="ark-card-icon">▶</div>
-                                <div>
-                                    <div class="ark-card-title">【核心引擎啟動】</div>
-                                    <div class="ark-card-sub">智能全新數位中控系統</div>
-                                    <div class="ark-card-desc">三年經營現況影片</div>
-                                </div>
-                                <div class="ark-card-arrow">›</div>
-                            </button>
-                            <button type="button" class="ark-nav-card" onclick="openArkFlow()">
-                                <div class="ark-card-icon">🕘</div>
-                                <div>
-                                    <div class="ark-card-title">【大會時空座標】</div>
-                                    <div class="ark-card-sub">實體進化航線預載</div>
-                                    <div class="ark-card-desc">09:30 - 17:00 航程時間軸</div>
-                                </div>
-                                <div class="ark-card-arrow">›</div>
-                            </button>
-                        </div>
+                    </div>
+
+                    <div style="margin-top:1rem; color:#aaa; font-size:0.86rem;">可用活動名單快速連結</div>
+                    <div id="eventLinkList" class="event-link-list"></div>
+                </div>
+                
+
+
+                <div class="form-group">
+                    <label>🗺️ 地圖導覽圖片網址 或 直接上傳圖片檔</label>
+                    <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 0.5rem;">
+                        <input type="text" class="cyber-input" id="mapImageUrl" style="margin-bottom: 0; flex-grow: 1;" placeholder="地圖 URL 或貼上本機圖片 Base64">
+                        <label class="adm-btn adm-btn-upload" style="cursor:pointer;">
+                            📁 上傳地圖
+                            <input type="file" id="mapLocalFile" accept="image/*" style="display: none;" onchange="handleMapFileUpload(this)">
+                        </label>
+                    </div>
+                    <p style="color: #ffa500; font-size: 0.85rem; margin-top: 0.5rem; text-align: left; letter-spacing: 1px;">
+                        ⚠️ 航空提示：請盡量上傳高解析度圖片（建議 1920x1080 或 1200x900）。
+                    </p>
+                    <div id="systemMapPreviewContainer" style="margin-top: 10px; display: none; text-align: left;">
+                        <img id="systemMapPreview" src="" style="max-width: 240px; max-height: 150px; border-radius: 8px; border: 1px solid var(--accent-gray); object-fit: contain; background: rgba(0,0,0,0.3);">
                     </div>
                 </div>
 
-                <button class="ck-btn ck-btn-ghost" onclick="resetToHome()" style="max-width:280px; margin:2rem auto 0; font-size: 0.95rem;">← 回 到 報 到 首 頁</button>
-            </section>
+
+                <button class="adm-btn adm-btn-primary adm-btn-lg" style="margin-bottom:2rem;" onclick="saveSystemSettings()">💾 儲存設定</button>
+
+                <div class="form-group" style="border-top: 1px solid rgba(0,229,255,0.2); padding-top: 2rem;">
+                    <div class="card-title neon-text" style="margin-bottom:0.5rem;">📥 本機名單一鍵覆寫同步</div>
+                    <label style="color:#aaa; margin-bottom:1.5rem;">您可以直接選擇本機的 CSV 檔案上傳，系統會將名單採高效併發寫入技術並覆寫最新名單。</label>
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <label class="adm-btn adm-btn-lg adm-btn-primary" style="cursor:pointer;">
+                            📊 選擇 CSV 並匯入
+                            <input type="file" id="csvLocalFile" accept=".csv" style="display: none;" onchange="handleCsvUpload(this)">
+                        </label>
+                        <span id="csvUploadStatus" style="color: #00e5ff; font-size: 0.95rem; letter-spacing:1px;">未選擇任何檔案</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cyber-card" style="padding: 2rem; border-radius: 1rem; margin-top: 2rem;">
+                <div class="card-title neon-text">🏷️ 商品分類管理中心</div>
+                <div class="form-group">
+                    <label>管理選單項目：新增自訂分類</label>
+                    <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem;">
+                        <input type="text" class="cyber-input" id="newCategoryPoolInput" style="margin-bottom: 0; flex-grow: 1;" placeholder="請輸入新分類名稱 (例如：服飾、軟體裝置)">
+                        <button class="adm-btn adm-btn-success" onclick="addCategoryToPool()">➕ 新增分類</button>
+                    </div>
+                </div>
+                <label style="margin-bottom: 0.8rem;">目前系統全域可用分類清單 (點擊紅色 ✕ 可直接刪除該下拉選項)：</label>
+                <div id="categoryPoolListContainer" style="display: flex; flex-wrap: wrap; gap: 0.8rem; margin-top: 0.5rem;"></div>
+            </div>
         </div>
 
-        <div id="productState" class="state-hidden">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3rem;">
-                <h1 class="neon-text" style="font-size: 2.2rem;">🛍️ 活 動 商 品 專 區</h1>
-                <button class="ck-btn-pill ck-btn-ghost" onclick="resetToHome()">← 返 回</button>
+        <div id="agenda" class="tab-content">
+            <div class="cyber-card" style="padding: 2rem; border-radius: 1rem;">
+                <div class="card-title neon-text">📅 大會議程設定</div>
+                <p style="color:#aaa; margin-bottom:1rem;">新增或修改前台報到成功後顯示的大會議程。</p>
+                <div id="agendaEditorList" style="display:grid; gap:0.8rem;"></div>
+                <div style="display:flex; gap:0.8rem; margin-top:1rem; flex-wrap:wrap;">
+                    <button class="adm-btn adm-btn-success" onclick="addAgendaRow()">➕ 新增議程</button>
+                    <button class="adm-btn adm-btn-primary" onclick="saveAgenda()">💾 儲存議程</button>
+                </div>
             </div>
-            <div id="giftsSection" class="state-hidden">
-                <h2 class="neon-text" style="margin-bottom: 1.5rem; font-size: 1.5rem;">🎁 精 選 伴 手 禮</h2>
-                <div id="giftsGrid" class="products-grid"></div>
+        </div>
+
+        <div id="industry" class="tab-content">
+            <div class="cyber-card" style="padding: 2rem; border-radius: 1rem;">
+                <div class="card-title neon-text">🏷️ 行業類別手動對照表</div>
+                <p style="color:#aaa; margin-bottom:0.45rem;">把公司名稱對應到行業類別，前台圓餅圖會用這些行業做統計。公司欄位可直接從目前表單公司下拉選取，也能手動輸入。</p>
+                <p id="companyOptionsHint" style="color:#00e5ff; margin-bottom:1rem; font-size:0.88rem;">公司清單載入中...</p>
+                <div id="industryMappingList" style="display:grid; gap:0.8rem;"></div>
+                <div style="display:flex; gap:0.8rem; margin-top:1rem; flex-wrap:wrap;">
+                    <button class="adm-btn adm-btn-success" onclick="addIndustryRow()">➕ 新增對照</button>
+                    <button class="adm-btn" onclick="refreshCompanyOptions()">🔄 重新讀取公司</button>
+                    <button class="adm-btn adm-btn-upload" onclick="addIndustryRowsFromCompanies()">📋 帶入表單公司</button>
+                    <button class="adm-btn adm-btn-primary" onclick="saveIndustryMappings()">💾 儲存對照表</button>
+                </div>
             </div>
-            <div id="normalProductsSection" style="margin-top: 4rem;">
-                <h2 class="neon-text" style="margin-bottom: 1.5rem; font-size: 1.5rem;">📚 補 給 品 清 單</h2>
-                <div id="categoryFilters" style="margin-bottom: 2.5rem; display: flex; flex-wrap: wrap; gap: 0.8rem;"></div>
-                <div id="productsGrid" class="products-grid"></div>
+        </div>
+
+        <div id="exhibitors" class="tab-content">
+            <div class="cyber-card" style="padding: 2rem; border-radius: 1rem;">
+                <div class="card-title neon-text">🏢 參與企業管理</div>
+                <p style="color:#aaa; margin-bottom:1rem;">管理前台「今日參與企業」卡片內容。商品與表單功能不受影響。</p>
+                <div id="exhibitorEditorList" style="display:grid; gap:0.8rem;"></div>
+                <div style="display:flex; gap:0.8rem; margin-top:1rem; flex-wrap:wrap;">
+                    <button class="adm-btn adm-btn-success" onclick="addExhibitorRow()">➕ 新增企業</button>
+                    <button class="adm-btn adm-btn-primary" onclick="saveExhibitors()">💾 儲存企業資訊</button>
+                </div>
             </div>
         </div>
     </main>
 
-    <!-- 肖像授權條款 Modal -->
-    <div id="portraitConsentModal" class="portrait-consent-modal">
-        <div class="portrait-consent-card">
-            <button class="portrait-consent-close" onclick="closePortraitConsentModal()">✕</button>
-            <h3>📸 活動拍攝與肖像使用授權條款</h3>
-            <p>本人同意主辦單位（以下簡稱「主辦方」）於本次活動期間，對本人進行拍攝、錄影及錄音，並授權主辦方將相關影像、照片及聲音（以下簡稱「影像資料」）用於以下用途：</p>
-            <p><strong style="color:#00e5ff;">一、授權使用範圍</strong><br>
-            活動紀錄與存檔、官方網站、社群媒體（Facebook、Instagram、YouTube 等）、宣傳素材、新聞稿及媒體發布、內部教育訓練及企業簡報。</p>
-            <p><strong style="color:#00e5ff;">二、授權期間</strong><br>
-            本授權自本人簽署同意起，永久有效，且不限地域範圍。</p>
-            <p><strong style="color:#00e5ff;">三、免責聲明</strong><br>
-            主辦方保證影像資料之使用不涉及任何誹謗、損害本人名譽或違法之行為。如有任何疑慮，請於報到前向工作人員提出。</p>
-            <p><strong style="color:#00e5ff;">四、不同意之處理</strong><br>
-            若本人不同意上述條款，請告知現場工作人員，主辦方將盡力安排避免拍攝，但仍可正常參與活動。</p>
-            <p style="color: rgba(255,255,255,0.5); font-size: 0.82rem; margin-top: 1rem;">如對本條款有任何疑問，請洽詢現場工作人員或主辦方聯絡窗口。</p>
-            <div style="display:flex; gap:1rem; margin-top:1.5rem;">
-                <button class="ck-btn ck-btn-confirm" style="font-size:0.95rem;" onclick="agreePortraitConsent()">✓ 我已閱讀並同意</button>
-                <button class="ck-btn ck-btn-ghost" style="font-size:0.95rem;" onclick="disagreePortraitConsent()">✕ 不同意</button>
+
+    <div id="tableDetailModal" class="modal">
+        <div class="modal-content cyber-card" style="max-width: 860px;">
+            <div style="display:flex; justify-content:space-between; gap:1rem; align-items:center; margin-bottom:1rem;">
+                <div class="modal-header neon-text" id="tableDetailTitle" style="margin:0;">桌號詳情</div>
+                <button class="adm-btn adm-btn-ghost adm-btn-sm" onclick="closeTableDetailModal()">✕ 關閉</button>
+            </div>
+            <div id="tableDetailSummary" style="color:#aaa; margin-bottom:1rem;"></div>
+            <div class="table-detail-grid">
+                <div>
+                    <h3 style="color:#4ade80; margin-bottom:0.8rem;">✅ 已報到</h3>
+                    <div id="tableCheckedList" class="table-person-list"></div>
+                </div>
+                <div>
+                    <h3 style="color:#f87171; margin-bottom:0.8rem;">⏳ 未報到</h3>
+                    <div id="tablePendingList" class="table-person-list"></div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div id="mapModal" class="state-hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
-        <div style="position: relative; width: 90%; height: 85vh; max-width: 1200px; display: flex; flex-direction: column;">
-            <button onclick="toggleMapModal(false)" style="align-self: flex-end; margin-bottom: 12px; background: #00e5ff; color: #000; border: none; padding: 10px 24px; border-radius: 30px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 15px rgba(0,229,255,0.3); transition: 0.2s;">✕ 關 閉 地 圖</button>
-            <div style="flex-grow: 1; background: #060f1e; border-radius: 12px; overflow: hidden; border: 1px solid rgba(0,229,255,0.25); display: flex; justify-content: center; align-items: center; box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
-                <img id="mapDisplayImage" src="" style="width: 100%; height: 100%; object-fit: contain; display: none;">
-                <iframe id="mapDisplayFrame" src="" style="width: 100%; height: 100%; border: none; display: none;"></iframe>
+    <div id="productModal" class="modal">
+        <div class="modal-content cyber-card">
+            <div class="modal-header neon-text" id="modalTitle">編輯商品</div>
+            <div class="form-group"><label>名稱 *</label><input type="text" class="cyber-input" id="productName"></div>
+            
+            <div class="form-group">
+                <label>圖片網址 或 直接上傳圖片檔</label>
+                <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 0.5rem;">
+                    <input type="text" class="cyber-input" id="productImage" style="margin-bottom: 0; flex-grow: 1;" placeholder="圖片網址或貼上本機圖片 Base64">
+                    <label class="adm-btn adm-btn-upload" style="cursor:pointer;">
+                        📁 上傳圖片
+                        <input type="file" accept="image/*" style="display: none;" onchange="handleProductFileUpload(this)">
+                    </label>
+                </div>
+                <p style="color: #00e5ff; font-size: 0.85rem; margin-top: 0.5rem; text-align: left; letter-spacing: 1px;">
+                    💡 建議比例：4:3 或 3:2（例如 800x600 像素），動態 GIF 亦可完美支援。
+                </p>
+                <div id="imagePreview" style="margin-top: 10px; text-align: center;">
+                    <img id="modalImgPreview" src="" style="max-width: 100%; max-height: 150px; display: none; border-radius: 8px; border: 1px solid var(--accent-gray); object-fit: contain;">
+                </div>
+            </div>
+
+            <div class="form-group"><label>簡介</label><textarea id="productDescription" class="cyber-input"></textarea></div>
+            
+            <div class="form-group">
+                <label>分類選項</label>
+                <select class="cyber-input" id="productCategory" onchange="checkCategorySelection(this)" style="background: rgba(10,20,35,0.9); color:#fff; border:1px solid rgba(0,229,255,0.25); padding:0.52rem 1rem; width:100%; border-radius:0.5rem; font-size:0.9rem; font-family:inherit; cursor:pointer; outline:none;">
+                    <option value="課程">📚 課程</option>
+                    <option value="諮詢">💼 諮詢</option>
+                    <option value="聯盟">🤝 聯盟</option>
+                    <option value="紀念品">🎁 紀念品</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="customCategoryContainer" style="display: none;">
+                <label>✍️ 請輸入新分類名稱</label>
+                <input type="text" class="cyber-input" id="customCategoryInput" placeholder="例如：服飾、講座、硬體設備">
+            </div>
+
+            <div class="form-group"><label>連結</label><input type="url" class="cyber-input" id="productLink"></div>
+            <input type="hidden" id="productIsGift">
+            <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:1rem; margin-top:1.5rem;">
+                <button class="adm-btn adm-btn-ghost" onclick="closeProductModal()">取消</button>
+                <button class="adm-btn adm-btn-primary" onclick="saveProduct()"><span id="saveButtonText">儲存</span></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="deleteModal" class="modal">
+        <div class="modal-content cyber-card" style="border-left-color: #dc2626;">
+            <div class="modal-header" style="color: #dc2626;">⚠️ 確認刪除</div>
+            <p style="margin-bottom:1.5rem;">確定移除「<strong id="deleteProductName" style="color:#fff;"></strong>」？此操作無法復原。</p>
+            <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:1rem;">
+                <button class="adm-btn adm-btn-ghost" onclick="closeDeleteModal()">取消</button>
+                <button class="adm-btn adm-btn-danger" onclick="confirmDelete()">刪除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 臨時報到 Modal -->
+    <div id="addModal" class="modal" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center;">
+        <div class="cyber-card" style="width: 90%; max-width: 500px; padding: 2rem; background: rgba(10,20,35,0.95);">
+            <h2 class="neon-text" style="margin-bottom: 1.5rem;">➕ 臨時額外報到</h2>
+            <div class="form-group"><label>旅客姓名</label><input type="text" id="addName" class="cyber-input"></div>
+            <div class="form-group"><label>手機號碼</label><input type="text" id="addPhone" class="cyber-input"></div>
+            <div class="form-group"><label>公司/單位</label><input type="text" id="addCompany" class="cyber-input"></div>
+            <div class="form-group"><label>桌號/座位 (選填)</label><input type="text" id="addSeat" class="cyber-input"></div>
+            <div style="display: flex; gap: 10px; margin-top: 1rem;">
+                <button class="adm-btn adm-btn-ghost" onclick="hideAddModal()">取消</button>
+                <button class="adm-btn adm-btn-success" onclick="submitAddRegistration()">✓ 確認報到</button>
             </div>
         </div>
     </div>
 
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        let currentSheet = urlParams.get('sheet') || '';
-        const currentAdmin = urlParams.get('admin') || 'admin';
         const API_BASE = '/api';
-        let searchMethod = '', selectedUser = null, systemConfig = null;
-        window.allProducts = [];
-        window.currentCategory = '全部';
-        window.selectedTempMealChoice = '葷食';
+        let currentConfig = null;
+        let currentUser = 'admin';
+        let companyOptions = [];
+        let editingIdx = null;
+        let deleteIdx = null;
 
-        window.onload = function() {
-            if (!currentSheet) { fetchCurrentSheet(); } else { initSystem(); }
-            setInterval(fetchCurrentSheet, 30000);
-        };
 
-        function fetchCurrentSheet() {
-            fetch(`${API_BASE}/current_sheet?admin=${encodeURIComponent(currentAdmin)}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        const newSheet = data.current_sheet;
-                        if (newSheet !== currentSheet) {
-                            currentSheet = newSheet;
-                            initSystem();
-                        }
-                    }
-                })
-                .catch(err => console.error("同步數據異常中斷", err));
-        }
-
-        function initSystem() {
-            loadSystemConfig();
-            document.title = `${currentSheet || '活動'} - 活動報到系統`;
-        }
-
-        function startRegistration() {
-            const splash = document.getElementById('splash-screen');
-            splash.style.opacity = '0';
-            splash.style.visibility = 'hidden';
-            setTimeout(() => {
-                splash.style.display = 'none';
-                setAppState('methodSelection'); 
-                document.getElementById('shopBtn').style.display = 'block'; 
-            }, 800);
-        }
-
-        function goToShop() {
-            const splash = document.getElementById('splash-screen');
-            if (splash && splash.style.display !== 'none') { splash.style.display = 'none'; }
-            showProducts();
-        }
-
-        function setAppState(s) {
-            ['methodSelection', 'action', 'groupList', 'meal', 'success', 'product'].forEach(x => {
-                const el = document.getElementById(x+'State');
-                if(el) el.classList.add('state-hidden');
-            });
-            document.getElementById(s+'State').classList.remove('state-hidden');
-            hideTempSection();
-            window.scrollTo(0, 0);
-        }
-
-        function resetToHome() { setAppState('methodSelection'); }
-        
-        function hideTempSection() {
-            const tempSec = document.getElementById('tempRegistrationSection');
-            if(tempSec) tempSec.classList.add('state-hidden');
-        }
-
-        function selectTempMeal(el, meal) {
-            window.selectedTempMealChoice = meal;
-            document.querySelectorAll('#tempMealRadioGroup .meal-opt-temp').forEach(btn => {
-                btn.style.borderColor = 'var(--accent-gray)';
-                btn.style.background = 'rgba(0,0,0,0.3)';
-                btn.style.boxShadow = 'none';
-                btn.style.color = '#fff';
-            });
-            el.style.borderColor = '#ffa500';
-            el.style.background = 'rgba(255, 165, 0, 0.15)';
-            el.style.boxShadow = '0 0 12px rgba(255, 165, 0, 0.3)';
-            el.style.color = '#ffa500';
-        }
-
-        async function submitAddRegistration() {
-            const consentTemp = document.getElementById('portraitConsentTemp');
-            const portraitConsent = consentTemp ? consentTemp.checked : false;
-            const data = {
-                name: document.getElementById('addName').value.trim(),
-                phone: document.getElementById('addPhone').value.trim(),
-                company: document.getElementById('addCompany').value.trim(),
-                seat: document.getElementById('addSeat').value.trim() || '現場安排',
-                meal: window.selectedTempMealChoice,
-                portrait_consent: portraitConsent,
-                portrait_consent_status: portraitConsent ? '同意' : '不同意',
-                admin: currentAdmin,
-                sheet: currentSheet
-            };
-            if(!data.name || !data.phone) return alert('❌ 請完整填寫學員姓名與手機核心欄位！');
-            
-            try {
-                const res = await fetch('/api/registrations/add', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(data)
-                });
-                const result = await res.json();
-                if(result.success) {
-                    hideTempSection();
-                    alert(`🎉 臨時補單報到成功！歡迎登機。`);
-                    resetToHome();
-                } else {
-                    alert('報到未完成：' + result.message);
-                }
-            } catch(e) { alert('通訊矩陣回應異常，無法外加名單'); }
-        }
-
-        async function toggleMapModal(show) {
-            const modal = document.getElementById('mapModal');
-            const img = document.getElementById('mapDisplayImage');
-            const frame = document.getElementById('mapDisplayFrame');
-            if (show) {
-                modal.classList.remove('state-hidden');
-                try {
-                    const res = await fetch(`${API_BASE}/config?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}&t=` + new Date().getTime());
-                    const config = await res.json();
-                    let url = config.map_image_url ? config.map_image_url.trim() : '';
-                    if (url) {
-                        const lowerUrl = url.toLowerCase();
-                        const isImage = lowerUrl.endsWith('.png') || lowerUrl.endsWith('.jpg') || lowerUrl.endsWith('.jpeg') || lowerUrl.endsWith('.gif') || lowerUrl.endsWith('.webp') || url.startsWith('data:image/');
-                        if (isImage) {
-                            frame.style.display = 'none'; frame.removeAttribute('src');
-                            img.src = url; img.style.display = 'block';
-                        } else {
-                            img.style.display = 'none'; img.removeAttribute('src');
-                            frame.src = url; frame.style.display = 'block';
-                        }
-                    } else {
-                        /* 👑 修正直接暴露後台的提示 */
-                        alert('✨ 產業星圖正由方舟中樞更新載入中，稍後將開放導覽。');
-                        modal.classList.add('state-hidden');
-                    }
-                } catch(e) { modal.classList.add('state-hidden'); }
-            } else {
-                modal.classList.add('state-hidden'); img.removeAttribute('src'); frame.removeAttribute('src');
-            }
-        }
-
-        function prepareSearch(method, label) {
-            searchMethod = method;
-            document.getElementById('actionTitle').textContent = `請 輸 入 旅 客 ${label}`;
-            document.getElementById('actionInput').value = '';
-            setAppState('action');
-        }
-
-        async function handleAction() {
-            const val = document.getElementById('actionInput').value.trim();
-            if(!val) return;
-            hideTempSection();
-            
-            try {
-                const res = await fetch(`${API_BASE}/search/${searchMethod}?${searchMethod}=${encodeURIComponent(val)}&admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
-                const json = await res.json();
-                if (json.data && json.data.length > 0) {
-                    if (searchMethod === 'company') {
-                        const first = json.data[0];
-                        const looksLikePassengerRows = (typeof first === 'object' && first !== null) && (
-                            'id' in first || 'phone' in first || 'email' in first || 'seat' in first || 'status' in first ||
-                            ('name' in first && ('company' in first || '公司' in first || '公司名稱' in first))
-                        );
-
-                        if (looksLikePassengerRows) {
-                            if (json.data.length === 1) {
-                                const u = json.data[0];
-                                if (u.status === 'checked_in' || u.status === '已報到' || u.status === '替代') {
-                                    selectedUser = u;
-                                    renderArkTerminalFromUser(u);
-                                    setAppState('success');
-                                    return;
-                                }
-                                selectedUser = u;
-                                renderMealOptions();
-                            } else {
-                                renderUserList(json.data, `請 選 擇 ${val} 的 旅 客`);
-                            }
-                        } else {
-                            renderCompanyList(json.data);
-                        }
-                    }
-                    else if (json.data.length === 1) { 
-                        const u = json.data[0];
-                        if (u.status === 'checked_in' || u.status === '已報到' || u.status === '替代') {
-                            selectedUser = u;
-                            renderArkTerminalFromUser(u);
-                            setAppState('success');
-                            return;
-                        }
-                        selectedUser = u; 
-                        renderMealOptions(); 
-                    }
-                    else { window.tempData = json.data; renderUserList(json.data, '搜尋結果'); }
-                } else {
-                    document.getElementById('addName').value = '';
-                    document.getElementById('addPhone').value = '';
-                    document.getElementById('addCompany').value = '';
-                    document.getElementById('addSeat').value = '';
-                    
-                    const defaultMealBtn = document.querySelector('#tempMealRadioGroup [data-meal="葷食"]');
-                    if(defaultMealBtn) selectTempMeal(defaultMealBtn, '葷食');
-
-                    document.getElementById('tempRegistrationSection').classList.remove('state-hidden');
-                    
-                    if (searchMethod === 'company') { document.getElementById('addCompany').value = val; } 
-                    else if (searchMethod === 'phone') { document.getElementById('addPhone').value = val; } 
-                    else if (searchMethod === 'name') { document.getElementById('addName').value = val; }
-                }
-            } catch(e) { alert('通訊矩陣連線中斷'); }
-        }   
-
-         function renderCompanyList(companies) {
-            const list = document.getElementById('groupList');
-            list.innerHTML = '';
-            companies.forEach(c => {
-                // c 可能是字串或物件，統一取名稱
-                const companyName = (typeof c === 'object' && c !== null)
-                    ? (c.company || c['公司'] || c['公司名稱'] || c.name || JSON.stringify(c))
-                    : String(c);
-                const div = document.createElement('div'); div.className = 'group-item';
-                div.innerHTML = `<span>🏢 ${escapeHtml(companyName)}</span><span style="color: var(--text-dark)">➔</span>`;
-                div.onclick = async () => {
-                    try {
-                        const res = await fetch(`${API_BASE}/search/company_members?name=${encodeURIComponent(companyName)}&admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
-                        const json = await res.json(); renderUserList(json.data, companyName);
-                    } catch(e) { alert('無法讀取數據結構'); }
-                };
-                list.appendChild(div);
-            });
-            document.getElementById('groupName').textContent = '請 選 擇 所 屬 公 司';
-            setAppState('groupList');
-        }
-
-        function renderUserList(users, title) {
-            const list = document.getElementById('groupList');
-            list.innerHTML = '';
-            users.forEach(u => {
-                const div = document.createElement('div'); div.className = 'group-item';
-                const isRegistered = (u.status === 'checked_in' || u.status === '已報到' || u.status === '替代');
-                const statusTag = isRegistered ? '<span style="color:#f87171; font-weight:bold;">[已報到]</span>' : '<span style="color: var(--text-dark)">➔</span>';
-                const userName = escapeHtml(u.name || u['姓名'] || '未命名旅客');
-                const userCompany = escapeHtml(u.company || u['公司'] || u['公司名稱'] || '');
-                div.innerHTML = `<div><div style="font-weight:bold; font-size:1.15rem; color:#fff;">${userName}</div><div style="font-size:0.85rem; color:#8fa0b0; margin-top:0.2rem;">${userCompany}</div></div>${statusTag}`;
-                div.onclick = () => {
-                    if (isRegistered) {
-                        selectedUser = u;
-                        renderArkTerminalFromUser(u);
-                        setAppState('success');
-                    } 
-                    else { selectedUser = u; renderMealOptions(); }
-                };
-                list.appendChild(div);
-            });
-            document.getElementById('groupName').textContent = title;
-            setAppState('groupList');
-        }
-
-        async function renderMealOptions() {
-            const res = await fetch(`${API_BASE}/config?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
-            systemConfig = await res.json();
-            if (!systemConfig.show_meal_options) { submitCheckin('不需要'); return; }
-            
-            const container = document.getElementById('mealOptions');
-            container.innerHTML = `
-                <div style="margin-bottom:2rem; text-align:left; padding:1.2rem; background:rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.2); border-radius:0.6rem;">
-                    <div style="font-size:0.85rem; color:rgba(0,229,255,0.7); letter-spacing:1px; margin-bottom:0.2rem;">旅 客 姓 名</div>
-                    <div style="font-size:1.4rem; font-weight:bold; color:#fff;">${selectedUser.name}</div>
-                </div>
-                <div class="two-col-grid" style="margin-bottom:2rem;">
-                    <div id="btnOrig" class="verify-card cyber-card is-original-selected" onclick="toggleIdentity(true)" style="padding:1.2rem; font-weight:bold;">本 人 報 到</div>
-                    <div id="btnProxy" class="verify-card cyber-card" onclick="toggleIdentity(false)" style="padding:1.2rem; font-weight:bold;">替 代 報 到</div>
-                </div>
-                <div id="proxyForm" class="state-hidden" style="margin-bottom:2rem; text-align:left; border:1px solid rgba(255,165,0,0.4); background:rgba(255,165,0,0.03); padding:1.5rem; border-radius:0.75rem;">
-                    <p style="color:#ffa500; margin-bottom:1rem; font-size:0.95rem; font-weight:bold;">請 輸 入 替 代 人 資 訊 ：</p>
-                    <input type="text" id="proxyName" class="cyber-input" placeholder="替代人姓名" style="margin-bottom:0.8rem; padding:0.9rem;">
-                    <input type="text" id="proxyPhone" class="cyber-input" placeholder="替代人手機" style="margin-bottom:0; padding:0.9rem;">
-                </div>
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem; margin-bottom:1.5rem;">
-                    <div class="verify-card cyber-card meal-opt" onclick="selectMeal(this, '葷食')" style="padding:1.2rem 0.5rem; font-weight:bold;">🥩 葷食</div>
-                    <div class="verify-card cyber-card meal-opt" onclick="selectMeal(this, '素食')" style="padding:1.2rem 0.5rem; font-weight:bold;">🥬 素食</div>
-                    <div class="verify-card cyber-card meal-opt" onclick="selectMeal(this, '不需餐食')" style="padding:1.2rem 0.5rem; font-weight:bold;">❌ 不需餐食</div>
-                </div>
-                <div class="portrait-consent-box">
-                    <label class="portrait-consent-check" onclick="event.preventDefault(); openPortraitConsentModal();" style="cursor:pointer;">
-                        <input type="checkbox" id="portraitConsent" onchange="checkMealReady()" onclick="event.stopPropagation();">
-                        <span>我已閱讀並同意活動拍攝與肖像使用授權條款<br><small style="color:rgba(255,255,255,0.45);">未勾選代表不同意，仍可完成報到並由系統記錄</small></span>
-                    </label>
-                    <button type="button" class="portrait-consent-link" onclick="openPortraitConsentModal()">📄 查看完整條款（含不同意選項）</button>
-                </div>
-            `;
-            window.selectedMeal = null; window.isOriginal = true;
-            document.getElementById('finalBtn').disabled = true;
-            setAppState('meal');
-        }
-
-        function toggleIdentity(isOrig) {
-            window.isOriginal = isOrig;
-            document.getElementById('btnOrig').classList.toggle('is-original-selected', isOrig);
-            document.getElementById('btnProxy').classList.toggle('proxy-selected', !isOrig);
-            document.getElementById('proxyForm').classList.toggle('state-hidden', isOrig);
-            checkMealReady();
-        }
-
-        function selectMeal(el, m) {
-            document.querySelectorAll('.meal-opt').forEach(x => x.classList.remove('meal-selected'));
-            el.classList.add('meal-selected');
-            window.selectedMeal = m; checkMealReady();
-        }
-
-        function checkMealReady() {
-            const finalBtn = document.getElementById('finalBtn');
-            // 肖像授權不再作為報到阻擋條件；未勾選代表不同意，仍可報到並送出記錄
-            finalBtn.disabled = !window.selectedMeal;
-        }
-
-        function openPortraitConsentModal() {
-            document.getElementById('portraitConsentModal').classList.add('active');
-        }
-        function closePortraitConsentModal() {
-            document.getElementById('portraitConsentModal').classList.remove('active');
-        }
-        function agreePortraitConsent() {
-            // 同意：勾選所有報到流程的 checkbox 並關閉 modal
-            const cb = document.getElementById('portraitConsent');
-            if (cb) { cb.checked = true; checkMealReady(); }
-            const cbTemp = document.getElementById('portraitConsentTemp');
-            if (cbTemp) { cbTemp.checked = true; }
-            closePortraitConsentModal();
-        }
-        function disagreePortraitConsent() {
-            // 不同意：取消勾選並關閉 modal；報到仍可繼續，送出時會記錄為不同意
-            const cb = document.getElementById('portraitConsent');
-            if (cb) { cb.checked = false; checkMealReady(); }
-            const cbTemp = document.getElementById('portraitConsentTemp');
-            if (cbTemp) { cbTemp.checked = false; }
-            closePortraitConsentModal();
+        function getActiveEventQuery() {
+            const sheetEl = document.getElementById('googleSheetName');
+            const sheet = (sheetEl && sheetEl.value) || (currentConfig && currentConfig.google_sheet_name) || '活動報到名單';
+            return `?admin=${encodeURIComponent(currentUser || 'admin')}&sheet=${encodeURIComponent(sheet)}`;
         }
 
         function escapeHtml(value) {
@@ -863,184 +898,1145 @@
             });
         }
 
-        function renderArkTerminal(user, meal) {
-            const name = escapeHtml(user?.name || selectedUser?.name || 'Jeremy');
-            const company = escapeHtml(user?.company || selectedUser?.company || '智慧方舟');
-            const seat = escapeHtml(user?.seat || selectedUser?.seat || '現場安排');
-            const mealText = escapeHtml(meal || user?.meal || selectedUser?.meal || '未選擇');
-            const eventName = escapeHtml((systemConfig && (systemConfig.event_title || systemConfig.google_sheet_name)) || currentSheet || '活動報到名單');
-            const startRaw = systemConfig && (systemConfig.event_date_start || systemConfig.event_start_date || systemConfig.date_start || systemConfig.exp_event_date_start || '');
-            const endRaw = systemConfig && (systemConfig.event_date_end || systemConfig.event_end_date || systemConfig.date_end || systemConfig.exp_event_date_end || '');
-            const startDate = escapeHtml(startRaw || '未設定');
-            const endDate = escapeHtml(endRaw || '');
-            document.getElementById('arkGreeting').innerHTML = `您好，領航員 ${name}`;
-            document.getElementById('arkTerminalInfo').innerHTML = `
-                <div class="ark-meta-chip">
-                    <div class="ark-meta-label">MISSION</div>
-                    <div class="ark-meta-value">${eventName}</div>
-                </div>
-                <div class="ark-meta-chip">
-                    <div class="ark-meta-label">DATE</div>
-                    <div class="ark-meta-value">${endDate ? `${startDate} ~ ${endDate}` : startDate}</div>
-                </div>
-                <div class="ark-meta-chip">
-                    <div class="ark-meta-label">COMPANY</div>
-                    <div class="ark-meta-value">${company}</div>
-                </div>
-                <div class="ark-meta-chip">
-                    <div class="ark-meta-label">SEAT / MEAL</div>
-                    <div class="ark-meta-value">${seat}｜${mealText}</div>
-                </div>
-            `;
+        async function loadCompanyOptions() {
+            try {
+                const res = await fetch(`${API_BASE}/companies/list${getActiveEventQuery()}`);
+                const json = await res.json();
+                if (!json.success) {
+                    console.warn('公司清單讀取失敗', json.message);
+                    companyOptions = [];
+                    renderCompanyDatalist();
+                    updateCompanyOptionsHint();
+                    return;
+                }
+
+                companyOptions = json.companies || [];
+                renderCompanyDatalist();
+                updateCompanyOptionsHint();
+            } catch (err) {
+                console.warn('公司清單讀取失敗', err);
+                companyOptions = [];
+                renderCompanyDatalist();
+                updateCompanyOptionsHint();
+            }
         }
 
-        // 已報到者直接跳終端機畫面（不重新打 check-in API）
-        function renderArkTerminalFromUser(user) {
-            if (!systemConfig) {
-                // 如果 config 還沒載入，先載入再顯示
-                fetch(`${API_BASE}/config?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`)
-                    .then(r => r.json())
-                    .then(cfg => { 
-                        systemConfig = cfg; 
-                        renderArkTerminal(user, user.meal || ''); 
-                    })
-                    .catch(() => renderArkTerminal(user, user.meal || ''));
+        function renderCompanyDatalist() {
+            let datalist = document.getElementById('companyOptionsDatalist');
+            if (!datalist) {
+                datalist = document.createElement('datalist');
+                datalist.id = 'companyOptionsDatalist';
+                document.body.appendChild(datalist);
+            }
+
+            datalist.innerHTML = companyOptions.map(c => {
+                const name = escapeHtml(c.name || '');
+                const people = Number(c.people_count || 0);
+                const checked = Number(c.checked_count || 0);
+                return `<option value="${name}" label="${name}（${people}人，已報到${checked}人）"></option>`;
+            }).join('');
+        }
+
+        function updateCompanyOptionsHint() {
+            const hint = document.getElementById('companyOptionsHint');
+            if (!hint) return;
+            hint.textContent = companyOptions.length
+                ? `已從目前表單讀取 ${companyOptions.length} 間公司，可直接在公司欄位下拉選取。`
+                : '目前表單尚未讀到公司資料，請先匯入名單或確認公司欄位。';
+        }
+
+        async function refreshCompanyOptions() {
+            await loadCompanyOptions();
+            alert(companyOptions.length ? `已更新公司清單：${companyOptions.length} 間公司` : '目前沒有可用公司資料');
+        }
+
+        function addIndustryRowsFromCompanies() {
+            const list = document.getElementById('industryMappingList');
+            if (!list) return;
+            if (!companyOptions.length) {
+                alert('目前表單沒有可用公司，請先匯入名單或按「重新讀取公司」。');
                 return;
             }
 
-            renderArkTerminal(user, user.meal || '');
+            const existing = new Set([...document.querySelectorAll('.industry-company-input')]
+                .map(input => input.value.trim())
+                .filter(Boolean));
+
+            let added = 0;
+            companyOptions.forEach(c => {
+                const companyName = (c.name || '').trim();
+                if (!companyName || existing.has(companyName)) return;
+                addIndustryRow({ company_name: companyName, industry: '' });
+                existing.add(companyName);
+                added += 1;
+            });
+
+            if (!added) alert('表單公司都已經在對照表裡了。');
         }
 
-        function openArkMap() { if (typeof toggleMapModal === 'function') return toggleMapModal(true); alert('✨ 產業星圖正由方舟中樞更新載入中。'); }
-        function openArkGift() { if (typeof showProducts === 'function') return showProducts(); alert('物資明細資料庫同步中。'); }
-        function openArkVideo() {
-            const url = systemConfig?.video_url || systemConfig?.event_video_url || systemConfig?.gift_video_url || '';
-            /* 👑 包裝提示 */
-            if (url) return window.open(url, '_blank', 'noopener');
-            alert('⚡ 核心引擎影像傳輸鏈結建立中，請稍後再試。');
-        }
 
-        function openArkFlow() {
-            const flowUrl = systemConfig?.flow_image_url || systemConfig?.schedule_image_url || systemConfig?.agenda_image_url || '';
-            if (flowUrl) {
-                const modal = document.getElementById('mapModal');
-                const img = document.getElementById('mapDisplayImage');
-                const frame = document.getElementById('mapDisplayFrame');
-                frame.style.display = 'none'; frame.removeAttribute('src');
-                img.src = flowUrl; img.style.display = 'block';
-                modal.classList.remove('state-hidden');
-                return;
+        function getCategoryList() {
+            const dummy = (currentConfig.products || []).find(p => p.name === "__SYSTEM_CATEGORIES__");
+            if (dummy && dummy.description) {
+                return dummy.description.split(',').map(c => c.trim()).filter(c => c);
             }
-            /* 👑 包裝提示 */
-            alert('⏳ 大會時空座標與實體進化航線正在預載中。');
+            return ['課程', '諮詢', '聯盟', '紀念品']; 
         }
 
-        async function submitCheckin(autoMeal) {
-            const meal = autoMeal || window.selectedMeal;
-            const consentEl = document.getElementById('portraitConsent');
-            const portraitConsent = consentEl ? consentEl.checked : false;
-            const proxyInfo = window.isOriginal ? {} : {
-                name: document.getElementById('proxyName').value.trim(),
-                phone: document.getElementById('proxyPhone').value.trim()
-            };
-            if (!window.isOriginal && !proxyInfo.name) { alert('請輸入替代人姓名'); return; }
+        function renderCategoryManager() {
+            const cats = getCategoryList();
+            const container = document.getElementById('categoryPoolListContainer');
+            if(!container) return;
+            container.innerHTML = cats.map(c => `
+                <div style="display: flex; align-items: center; gap: 0.6rem; background: rgba(0, 229, 255, 0.1); border: 1px solid rgba(0, 229, 255, 0.3); padding: 0.5rem 1.2rem; border-radius: 20px; font-size: 0.95rem; font-weight: bold; letter-spacing: 1px;">
+                    <span style="color: #fff;">${c}</span>
+                    <span style="color: #f87171; cursor: pointer; font-weight: bold; margin-left: 5px; font-size: 1.1rem;" onclick="deleteCategoryFromPool('${c}')" title="刪除此分類">✕</span>
+                </div>
+            `).join('');
+        }
+
+        async function deleteCategoryFromPool(catName) {
+            if(!confirm(`確定要將「${catName}」從系統下拉選單選單池中移除嗎？`)) return;
+            let cats = getCategoryList();
+            cats = cats.filter(c => c !== catName);
             
-            const btn = document.getElementById('finalBtn');
-            btn.disabled = true; btn.innerHTML = '<span>登 機 核 對 中 ...</span>';
+            let dummy = currentConfig.products.find(p => p.name === "__SYSTEM_CATEGORIES__");
+            if (!dummy) {
+                dummy = { name: "__SYSTEM_CATEGORIES__", isGift: false, image: "", link: "", category: "SYSTEM" };
+                currentConfig.products.push(dummy);
+            }
+            dummy.description = cats.join(',');
+            
+            if (await postConfig()) {
+                renderProducts();
+                renderCategoryManager();
+                alert(`分類「${catName}」已成功移除！`);
+            }
+        }
+
+        async function addCategoryToPool() {
+            const input = document.getElementById('newCategoryPoolInput');
+            const newCat = input.value.trim();
+            if (!newCat) return alert('請輸入欲新增的分類名稱');
+            
+            let cats = getCategoryList();
+            if (cats.includes(newCat)) return alert('該分類已存在於選單池中');
+            cats.push(newCat);
+            
+            let dummy = currentConfig.products.find(p => p.name === "__SYSTEM_CATEGORIES__");
+            if (!dummy) {
+                dummy = { name: "__SYSTEM_CATEGORIES__", isGift: false, image: "", link: "", category: "SYSTEM" };
+                currentConfig.products.push(dummy);
+            }
+            dummy.description = cats.join(',');
+            
+            if (await postConfig()) {
+                input.value = '';
+                renderProducts();
+                renderCategoryManager();
+                alert(`分類「${newCat}」已成功加入選單池！`);
+            }
+        }
+
+        function processAndCompressImage(file, maxTargetWidth, callback) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width, height = img.height;
+                    if (width > maxTargetWidth) {
+                        height = Math.round((height * maxTargetWidth) / width);
+                        width = maxTargetWidth;
+                    }
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                    callback(compressedBase64);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function init() {
+            await loadConfig();
+            await loadAvailableSheets(); // 【優化追加】初始化時向後端非同步撈取可用試算表清單
+            setupTabButtons();
+            updateDashboard();
+            setInterval(updateDashboard, 60000);
+
+            document.getElementById('productImage').oninput = (e) => {
+                const previewImg = document.getElementById('modalImgPreview');
+                if(e.target.value) { previewImg.src = e.target.value; previewImg.style.display = 'block'; } 
+                else { previewImg.style.display = 'none'; }
+            };
+
+            document.getElementById('mapImageUrl').oninput = (e) => {
+                const val = e.target.value.trim();
+                const previewImg = document.getElementById('systemMapPreview');
+                if(val) { previewImg.src = val; document.getElementById('systemMapPreviewContainer').style.display = 'block'; }
+                else { document.getElementById('systemMapPreviewContainer').style.display = 'none'; }
+            };
+        }
+
+        // ============================================================
+        // 【MySQL 場次下拉】從 Aiven MySQL admins.allowed_events 讀取活動列表
+        // ============================================================
+        async function loadAvailableSheets() {
+            try {
+                const res = await fetch(`${API_BASE}/sheets/list`);
+                const json = await res.json();
+                if (json.success && json.sheets.length > 0) {
+                    const select = document.getElementById('googleSheetName');
+                    const currentValue = currentConfig.google_sheet_name || '';
+                    
+                    select.innerHTML = json.sheets.map(name => `
+                        <option value="${name}" ${name === currentValue ? 'selected' : ''}>📊 ${name}</option>
+                    `).join('');
+                    renderEventLinkList(json.sheets);
+                    updateEventLink();
+                    renderEventQrCode();
+                } else {
+                    document.getElementById('googleSheetName').innerHTML = '<option value="">❌ 您的帳戶尚未設定任何 MySQL 活動場次</option>'; renderEventLinkList([]); updateEventLink();
+                }
+            } catch(e) {
+                document.getElementById('googleSheetName').innerHTML = '<option value="">❌ 無法讀取 MySQL 活動場次列表</option>'; renderEventLinkList([]); updateEventLink();
+            }
+        }
+
+        // ============================================================
+        // 【全新前端邏輯 2】處理 CSV 上傳覆寫邏輯
+        // ============================================================
+        async function handleCsvUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const statusText = document.getElementById('csvUploadStatus');
+            statusText.innerHTML = `<span style="color:#00e5ff">⏳ 正在上傳名單：${file.name}...</span>`;
+            
+            const formData = new FormData();
+            formData.append('file', file);
             
             try {
-                const res = await fetch(`${API_BASE}/checkin/${selectedUser.id}?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`, {
+                const res = await fetch(`${API_BASE}/sheets/upload_csv`, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ 
-                        meal, 
-                        is_original: window.isOriginal, 
-                        proxy_info: proxyInfo, 
-                        portrait_consent: portraitConsent,
-                        portrait_consent_status: portraitConsent ? '同意' : '不同意'
-                    })
+                    body: formData
                 });
                 const json = await res.json();
                 if (json.success) {
-                    const u = json.data;
-                    renderArkTerminal(u, meal);
-                    setAppState('success');
+                    statusText.innerHTML = `<span style="color:#4ade80">✓ ${json.message}</span>`;
+                    alert(json.message);
+                    await loadAvailableSheets(); // 🚀 關鍵改動：上傳成功後立即刷新下拉選單
+                    await loadCompanyOptions(); // 重新讀取行業對照可選公司
+                    updateDashboard(); // 重新拉取一次儀表板最新應到人數數據
                 } else {
-                    if (json.error === 'already_done') { alert('🛬 旅客已完成登機報到手續！'); } 
-                    else { alert('登機確認手續未完成'); }
-                    btn.disabled = false; btn.innerHTML = '<span>確 認 並 核 發 登 機 證</span>';
+                    statusText.innerHTML = `<span style="color:#f87171">✕ 同步失敗：${json.message}</span>`;
+                    alert('匯入失敗：' + json.message);
                 }
-            } catch(e) { 
-                alert('網路序列傳輸異常'); btn.disabled = false; btn.innerHTML = '<span>確 認 並 核 發 登 機 證</span>';
+            } catch(e) {
+                statusText.innerHTML = `<span style="color:#f87171">✕ 網路同步異常</span>`;
+                alert('網路連線異常，請稍後再試');
             }
         }
 
-        async function showProducts() {
+        async function preloadTabData(tabName) {
             try {
-                const res = await fetch(`${API_BASE}/config?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
-                const config = await res.json();
-                window.allProducts = config.products || [];
-                const gifts = window.allProducts.filter(p => p.isGift);
-                const normals = window.allProducts.filter(p => !p.isGift);
-                const giftsSection = document.getElementById('giftsSection');
-                if (gifts.length > 0) {
-                    giftsSection.classList.remove('state-hidden'); renderGrid('giftsGrid', gifts);
-                } else giftsSection.classList.add('state-hidden');
-                const categories = ['全 部', ...new Set(normals.map(p => p.category).filter(c => c))];
-                const filterContainer = document.getElementById('categoryFilters');
-                filterContainer.innerHTML = categories.map(c => `
-                    <button class="ck-tag ${window.currentCategory === c ? 'active' : ''}" 
-                         onclick="filterCategory('${c}')">${c}</button>
-                `).join('');
-                filterCategory(window.currentCategory); setAppState('product');
-            } catch(e) { alert('物資艙清單載入中'); }
+                if (tabName === 'dashboard') await updateDashboard();
+                if (tabName === 'experience') {
+                    await loadExperienceConfig();
+                    // 大會流程時間軸已移除，流程改由「議程管理」維護。
+                }
+                if (tabName === 'products' || tabName === 'system') await loadConfig();
+                if (tabName === 'agenda') await loadAgenda();
+                if (tabName === 'industry') await loadIndustryMappings();
+                if (tabName === 'exhibitors') await loadExhibitors();
+            } catch (e) {
+                console.warn('分頁資料預載失敗：', tabName, e);
+            }
         }
 
-        function filterCategory(cat) {
-            window.currentCategory = cat;
-            document.querySelectorAll('#categoryFilters .ck-tag').forEach(btn => {
-                const isActive = btn.textContent === cat;
-                btn.style.background = isActive ? 'var(--text-dark)' : 'transparent';
-                btn.style.color = isActive ? '#000' : '#aaa';
-                btn.style.borderColor = isActive ? 'var(--text-dark)' : 'rgba(0,229,255,0.2)';
+        async function switchAdminTab(tabName) {
+            const target = document.getElementById(tabName);
+            const targetButtons = document.querySelectorAll(`.tab-btn[data-tab="${tabName}"]`);
+            if (!target || !targetButtons.length) return;
+
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+            target.classList.add('active');
+            targetButtons.forEach(btn => btn.classList.add('active'));
+
+            await preloadTabData(tabName);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function setupTabButtons() {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => switchAdminTab(btn.getAttribute('data-tab')));
             });
-            const filtered = window.currentCategory === '全 部' ? window.allProducts.filter(p => !p.isGift) : window.allProducts.filter(p => !p.isGift && p.category === cat);
-            renderGrid('productsGrid', filtered);
         }
 
-        function renderGrid(id, items) {
-            const grid = document.getElementById(id);
-            grid.innerHTML = items.map(p => `
-                <div class="cyber-card" style="padding:0; overflow:hidden; display:flex; flex-direction:column; border-radius: 0.75rem !important;">
-                    ${p.image ? `<img src="${p.image}" class="product-img">` : '<div class="product-img" style="display:flex; align-items:center; justify-content:center; font-size:3rem;">📦</div>'}
-                    <div style="padding:1.5rem; flex-grow:1; display:flex; flex-direction:column;">
-                        <div style="color:var(--text-dark); font-size:0.8rem; margin-bottom:0.5rem; font-weight: bold;"># ${p.category || '一 般'}</div>
-                        <h3 style="margin-bottom:0.8rem; font-size:1.25rem; color:#fff;">${p.name}</h3>
-                        <p style="font-size:0.9rem; color:rgba(255,255,255,0.6); margin-bottom:1.5rem; flex-grow:1; line-height:1.5;">${p.description || ''}</p>
-                        ${p.link ? `<a href="${p.link}" target="_blank" class="ck-btn" style="text-decoration:none; padding:0.6rem 1rem; font-size:0.9rem; letter-spacing:1px;">立 即 查 看 →</a>` : ''}
+        async function runSystemCheck() {
+            try {
+                const res = await fetch(`${API_BASE}/system_check${getActiveEventQuery()}`);
+                const json = await res.json();
+
+                if (!json.success) {
+                    alert('連動檢查失敗：' + (json.message || '未知錯誤'));
+                    return;
+                }
+
+                const checks = json.checks || {};
+                const lines = [
+                    `資料庫：${json.database || '-'}`,
+                    `管理員：${json.admin_user}`,
+                    `目前場次：${json.event_key}`,
+                    `必要資料表：${checks.tables?.ok ? 'OK' : '缺少 ' + (checks.tables?.missing || []).join(', ')}`,
+                    `Admin 帳號：${checks.admin?.ok ? 'OK' : '找不到'}`,
+                    `活動設定：${checks.event_config?.ok ? 'OK' : '尚未儲存設定'}`,
+                    `議程資料：${checks.schedule?.ok ? 'OK（' + checks.schedule.count + ' 筆）' : '尚未建立議程'}`,
+                    `報名資料：${checks.registrations ? checks.registrations.count + ' 筆' : '-'}`,
+                    `API 路由：${checks.routes?.ok ? 'OK' : '缺少 ' + (checks.routes?.missing || []).join(', ')}`
+                ];
+
+                alert(lines.join('\n'));
+                showMessage(json.all_ok ? '後台、前台、投影頁連動檢查通過' : '連動檢查完成，請看彈窗細節', json.all_ok ? 'success' : 'info');
+            } catch (e) {
+                alert('連動檢查失敗：' + e.message);
+            }
+        }
+
+        async function loadConfig() {
+            try {
+                const res = await fetch(`${API_BASE}/config`);
+                currentConfig = await res.json();
+                renderProducts();
+                renderCategoryManager();
+
+                const mapUrl = currentConfig.map_image_url ? currentConfig.map_image_url.trim() : '';
+                document.getElementById('mapImageUrl').value = mapUrl;
+                if(mapUrl) {
+                    document.getElementById('systemMapPreview').src = mapUrl;
+                    document.getElementById('systemMapPreviewContainer').style.display = 'block';
+                } else {
+                    document.getElementById('systemMapPreviewContainer').style.display = 'none';
+                }
+
+                document.getElementById('bannerImageUrl').value = currentConfig.banner_image_url || '';
+                updateEventLink();
+            } catch (e) { showMessage('設定載入失敗', 'danger'); }
+        }
+
+        let latestTableStats = [];
+
+        function escapeAdminHtml(value) {
+            return String(value ?? '').replace(/[&<>"]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s]));
+        }
+
+        function isZeroTableName(tableName) {
+            const t = String(tableName || '').replace(/\s/g, '');
+            return !t || ['0', '第0桌', '第０桌', '0桌', '０桌'].includes(t);
+        }
+
+
+        function parseTableGroup(rawTable) {
+            const text = String(rawTable || '').trim();
+            if (!text || isZeroTableName(text)) return null;
+
+            // 常見資料：01-01、01-02、02-01；前半段代表桌號，後半段代表座位。
+            const normalized = text
+                .replace(/^第\s*/g, '')
+                .replace(/桌$/g, '')
+                .replace(/\s+/g, '');
+
+            const match = normalized.match(/^(\d{1,3})[-_－—](\d{1,3})$/);
+            if (match) {
+                const tableNo = Number(match[1]);
+                return {
+                    key: String(tableNo).padStart(2, '0'),
+                    displayName: toChineseTableName(tableNo),
+                    seatText: normalized
+                };
+            }
+
+            const onlyNo = normalized.match(/^(\d{1,3})$/);
+            if (onlyNo) {
+                const tableNo = Number(onlyNo[1]);
+                return {
+                    key: String(tableNo).padStart(2, '0'),
+                    displayName: toChineseTableName(tableNo),
+                    seatText: normalized
+                };
+            }
+
+            return {
+                key: normalized,
+                displayName: `第 ${normalized} 桌`,
+                seatText: normalized
+            };
+        }
+
+        function toChineseTableName(num) {
+            const n = Number(num);
+            const zh = ['零','一','二','三','四','五','六','七','八','九','十'];
+            if (!Number.isFinite(n) || n <= 0) return `第 ${num} 桌`;
+            if (n <= 10) return `第${zh[n]}桌`;
+            if (n < 20) return `第十${zh[n - 10]}桌`;
+            const tens = Math.floor(n / 10);
+            const ones = n % 10;
+            return `第${zh[tens]}十${ones ? zh[ones] : ''}桌`;
+        }
+
+        function formatSeatRange(seats) {
+            const clean = [...new Set((seats || []).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh-Hant-u-kn-true'));
+            if (!clean.length) return '尚無座位資料';
+            if (clean.length === 1) return `座位 ${clean[0]}`;
+            return `座位 ${clean[0]} ～ ${clean[clean.length - 1]}，共 ${clean.length} 位`;
+        }
+
+        function groupTableStats(rawStats) {
+            const map = new Map();
+
+            (rawStats || []).forEach(item => {
+                const parsed = parseTableGroup(item.table);
+                if (!parsed) return;
+
+                if (!map.has(parsed.key)) {
+                    map.set(parsed.key, {
+                        group: parsed.key,
+                        displayName: parsed.displayName,
+                        checked: 0,
+                        total: 0,
+                        seats: []
+                    });
+                }
+
+                const group = map.get(parsed.key);
+                group.checked += Number(item.checked || 0);
+                group.total += Number(item.total || 0);
+                group.seats.push(parsed.seatText);
+            });
+
+            return [...map.values()]
+                .map(group => ({
+                    ...group,
+                    percent: group.total ? group.checked / group.total * 100 : 0,
+                    seatLabel: formatSeatRange(group.seats)
+                }))
+                .sort((a, b) => String(a.group).localeCompare(String(b.group), 'zh-Hant-u-kn-true'));
+        }
+
+        async function updateDashboard() {
+            try {
+                const res = await fetch(`${API_BASE}/dashboard_stats${getActiveEventQuery()}`);
+                const json = await res.json();
+                if(json.success) {
+                    document.getElementById('stat-total').textContent = json.stats.total;
+                    document.getElementById('stat-checked').textContent = json.stats.checked_in;
+                    document.getElementById('stat-pending').textContent = json.stats.not_checked_in;
+
+                    latestTableStats = groupTableStats(json.stats.table_stats || []);
+                    document.getElementById('table-stats-container').innerHTML = latestTableStats.map((item, index) => {
+                        const percent = Number(item.percent ?? (item.total ? item.checked / item.total * 100 : 0)).toFixed(1).replace('.0','');
+                        return `
+                        <div class="cyber-card table-stat-card" onclick="openTableDetailModal(${index})">
+                            <div>
+                                <div class="table-stat-card-title">${escapeAdminHtml(item.displayName)}</div>
+                                <div class="table-stat-card-sub">${escapeAdminHtml(item.seatLabel)}</div>
+                            </div>
+                            <div class="table-stat-card-main">
+                                <div class="table-stat-percent">${percent}%</div>
+                                <div class="table-stat-count">
+                                    <b>${item.checked || 0}/${item.total || 0}</b><br>
+                                    已報到
+                                </div>
+                            </div>
+                            <div class="table-stat-foot">點擊查看 ${item.total || 0} 人名單 →</div>
+                        </div>`;
+                    }).join('') || '<div style="color:#888;">尚無桌次資料</div>';
+
+                    document.getElementById('logs-body').innerHTML = (json.stats.logs || []).map(l => `<tr><td>${escapeAdminHtml(l.time)}</td><td>${escapeAdminHtml(l.name)}</td><td>${escapeAdminHtml(l.company)}</td><td>${escapeAdminHtml(l.meal)}</td></tr>`).join('');
+                } else {
+                    console.warn('dashboard_stats failed', json);
+                }
+            } catch (e) { console.error("同步失敗", e); }
+        }
+
+        function renderPersonList(list, emptyText) {
+            if (!list || !list.length) return `<div style="color:#888;">${emptyText}</div>`;
+            return list.map(p => {
+                const checked = !!p.checked;
+                const statusLabel = checked ? '已報到' : '未報到';
+                const statusClass = checked ? 'checked' : 'pending';
+                return `
+                <div class="table-person-card ${statusClass}">
+                    <div class="table-person-name">
+                        <span>${escapeAdminHtml(p.name || '未命名')}</span>
+                        <span class="person-status-badge ${statusClass}">${statusLabel}</span>
+                    </div>
+                    <div class="table-person-meta">
+                        ${escapeAdminHtml(p.company || '無公司')}<br>
+                        ${p.seat ? `座位：${escapeAdminHtml(p.seat)}<br>` : ''}
+                        ${p.phone ? `手機：${escapeAdminHtml(p.phone)}<br>` : ''}
+                        ${p.meal ? `餐食：${escapeAdminHtml(p.meal)}<br>` : ''}
+                        ${p.checkin_time ? `報到時間：${escapeAdminHtml(p.checkin_time)}` : ''}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        async function openTableDetailModal(index) {
+            const item = latestTableStats[index];
+            if (!item) return;
+
+            document.getElementById('tableDetailTitle').textContent = `${item.displayName}報到詳情`;
+            document.getElementById('tableDetailSummary').textContent = `正在讀取 ${item.displayName} 名單...`;
+            document.getElementById('tableCheckedList').innerHTML = `<div style="color:#888;">讀取中...</div>`;
+            document.getElementById('tablePendingList').innerHTML = `<div style="color:#888;">讀取中...</div>`;
+            document.getElementById('tableDetailModal').classList.add('active');
+
+            try {
+                const query = `${getActiveEventQuery()}&group=${encodeURIComponent(item.group)}`;
+                const res = await fetch(`/api/table_group_detail${query}`);
+                const json = await res.json();
+                if (!json.success) throw new Error(json.message || '讀取失敗');
+
+                document.getElementById('tableDetailTitle').textContent = `${escapeAdminHtml(json.display_name || item.displayName)}報到詳情`;
+                document.getElementById('tableDetailSummary').textContent = `已報到 ${json.checked || 0} / 共 ${json.total || 0} 人｜${escapeAdminHtml(json.seat_label || item.seatLabel || '')}`;
+                document.getElementById('tableCheckedList').innerHTML = renderPersonList(json.checked_people || [], '目前尚無已報到人員');
+                document.getElementById('tablePendingList').innerHTML = renderPersonList(json.pending_people || [], '此桌已全數報到');
+            } catch (e) {
+                document.getElementById('tableDetailSummary').textContent = '桌次名單讀取失敗';
+                document.getElementById('tableCheckedList').innerHTML = `<div style="color:#f87171;">${escapeAdminHtml(e.message || e)}</div>`;
+                document.getElementById('tablePendingList').innerHTML = '';
+            }
+        }
+
+        function closeTableDetailModal() {
+            document.getElementById('tableDetailModal').classList.remove('active');
+        }
+
+        function renderProducts() {
+            const validItems = (currentConfig.products || []).filter(p => p.name !== "__SYSTEM_CATEGORIES__");
+            
+            const gifts = validItems.filter(p => p.isGift);
+            const prods = validItems.filter(p => !p.isGift);
+            
+            const giftsContainer = document.getElementById('giftsList');
+            const prodsContainer = document.getElementById('productsList');
+            
+            giftsContainer.innerHTML = gifts.length ? gifts.map(p => {
+                const idx = currentConfig.products.indexOf(p);
+                return renderProductRow(p, idx);
+            }).join('') : `<div style="text-align:center; padding:1.5rem; color:#888;">尚無伴手禮</div>`;
+            
+            prodsContainer.innerHTML = prods.length ? prods.map(p => {
+                const idx = currentConfig.products.indexOf(p);
+                return renderProductRow(p, idx);
+            }).join('') : `<div style="text-align:center; padding:1.5rem; color:#888;">尚無一般商品</div>`;
+        }
+
+        function renderProductRow(p, idx) {
+            return `<div class="product-item">
+                <div class="product-info">
+                    <div class="product-name neon-text">${p.name}</div>
+                    <div class="product-field">TAG: ${p.category || '未分類'} | ${p.image ? '<span style="color:#4ade80">✓ 已有圖</span>' : '<span style="color:#f87171">✗ 無圖</span>'}</div>
+                </div>
+                <div class="product-actions">
+                    <button class="adm-btn adm-btn-sm" onclick="editProduct(${idx})">✏️ 編輯</button>
+                    <button class="adm-btn adm-btn-danger adm-btn-sm" onclick="openDeleteModal(${idx})">🗑 刪除</button>
+                </div>
+            </div>`;
+        }
+
+        function openAddGiftModal() { openProductModal(null, true); }
+        function openAddProductModal() { openProductModal(null, false); }
+        
+        function openProductModal(idx, isGift) {
+            editingIdx = idx;
+            document.getElementById('modalTitle').textContent = idx === null ? (isGift ? '新增伴手禮' : '新增一般商品') : (isGift ? '編輯伴手禮' : '編輯一般商品');
+            document.getElementById('saveButtonText').textContent = idx === null ? '新增' : '儲存修改';
+            document.getElementById('productIsGift').value = isGift;
+
+            const previewImg = document.getElementById('modalImgPreview');
+            document.getElementById('customCategoryContainer').style.display = 'none';
+
+            const cats = getCategoryList();
+            document.getElementById('productCategory').innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('') + 
+                `<option value="__NEW__">➕ 新增其它自訂分類...</option>`;
+
+            if (idx !== null) {
+                const p = currentConfig.products[idx];
+                document.getElementById('productName').value = p.name || '';
+                document.getElementById('productImage').value = p.image || '';
+                document.getElementById('productDescription').value = p.description || '';
+                document.getElementById('productLink').value = p.link || '';
+                
+                if (cats.includes(p.category)) {
+                    document.getElementById('productCategory').value = p.category;
+                } else if (p.category) {
+                    document.getElementById('productCategory').value = '__NEW__';
+                    document.getElementById('customCategoryContainer').style.display = 'block';
+                    document.getElementById('customCategoryInput').value = p.category;
+                } else {
+                    document.getElementById('productCategory').value = cats[0] || '課程';
+                }
+
+                if(p.image) { previewImg.src = p.image; previewImg.style.display = 'block'; } 
+                else { previewImg.style.display = 'none'; }
+            } else {
+                document.getElementById('productName').value = '';
+                document.getElementById('productImage').value = '';
+                document.getElementById('productDescription').value = '';
+                document.getElementById('productLink').value = '';
+                document.getElementById('productCategory').value = cats[0] || '課程';
+                previewImg.style.display = 'none';
+            }
+            document.getElementById('productModal').classList.add('active');
+        }
+
+        function editProduct(idx) { const p = currentConfig.products[idx]; openProductModal(idx, p.isGift); }
+        function closeProductModal() { document.getElementById('productModal').classList.remove('active'); }
+        
+        function checkCategorySelection(select) {
+            const container = document.getElementById('customCategoryContainer');
+            if (select.value === '__NEW__') {
+                container.style.display = 'block';
+                document.getElementById('customCategoryInput').value = '';
+            } else {
+                container.style.display = 'none';
+            }
+        }
+
+        async function saveProduct() {
+            let finalCategory = document.getElementById('productCategory').value;
+            if (finalCategory === '__NEW__') {
+                finalCategory = document.getElementById('customCategoryInput').value.trim();
+                if (!finalCategory) return alert('請填寫自訂分類名稱！');
+                
+                let cats = getCategoryList();
+                if (!cats.includes(finalCategory)) {
+                    cats.push(finalCategory);
+                    let dummy = currentConfig.products.find(p => p.name === "__SYSTEM_CATEGORIES__");
+                    if (!dummy) {
+                        dummy = { name: "__SYSTEM_CATEGORIES__", isGift: false, image: "", link: "", category: "SYSTEM" };
+                        currentConfig.products.push(dummy);
+                    }
+                    dummy.description = cats.join(',');
+                }
+            }
+
+            const p = { name: document.getElementById('productName').value.trim(), image: document.getElementById('productImage').value.trim(), category: finalCategory, description: document.getElementById('productDescription').value.trim(), link: document.getElementById('productLink').value.trim(), isGift: document.getElementById('productIsGift').value === "true" };
+            if(!p.name) return alert('商品名稱為必填');
+            if(editingIdx !== null) currentConfig.products[editingIdx] = p; else currentConfig.products.push(p);
+            if(await postConfig()) { 
+                renderProducts(); 
+                renderCategoryManager();
+                closeProductModal(); 
+                alert('儲存成功！'); 
+            }
+        }
+
+        function openDeleteModal(idx) { deleteIdx = idx; document.getElementById('deleteProductName').textContent = currentConfig.products[idx].name; document.getElementById('deleteModal').classList.add('active'); }
+        function closeDeleteModal() { document.getElementById('deleteModal').classList.remove('active'); }
+        async function confirmDelete() { 
+            currentConfig.products.splice(deleteIdx, 1); 
+            if(await postConfig()) { 
+                renderProducts(); 
+                renderCategoryManager();
+                closeDeleteModal(); 
+                alert('刪除成功！');
+            } 
+        }
+
+
+        async function switchActiveSheet() {
+            const select = document.getElementById('googleSheetName');
+            const status = document.getElementById('sheetSwitchStatus');
+            const sheet = select ? select.value : '';
+            if (!sheet) return alert('請先選擇活動場次');
+
+            if (status) status.innerHTML = '<span style="color:#00e5ff">⏳ 正在快速切換場次...</span>';
+            if (select) select.disabled = true;
+
+            try {
+                const res = await fetch('/api/session/sheet', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({sheet})
+                });
+                const json = await res.json();
+
+                if (!json.success) {
+                    if (status) status.innerHTML = `<span style="color:#f87171">✕ ${json.message || '切換失敗'}</span>`;
+                    return alert(json.message || '切換失敗');
+                }
+
+                currentConfig.google_sheet_name = sheet;
+                updateEventLink();
+
+                await Promise.allSettled([
+                    loadConfig(),
+                    updateDashboard(),
+                    loadAgenda(),
+                    loadCompanyOptions(),
+                    loadIndustryMappings(),
+                    loadExhibitors(),
+                    loadExperienceConfig(),
+                    loadExperienceSchedule()
+                ]);
+
+                if (status) status.innerHTML = `<span style="color:#4ade80">✓ 已切換到：${sheet}</span>`;
+                showMessage(`已快速切換到「${sheet}」`, 'success');
+            } catch (e) {
+                console.error(e);
+                if (status) status.innerHTML = '<span style="color:#f87171">✕ 網路連線異常，切換失敗</span>';
+                alert('網路連線異常，切換失敗');
+            } finally {
+                if (select) select.disabled = false;
+            }
+        }
+
+        async function saveSystemSettings() {
+            currentConfig.google_sheet_name = document.getElementById('googleSheetName').value;
+            currentConfig.map_image_url = document.getElementById('mapImageUrl').value.trim();
+            currentConfig.banner_image_url = document.getElementById('bannerImageUrl') ? document.getElementById('bannerImageUrl').value.trim() : (currentConfig.banner_image_url || '');
+            if(await postConfig()) {
+                showMessage('設定已儲存到 MySQL，不會重整整個後台。', 'success');
+                await loadConfig();
+                updateEventLink();
+            }
+        }
+
+        function handleMapFileUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+            processAndCompressImage(file, 1200, function(compressedBase64) {
+                document.getElementById('mapImageUrl').value = compressedBase64;
+                const previewImg = document.getElementById('systemMapPreview');
+                previewImg.src = compressedBase64;
+                document.getElementById('systemMapPreviewContainer').style.display = 'block';
+            });
+        }
+
+        function handleProductFileUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+            processAndCompressImage(file, 600, function(compressedBase64) {
+                document.getElementById('productImage').value = compressedBase64;
+                const previewImg = document.getElementById('modalImgPreview');
+                previewImg.src = compressedBase64;
+                previewImg.style.display = 'block';
+            });
+        }
+
+        async function postConfig() {
+            try {
+                const res = await fetch(`${API_BASE}/config`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(currentConfig) });
+                if(res.ok) return true;
+                showMessage('數據同步失敗', 'danger'); return false;
+            } catch(e) { showMessage('網路連線異常', 'danger'); return false; }
+        }
+
+        function showMessage(text, type = 'info') {
+            document.getElementById('messageContainer').innerHTML = `<div class="alert alert-${type}">${text}</div>`;
+            setTimeout(() => document.getElementById('messageContainer').innerHTML = '', 3000);
+        }
+
+        async function fetchUserInfo() {
+            try {
+                const res = await fetch('/api/user/info');
+                if (res.status === 401) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+                const data = await res.json();
+                if (data.success) {
+                    currentUser = data.username;
+                    document.getElementById('welcome-msg').textContent = `🛰️ 歡迎，${data.username}`;
+                    updateEventLink();
+                }
+            } catch (err) {
+                document.getElementById('welcome-msg').textContent = `🛰️ 系統連線中...`;
+            }
+        }
+
+
+        function renderEventQrCode() {
+            const target = document.getElementById('eventQrCode');
+            const linkInput = document.getElementById('event_link');
+            if (!target || !linkInput) return;
+            const link = linkInput.value || buildEventUrl(document.getElementById('googleSheetName')?.value || '', 'front');
+            target.innerHTML = '';
+            if (!link || typeof QRCode === 'undefined') return;
+            new QRCode(target, {
+                text: link,
+                width: 146,
+                height: 146,
+                colorDark: "#061425",
+                colorLight: "#f8feff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+
+        function downloadEventQrCode() {
+            const qrBox = document.getElementById('eventQrCode');
+            const sheet = document.getElementById('googleSheetName')?.value || 'event';
+            if (!qrBox) return alert('QR Code 尚未產生');
+            const canvas = qrBox.querySelector('canvas');
+            const img = qrBox.querySelector('img');
+            let dataUrl = '';
+            if (canvas) dataUrl = canvas.toDataURL('image/png');
+            else if (img) dataUrl = img.src;
+            if (!dataUrl) return alert('QR Code 尚未產生');
+
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = `${sheet}_報到首頁_QRCode.png`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        }
+
+        function buildEventUrl(sheetName, page = 'front') {
+            const encodedAdmin = encodeURIComponent(currentUser || 'admin');
+            const encodedSheet = encodeURIComponent(sheetName || document.getElementById('googleSheetName')?.value || '活動報到名單');
+            if (page === 'dashboard') {
+                return `${window.location.origin}/dashboard.html?admin=${encodedAdmin}&sheet=${encodedSheet}`;
+            }
+            return `${window.location.origin}/?admin=${encodedAdmin}&sheet=${encodedSheet}`;
+        }
+
+        function updateEventLink() {
+            const sheet = document.getElementById('googleSheetName')?.value || '';
+            const linkInput = document.getElementById('event_link');
+            const dashboardInput = document.getElementById('dashboard_link');
+            if(linkInput) linkInput.value = buildEventUrl(sheet, 'front');
+            if(dashboardInput) dashboardInput.value = buildEventUrl(sheet, 'dashboard');
+            renderEventQrCode();
+        }
+
+        async function copySpecificLink(inputId) {
+            const copyText = document.getElementById(inputId);
+            if (!copyText || !copyText.value) return alert('目前沒有可複製的連結');
+            try {
+                await navigator.clipboard.writeText(copyText.value);
+                alert('專屬連結已複製到剪貼簿');
+            } catch(e) {
+                copyText.select();
+                document.execCommand("copy");
+                alert('專屬連結已複製到剪貼簿');
+            }
+        }
+
+        function copyEventLink() {
+            copySpecificLink('event_link');
+        }
+
+        function renderEventLinkList(sheets = []) {
+            const box = document.getElementById('eventLinkList');
+            if (!box) return;
+            box.innerHTML = sheets.map(name => `
+                <div class="event-link-item">
+                    <div class="event-link-name">📊 ${name}</div>
+                    <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                        <button type="button" class="adm-btn adm-btn-sm" onclick="copyRawLink('${buildEventUrl(name, 'front').replace(/'/g, "\\'")}')">📋 複製報到頁</button>
+                        <button type="button" class="adm-btn adm-btn-sm" onclick="copyRawLink('${buildEventUrl(name, 'dashboard').replace(/'/g, "\\'")}')">📊 複製儀錶板</button>
                     </div>
                 </div>
             `).join('');
         }
 
-        async function loadSystemConfig() {
+        async function copyRawLink(link) {
             try {
-                const res = await fetch(`${API_BASE}/config?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
-                systemConfig = await res.json();
-                if(systemConfig) {
-                    const displayTitle = systemConfig.event_title || systemConfig.google_sheet_name || currentSheet || '活動報到名單';
-                    document.getElementById('header-title').textContent = displayTitle.split('').join(' ');
-                    document.title = `${displayTitle} - 活動報到系統`;
-                }
-                const banner = document.getElementById('event-banner');
-                if(systemConfig && systemConfig.banner_image_url) {
-                    banner.src = systemConfig.banner_image_url;
-                    document.getElementById('banner-container').style.display = 'block';
-                } else {
-                    document.getElementById('banner-container').style.display = 'none';
-                }
-            } catch(e) { console.error("系統初始化同步中"); }
+                await navigator.clipboard.writeText(link);
+                alert('專屬連結已複製到剪貼簿');
+            } catch(e) {
+                const temp = document.createElement('input');
+                temp.value = link;
+                document.body.appendChild(temp);
+                temp.select();
+                document.execCommand('copy');
+                temp.remove();
+                alert('專屬連結已複製到剪貼簿');
+            }
         }
+
+        function showAddModal() { document.getElementById('addModal').style.display = 'flex'; }
+        function hideAddModal() { document.getElementById('addModal').style.display = 'none'; }
+
+        async function submitAddRegistration() {
+            const data = {
+                name: document.getElementById('addName').value,
+                phone: document.getElementById('addPhone').value,
+                company: document.getElementById('addCompany').value,
+                seat: document.getElementById('addSeat').value
+            };
+            if(!data.name) return alert('請輸入姓名');
+            const res = await fetch('/api/registrations/add', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            if((await res.json()).success) {
+                hideAddModal();
+                updateDashboard();
+                alert('臨時報到成功');
+            }
+        }
+
+        function handleBannerFileUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+            processAndCompressImage(file, 1200, function(compressedBase64) {
+                document.getElementById('bannerImageUrl').value = compressedBase64;
+            });
+        }
+
+        function exportCsv() {
+            // 匯出目前登入管理員 + 目前切換場次的完整報到名單
+            window.location.href = `/api/sheets/export_csv${getActiveEventQuery()}`;
+        }
+
+
+        function agendaRowTemplate(item = {}) {
+            return `<div class="agenda-row" style="display:grid; grid-template-columns:140px 1fr auto; gap:0.8rem; align-items:center;">
+                <input class="cyber-input agenda-time-input" style="margin:0;" placeholder="09:00" value="${item.time || ''}">
+                <input class="cyber-input agenda-event-input" style="margin:0;" placeholder="議程內容" value="${item.event || ''}">
+                <button class="adm-btn adm-btn-danger adm-btn-sm" onclick="this.closest('.agenda-row').remove()">刪除</button>
+            </div>`;
+        }
+        function addAgendaRow(item = {}) { document.getElementById('agendaEditorList').insertAdjacentHTML('beforeend', agendaRowTemplate(item)); }
+        async function loadAgenda() {
+            try {
+                const res = await fetch(`/api/agenda${getActiveEventQuery()}`);
+                const json = await res.json();
+                const list = document.getElementById('agendaEditorList');
+                if (!list) return;
+                list.innerHTML = '';
+                (json.data || []).forEach(addAgendaRow);
+                if (!list.children.length) addAgendaRow();
+            } catch(e) { console.warn('議程載入失敗', e); }
+        }
+        async function saveAgenda() {
+            const agenda = [...document.querySelectorAll('.agenda-row')].map(row => ({
+                time: row.querySelector('.agenda-time-input').value.trim(),
+                event: row.querySelector('.agenda-event-input').value.trim()
+            })).filter(x => x.time || x.event);
+            const res = await fetch(`/api/agenda${getActiveEventQuery()}`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({agenda})});
+            const json = await res.json();
+            alert(json.success ? '議程已儲存到資料庫，Dashboard 會同步顯示。' : (json.message || '議程儲存失敗'));
+        }
+
+        function industryRowTemplate(item = {}) {
+            const companyValue = escapeHtml(item.company_name || item.company || '');
+            const industryValue = escapeHtml(item.industry || '');
+            return `<div class="industry-row" style="display:grid; grid-template-columns:1fr 1fr auto; gap:0.8rem; align-items:center;">
+                <input class="cyber-input industry-company-input" list="companyOptionsDatalist" style="margin:0;" placeholder="選擇或輸入公司名稱" value="${companyValue}">
+                <input class="cyber-input industry-name-input" style="margin:0;" placeholder="行業類別，例如：科技、金融、製造" value="${industryValue}">
+                <button class="adm-btn adm-btn-danger adm-btn-sm" onclick="this.closest('.industry-row').remove()">刪除</button>
+            </div>`;
+        }
+        function addIndustryRow(item = {}) { document.getElementById('industryMappingList').insertAdjacentHTML('beforeend', industryRowTemplate(item)); }
+        async function loadIndustryMappings() {
+            try {
+                await loadCompanyOptions();
+                const res = await fetch(`/api/industry_mapping${getActiveEventQuery()}`);
+                const json = await res.json();
+                const list = document.getElementById('industryMappingList');
+                if (!list) return;
+                list.innerHTML = '';
+                (json.data || []).forEach(addIndustryRow);
+                if (!list.children.length) addIndustryRow();
+            } catch(e) { console.warn('行業對照載入失敗', e); }
+        }
+        async function saveIndustryMappings() {
+            const mappings = [...document.querySelectorAll('.industry-row')].map(row => ({
+                company: row.querySelector('.industry-company-input').value.trim(),
+                industry: row.querySelector('.industry-name-input').value.trim()
+            })).filter(x => x.company || x.industry);
+
+            const res = await fetch(`/api/industry_mapping${getActiveEventQuery()}`, {
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({mappings})
+            });
+            const json = await res.json();
+
+            if (json.success) {
+                // 儲存後立刻通知已開啟的 Dashboard / Projection。
+                // 同瀏覽器分頁可用 BroadcastChannel / localStorage 收到，跨裝置則靠 dashboard 自己輪詢 API。
+                try {
+                    const payload = {
+                        type: 'industry-mapping-updated',
+                        sheet: (document.getElementById('googleSheetName')?.value || '').trim(),
+                        at: Date.now()
+                    };
+                    localStorage.setItem('smartArkIndustryMappingUpdated', JSON.stringify(payload));
+                    localStorage.setItem('smartArkCheckinSuccess', String(Date.now()));
+                    if ('BroadcastChannel' in window) {
+                        const ch = new BroadcastChannel('smart-ark-dashboard');
+                        ch.postMessage(payload);
+                        ch.postMessage({type:'checkin-success', reason:'industry-mapping-updated', at: Date.now()});
+                        ch.close();
+                    }
+                } catch(e) {}
+
+                await loadCompanyOptions();
+                if (typeof updateDashboard === 'function') updateDashboard();
+                alert('行業對照已儲存。投影頁重新整理後會立即套用；若投影頁已開啟，約 5～15 秒內會同步。');
+            } else {
+                alert(json.message || '行業對照儲存失敗');
+            }
+        }
+
+        function exhibitorRowTemplate(item = {}) {
+            return `<div class="exhibitor-row" style="display:grid; grid-template-columns:1fr 1fr 90px auto; gap:0.8rem; align-items:center;">
+                <input class="cyber-input exhibitor-name-input" style="margin:0;" placeholder="公司名稱" value="${item.name || item.company_name || ''}">
+                <input class="cyber-input exhibitor-industry-input" style="margin:0;" placeholder="行業類別" value="${item.industry || ''}">
+                <input class="cyber-input exhibitor-logo-input" style="margin:0;" placeholder="Logo" value="${item.logo || '🏢'}">
+                <button class="adm-btn adm-btn-danger adm-btn-sm" onclick="this.closest('.exhibitor-row').remove()">刪除</button>
+                <input class="cyber-input exhibitor-website-input" style="margin:0;" placeholder="網站連結，可留空" value="${item.website || ''}">
+                <input class="cyber-input exhibitor-contact-input" style="margin:0;" placeholder="聯絡資訊，可留空" value="${item.contact || ''}">
+                <textarea class="cyber-input exhibitor-desc-input" style="grid-column:1 / -1; margin:0;" placeholder="公司簡介">${item.description || ''}</textarea>
+            </div>`;
+        }
+        function addExhibitorRow(item = {}) { document.getElementById('exhibitorEditorList').insertAdjacentHTML('beforeend', exhibitorRowTemplate(item)); }
+        async function loadExhibitors() {
+            try {
+                const res = await fetch(`/api/exhibitors${getActiveEventQuery()}`);
+                const json = await res.json();
+                const list = document.getElementById('exhibitorEditorList');
+                if (!list) return;
+                list.innerHTML = '';
+                (json.exhibitors || []).forEach(addExhibitorRow);
+                if (!list.children.length) addExhibitorRow();
+            } catch(e) { console.warn('企業載入失敗', e); }
+        }
+        async function saveExhibitors() {
+            const exhibitors = [...document.querySelectorAll('.exhibitor-row')].map(row => ({
+                name: row.querySelector('.exhibitor-name-input').value.trim(),
+                industry: row.querySelector('.exhibitor-industry-input').value.trim(),
+                logo: row.querySelector('.exhibitor-logo-input').value.trim(),
+                website: row.querySelector('.exhibitor-website-input') ? row.querySelector('.exhibitor-website-input').value.trim() : '',
+                contact: row.querySelector('.exhibitor-contact-input') ? row.querySelector('.exhibitor-contact-input').value.trim() : '',
+                description: row.querySelector('.exhibitor-desc-input').value.trim()
+            })).filter(x => x.name);
+            const res = await fetch(`/api/exhibitors${getActiveEventQuery()}`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({exhibitors})});
+            const json = await res.json();
+            alert(json.success ? '企業資訊已儲存到資料庫，Dashboard 會同步顯示。' : (json.message || '企業資訊儲存失敗'));
+        }
+
+
+        // ===== 智慧論壇 Navigator 設定 =====
+        const expKeys = [
+            'event_title','event_subtitle','event_date_start','event_date_end','brand_name','logo_url',
+            'gift_title','gift_image_url','gift_description','gift_enabled',
+            'video_title','video_url','video_embed_enabled','video_enabled',
+            'flow_title','flow_image_url','flow_description','flow_enabled',
+            'projection_title','projection_subtitle'
+        ];
+
+        function expEl(key) { return document.getElementById('exp_' + key); }
+        function readExpField(key) {
+            const el = expEl(key);
+            if (!el) return '';
+            if (el.type === 'checkbox') return el.checked;
+            return el.value.trim();
+        }
+        function writeExpField(key, value) {
+            const el = expEl(key);
+            if (!el) return;
+            if (el.type === 'checkbox') el.checked = !!value;
+            else el.value = value || '';
+        }
+
+        async function loadExperienceConfig() {
+            try {
+                const res = await fetch(`${API_BASE}/event-config${getActiveEventQuery()}`);
+                const json = await res.json();
+                const cfg = json.config || {};
+                expKeys.forEach(k => writeExpField(k, cfg[k]));
+            } catch (e) {
+                console.warn('Navigator 設定載入失敗', e);
+            }
+        }
+
+        async function saveExperienceConfig() {
+            const payload = {};
+            expKeys.forEach(k => payload[k] = readExpField(k));
+            try {
+                const res = await fetch(`${API_BASE}/admin/event-config${getActiveEventQuery()}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                const json = await res.json();
+                alert(json.success ? 'Navigator 設定已儲存' : ('儲存失敗：' + (json.message || '未知錯誤')));
+            } catch (e) {
+                alert('Navigator 設定儲存失敗：' + e.message);
+            }
+        }
+
+        function scheduleRowTemplate(item = {}) {
+            return `
+                <div class="experience-schedule-row">
+                    <input class="cyber-input exp-sch-time" placeholder="09:30" value="${escapeAdminHtml(item.time || '')}">
+                    <input class="cyber-input exp-sch-title" placeholder="報到啟航" value="${escapeAdminHtml(item.title || '')}">
+                    <input class="cyber-input exp-sch-desc" placeholder="領航員迎賓報到" value="${escapeAdminHtml(item.description || '')}">
+                    <button class="adm-btn adm-btn-sm adm-btn-ghost" onclick="this.closest('.experience-schedule-row').remove()">✕</button>
+                </div>`;
+        }
+
+        async function loadExperienceSchedule() {
+            try {
+                const res = await fetch(`${API_BASE}/schedule${getActiveEventQuery()}`);
+                const json = await res.json();
+                const rows = json.schedule || [];
+                const box = document.getElementById('experienceScheduleRows');
+                if (box) box.innerHTML = rows.map(scheduleRowTemplate).join('');
+            } catch (e) {
+                console.warn('流程時間軸載入失敗', e);
+            }
+        }
+
+        function addExperienceScheduleRow() {
+            const box = document.getElementById('experienceScheduleRows');
+            if (box) box.insertAdjacentHTML('beforeend', scheduleRowTemplate({time:'', title:'', description:''}));
+        }
+
+        async function saveExperienceSchedule() {
+            const rows = [...document.querySelectorAll('.experience-schedule-row')].map((row, i) => ({
+                time: row.querySelector('.exp-sch-time').value.trim(),
+                title: row.querySelector('.exp-sch-title').value.trim(),
+                description: row.querySelector('.exp-sch-desc').value.trim(),
+                sort_order: i
+            })).filter(x => x.time || x.title || x.description);
+            try {
+                const res = await fetch(`${API_BASE}/admin/schedule${getActiveEventQuery()}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({schedule: rows})
+                });
+                const json = await res.json();
+                alert(json.success ? '流程時間軸已儲存' : ('儲存失敗：' + (json.message || '未知錯誤')));
+            } catch (e) {
+                alert('流程時間軸儲存失敗：' + e.message);
+            }
+        }
+
+        window.onload = async () => {
+            await fetchUserInfo();
+            await init();
+            await loadAgenda();
+            await loadCompanyOptions();
+            await loadIndustryMappings();
+            await loadExhibitors();
+            await loadExperienceConfig();
+            // 大會流程時間軸已移除，流程改由「議程管理」維護。
+        };
     </script>
 </body>
 </html>
