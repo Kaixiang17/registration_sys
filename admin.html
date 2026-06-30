@@ -458,6 +458,46 @@
         .experience-check input { width:18px; height:18px; accent-color:#00e5ff; }
         @media(max-width: 900px) { .experience-grid, .experience-schedule-row { grid-template-columns:1fr; } }
 
+
+
+        /* 企業展示：商業版編輯卡 */
+        .exhibitor-row {
+            display: grid;
+            grid-template-columns: 110px 1fr auto;
+            gap: 0.9rem;
+            align-items: start;
+            padding: 1rem;
+            border: 1px solid rgba(0,229,255,0.16);
+            border-radius: 1rem;
+            background: linear-gradient(135deg, rgba(0,229,255,0.055), rgba(255,255,255,0.025));
+        }
+        .exhibitor-image-box {
+            width: 110px;
+            height: 88px;
+            border: 1px solid rgba(0,229,255,0.24);
+            border-radius: 0.8rem;
+            background: rgba(0,0,0,0.28);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            color: #00e5ff;
+            font-weight: 900;
+            font-size: 1.6rem;
+            box-shadow: inset 0 0 18px rgba(0,229,255,0.05);
+        }
+        .exhibitor-image-box img { width:100%; height:100%; object-fit:cover; display:block; }
+        .exhibitor-main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.7rem;
+        }
+        .exhibitor-image-actions { display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.55rem; }
+        @media(max-width: 768px) {
+            .exhibitor-row { grid-template-columns: 1fr; }
+            .exhibitor-main-grid { grid-template-columns: 1fr; }
+        }
+
     </style>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
@@ -772,10 +812,13 @@
         <div id="exhibitors" class="tab-content">
             <div class="cyber-card" style="padding: 2rem; border-radius: 1rem;">
                 <div class="card-title neon-text">🏢 參與企業管理</div>
-                <p style="color:#aaa; margin-bottom:1rem;">管理前台「今日參與企業」卡片內容。商品與表單功能不受影響。</p>
-                <div id="exhibitorEditorList" style="display:grid; gap:0.8rem;"></div>
+                <p style="color:#aaa; margin-bottom:0.55rem;">管理投影頁下方「今日參與企業」直式卡片。公司名稱可直接從目前表單帶入，再補上商業簡介與小圖片。</p>
+                <p id="exhibitorCompanyHint" style="color:#00e5ff; margin-bottom:1rem; font-size:0.88rem;">公司清單載入中...</p>
+                <div id="exhibitorEditorList" style="display:grid; gap:0.9rem;"></div>
                 <div style="display:flex; gap:0.8rem; margin-top:1rem; flex-wrap:wrap;">
                     <button class="adm-btn adm-btn-success" onclick="addExhibitorRow()">➕ 新增企業</button>
+                    <button class="adm-btn adm-btn-upload" onclick="addExhibitorRowsFromCompanies()">📋 帶入全部表單公司</button>
+                    <button class="adm-btn" onclick="refreshCompanyOptions()">🔄 重新讀取公司</button>
                     <button class="adm-btn adm-btn-primary" onclick="saveExhibitors()">💾 儲存企業資訊</button>
                 </div>
             </div>
@@ -943,6 +986,7 @@
             hint.textContent = companyOptions.length
                 ? `已從目前表單讀取 ${companyOptions.length} 間公司，可直接在公司欄位下拉選取。`
                 : '目前表單尚未讀到公司資料，請先匯入名單或確認公司欄位。';
+            if (typeof updateExhibitorCompanyHint === 'function') updateExhibitorCompanyHint();
         }
 
         async function refreshCompanyOptions() {
@@ -1892,20 +1936,94 @@
             }
         }
 
+        function updateExhibitorImagePreview(row) {
+            if (!row) return;
+            const input = row.querySelector('.exhibitor-image-input');
+            const box = row.querySelector('.exhibitor-image-box');
+            const name = row.querySelector('.exhibitor-name-input')?.value.trim() || '企';
+            const url = input ? input.value.trim() : '';
+            if (!box) return;
+            box.innerHTML = url ? `<img src="${escapeHtml(url)}" alt="${escapeHtml(name)}">` : `<span>${escapeHtml(name.slice(0,1) || '企')}</span>`;
+        }
+
+        function handleExhibitorImageUpload(input) {
+            const file = input.files && input.files[0];
+            if (!file) return;
+            const row = input.closest('.exhibitor-row');
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imageInput = row.querySelector('.exhibitor-image-input');
+                imageInput.value = e.target.result;
+                updateExhibitorImagePreview(row);
+            };
+            reader.readAsDataURL(file);
+        }
+
         function exhibitorRowTemplate(item = {}) {
-            return `<div class="exhibitor-row" style="display:grid; grid-template-columns:1fr 1fr 90px auto; gap:0.8rem; align-items:center;">
-                <input class="cyber-input exhibitor-name-input" style="margin:0;" placeholder="公司名稱" value="${item.name || item.company_name || ''}">
-                <input class="cyber-input exhibitor-industry-input" style="margin:0;" placeholder="行業類別" value="${item.industry || ''}">
-                <input class="cyber-input exhibitor-logo-input" style="margin:0;" placeholder="Logo" value="${item.logo || '🏢'}">
+            const name = escapeHtml(item.name || item.company_name || '');
+            const industry = escapeHtml(item.industry || '');
+            const image = escapeHtml(item.image_url || item.image || '');
+            const website = escapeHtml(item.website || '');
+            const contact = escapeHtml(item.contact || '');
+            const description = escapeHtml(item.description || '');
+            const initial = escapeHtml((item.name || item.company_name || '企').slice(0,1) || '企');
+            return `<div class="exhibitor-row">
+                <div>
+                    <div class="exhibitor-image-box">${image ? `<img src="${image}" alt="${name}">` : `<span>${initial}</span>`}</div>
+                    <div class="exhibitor-image-actions">
+                        <label class="adm-btn adm-btn-upload adm-btn-sm" style="cursor:pointer;">
+                            🖼️ 上傳小圖
+                            <input type="file" accept="image/*" style="display:none;" onchange="handleExhibitorImageUpload(this)">
+                        </label>
+                    </div>
+                </div>
+                <div class="exhibitor-main-grid">
+                    <input class="cyber-input exhibitor-name-input" list="companyOptionsDatalist" style="margin:0;" placeholder="選擇或輸入公司名稱" value="${name}" oninput="updateExhibitorImagePreview(this.closest('.exhibitor-row'))">
+                    <input class="cyber-input exhibitor-industry-input" style="margin:0;" placeholder="行業類別，例如：科技、金融、旅宿" value="${industry}">
+                    <input class="cyber-input exhibitor-image-input" style="margin:0; grid-column:1 / -1;" placeholder="公司小圖片 URL，或按左側上傳圖片" value="${image}" oninput="updateExhibitorImagePreview(this.closest('.exhibitor-row'))">
+                    <input class="cyber-input exhibitor-website-input" style="margin:0;" placeholder="網站連結，可留空" value="${website}">
+                    <input class="cyber-input exhibitor-contact-input" style="margin:0;" placeholder="聯絡資訊，可留空" value="${contact}">
+                    <textarea class="cyber-input exhibitor-desc-input" style="grid-column:1 / -1; margin:0; min-height:82px;" placeholder="公司商業簡介：服務內容、亮點、合作機會">${description}</textarea>
+                </div>
                 <button class="adm-btn adm-btn-danger adm-btn-sm" onclick="this.closest('.exhibitor-row').remove()">刪除</button>
-                <input class="cyber-input exhibitor-website-input" style="margin:0;" placeholder="網站連結，可留空" value="${item.website || ''}">
-                <input class="cyber-input exhibitor-contact-input" style="margin:0;" placeholder="聯絡資訊，可留空" value="${item.contact || ''}">
-                <textarea class="cyber-input exhibitor-desc-input" style="grid-column:1 / -1; margin:0;" placeholder="公司簡介">${item.description || ''}</textarea>
             </div>`;
         }
+
         function addExhibitorRow(item = {}) { document.getElementById('exhibitorEditorList').insertAdjacentHTML('beforeend', exhibitorRowTemplate(item)); }
+
+        function updateExhibitorCompanyHint() {
+            const hint = document.getElementById('exhibitorCompanyHint');
+            if (!hint) return;
+            hint.textContent = companyOptions.length
+                ? `已從目前表單讀取 ${companyOptions.length} 間公司，可按「帶入全部表單公司」後直接補介紹。`
+                : '目前表單尚未讀到公司資料，請先匯入名單或確認公司欄位。';
+        }
+
+        function addExhibitorRowsFromCompanies() {
+            const list = document.getElementById('exhibitorEditorList');
+            if (!list) return;
+            if (!companyOptions.length) {
+                alert('目前表單沒有可用公司，請先匯入名單或按「重新讀取公司」。');
+                return;
+            }
+            const existing = new Set([...document.querySelectorAll('.exhibitor-name-input')]
+                .map(input => input.value.trim())
+                .filter(Boolean));
+            let added = 0;
+            companyOptions.forEach(c => {
+                const companyName = (c.name || '').trim();
+                if (!companyName || existing.has(companyName)) return;
+                addExhibitorRow({ name: companyName, industry: '', description: '' });
+                existing.add(companyName);
+                added += 1;
+            });
+            if (!added) alert('表單公司都已經在企業展示裡了。');
+        }
+
         async function loadExhibitors() {
             try {
+                await loadCompanyOptions();
+                updateExhibitorCompanyHint();
                 const res = await fetch(`/api/exhibitors${getActiveEventQuery()}`);
                 const json = await res.json();
                 const list = document.getElementById('exhibitorEditorList');
@@ -1915,20 +2033,20 @@
                 if (!list.children.length) addExhibitorRow();
             } catch(e) { console.warn('企業載入失敗', e); }
         }
+
         async function saveExhibitors() {
             const exhibitors = [...document.querySelectorAll('.exhibitor-row')].map(row => ({
                 name: row.querySelector('.exhibitor-name-input').value.trim(),
                 industry: row.querySelector('.exhibitor-industry-input').value.trim(),
-                logo: row.querySelector('.exhibitor-logo-input').value.trim(),
+                image_url: row.querySelector('.exhibitor-image-input') ? row.querySelector('.exhibitor-image-input').value.trim() : '',
                 website: row.querySelector('.exhibitor-website-input') ? row.querySelector('.exhibitor-website-input').value.trim() : '',
                 contact: row.querySelector('.exhibitor-contact-input') ? row.querySelector('.exhibitor-contact-input').value.trim() : '',
                 description: row.querySelector('.exhibitor-desc-input').value.trim()
             })).filter(x => x.name);
             const res = await fetch(`/api/exhibitors${getActiveEventQuery()}`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({exhibitors})});
             const json = await res.json();
-            alert(json.success ? '企業資訊已儲存到資料庫，Dashboard 會同步顯示。' : (json.message || '企業資訊儲存失敗'));
+            alert(json.success ? '企業資訊已儲存到資料庫，Dashboard 下方企業展示會同步顯示。' : (json.message || '企業資訊儲存失敗'));
         }
-
 
         // ===== 智慧論壇 Navigator 設定 =====
         const expKeys = [
