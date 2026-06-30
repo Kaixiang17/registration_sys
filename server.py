@@ -598,6 +598,62 @@ def handle_industry_mapping():
         conn.close()
 
 
+
+
+@app.route('/api/companies/list')
+def api_companies_list():
+    """
+    取得目前活動名單中的公司清單。
+    給後台「行業對照表」下拉選單使用，避免手動輸入公司名稱。
+    """
+    admin_user, event_key = get_admin_and_event_context()
+    conn = get_db_connection()
+
+    try:
+        ensure_core_tables(conn)
+
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT
+                    TRIM(company_name) AS company_name,
+                    COUNT(*) AS people_count,
+                    SUM(CASE WHEN status IN ('checked_in', '已報到', '替代') THEN 1 ELSE 0 END) AS checked_count
+                FROM event_registrations
+                WHERE admin_user = %s
+                  AND event_key = %s
+                  AND TRIM(COALESCE(company_name, '')) <> ''
+                GROUP BY TRIM(company_name)
+                ORDER BY company_name ASC
+            """, (admin_user, event_key))
+            rows = cursor.fetchall()
+
+        companies = []
+        for row in rows:
+            companies.append({
+                "name": row.get("company_name") or "",
+                "people_count": int(row.get("people_count") or 0),
+                "checked_count": int(row.get("checked_count") or 0)
+            })
+
+        return jsonify({
+            "success": True,
+            "admin": admin_user,
+            "sheet": event_key,
+            "companies": companies
+        })
+
+    except Exception as e:
+        print(f"❌ [公司清單 API 失敗]: {e}")
+        return jsonify({
+            "success": False,
+            "message": str(e),
+            "companies": []
+        }), 500
+
+    finally:
+        conn.close()
+
+
 # ============================================================
 # 👑 【新增：AI 抓取公司資料 API】
 # ============================================================
