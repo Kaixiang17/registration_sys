@@ -1864,9 +1864,39 @@
                 company: row.querySelector('.industry-company-input').value.trim(),
                 industry: row.querySelector('.industry-name-input').value.trim()
             })).filter(x => x.company || x.industry);
-            const res = await fetch(`/api/industry_mapping${getActiveEventQuery()}`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({mappings})});
+
+            const res = await fetch(`/api/industry_mapping${getActiveEventQuery()}`, {
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({mappings})
+            });
             const json = await res.json();
-            alert(json.success ? '行業對照已儲存到資料庫，圓餅圖會同步更新。' : (json.message || '行業對照儲存失敗'));
+
+            if (json.success) {
+                // 儲存後立刻通知已開啟的 Dashboard / Projection。
+                // 同瀏覽器分頁可用 BroadcastChannel / localStorage 收到，跨裝置則靠 dashboard 自己輪詢 API。
+                try {
+                    const payload = {
+                        type: 'industry-mapping-updated',
+                        sheet: (document.getElementById('googleSheetName')?.value || '').trim(),
+                        at: Date.now()
+                    };
+                    localStorage.setItem('smartArkIndustryMappingUpdated', JSON.stringify(payload));
+                    localStorage.setItem('smartArkCheckinSuccess', String(Date.now()));
+                    if ('BroadcastChannel' in window) {
+                        const ch = new BroadcastChannel('smart-ark-dashboard');
+                        ch.postMessage(payload);
+                        ch.postMessage({type:'checkin-success', reason:'industry-mapping-updated', at: Date.now()});
+                        ch.close();
+                    }
+                } catch(e) {}
+
+                await loadCompanyOptions();
+                if (typeof updateDashboard === 'function') updateDashboard();
+                alert('行業對照已儲存。投影頁重新整理後會立即套用；若投影頁已開啟，約 5～15 秒內會同步。');
+            } else {
+                alert(json.message || '行業對照儲存失敗');
+            }
         }
 
         function exhibitorRowTemplate(item = {}) {
