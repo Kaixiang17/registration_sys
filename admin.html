@@ -764,10 +764,13 @@
         <div id="industry" class="tab-content">
             <div class="cyber-card" style="padding: 2rem; border-radius: 1rem;">
                 <div class="card-title neon-text">🏷️ 行業類別手動對照表</div>
-                <p style="color:#aaa; margin-bottom:1rem;">把公司名稱對應到行業類別，前台圓餅圖會用這些行業做統計。</p>
+                <p style="color:#aaa; margin-bottom:0.45rem;">把公司名稱對應到行業類別，前台圓餅圖會用這些行業做統計。公司欄位可直接從目前表單公司下拉選取，也能手動輸入。</p>
+                <p id="companyOptionsHint" style="color:#00e5ff; margin-bottom:1rem; font-size:0.88rem;">公司清單載入中...</p>
                 <div id="industryMappingList" style="display:grid; gap:0.8rem;"></div>
                 <div style="display:flex; gap:0.8rem; margin-top:1rem; flex-wrap:wrap;">
                     <button class="adm-btn adm-btn-success" onclick="addIndustryRow()">➕ 新增對照</button>
+                    <button class="adm-btn" onclick="refreshCompanyOptions()">🔄 重新讀取公司</button>
+                    <button class="adm-btn adm-btn-upload" onclick="addIndustryRowsFromCompanies()">📋 帶入表單公司</button>
                     <button class="adm-btn adm-btn-primary" onclick="saveIndustryMappings()">💾 儲存對照表</button>
                 </div>
             </div>
@@ -885,6 +888,7 @@
         const API_BASE = '/api';
         let currentConfig = null;
         let currentUser = 'admin';
+        let companyOptions = [];
         let editingIdx = null;
         let deleteIdx = null;
 
@@ -893,6 +897,88 @@
             const sheetEl = document.getElementById('googleSheetName');
             const sheet = (sheetEl && sheetEl.value) || (currentConfig && currentConfig.google_sheet_name) || '活動報到名單';
             return `?admin=${encodeURIComponent(currentUser || 'admin')}&sheet=${encodeURIComponent(sheet)}`;
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, function(ch) {
+                return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[ch];
+            });
+        }
+
+        async function loadCompanyOptions() {
+            try {
+                const res = await fetch(`${API_BASE}/companies/list${getActiveEventQuery()}`);
+                const json = await res.json();
+                if (!json.success) {
+                    console.warn('公司清單讀取失敗', json.message);
+                    companyOptions = [];
+                    renderCompanyDatalist();
+                    updateCompanyOptionsHint();
+                    return;
+                }
+
+                companyOptions = json.companies || [];
+                renderCompanyDatalist();
+                updateCompanyOptionsHint();
+            } catch (err) {
+                console.warn('公司清單讀取失敗', err);
+                companyOptions = [];
+                renderCompanyDatalist();
+                updateCompanyOptionsHint();
+            }
+        }
+
+        function renderCompanyDatalist() {
+            let datalist = document.getElementById('companyOptionsDatalist');
+            if (!datalist) {
+                datalist = document.createElement('datalist');
+                datalist.id = 'companyOptionsDatalist';
+                document.body.appendChild(datalist);
+            }
+
+            datalist.innerHTML = companyOptions.map(c => {
+                const name = escapeHtml(c.name || '');
+                const people = Number(c.people_count || 0);
+                const checked = Number(c.checked_count || 0);
+                return `<option value="${name}" label="${name}（${people}人，已報到${checked}人）"></option>`;
+            }).join('');
+        }
+
+        function updateCompanyOptionsHint() {
+            const hint = document.getElementById('companyOptionsHint');
+            if (!hint) return;
+            hint.textContent = companyOptions.length
+                ? `已從目前表單讀取 ${companyOptions.length} 間公司，可直接在公司欄位下拉選取。`
+                : '目前表單尚未讀到公司資料，請先匯入名單或確認公司欄位。';
+        }
+
+        async function refreshCompanyOptions() {
+            await loadCompanyOptions();
+            alert(companyOptions.length ? `已更新公司清單：${companyOptions.length} 間公司` : '目前沒有可用公司資料');
+        }
+
+        function addIndustryRowsFromCompanies() {
+            const list = document.getElementById('industryMappingList');
+            if (!list) return;
+            if (!companyOptions.length) {
+                alert('目前表單沒有可用公司，請先匯入名單或按「重新讀取公司」。');
+                return;
+            }
+
+            const existing = new Set([...document.querySelectorAll('.industry-company-input')]
+                .map(input => input.value.trim())
+                .filter(Boolean));
+
+            let added = 0;
+            companyOptions.forEach(c => {
+                const companyName = (c.name || '').trim();
+                if (!companyName || existing.has(companyName)) return;
+                addIndustryRow({ company_name: companyName, industry: '' });
+                existing.add(companyName);
+                added += 1;
+            });
+
+            if (!added) alert('表單公司都已經在對照表裡了。');
         }
 
 
@@ -1050,6 +1136,7 @@
                     statusText.innerHTML = `<span style="color:#4ade80">✓ ${json.message}</span>`;
                     alert(json.message);
                     await loadAvailableSheets(); // 🚀 關鍵改動：上傳成功後立即刷新下拉選單
+                    await loadCompanyOptions(); // 重新讀取行業對照可選公司
                     updateDashboard(); // 重新拉取一次儀表板最新應到人數數據
                 } else {
                     statusText.innerHTML = `<span style="color:#f87171">✕ 同步失敗：${json.message}</span>`;
@@ -1501,6 +1588,7 @@
                     loadConfig(),
                     updateDashboard(),
                     loadAgenda(),
+                    loadCompanyOptions(),
                     loadIndustryMappings(),
                     loadExhibitors(),
                     loadExperienceConfig(),
@@ -1750,15 +1838,18 @@
         }
 
         function industryRowTemplate(item = {}) {
+            const companyValue = escapeHtml(item.company_name || item.company || '');
+            const industryValue = escapeHtml(item.industry || '');
             return `<div class="industry-row" style="display:grid; grid-template-columns:1fr 1fr auto; gap:0.8rem; align-items:center;">
-                <input class="cyber-input industry-company-input" style="margin:0;" placeholder="公司名稱" value="${item.company_name || item.company || ''}">
-                <input class="cyber-input industry-name-input" style="margin:0;" placeholder="行業類別" value="${item.industry || ''}">
+                <input class="cyber-input industry-company-input" list="companyOptionsDatalist" style="margin:0;" placeholder="選擇或輸入公司名稱" value="${companyValue}">
+                <input class="cyber-input industry-name-input" style="margin:0;" placeholder="行業類別，例如：科技、金融、製造" value="${industryValue}">
                 <button class="adm-btn adm-btn-danger adm-btn-sm" onclick="this.closest('.industry-row').remove()">刪除</button>
             </div>`;
         }
         function addIndustryRow(item = {}) { document.getElementById('industryMappingList').insertAdjacentHTML('beforeend', industryRowTemplate(item)); }
         async function loadIndustryMappings() {
             try {
+                await loadCompanyOptions();
                 const res = await fetch(`/api/industry_mapping${getActiveEventQuery()}`);
                 const json = await res.json();
                 const list = document.getElementById('industryMappingList');
@@ -1917,6 +2008,7 @@
             await fetchUserInfo();
             await init();
             await loadAgenda();
+            await loadCompanyOptions();
             await loadIndustryMappings();
             await loadExhibitors();
             await loadExperienceConfig();
