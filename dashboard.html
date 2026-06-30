@@ -183,14 +183,18 @@ body::after {
 /* ── DONUT ── */
 .donut-layout {
   height: 100%;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 2rem;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 2.6rem;
 }
 
 .donut-wrap {
-  position: relative; flex-shrink: 0;
-  width: 240px; height: 240px;
+  position: relative;
+  flex-shrink: 0;
+  width: 260px;
+  height: 260px;
 }
 #donut-svg {
   display: block;
@@ -209,22 +213,40 @@ body::after {
 }
 .donut-lbl { font-size: 0.62rem; color: var(--muted); letter-spacing: 2px; margin-top: 5px; }
 
-/* legend — vertical list below donut */
+/* legend — right side of donut */
 .legend {
-  display: flex; flex-direction: column; gap: 0.7rem;
-  width: 100%; max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  width: 320px;
+  max-width: 320px;
+  align-self: center;
 }
 .leg {
-  display: flex; align-items: center; gap: 10px;
+  display: grid;
+  grid-template-columns: 14px 1fr auto;
+  align-items: center;
+  column-gap: 12px;
 }
 .leg-dot {
-  width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  flex-shrink: 0;
 }
-.leg-name { font-size: 0.82rem; color: var(--text); font-weight: 700; flex: 1; }
+.leg-name {
+  font-size: 0.92rem;
+  color: var(--text);
+  font-weight: 800;
+  line-height: 1.35;
+}
 .leg-val  {
   font-family: "Michroma", sans-serif;
-  font-size: 0.72rem; color: var(--muted);
+  font-size: 0.9rem;
+  color: var(--muted);
   white-space: nowrap;
+  text-align: right;
+  min-width: 72px;
 }
 
 .empty-msg { text-align: center; padding: 3rem 0; color: var(--muted); font-size: 0.85rem; line-height: 2; }
@@ -320,7 +342,8 @@ body::after {
     min-height: unset;
     padding: 1rem 1rem 1.5rem;
   }
-  .donut-layout { gap: 1.5rem; }
+  .donut-layout { flex-direction: column; gap: 1.5rem; }
+  .legend { width: 100%; max-width: 340px; }
   .donut-wrap { width: 200px; height: 200px; }
   .donut-num  { font-size: 2.2rem; }
   .brand-sub  { display: none; }
@@ -427,9 +450,18 @@ const ADMIN = UP.get('admin') || 'admin';
 const API   = '/api';
 
 const PALETTE = [
-  '#00b4d8','#f72585','#7209b7','#4cc9f0','#3a0ca3',
-  '#06d6a0','#ffd166','#ef476f','#118ab2','#a78bfa',
-  '#ff6b6b','#51cf66','#339af0','#cc5de8','#ff922b',
+  '#00E5FF', // 亮青
+  '#FF2D95', // 桃紅
+  '#FFD600', // 黃
+  '#00E676', // 綠
+  '#7C4DFF', // 紫
+  '#FF6D00', // 橘
+  '#40C4FF', // 藍
+  '#FF5252', // 紅
+  '#C6FF00', // 黃綠
+  '#B388FF', // 淺紫
+  '#69F0AE', // 淺綠
+  '#FFAB40'  // 淺橘
 ];
 
 /* ── state ── */
@@ -564,7 +596,7 @@ function drawLegend(segs) {
   }
   el.innerHTML = segs.map(s => `
     <div class="leg">
-      <div class="leg-dot" style="background:${s.color};box-shadow:0 0 6px ${s.color}88;"></div>
+      <div class="leg-dot" style="background:${s.color};box-shadow:0 0 10px ${s.color}aa, 0 0 18px ${s.color}55;"></div>
       <span class="leg-name">${esc(s.name)}</span>
       <span class="leg-val">${s.pct}%</span>
     </div>
