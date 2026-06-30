@@ -327,6 +327,7 @@ def ensure_dashboard_tables(conn):
                 company_name VARCHAR(255) NOT NULL,
                 industry VARCHAR(100),
                 logo TEXT,
+                image_url LONGTEXT,
                 description TEXT,
                 website TEXT,
                 contact TEXT,
@@ -340,6 +341,7 @@ def ensure_dashboard_tables(conn):
                 'website': 'TEXT',
                 'contact': 'TEXT',
                 'logo': 'TEXT',
+                'image_url': 'LONGTEXT',
                 'description': 'TEXT',
                 'industry': 'VARCHAR(100)'
             },
@@ -444,42 +446,64 @@ def handle_exhibitors():
                     company_name = _clean_str(ex.get('name') or ex.get('company_name')).strip()
                     if not company_name:
                         continue
+
+                    # 公司小圖片：支援新版 image_url / image，也相容舊版誤存在 logo 的 data:image 或 http URL
+                    raw_logo = _clean_str(ex.get('logo')).strip()
+                    image_url = _clean_str(ex.get('image_url') or ex.get('image') or ex.get('photo')).strip()
+                    if not image_url and (raw_logo.startswith('data:image') or raw_logo.startswith('http://') or raw_logo.startswith('https://')):
+                        image_url = raw_logo
+
                     cursor.execute("""INSERT INTO event_exhibitors
-                                      (admin_user, event_key, company_name, industry, logo, description, website, contact)
-                                      VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
+                                      (admin_user, event_key, company_name, industry, logo, image_url, description, website, contact)
+                                      VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                                    (admin_user, event_key, company_name, _clean_str(ex.get('industry')).strip(),
-                                    _clean_str(ex.get('logo') or '🏢').strip(), _clean_str(ex.get('description')).strip(),
+                                    '', image_url, _clean_str(ex.get('description')).strip(),
                                     _clean_str(ex.get('website')).strip(), _clean_str(ex.get('contact')).strip()))
             conn.commit()
             return jsonify({"success": True, "message": "企業資訊已儲存到資料庫"})
 
         with conn.cursor() as cursor:
             # 1) 後台固定維護的企業展示資料
-            cursor.execute("""SELECT id, company_name, industry, logo, description, website, contact
+            cursor.execute("""SELECT id, company_name, industry, logo, image_url, description, website, contact
                               FROM event_exhibitors
                               WHERE admin_user = %s AND event_key = %s
                               ORDER BY id ASC""", (admin_user, event_key))
             raw_exhibitors = _to_json_safe_rows(cursor.fetchall())
             exhibitors = []
+            configured_names = set()
             for ex in raw_exhibitors:
+                name = ex.get("company_name") or ""
+                configured_names.add(name.strip())
+                logo_or_image = ex.get("logo") or ""
+                image_url = ex.get("image_url") or ""
+                if not image_url and (str(logo_or_image).startswith('data:image') or str(logo_or_image).startswith('http://') or str(logo_or_image).startswith('https://')):
+                    image_url = logo_or_image
                 exhibitors.append({
                     "id": ex.get("id"),
-                    "name": ex.get("company_name") or "",
-                    "company_name": ex.get("company_name") or "",
+                    "name": name,
+                    "company_name": name,
                     "industry": ex.get("industry") or "未分類",
-                    "logo": ex.get("logo") or "🏢",
+                    "logo": "",
+                    "image_url": image_url or "",
+                    "image": image_url or "",
                     "description": ex.get("description") or "",
                     "website": ex.get("website") or "",
                     "contact": ex.get("contact") or ""
                 })
 
-            # 2) 即使尚未填企業展示，也從 CSV 名單/報到資料抓出與會公司，避免 dashboard 空白。
+            # 2) 從報到名單帶出全部參與公司，讓後台可以直接補介紹，不必重新打公司名。
             cursor.execute("""
                 SELECT
                     MIN(r.id) AS id,
                     TRIM(r.company_name) AS company_name,
                     COALESCE(NULLIF(TRIM(m.industry), ''), NULLIF(TRIM(e.industry), ''), '未分類') AS industry,
-                    COALESCE(NULLIF(TRIM(e.logo), ''), '🏢') AS logo,
+                    COALESCE(
+                        NULLIF(TRIM(e.image_url), ''),
+                        CASE
+                            WHEN e.logo LIKE 'data:image%%' OR e.logo LIKE 'http://%%' OR e.logo LIKE 'https://%%' THEN e.logo
+                            ELSE ''
+                        END
+                    ) AS image_url,
                     COALESCE(NULLIF(TRIM(e.description), ''), '') AS description,
                     COALESCE(NULLIF(TRIM(e.website), ''), '') AS website,
                     COALESCE(NULLIF(TRIM(e.contact), ''), '') AS contact,
@@ -497,24 +521,30 @@ def handle_exhibitors():
                 WHERE r.admin_user = %s
                   AND r.event_key = %s
                   AND TRIM(COALESCE(r.company_name, '')) <> ''
-                GROUP BY TRIM(r.company_name), industry, logo, description, website, contact
+                GROUP BY TRIM(r.company_name), industry, image_url, description, website, contact
                 ORDER BY checked_count DESC, people_count DESC, company_name ASC
             """, (admin_user, event_key))
             participating_companies = []
             for ex in _to_json_safe_rows(cursor.fetchall()):
                 company_name = ex.get("company_name") or ""
-                participating_companies.append({
+                payload = {
                     "id": ex.get("id"),
                     "name": company_name,
                     "company_name": company_name,
                     "industry": ex.get("industry") or "未分類",
-                    "logo": ex.get("logo") or "🏢",
+                    "logo": "",
+                    "image_url": ex.get("image_url") or "",
+                    "image": ex.get("image_url") or "",
                     "description": ex.get("description") or "",
                     "website": ex.get("website") or "",
                     "contact": ex.get("contact") or "",
                     "people_count": int(ex.get("people_count") or 0),
                     "checked_count": int(ex.get("checked_count") or 0)
-                })
+                }
+                participating_companies.append(payload)
+                # 後台清單自動補上尚未建立介紹的公司，方便直接 key 介紹。
+                if company_name.strip() and company_name.strip() not in configured_names:
+                    exhibitors.append(payload)
 
             def load_industry_stats(only_checked):
                 status_sql = "AND r.status IN ('checked_in', '已報到', '替代')" if only_checked else ""
