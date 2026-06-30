@@ -375,9 +375,9 @@
                 <div class="portrait-consent-box" style="margin-bottom:1.5rem;">
                     <label class="portrait-consent-check" onclick="event.preventDefault(); openPortraitConsentModal();" style="cursor:pointer;">
                         <input type="checkbox" id="portraitConsentTemp" onclick="event.stopPropagation();">
-                        <span>我已閱讀並同意活動拍攝與肖像使用授權條款</span>
+                        <span>我已閱讀並同意活動拍攝與肖像使用授權條款<br><small style="color:rgba(255,255,255,0.45);">未勾選代表不同意，仍可完成報到並由系統記錄</small></span>
                     </label>
-                    <button type="button" class="portrait-consent-link" onclick="openPortraitConsentModal()">📄 查看完整條款 / 選擇不同意</button>
+                    <button type="button" class="portrait-consent-link" onclick="openPortraitConsentModal()">📄 查看完整條款（含不同意選項）</button>
                 </div>
                 <div style="display: flex; gap: 1rem; margin-top: 0;">
                     <button class="ck-btn ck-btn-warn" onclick="submitAddRegistration()" style="margin-top:0;">✓ 確認外加報到</button>
@@ -602,16 +602,16 @@
         }
 
         async function submitAddRegistration() {
-            // 不強制同意，portrait_consent 狀態隨 checkbox 值傳送
             const consentTemp = document.getElementById('portraitConsentTemp');
-            const portraitConsentValue = consentTemp ? consentTemp.checked : false;
+            const portraitConsent = consentTemp ? consentTemp.checked : false;
             const data = {
                 name: document.getElementById('addName').value.trim(),
                 phone: document.getElementById('addPhone').value.trim(),
                 company: document.getElementById('addCompany').value.trim(),
                 seat: document.getElementById('addSeat').value.trim() || '現場安排',
                 meal: window.selectedTempMealChoice,
-                portrait_consent: portraitConsentValue,
+                portrait_consent: portraitConsent,
+                portrait_consent_status: portraitConsent ? '同意' : '不同意',
                 admin: currentAdmin,
                 sheet: currentSheet
             };
@@ -810,9 +810,9 @@
                 <div class="portrait-consent-box">
                     <label class="portrait-consent-check" onclick="event.preventDefault(); openPortraitConsentModal();" style="cursor:pointer;">
                         <input type="checkbox" id="portraitConsent" onchange="checkMealReady()" onclick="event.stopPropagation();">
-                        <span>我已閱讀並同意活動拍攝與肖像使用授權條款</span>
+                        <span>我已閱讀並同意活動拍攝與肖像使用授權條款<br><small style="color:rgba(255,255,255,0.45);">未勾選代表不同意，仍可完成報到並由系統記錄</small></span>
                     </label>
-                    <button type="button" class="portrait-consent-link" onclick="openPortraitConsentModal()">📄 查看完整條款 / 選擇不同意</button>
+                    <button type="button" class="portrait-consent-link" onclick="openPortraitConsentModal()">📄 查看完整條款（含不同意選項）</button>
                 </div>
             `;
             window.selectedMeal = null; window.isOriginal = true;
@@ -836,7 +836,7 @@
 
         function checkMealReady() {
             const finalBtn = document.getElementById('finalBtn');
-            // 條款同意與否不阻擋報到，只需選餐即可送出
+            // 肖像授權不再作為報到阻擋條件；未勾選代表不同意，仍可報到並送出記錄
             finalBtn.disabled = !window.selectedMeal;
         }
 
@@ -855,8 +855,7 @@
             closePortraitConsentModal();
         }
         function disagreePortraitConsent() {
-            // 不同意：記錄不同意狀態，關閉 modal，不阻擋報到
-            window.portraitConsentDeclined = true;
+            // 不同意：取消勾選並關閉 modal；報到仍可繼續，送出時會記錄為不同意
             const cb = document.getElementById('portraitConsent');
             if (cb) { cb.checked = false; checkMealReady(); }
             const cbTemp = document.getElementById('portraitConsentTemp');
@@ -943,9 +942,7 @@
         async function submitCheckin(autoMeal) {
             const meal = autoMeal || window.selectedMeal;
             const consentEl = document.getElementById('portraitConsent');
-            // 不同意也可以繼續，portrait_consent 傳 false 讓後台記錄
-            const portraitConsent = consentEl ? consentEl.checked : true;
-            // 移除原本的 if (!portraitConsent) return 阻擋邏輯
+            const portraitConsent = consentEl ? consentEl.checked : false;
             const proxyInfo = window.isOriginal ? {} : {
                 name: document.getElementById('proxyName').value.trim(),
                 phone: document.getElementById('proxyPhone').value.trim()
@@ -959,7 +956,13 @@
                 const res = await fetch(`${API_BASE}/checkin/${selectedUser.id}?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ meal, is_original: window.isOriginal, proxy_info: proxyInfo, portrait_consent: portraitConsent })
+                    body: JSON.stringify({ 
+                        meal, 
+                        is_original: window.isOriginal, 
+                        proxy_info: proxyInfo, 
+                        portrait_consent: portraitConsent,
+                        portrait_consent_status: portraitConsent ? '同意' : '不同意'
+                    })
                 });
                 const json = await res.json();
                 if (json.success) {
