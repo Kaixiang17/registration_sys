@@ -492,23 +492,30 @@ def handle_exhibitors():
                 })
 
             # 2) 從報到名單帶出全部參與公司，讓後台可以直接補介紹，不必重新打公司名。
+            # 注意：Railway MySQL 預設啟用 ONLY_FULL_GROUP_BY，SELECT 裡不能直接放 e.logo/e.image_url
+            # 這類未聚合欄位。因此這裡所有企業展示欄位都用 MAX() 聚合，GROUP BY 只保留公司名稱，避免 1055 錯誤。
             cursor.execute("""
                 SELECT
                     MIN(r.id) AS id,
                     TRIM(r.company_name) AS company_name,
-                    MIN(COALESCE(NULLIF(TRIM(m.industry), ''), NULLIF(TRIM(e.industry), ''), '未分類')) AS industry,
-                    MIN(
-                        COALESCE(
-                            NULLIF(TRIM(e.image_url), ''),
-                            CASE
-                                WHEN e.logo LIKE 'data:image%%' OR e.logo LIKE 'http://%%' OR e.logo LIKE 'https://%%' THEN e.logo
-                                ELSE ''
-                            END
-                        )
+                    COALESCE(
+                        NULLIF(TRIM(MAX(m.industry)), ''),
+                        NULLIF(TRIM(MAX(e.industry)), ''),
+                        '未分類'
+                    ) AS industry,
+                    COALESCE(
+                        NULLIF(TRIM(MAX(e.image_url)), ''),
+                        CASE
+                            WHEN MAX(e.logo) LIKE 'data:image%%'
+                              OR MAX(e.logo) LIKE 'http://%%'
+                              OR MAX(e.logo) LIKE 'https://%%'
+                            THEN MAX(e.logo)
+                            ELSE ''
+                        END
                     ) AS image_url,
-                    MIN(COALESCE(NULLIF(TRIM(e.description), ''), '')) AS description,
-                    MIN(COALESCE(NULLIF(TRIM(e.website), ''), '')) AS website,
-                    MIN(COALESCE(NULLIF(TRIM(e.contact), ''), '')) AS contact,
+                    COALESCE(NULLIF(TRIM(MAX(e.description)), ''), '') AS description,
+                    COALESCE(NULLIF(TRIM(MAX(e.website)), ''), '') AS website,
+                    COALESCE(NULLIF(TRIM(MAX(e.contact)), ''), '') AS contact,
                     COUNT(*) AS people_count,
                     SUM(CASE WHEN r.status IN ('checked_in', '已報到', '替代') THEN 1 ELSE 0 END) AS checked_count
                 FROM event_registrations r
@@ -526,6 +533,49 @@ def handle_exhibitors():
                 GROUP BY TRIM(r.company_name)
                 ORDER BY checked_count DESC, people_count DESC, company_name ASC
             """, (admin_user, event_key))
+            participating_companies = []
+            for ex in _to_json_safe_rows(cursor.fetchall()):
+                company_name = ex.get("company_name") or ""
+                payload = {
+                    "id": ex.get("id"),
+                    "name": company_name,
+                    "company_name": company_name,
+                    "industry": ex.get("industry") or "未分類",
+                    "logo": "",
+                    "image_url": ex.get("image_url") or "",
+                    "image": ex.get("image_url") or "",
+                    "description": ex.get("description") or "",
+                    "website": ex.get("website") or "",
+                    "contact": ex.get("contact") or "",
+                    "people_count": int(ex.get("people_count") or 0),
+                    "checked_count": int(ex.get("checked_count") or 0)
+                }
+                participating_companies.append(payload)
+                # 後台清單自動補上尚未建立介紹的公司，方便直接 key 介紹。
+                if company_name.strip() and company_name.strip() not in configured_names:
+                    exhibitors.append(payload)
+
+            def load_industry_stats(only_checked):
+                status_sql = "AND r.status IN ('checked_in', '已報到', '替代')" if only_checked else ""
+                cursor.execute(f"""
+                    SELECT COALESCE(NULLIF(TRIM(m.industry), ''), NULLIF(TRIM(e.industry), ''), '未分類') AS industry,
+                           COUNT(*) AS cnt
+                    FROM event_registrations r
+                    LEFT JOIN company_industry_mapping m
+                        ON m.admin_user = r.admin_user
+                       AND m.event_key = r.event_key
+                       AND TRIM(m.company_name) = TRIM(r.company_name)
+                    LEFT JOIN event_exhibitors e
+                        ON e.admin_user = r.admin_user
+                       AND e.event_key = r.event_key
+                       AND TRIM(e.company_name) = TRIM(r.company_name)
+                    WHERE r.admin_user = %s
+                      AND r.event_key = %s
+                      AND TRIM(COALESCE(r.company_name, '')) <> ''
+                      {status_sql}
+                    GROUP BY industry
+                    ORDER BY cnt DESC
+                """, (admin_user, event_key))
                 return {row['industry'] or '未分類': int(row['cnt'] or 0) for row in cursor.fetchall() if int(row['cnt'] or 0) > 0}
 
             checked_stats = load_industry_stats(True)
