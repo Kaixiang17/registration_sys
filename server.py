@@ -689,7 +689,7 @@ def handle_config():
     admin_user, event_key = get_admin_and_event_context()
     conn = get_db_connection()
     try:
-        ensure_core_tables(conn)
+        ensure_experience_tables(conn)
         if request.method == 'POST':
             if not session.get('admin_logged_in'): return jsonify({"success": False, "message": "未授權的操作"}), 403
             payload = request.json
@@ -713,6 +713,16 @@ def handle_config():
         config_data = {
             "show_meal_options": True,
             "google_sheet_name": event_key,
+            # 前台成功畫面 / 左上標題 / 投影頁共用的活動資訊
+            "event_title": event_key,
+            "event_subtitle": "",
+            "event_date_start": "",
+            "event_date_end": "",
+            # 舊版前端相容欄位
+            "event_start_date": "",
+            "event_end_date": "",
+            "date_start": "",
+            "date_end": "",
             "map_image_url": "",
             "banner_image_url": "",
             "products": [],
@@ -728,6 +738,19 @@ def handle_config():
                 config_data["show_meal_options"] = bool(cfg["show_meal_options"])
                 config_data["map_image_url"] = cfg.get("map_image_url") or ""
                 config_data["banner_image_url"] = cfg.get("banner_image_url") or ""
+                event_title = cfg.get("event_title") or event_key
+                event_subtitle = cfg.get("event_subtitle") or ""
+                date_start = cfg.get("event_date_start") or ""
+                date_end = cfg.get("event_date_end") or ""
+                config_data["event_title"] = event_title
+                config_data["event_subtitle"] = event_subtitle
+                config_data["event_date_start"] = date_start
+                config_data["event_date_end"] = date_end
+                # 舊版前端相容欄位
+                config_data["event_start_date"] = date_start
+                config_data["event_end_date"] = date_end
+                config_data["date_start"] = date_start
+                config_data["date_end"] = date_end
                 
             cursor.execute("SELECT * FROM event_products WHERE admin_user = %s AND event_key = %s", (admin_user, event_key))
             prods = cursor.fetchall()
