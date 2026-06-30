@@ -551,9 +551,9 @@ def handle_exhibitors():
                     "checked_count": int(ex.get("checked_count") or 0)
                 }
                 participating_companies.append(payload)
-                # 後台清單自動補上尚未建立介紹的公司，方便直接 key 介紹。
-                if company_name.strip() and company_name.strip() not in configured_names:
-                    exhibitors.append(payload)
+                # 注意：不要自動把表單內所有公司塞進 exhibitors。
+                # exhibitors 只代表「後台手動新增/儲存的企業展示卡片」。
+                # participating_companies 仍保留給後台「帶入全部表單公司」按鈕使用。
 
             def load_industry_stats(only_checked):
                 status_sql = "AND r.status IN ('checked_in', '已報到', '替代')" if only_checked else ""
