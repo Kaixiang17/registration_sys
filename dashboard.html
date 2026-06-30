@@ -80,6 +80,14 @@ body::after {
 .brand-sub { font-size: 0.65rem; color: var(--muted); letter-spacing: 2px; margin-top: 2px; }
 
 .hdr-center { flex: 1; text-align: center; min-width: 0; }
+.hdr-event {
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #fff;
+  line-height: 1.1;
+  text-shadow: 0 0 18px rgba(255,255,255,0.20), var(--glow);
+}
 .hdr-en {
   font-family: "Michroma", sans-serif;
   font-size: 0.72rem; letter-spacing: 5px; color: var(--cyan); opacity: .65;
@@ -322,6 +330,94 @@ body::after {
 }
 .tl-sub { font-size: 0.70rem; color: var(--muted); margin-top: 0.28rem; line-height: 1.5; }
 
+
+
+/* ── ENTERPRISE DIRECTORY ── */
+.enterprise-panel {
+  grid-column: 1 / -1;
+  min-height: 360px;
+}
+.enterprise-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.9rem;
+}
+.enterprise-card {
+  display: grid;
+  grid-template-columns: 108px 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid rgba(0,229,255,0.18);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(0,229,255,0.065), rgba(255,255,255,0.025));
+  box-shadow: inset 0 0 26px rgba(0,229,255,0.035);
+}
+.enterprise-img {
+  width: 108px;
+  height: 78px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,229,255,0.22);
+  background: rgba(255,255,255,0.045);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cyan);
+  font-size: 1.8rem;
+  font-weight: 900;
+  box-shadow: 0 0 14px rgba(0,229,255,0.10);
+}
+.enterprise-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.enterprise-meta { min-width: 0; }
+.enterprise-name {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #f2fbff;
+  letter-spacing: 1px;
+  margin-bottom: 0.25rem;
+}
+.enterprise-industry {
+  display: inline-flex;
+  color: #06111f;
+  background: linear-gradient(135deg, #00e5ff, #4ade80);
+  border-radius: 999px;
+  padding: 0.18rem 0.62rem;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+  margin-bottom: 0.45rem;
+}
+.enterprise-desc {
+  color: rgba(221,238,255,0.68);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+.enterprise-side {
+  min-width: 120px;
+  text-align: right;
+  color: var(--muted);
+  font-family: "Michroma", sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 1px;
+}
+.enterprise-side strong {
+  display:block;
+  color: var(--cyan);
+  font-size: 1.15rem;
+  margin-bottom: 0.18rem;
+}
+@media (max-width: 760px) {
+  .enterprise-card { grid-template-columns: 80px 1fr; }
+  .enterprise-img { width: 80px; height: 64px; }
+  .enterprise-side { grid-column: 1 / -1; text-align: left; }
+}
+
 /* ── FOOTER ── */
 .ftr {
   position: relative; z-index: 10;
@@ -372,7 +468,8 @@ body::after {
       </div>
     </div>
     <div class="hdr-center">
-      <div id="hdr-en" class="hdr-en">DIGITAL CONVERGENCE FOR GENERATIONAL PROSPERITY</div>
+      <div id="hdr-event" class="hdr-event">2026 全球面對面</div>
+      <div id="hdr-en" class="hdr-en">GLOBAL FACE TO FACE</div>
       <div id="hdr-zh" class="hdr-zh">世代共榮的數位聚合</div>
       <div id="hdr-dates" class="hdr-dates">2026/06/01 ─ 2026/08/XX</div>
     </div>
@@ -434,6 +531,19 @@ body::after {
     </div>
   </div>
 
+  <!-- BOTTOM: Enterprise Directory -->
+  <div class="panel enterprise-panel">
+    <div class="panel-head">
+      <div class="panel-title">🏢 今日參與企業</div>
+      <span class="panel-en">PARTNER DIRECTORY</span>
+    </div>
+    <div class="panel-body">
+      <div id="enterprise-list" class="enterprise-list">
+        <div class="empty-msg">📡 載入參與企業中…</div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <!-- FOOTER -->
@@ -490,17 +600,27 @@ async function loadCfg() {
     cfg = await get(`${API}/config?admin=${enc(ADMIN)}&sheet=${enc(SHEET)}`);
     applyHeader();
     renderAgenda();
+    renderEnterprises();
   } catch (e) { console.warn('cfg', e); }
+}
+
+function cleanEventTitle(value) {
+  const v = String(value || '').trim();
+  if (!v || v === '活動報到名單' || v === '活動報名表單') return '2026 全球面對面';
+  return v.replace(/活動報名表單/g, '').replace(/活動報到名單/g, '').trim() || '2026 全球面對面';
 }
 
 function applyHeader() {
   if (!cfg) return;
-  setText('hdr-zh',    cfg.event_title         || cfg.exp_event_title         || '世代共榮的數位聚合');
-  setText('hdr-en',    cfg.event_subtitle       || cfg.exp_event_subtitle      || 'DIGITAL CONVERGENCE FOR GENERATIONAL PROSPERITY');
-  const ds = cfg.date_start || cfg.exp_event_date_start || '';
-  const de = cfg.date_end   || cfg.exp_event_date_end   || '';
+  const eventName = cleanEventTitle(cfg.event_title || cfg.exp_event_title || cfg.google_sheet_name);
+  const subtitle = cfg.event_subtitle || cfg.exp_event_subtitle || '世代共榮的數位聚合';
+  setText('hdr-event', eventName);
+  setText('hdr-en', 'GLOBAL FACE TO FACE');
+  setText('hdr-zh', subtitle);
+  const ds = cfg.date_start || cfg.event_date_start || cfg.exp_event_date_start || '';
+  const de = cfg.date_end || cfg.event_date_end || cfg.exp_event_date_end || '';
   setText('hdr-dates', ds || de ? `${ds}${de ? ' ─ '+de : ''}` : '');
-  setText('b-mid',     cfg.banner_text || '2026 全球面對面 · GLOBAL FACE TO FACE');
+  setText('b-mid', `${eventName} · GLOBAL FACE TO FACE`);
   const brand = cfg.brand_name || cfg.exp_brand_name || '聯聖集團';
   setText('ftr-l', `SMART ARK CONTROL TERMINAL © 2026 ${brand}`);
 }
@@ -528,6 +648,7 @@ async function poll() {
 
     // always refresh agenda active state
     renderAgenda();
+    renderEnterprises();
 
     setStatus('● LIVE', '#4ade80');
   } catch {
@@ -601,6 +722,52 @@ function drawLegend(segs) {
       <span class="leg-val">${s.pct}%</span>
     </div>
   `).join('');
+}
+
+
+/* ── enterprise directory ── */
+let lastEnterpriseRenderAt = 0;
+async function renderEnterprises(force=false) {
+  const list = document.getElementById('enterprise-list');
+  if (!list) return;
+  const nowTs = Date.now();
+  if (!force && nowTs - lastEnterpriseRenderAt < 11000) return;
+  lastEnterpriseRenderAt = nowTs;
+  try {
+    const json = await get(`${API}/exhibitors?admin=${enc(ADMIN)}&sheet=${enc(SHEET)}`);
+    if (!json.success) throw new Error(json.message || '企業資料載入失敗');
+    const items = (json.exhibitors || json.participating_companies || [])
+      .filter(x => (x.name || x.company_name || '').trim())
+      .slice(0, 18);
+    if (!items.length) {
+      list.innerHTML = '<div class="empty-msg">後台尚未設定參與企業，或目前表單沒有公司資料。</div>';
+      return;
+    }
+    list.innerHTML = items.map(item => {
+      const name = esc(item.name || item.company_name || '');
+      const industry = esc(item.industry || '未分類');
+      const desc = esc(item.description || '尚未設定公司簡介，可於後台「企業展示」補上介紹與圖片。');
+      const img = item.image_url || item.image || '';
+      const count = Number(item.people_count || 0);
+      const checked = Number(item.checked_count || 0);
+      return `
+        <div class="enterprise-card">
+          <div class="enterprise-img">${img ? `<img src="${esc(img)}" alt="${name}">` : `<span>${name.slice(0,1) || '企'}</span>`}</div>
+          <div class="enterprise-meta">
+            <div class="enterprise-name">${name}</div>
+            <div class="enterprise-industry">${industry}</div>
+            <div class="enterprise-desc">${desc}</div>
+          </div>
+          <div class="enterprise-side">
+            <strong>${checked || count || '—'}</strong>
+            ${checked ? '已報到' : count ? '報名人員' : 'PARTNER'}
+          </div>
+        </div>`;
+    }).join('');
+  } catch (e) {
+    console.warn('enterprises', e);
+    list.innerHTML = '<div class="empty-msg">企業資料同步中…</div>';
+  }
 }
 
 /* ── agenda ── */
