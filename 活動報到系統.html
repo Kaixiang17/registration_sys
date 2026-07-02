@@ -6,18 +6,15 @@
     <title>智慧方舟 - 航空登機系統</title>
     <link rel="stylesheet" href="smart-ark-theme.css?v=9">
     <style>
-        /* ============================================================
-           電腦版基礎與框架優化
-           ============================================================ */
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "PingFang TC", "Michroma", "Stick", sans-serif; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; font-family: "PingFang TC", "Michroma", "Stick", sans-serif; }
         body { line-height: 1.6; color: #fff; overflow-x: hidden; }
-        
-        header { 
-            padding: 1rem 0; 
-            position: sticky; 
-            top: 0; 
-            z-index: 100; 
-            border-bottom: 1px solid var(--accent-gray); 
+
+        header {
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--accent-gray);
             background: rgba(8, 16, 28, 0.85);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
@@ -25,56 +22,54 @@
         .header-container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; display: flex; justify-content: space-between; align-items: center; }
         main { max-width: 1200px; margin: 0 auto; padding: 2.5rem 2rem 5rem; min-height: calc(100vh - 80px); }
         .state-hidden { display: none !important; }
-        
+
         .verify-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem; margin-top: 2.5rem; }
-        .verify-card { 
-            padding: 2.5rem 2rem; 
-            text-align: center; 
-            cursor: pointer; 
-            border-radius: 1rem; 
+        .verify-card {
+            padding: 2.5rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 1rem;
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .form-card { max-width: 600px; margin: 0 auto; padding: 3.5rem 3rem; text-align: center; border-radius: 1.5rem; }
         .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2.5rem; }
         .product-img { width: 100%; height: 220px; object-fit: contain; background: rgba(0,0,0,0.4); border-bottom: 1px solid var(--accent-gray); }
-        
-        .btn-back-nav { 
-            background: transparent; 
-            border: 1px solid var(--accent-gray); 
-            color: var(--text-dark); 
-            padding: 0.6rem 1.4rem; 
-            border-radius: 0.5rem; 
-            cursor: pointer; 
-            font-weight: bold; 
-            transition: 0.2s; 
-            margin-bottom: 2rem; 
-            display: inline-flex; 
-            align-items: center; 
-            gap: 0.5rem; 
+
+        .btn-back-nav {
+            background: transparent;
+            border: 1px solid var(--accent-gray);
+            color: var(--text-dark);
+            padding: 0.6rem 1.4rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+            margin-bottom: 2rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
         }
         .btn-back-nav:hover { border-color: var(--text-dark); background: rgba(0, 229, 255, 0.08); transform: translateX(-2px); }
         .cyber-input { width: 100%; margin-bottom: 1.5rem; padding: 1.2rem; font-size: 1.1rem; border-radius: 0.6rem; }
-        
+
         .group-item { padding: 1.5rem; border-bottom: 1px solid rgba(0,229,255,0.15); cursor: pointer; transition: 0.2s; text-align: left; display: flex; justify-content: space-between; align-items: center;}
         .group-item:hover { background: rgba(0,229,255,0.08); }
-        
-        .meal-selected, .is-original-selected { 
-            border-color: #00e5ff !important; 
+
+        .meal-selected, .is-original-selected {
+            border-color: #00e5ff !important;
             background: rgba(0, 229, 255, 0.25) !important;
             box-shadow: 0 0 20px rgba(0, 229, 255, 0.4), inset 0 0 10px rgba(0, 229, 255, 0.2) !important;
             font-weight: bold !important;
             transform: translateY(-2px);
         }
-        .proxy-selected { 
-            border-color: #ffa500 !important; 
+        .proxy-selected {
+            border-color: #ffa500 !important;
             background: rgba(255, 165, 0, 0.2) !important;
             box-shadow: 0 0 20px rgba(255, 165, 0, 0.3) !important;
             transform: translateY(-2px);
         }
 
-        /* ============================================================
-           方舟終端機 ARK TERMINAL
-           ============================================================ */
+        /* ── ARK TERMINAL ── */
         .ark-terminal-shell {
             max-width: 560px;
             margin: 0 auto;
@@ -164,7 +159,7 @@
         }
         .ark-meta-label { color: rgba(255,255,255,0.45); font-size: .7rem; letter-spacing: .05em; margin-bottom: 0.15rem; }
         .ark-meta-value { color: #00e5ff; font-weight: bold; font-size: .95rem; word-break: break-word; }
-        
+
         .ark-terminal-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
         .ark-nav-card {
             border-radius: 1rem;
@@ -197,7 +192,7 @@
         .ark-card-desc { color: rgba(255,255,255,0.5); font-size: .75rem; margin-top: .2rem; line-height: 1.4; }
         .ark-card-arrow { color: rgba(0,229,255,.6); font-size: 1.2rem; transition: 0.2s; }
         .ark-nav-card:hover .ark-card-arrow { color: #00e5ff; transform: translateX(2px); }
-        
+
         .ark-terminal-footer {
             position: sticky; bottom: 1rem; margin: 1.5rem auto 0; max-width: 560px;
             display: grid; grid-template-columns: repeat(5,1fr); gap: .4rem; padding: .5rem;
@@ -224,7 +219,7 @@
         .portrait-consent-check { display: flex; align-items: flex-start; gap: 0.6rem; color: #dffaff; font-size: 0.9rem; line-height: 1.5; cursor: pointer; }
         .portrait-consent-check input { margin-top: 0.2rem; width: 16px; height: 16px; flex: 0 0 auto; accent-color: #00e5ff; }
         .portrait-consent-link { border: none; background: transparent; color: #00e5ff; font-size: 0.85rem; font-weight: bold; text-decoration: underline; cursor: pointer; padding: 0; margin-top: 0.4rem; display: inline-block; }
-        
+
         .portrait-consent-modal { position: fixed; inset: 0; z-index: 9999; display: none; align-items: center; justify-content: center; padding: 1.5rem; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
         .portrait-consent-modal.active { display: flex; }
         .portrait-consent-card { width: min(92vw, 540px); max-height: 75vh; overflow-y: auto; padding: 2rem; border-radius: 1.25rem; border: 1px solid rgba(0, 229, 255, 0.3); background: rgba(6, 15, 30, 0.98); color: #eaffff; box-shadow: 0 20px 40px rgba(0,0,0,0.5); text-align: left; }
@@ -232,7 +227,7 @@
         .portrait-consent-card p { color: rgba(255,255,255,0.7); line-height: 1.6; font-size: 0.9rem; margin-bottom: 0.8rem; }
         .portrait-consent-close { float: right; border: 1px solid rgba(255,255,255,0.2); background: rgba(255, 255, 255, 0.05); color: #fff; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
 
-        /* ── 前台報到按鈕系統 ── */
+        /* ── 前台按鈕系統 ── */
         .ck-btn {
             display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
             width: 100%; padding: 1rem 1.5rem; font-family: inherit; font-size: 1.05rem; font-weight: bold;
@@ -242,14 +237,12 @@
         .ck-btn:hover:not(:disabled) { background: rgba(0,229,255,0.15); border-color: #00e5ff; box-shadow: 0 0 15px rgba(0,229,255,0.2); }
         .ck-btn:active:not(:disabled) { transform: scale(0.99); }
         .ck-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-
         .ck-btn-confirm { border-color: rgba(74,222,128,0.5); color: #4ade80; background: rgba(74,222,128,0.08); font-size: 1.1rem; }
         .ck-btn-confirm:hover:not(:disabled) { background: rgba(74,222,128,0.18); border-color: #4ade80; box-shadow: 0 0 15px rgba(74,222,128,0.25); }
         .ck-btn-warn { border-color: rgba(255,165,0,0.5); color: #ffa500; background: rgba(255,165,0,0.06); }
         .ck-btn-warn:hover:not(:disabled) { background: rgba(255,165,0,0.15); border-color: #ffa500; }
         .ck-btn-ghost { border-color: rgba(255,255,255,0.15); color: #aaa; background: transparent; }
         .ck-btn-ghost:hover:not(:disabled) { border-color: rgba(255,255,255,0.3); color: #fff; background: rgba(255,255,255,0.05); }
-
         .ck-btn-pill {
             width: auto; padding: 0.45rem 1.1rem; font-size: 0.85rem; letter-spacing: 1px;
             border-radius: 30px; border: 1px solid rgba(0,229,255,0.3); color: #00e5ff; background: rgba(0,229,255,0.05);
@@ -259,33 +252,62 @@
         .ck-tag { padding: 0.4rem 1.2rem; border-radius: 30px; font-size: 0.85rem; font-weight: 600; border: 1px solid rgba(0,229,255,0.2); color: #aaa; background: transparent; cursor: pointer; transition: all 0.18s; font-family: inherit; }
         .ck-tag:hover, .ck-tag.active { border-color: #00e5ff; color: #00e5ff; background: rgba(0,229,255,0.08); }
 
+        /* header 按鈕區 */
         .header-action-buttons { display: flex; align-items: center; justify-content: flex-end; gap: 12px; flex-shrink: 0; }
 
+        /* ══════════════════════════════════════
+           手機版全面修正
+        ══════════════════════════════════════ */
         @media(max-width: 768px) {
-            .header-container { padding: 0 1rem; gap: 8px; }
-            .header-action-buttons { gap: 6px; }
-            .header-action-buttons .ck-btn-pill { padding: 0.4rem 0.75rem !important; font-size: 0.75rem !important; white-space: nowrap; }
-            .header-title-text { font-size: 1rem !important; letter-spacing: 1px !important; }
-            
+            /* header */
+            .header-container { padding: 0 1rem !important; gap: 8px !important; }
+            .header-action-buttons { gap: 5px !important; }
+            /* 右側 pill 按鈕縮小，防止擠壓左側標題 */
+            .header-action-buttons .ck-btn-pill {
+                padding: 0.38rem 0.65rem !important;
+                font-size: 0.72rem !important;
+                letter-spacing: 0 !important;
+                white-space: nowrap !important;
+            }
+            /* 左側「首頁」文字適度縮小 */
+            .header-title-text {
+                font-size: 0.95rem !important;
+                letter-spacing: 0.5px !important;
+                white-space: nowrap !important;
+            }
+            /* main 內距 */
             main { padding: 1.5rem 1rem 4rem !important; }
+            /* form card */
             .form-card { padding: 2.5rem 1.5rem !important; border-radius: 1rem; }
+            /* heading */
             h2.neon-text { font-size: 1.6rem !important; text-align: center; line-height: 1.3; }
             #actionState h2.neon-text { font-size: 1.8rem !important; margin-bottom: 2rem !important; }
-            
+            /* 選擇方式卡片：手機單欄 */
             .verify-grid { grid-template-columns: 1fr !important; gap: 1rem !important; margin-top: 1.5rem; }
             .verify-card { padding: 1.75rem 1.25rem !important; }
-            
-            #mealOptions > div[style*="grid-template-columns"], 
+            /* 餐點選擇 */
+            #mealOptions > div[style*="grid-template-columns"],
             #tempMealRadioGroup { grid-template-columns: 1fr !important; gap: 0.75rem !important; }
-            
+            /* 商品頁 */
             #productState > div:first-child { flex-direction: column !important; align-items: stretch !important; gap: 1rem !important; margin-bottom: 2rem !important; }
             #productState h1.neon-text { font-size: 1.8rem !important; text-align: left; }
             .products-grid { grid-template-columns: 1fr !important; gap: 1.5rem !important; }
-            
+            /* ARK terminal */
             .ark-terminal-panel { padding: 1.25rem; border-radius: 1.25rem; }
             .ark-nav-card { grid-template-columns: 40px 1fr auto; gap: .75rem; padding: .9rem; }
             .ark-card-icon { width: 40px; height: 40px; font-size: 1.15rem; }
             .ark-mission-meta { grid-template-columns: 1fr; gap: 0.5rem; }
+            /* inputs & buttons */
+            .cyber-input { padding: 1rem !important; font-size: 1rem !important; }
+            .ck-btn { font-size: 1rem !important; letter-spacing: 1.5px !important; }
+        }
+
+        /* 極小螢幕 (<400px) 額外保護 */
+        @media(max-width: 400px) {
+            .header-action-buttons .ck-btn-pill { padding: 0.32rem 0.5rem !important; font-size: 0.68rem !important; }
+            .header-title-text { font-size: 0.88rem !important; }
+            /* 隱藏「大會投影」只保留其他兩個按鈕 */
+            #projectionBtn { display: none !important; }
         }
     </style>
 </head>
@@ -302,14 +324,15 @@
 
     <header>
         <div class="header-container">
-            <div onclick="resetToHome()" style="cursor:pointer; display: flex; align-items: center; gap: 8px; min-width: 0;">
-                <span style="font-size: 1.3rem;">✈️</span>
-                <span id="header-title" class="header-title-text" style="font-size: 1.2rem; letter-spacing: 2px; white-space: nowrap; font-weight: bold; color: var(--text-dark);">航 班 大 廳</span>
+            <!-- 左上：固定顯示「首頁」，點擊回到選擇方式 -->
+            <div onclick="resetToHome()" style="cursor:pointer; display: flex; align-items: center; gap: 8px; min-width: 0; flex-shrink: 1;">
+                <span style="font-size: 1.3rem; flex-shrink: 0;">🏠</span>
+                <span id="header-title" class="header-title-text" style="font-size: 1.15rem; letter-spacing: 2px; white-space: nowrap; font-weight: bold; color: var(--text-dark);">首 頁</span>
             </div>
             <div class="header-action-buttons">
                 <a id="projectionBtn" class="ck-btn-pill" href="/dashboard" target="_blank" rel="noopener" style="border-color:rgba(74,222,128,0.4); color:#4ade80; background:rgba(74,222,128,0.05);">📺 大會投影</a>
-                <button id="shopBtn" class="ck-btn-pill" onclick="goToShop()" style="display:none;">🛒 商品專區</button>
-                <button id="mapBtn" class="ck-btn-pill" onclick="toggleMapModal(true)">🗺️ 地圖導覽</button>
+                <button id="shopBtn" class="ck-btn-pill" onclick="goToShop()" style="display:none;">🛒 商品</button>
+                <button id="mapBtn" class="ck-btn-pill" onclick="toggleMapModal(true)">🗺️ 地圖</button>
             </div>
         </div>
     </header>
@@ -323,7 +346,7 @@
                         <div style="font-size:3rem; margin-bottom: 0.5rem;">📝</div><h3 class="neon-text">姓 名 報 到</h3>
                     </div>
                     <div class="verify-card cyber-card" onclick="prepareSearch('phone', '手機')">
-                        <div style="font-size:3rem; margin-bottom: 0.5rem;">📱</div><h3 class="neon-text">手 機 號 碼 報 到</h3>
+                        <div style="font-size:3rem; margin-bottom: 0.5rem;">📱</div><h3 class="neon-text">手 機 報 到</h3>
                     </div>
                     <div class="verify-card cyber-card" onclick="prepareSearch('email', 'Email')">
                         <div style="font-size:3rem; margin-bottom: 0.5rem;">✉️</div><h3 class="neon-text">Email 報 到</h3>
@@ -345,7 +368,7 @@
 
             <div id="tempRegistrationSection" class="form-card cyber-card state-hidden" style="margin-top: 2.5rem; border: 1px solid #ffa500 !important; box-shadow: 0 0 25px rgba(255, 165, 0, 0.2); background: rgba(12, 22, 38, 0.95); text-align: left;">
                 <h3 style="color: #ffa500; font-size: 1.25rem; margin-bottom: 1.5rem; text-shadow: 0 0 10px rgba(255,165,0,0.3); font-weight: bold; text-align: center; line-height: 1.4;">⚠️ 查無此旅客登機紀錄！<br>是否開啟現場補位功能？</h3>
-                
+
                 <div style="margin-bottom: 1.2rem;">
                     <label style="color: #ffa500; display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: bold;">旅客姓名 *</label>
                     <input type="text" id="addName" class="cyber-input" placeholder="請輸入姓名" style="margin-bottom: 0;">
@@ -422,43 +445,49 @@
                             <button type="button" class="ark-nav-card" onclick="openArkMap()">
                                 <div class="ark-card-icon">🧭</div>
                                 <div>
-                                    <div class="ark-card-title">【2026 產業星圖】</div>
-                                    <div class="ark-card-sub">領航員名冊與每攤機會</div>
-                                    <div class="ark-card-desc">A-MALL.png / Navigator Directory</div>
+                                    <div class="ark-card-title" id="arkCard1Title">【2026 產業星圖】</div>
+                                    <div class="ark-card-sub" id="arkCard1Sub">領航員名冊與每攤機會</div>
+                                    <div class="ark-card-desc" id="arkCard1Desc">A-MALL.png / Navigator Directory</div>
                                 </div>
                                 <div class="ark-card-arrow">›</div>
                             </button>
-                            <button type="button" class="ark-nav-card" onclick="openArkGift()">
+                            <button type="button" class="ark-nav-card" id="arkCard2Btn" onclick="openArkGift()">
                                 <div class="ark-card-icon">🎁</div>
                                 <div>
-                                    <div class="ark-card-title">【方舟物資艙】</div>
-                                    <div class="ark-card-sub">伴手禮核心內涵</div>
-                                    <div class="ark-card-desc">守護碼 / 禮品說明手冊</div>
+                                    <div class="ark-card-title" id="arkCard2Title">【方舟物資艙】</div>
+                                    <div class="ark-card-sub" id="arkCard2Sub">傳承伴手禮核心內涵</div>
+                                    <div class="ark-card-desc" id="arkCard2Desc">守護碼 / 禮品說明手冊</div>
                                 </div>
                                 <div class="ark-card-arrow">›</div>
                             </button>
-                            <button type="button" class="ark-nav-card" onclick="openArkVideo()">
+                            <button type="button" class="ark-nav-card" id="arkCard3Btn" onclick="openArkVideo()">
                                 <div class="ark-card-icon">▶</div>
                                 <div>
-                                    <div class="ark-card-title">【核心引擎啟動】</div>
-                                    <div class="ark-card-sub">智能全新數位中控系統</div>
-                                    <div class="ark-card-desc">三年經營現況影片</div>
+                                    <div class="ark-card-title" id="arkCard3Title">【核心引擎啟動】</div>
+                                    <div class="ark-card-sub" id="arkCard3Sub">智能全新數位中控系統</div>
+                                    <div class="ark-card-desc" id="arkCard3Desc">三年經營現況影片</div>
                                 </div>
                                 <div class="ark-card-arrow">›</div>
                             </button>
-                            <button type="button" class="ark-nav-card" onclick="openArkFlow()">
+                            <button type="button" class="ark-nav-card" id="arkCard4Btn" onclick="openArkFlow()">
                                 <div class="ark-card-icon">🕘</div>
                                 <div>
-                                    <div class="ark-card-title">【大會時空座標】</div>
-                                    <div class="ark-card-sub">實體進化航線預載</div>
-                                    <div class="ark-card-desc">09:30 - 17:00 航程時間軸</div>
+                                    <div class="ark-card-title" id="arkCard4Title">【大會時空座標】</div>
+                                    <div class="ark-card-sub" id="arkCard4Sub">實體進化航線預載</div>
+                                    <div class="ark-card-desc" id="arkCard4Desc">09:30 - 17:00 航程時間軸</div>
                                 </div>
                                 <div class="ark-card-arrow">›</div>
                             </button>
                         </div>
                     </div>
                 </div>
-
+                <nav class="ark-terminal-footer" aria-label="方舟終端機導覽">
+                    <button type="button" class="ark-bottom-item active" onclick="setAppState('success')"><span class="ark-bottom-icon">⌂</span><span>首頁</span></button>
+                    <button type="button" class="ark-bottom-item" onclick="openArkMap()"><span class="ark-bottom-icon">◇</span><span>星圖</span></button>
+                    <button type="button" class="ark-bottom-item" onclick="openArkGift()"><span class="ark-bottom-icon">▣</span><span>物資</span></button>
+                    <button type="button" class="ark-bottom-item" onclick="openArkVideo()"><span class="ark-bottom-icon">▶</span><span>引擎</span></button>
+                    <button type="button" class="ark-bottom-item" onclick="openArkFlow()"><span class="ark-bottom-icon">☷</span><span>會議</span></button>
+                </nav>
                 <button class="ck-btn ck-btn-ghost" onclick="resetToHome()" style="max-width:280px; margin:2rem auto 0; font-size: 0.95rem;">← 回 到 報 到 首 頁</button>
             </section>
         </div>
@@ -533,10 +562,7 @@
                 .then(data => {
                     if (data.success) {
                         const newSheet = data.current_sheet;
-                        if (newSheet !== currentSheet) {
-                            currentSheet = newSheet;
-                            initSystem();
-                        }
+                        if (newSheet !== currentSheet) { currentSheet = newSheet; initSystem(); }
                     }
                 })
                 .catch(err => console.error("同步數據異常中斷", err));
@@ -553,8 +579,8 @@
             splash.style.visibility = 'hidden';
             setTimeout(() => {
                 splash.style.display = 'none';
-                setAppState('methodSelection'); 
-                document.getElementById('shopBtn').style.display = 'block'; 
+                setAppState('methodSelection');
+                document.getElementById('shopBtn').style.display = 'block';
             }, 800);
         }
 
@@ -575,7 +601,7 @@
         }
 
         function resetToHome() { setAppState('methodSelection'); }
-        
+
         function hideTempSection() {
             const tempSec = document.getElementById('tempRegistrationSection');
             if(tempSec) tempSec.classList.add('state-hidden');
@@ -610,7 +636,6 @@
                 sheet: currentSheet
             };
             if(!data.name || !data.phone) return alert('❌ 請完整填寫學員姓名與手機核心欄位！');
-            
             try {
                 const res = await fetch('/api/registrations/add', {
                     method: 'POST',
@@ -649,8 +674,7 @@
                             frame.src = url; frame.style.display = 'block';
                         }
                     } else {
-                        /* 👑 修正直接暴露後台的提示 */
-                        alert('✨ 地圖正由方舟人員更新載入中，稍後將可開放顯示。');
+                        alert('✨ 產業星圖正由方舟中樞更新載入中，稍後將開放導覽。');
                         modal.classList.add('state-hidden');
                     }
                 } catch(e) { modal.classList.add('state-hidden'); }
@@ -670,7 +694,6 @@
             const val = document.getElementById('actionInput').value.trim();
             if(!val) return;
             hideTempSection();
-            
             try {
                 const res = await fetch(`${API_BASE}/search/${searchMethod}?${searchMethod}=${encodeURIComponent(val)}&admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
                 const json = await res.json();
@@ -681,18 +704,13 @@
                             'id' in first || 'phone' in first || 'email' in first || 'seat' in first || 'status' in first ||
                             ('name' in first && ('company' in first || '公司' in first || '公司名稱' in first))
                         );
-
                         if (looksLikePassengerRows) {
                             if (json.data.length === 1) {
                                 const u = json.data[0];
                                 if (u.status === 'checked_in' || u.status === '已報到' || u.status === '替代') {
-                                    selectedUser = u;
-                                    renderArkTerminalFromUser(u);
-                                    setAppState('success');
-                                    return;
+                                    selectedUser = u; renderArkTerminalFromUser(u); setAppState('success'); return;
                                 }
-                                selectedUser = u;
-                                renderMealOptions();
+                                selectedUser = u; renderMealOptions();
                             } else {
                                 renderUserList(json.data, `請 選 擇 ${val} 的 旅 客`);
                             }
@@ -700,16 +718,12 @@
                             renderCompanyList(json.data);
                         }
                     }
-                    else if (json.data.length === 1) { 
+                    else if (json.data.length === 1) {
                         const u = json.data[0];
                         if (u.status === 'checked_in' || u.status === '已報到' || u.status === '替代') {
-                            selectedUser = u;
-                            renderArkTerminalFromUser(u);
-                            setAppState('success');
-                            return;
+                            selectedUser = u; renderArkTerminalFromUser(u); setAppState('success'); return;
                         }
-                        selectedUser = u; 
-                        renderMealOptions(); 
+                        selectedUser = u; renderMealOptions();
                     }
                     else { window.tempData = json.data; renderUserList(json.data, '搜尋結果'); }
                 } else {
@@ -717,26 +731,22 @@
                     document.getElementById('addPhone').value = '';
                     document.getElementById('addCompany').value = '';
                     document.getElementById('addSeat').value = '';
-                    
                     const defaultMealBtn = document.querySelector('#tempMealRadioGroup [data-meal="葷食"]');
                     if(defaultMealBtn) selectTempMeal(defaultMealBtn, '葷食');
-
                     document.getElementById('tempRegistrationSection').classList.remove('state-hidden');
-                    
-                    if (searchMethod === 'company') { document.getElementById('addCompany').value = val; } 
-                    else if (searchMethod === 'phone') { document.getElementById('addPhone').value = val; } 
+                    if (searchMethod === 'company') { document.getElementById('addCompany').value = val; }
+                    else if (searchMethod === 'phone') { document.getElementById('addPhone').value = val; }
                     else if (searchMethod === 'name') { document.getElementById('addName').value = val; }
                 }
             } catch(e) { alert('通訊矩陣連線中斷'); }
-        }   
+        }
 
-         function renderCompanyList(companies) {
+        function renderCompanyList(companies) {
             const list = document.getElementById('groupList');
             list.innerHTML = '';
             companies.forEach(c => {
-                // c 可能是字串或物件，統一取名稱
                 const companyName = (typeof c === 'object' && c !== null)
-                    ? (c.company || c['公司'] || c['公司名稱'] || c.name || JSON.stringify(c))
+                    ? (c.company || c['公司'] || c['公司名稱'] || c.name || '')
                     : String(c);
                 const div = document.createElement('div'); div.className = 'group-item';
                 div.innerHTML = `<span>🏢 ${escapeHtml(companyName)}</span><span style="color: var(--text-dark)">➔</span>`;
@@ -763,11 +773,7 @@
                 const userCompany = escapeHtml(u.company || u['公司'] || u['公司名稱'] || '');
                 div.innerHTML = `<div><div style="font-weight:bold; font-size:1.15rem; color:#fff;">${userName}</div><div style="font-size:0.85rem; color:#8fa0b0; margin-top:0.2rem;">${userCompany}</div></div>${statusTag}`;
                 div.onclick = () => {
-                    if (isRegistered) {
-                        selectedUser = u;
-                        renderArkTerminalFromUser(u);
-                        setAppState('success');
-                    } 
+                    if (isRegistered) { selectedUser = u; renderArkTerminalFromUser(u); setAppState('success'); }
                     else { selectedUser = u; renderMealOptions(); }
                 };
                 list.appendChild(div);
@@ -779,8 +785,8 @@
         async function renderMealOptions() {
             const res = await fetch(`${API_BASE}/config?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
             systemConfig = await res.json();
+            await mergeExperienceConfig();
             if (!systemConfig.show_meal_options) { submitCheckin('不需要'); return; }
-            
             const container = document.getElementById('mealOptions');
             container.innerHTML = `
                 <div style="margin-bottom:2rem; text-align:left; padding:1.2rem; background:rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.2); border-radius:0.6rem;">
@@ -830,7 +836,6 @@
 
         function checkMealReady() {
             const finalBtn = document.getElementById('finalBtn');
-            // 肖像授權不再作為報到阻擋條件；未勾選代表不同意，仍可報到並送出記錄
             finalBtn.disabled = !window.selectedMeal;
         }
 
@@ -841,7 +846,6 @@
             document.getElementById('portraitConsentModal').classList.remove('active');
         }
         function agreePortraitConsent() {
-            // 同意：勾選所有報到流程的 checkbox 並關閉 modal
             const cb = document.getElementById('portraitConsent');
             if (cb) { cb.checked = true; checkMealReady(); }
             const cbTemp = document.getElementById('portraitConsentTemp');
@@ -849,7 +853,6 @@
             closePortraitConsentModal();
         }
         function disagreePortraitConsent() {
-            // 不同意：取消勾選並關閉 modal；報到仍可繼續，送出時會記錄為不同意
             const cb = document.getElementById('portraitConsent');
             if (cb) { cb.checked = false; checkMealReady(); }
             const cbTemp = document.getElementById('portraitConsentTemp');
@@ -864,62 +867,79 @@
         }
 
         function renderArkTerminal(user, meal) {
-            const name = escapeHtml(user?.name || selectedUser?.name || 'Jeremy');
+            const name = escapeHtml(user?.name || selectedUser?.name || '領航員');
             const company = escapeHtml(user?.company || selectedUser?.company || '智慧方舟');
             const seat = escapeHtml(user?.seat || selectedUser?.seat || '現場安排');
             const mealText = escapeHtml(meal || user?.meal || selectedUser?.meal || '未選擇');
-            const eventName = escapeHtml((systemConfig && (systemConfig.event_title || systemConfig.google_sheet_name)) || currentSheet || '2026全球面對面');
+            const eventName = escapeHtml((systemConfig && (systemConfig.event_title || systemConfig.google_sheet_name)) || currentSheet || '活動報到名單');
             const startRaw = systemConfig && (systemConfig.event_date_start || systemConfig.event_start_date || systemConfig.date_start || systemConfig.exp_event_date_start || '');
-            const endRaw = systemConfig && (systemConfig.event_date_end || systemConfig.event_end_date || systemConfig.date_end || systemConfig.exp_event_date_end || '');
+            const endRaw   = systemConfig && (systemConfig.event_date_end   || systemConfig.event_end_date   || systemConfig.date_end   || systemConfig.exp_event_date_end   || '');
             const startDate = escapeHtml(startRaw || '未設定');
-            const endDate = escapeHtml(endRaw || '');
+            const endDate   = escapeHtml(endRaw   || '');
             document.getElementById('arkGreeting').innerHTML = `您好，領航員 ${name}`;
             document.getElementById('arkTerminalInfo').innerHTML = `
-                <div class="ark-meta-chip">
-                    <div class="ark-meta-label">MISSION</div>
-                    <div class="ark-meta-value">${eventName}</div>
-                </div>
-                <div class="ark-meta-chip">
-                    <div class="ark-meta-label">DATE</div>
-                    <div class="ark-meta-value">${endDate ? `${startDate} ~ ${endDate}` : startDate}</div>
-                </div>
-                <div class="ark-meta-chip">
-                    <div class="ark-meta-label">COMPANY</div>
-                    <div class="ark-meta-value">${company}</div>
-                </div>
-                <div class="ark-meta-chip">
-                    <div class="ark-meta-label">SEAT / MEAL</div>
-                    <div class="ark-meta-value">${seat}｜${mealText}</div>
-                </div>
+                <div class="ark-meta-chip"><div class="ark-meta-label">MISSION</div><div class="ark-meta-value">${eventName}</div></div>
+                <div class="ark-meta-chip"><div class="ark-meta-label">DATE</div><div class="ark-meta-value">${endDate ? `${startDate} ~ ${endDate}` : startDate}</div></div>
+                <div class="ark-meta-chip"><div class="ark-meta-label">COMPANY</div><div class="ark-meta-value">${company}</div></div>
+                <div class="ark-meta-chip"><div class="ark-meta-label">SEAT / MEAL</div><div class="ark-meta-value">${seat}｜${mealText}</div></div>
             `;
+            applyArkCardsFromConfig();
         }
 
-        // 已報到者直接跳終端機畫面（不重新打 check-in API）
-        function renderArkTerminalFromUser(user) {
+        async function renderArkTerminalFromUser(user) {
             if (!systemConfig) {
-                // 如果 config 還沒載入，先載入再顯示
-                fetch(`${API_BASE}/config?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`)
-                    .then(r => r.json())
-                    .then(cfg => { 
-                        systemConfig = cfg; 
-                        renderArkTerminal(user, user.meal || ''); 
-                    })
-                    .catch(() => renderArkTerminal(user, user.meal || ''));
-                return;
+                try {
+                    const r = await fetch(`${API_BASE}/config?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
+                    systemConfig = await r.json();
+                } catch(e) { systemConfig = systemConfig || {}; }
             }
-
+            await mergeExperienceConfig();
             renderArkTerminal(user, user.meal || '');
+        }
+
+        async function mergeExperienceConfig() {
+            try {
+                const res = await fetch(`${API_BASE}/event-config?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
+                const json = await res.json();
+                if (json.success && json.config) {
+                    systemConfig = Object.assign({}, systemConfig, json.config);
+                }
+            } catch(e) { /* silent */ }
+        }
+
+        function applyArkCardsFromConfig() {
+            const c = systemConfig || {};
+            setCardText('arkCard2Title', c.gift_title  ? `【${c.gift_title}】`  : '【方舟物資艙】');
+            setCardText('arkCard2Sub',   '傳承伴手禮核心內涵');
+            setCardText('arkCard2Desc',  c.gift_description || '守護碼 / 禮品說明手冊');
+            const b2 = document.getElementById('arkCard2Btn');
+            if (b2) b2.style.display = (c.gift_enabled === false) ? 'none' : '';
+
+            setCardText('arkCard3Title', c.video_title ? `【${c.video_title}】` : '【核心引擎啟動】');
+            setCardText('arkCard3Sub',   '智能全新數位中控系統');
+            setCardText('arkCard3Desc',  '三年經營現況影片');
+            const b3 = document.getElementById('arkCard3Btn');
+            if (b3) b3.style.display = (c.video_enabled === false) ? 'none' : '';
+
+            setCardText('arkCard4Title', c.flow_title  ? `【${c.flow_title}】`  : '【大會時空座標】');
+            setCardText('arkCard4Sub',   '實體進化航線預載');
+            setCardText('arkCard4Desc',  c.flow_description || '09:30 - 17:00 航程時間軸');
+            const b4 = document.getElementById('arkCard4Btn');
+            if (b4) b4.style.display = (c.flow_enabled === false) ? 'none' : '';
+        }
+
+        function setCardText(id, value) {
+            const el = document.getElementById(id);
+            if (el && value) el.textContent = value;
         }
 
         function openArkMap() { if (typeof toggleMapModal === 'function') return toggleMapModal(true); alert('✨ 產業星圖正由方舟中樞更新載入中。'); }
         function openArkGift() { if (typeof showProducts === 'function') return showProducts(); alert('物資明細資料庫同步中。'); }
         function openArkVideo() {
             const url = systemConfig?.video_url || systemConfig?.event_video_url || systemConfig?.gift_video_url || '';
-            /* 👑 包裝提示 */
             if (url) return window.open(url, '_blank', 'noopener');
             alert('⚡ 核心引擎影像傳輸鏈結建立中，請稍後再試。');
         }
-
         function openArkFlow() {
             const flowUrl = systemConfig?.flow_image_url || systemConfig?.schedule_image_url || systemConfig?.agenda_image_url || '';
             if (flowUrl) {
@@ -931,7 +951,6 @@
                 modal.classList.remove('state-hidden');
                 return;
             }
-            /* 👑 包裝提示 */
             alert('⏳ 大會時空座標與實體進化航線正在預載中。');
         }
 
@@ -944,18 +963,16 @@
                 phone: document.getElementById('proxyPhone').value.trim()
             };
             if (!window.isOriginal && !proxyInfo.name) { alert('請輸入替代人姓名'); return; }
-            
             const btn = document.getElementById('finalBtn');
             btn.disabled = true; btn.innerHTML = '<span>登 機 核 對 中 ...</span>';
-            
             try {
                 const res = await fetch(`${API_BASE}/checkin/${selectedUser.id}?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ 
-                        meal, 
-                        is_original: window.isOriginal, 
-                        proxy_info: proxyInfo, 
+                    body: JSON.stringify({
+                        meal,
+                        is_original: window.isOriginal,
+                        proxy_info: proxyInfo,
                         portrait_consent: portraitConsent,
                         portrait_consent_status: portraitConsent ? '同意' : '不同意'
                     })
@@ -966,11 +983,11 @@
                     renderArkTerminal(u, meal);
                     setAppState('success');
                 } else {
-                    if (json.error === 'already_done') { alert('🛬 旅客已完成登機報到手續！'); } 
+                    if (json.error === 'already_done') { alert('🛬 旅客已完成登機報到手續！'); }
                     else { alert('登機確認手續未完成'); }
                     btn.disabled = false; btn.innerHTML = '<span>確 認 並 核 發 登 機 證</span>';
                 }
-            } catch(e) { 
+            } catch(e) {
                 alert('網路序列傳輸異常'); btn.disabled = false; btn.innerHTML = '<span>確 認 並 核 發 登 機 證</span>';
             }
         }
@@ -989,11 +1006,11 @@
                 const categories = ['全 部', ...new Set(normals.map(p => p.category).filter(c => c))];
                 const filterContainer = document.getElementById('categoryFilters');
                 filterContainer.innerHTML = categories.map(c => `
-                    <button class="ck-tag ${window.currentCategory === c ? 'active' : ''}" 
+                    <button class="ck-tag ${window.currentCategory === c ? 'active' : ''}"
                          onclick="filterCategory('${c}')">${c}</button>
                 `).join('');
                 filterCategory(window.currentCategory); setAppState('product');
-            } catch(e) { alert('物資清單載入中'); }
+            } catch(e) { alert('物資艙清單載入中'); }
         }
 
         function filterCategory(cat) {
@@ -1027,11 +1044,8 @@
             try {
                 const res = await fetch(`${API_BASE}/config?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
                 systemConfig = await res.json();
-                if(systemConfig) {
-                    const displayTitle = systemConfig.event_title || systemConfig.google_sheet_name || currentSheet || '活動報到名單';
-                    document.getElementById('header-title').textContent = displayTitle.split('').join(' ');
-                    document.title = `${displayTitle} - 活動報到系統`;
-                }
+                /* 標題固定顯示「首頁」，不被活動名稱覆蓋 */
+                document.title = `${systemConfig?.event_title || currentSheet || '活動'} - 活動報到系統`;
                 const banner = document.getElementById('event-banner');
                 if(systemConfig && systemConfig.banner_image_url) {
                     banner.src = systemConfig.banner_image_url;
