@@ -323,7 +323,7 @@
                         <div style="font-size:3rem; margin-bottom: 0.5rem;">📝</div><h3 class="neon-text">姓 名 報 到</h3>
                     </div>
                     <div class="verify-card cyber-card" onclick="prepareSearch('phone', '手機')">
-                        <div style="font-size:3rem; margin-bottom: 0.5rem;">📱</div><h3 class="neon-text">手 機 報 到</h3>
+                        <div style="font-size:3rem; margin-bottom: 0.5rem;">📱</div><h3 class="neon-text">手 機 號 碼 報 到</h3>
                     </div>
                     <div class="verify-card cyber-card" onclick="prepareSearch('email', 'Email')">
                         <div style="font-size:3rem; margin-bottom: 0.5rem;">✉️</div><h3 class="neon-text">Email 報 到</h3>
@@ -432,7 +432,7 @@
                                 <div class="ark-card-icon">🎁</div>
                                 <div>
                                     <div class="ark-card-title">【方舟物資艙】</div>
-                                    <div class="ark-card-sub">傳承伴手禮核心內涵</div>
+                                    <div class="ark-card-sub">伴手禮核心內涵</div>
                                     <div class="ark-card-desc">守護碼 / 禮品說明手冊</div>
                                 </div>
                                 <div class="ark-card-arrow">›</div>
@@ -650,7 +650,7 @@
                         }
                     } else {
                         /* 👑 修正直接暴露後台的提示 */
-                        alert('✨ 產業星圖正由方舟中樞更新載入中，稍後將開放導覽。');
+                        alert('✨ 地圖正由方舟人員更新載入中，稍後將可開放顯示。');
                         modal.classList.add('state-hidden');
                     }
                 } catch(e) { modal.classList.add('state-hidden'); }
@@ -868,7 +868,7 @@
             const company = escapeHtml(user?.company || selectedUser?.company || '智慧方舟');
             const seat = escapeHtml(user?.seat || selectedUser?.seat || '現場安排');
             const mealText = escapeHtml(meal || user?.meal || selectedUser?.meal || '未選擇');
-            const eventName = escapeHtml((systemConfig && (systemConfig.event_title || systemConfig.google_sheet_name)) || currentSheet || '活動報到名單');
+            const eventName = escapeHtml((systemConfig && (systemConfig.event_title || systemConfig.google_sheet_name)) || currentSheet || '2026全球面對面');
             const startRaw = systemConfig && (systemConfig.event_date_start || systemConfig.event_start_date || systemConfig.date_start || systemConfig.exp_event_date_start || '');
             const endRaw = systemConfig && (systemConfig.event_date_end || systemConfig.event_end_date || systemConfig.date_end || systemConfig.exp_event_date_end || '');
             const startDate = escapeHtml(startRaw || '未設定');
@@ -993,7 +993,7 @@
                          onclick="filterCategory('${c}')">${c}</button>
                 `).join('');
                 filterCategory(window.currentCategory); setAppState('product');
-            } catch(e) { alert('物資艙清單載入中'); }
+            } catch(e) { alert('物資清單載入中'); }
         }
 
         function filterCategory(cat) {
