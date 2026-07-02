@@ -1958,14 +1958,6 @@ def index(): return send_from_directory('.', '活動報到系統.html')
 
 @app.route('/api/sheets/export_csv', methods=['GET'])
 def export_csv():
-    """
-    匯出目前場次完整報到名單。
-    重點：
-    - 會依目前 admin_user / event_key 匯出，不會混到其他場次
-    - 檔名包含表單名稱與產生時間
-    - CSV 內也包含「表單名稱 / 名單產生時間」
-    - 匯出原報名人、實際報到人、替代人 / 代理人、電話、公司、桌次、餐食、報到時間等欄位
-    """
     if not session.get('admin_logged_in'):
         return jsonify({"success": False, "message": "未授權的操作"}), 403
 
@@ -1973,7 +1965,6 @@ def export_csv():
 
     admin_user, event_key = get_admin_and_event_context()
     generated_at = datetime.now()
-    generated_text = generated_at.strftime('%Y-%m-%d %H:%M:%S')
     filename_time = generated_at.strftime('%Y%m%d_%H%M%S')
 
     def safe_filename(text):
@@ -1990,137 +1981,101 @@ def export_csv():
         except Exception:
             return str(value)
 
+    def fmt_consent(value):
+        if value in [1, True, '1', 'true']:
+            return '同意'
+        if value in [0, False, '0', 'false']:
+            return '不同意'
+        return ''
+
     conn = get_db_connection()
     try:
         ensure_core_tables(conn)
         with conn.cursor() as cursor:
-            cursor.execute("SHOW COLUMNS FROM event_registrations")
-            existing_columns = {row.get("Field") for row in cursor.fetchall()}
-
-            preferred_columns = [
-                "id",
-                "admin_user",
-                "event_key",
-                "name",
-                "phone",
-                "email",
-                "company_name",
-                "job_title",
-                "contact_person",
-                "region",
-                "training_level",
-                "contract_period",
-                "participant_count",
-                "seating_chart",
-                "meal_choice",
-                "original_meal_choice",
-                "status",
-                "checkin_time",
-                "substitute_name",
-                "substitute_phone",
-                "substitute_email",
-                "proxy_name",
-                "proxy_phone",
-                "portrait_consent",
-                "portrait_consent_status",
-                "portrait_consent_time",
-                "note",
-                "created_at",
-                "updated_at"
-            ]
-
-            select_columns = [c for c in preferred_columns if c in existing_columns]
-            if not select_columns:
-                return jsonify({"success": False, "message": "event_registrations 沒有可匯出的欄位"}), 500
-
-            select_sql = ", ".join([f"`{c}`" for c in select_columns])
-
-            cursor.execute(f"""
-                SELECT {select_sql}
-                FROM event_registrations
-                WHERE admin_user = %s AND event_key = %s
+            cursor.execute("""
+                SELECT
+                    r.name,
+                    r.phone,
+                    r.email,
+                    r.company_name,
+                    r.job_title,
+                    r.region,
+                    r.training_level,
+                    r.contract_period,
+                    r.participant_count,
+                    r.seating_chart,
+                    r.meal_choice,
+                    r.status,
+                    r.checkin_time,
+                    r.proxy_name,
+                    r.proxy_phone,
+                    r.portrait_consent,
+                    r.portrait_consent_status,
+                    r.portrait_consent_time,
+                    r.note,
+                    r.created_at
+                FROM event_registrations r
+                WHERE r.admin_user = %s AND r.event_key = %s
                 ORDER BY
-                    COALESCE(seating_chart, '') ASC,
-                    CASE WHEN status IN ('checked_in', '已報到', '替代') THEN 0 ELSE 1 END,
-                    id ASC
+                    COALESCE(r.seating_chart, '') ASC,
+                    CASE WHEN r.status IN ('checked_in', '已報到', '替代') THEN 0 ELSE 1 END,
+                    r.id ASC
             """, (admin_user, event_key))
             rows = cursor.fetchall()
 
         output = io.StringIO()
         writer = csv.writer(output)
 
-        headers = [
-            "表單名稱",
-            "名單產生時間",
-            "資料ID",
-            "管理員",
-            "原報名人姓名",
-            "原報名人電話",
-            "原報名人Email",
-            "公司/單位",
-            "職稱",
-            "聯絡人",
-            "地區",
-            "課程/職階",
-            "合約期間",
-            "報名人數",
-            "桌號/座位",
-            "餐食選擇",
-            "原餐食選擇",
-            "報到狀態",
-            "報到時間",
-            "實際報到人",
-            "替代人姓名",
-            "替代人電話",
-            "替代人Email",
-            "代理人姓名",
-            "代理人電話",
-            "肖像授權",
-            "肖像授權狀態",
-            "肖像授權時間",
-            "備註",
-            "建立時間",
-            "更新時間"
-        ]
-        writer.writerow(headers)
+        # 簡潔欄位，移除重複和意義不大的系統欄位
+        writer.writerow([
+            '姓名',
+            '手機',
+            'Email',
+            '公司/單位',
+            '職稱/職階',
+            '地區',
+            '合約期間',
+            '報名人數',
+            '桌號/座位',
+            '餐食',
+            '報到狀態',
+            '報到時間',
+            '替代人姓名',
+            '替代人手機',
+            '肖像授權',
+            '肖像授權時間',
+            '備註',
+            '建立時間',
+        ])
 
         for r in rows:
-            substitute_name = r.get("substitute_name") or ""
-            proxy_name = r.get("proxy_name") or ""
-            actual_attendee = proxy_name or substitute_name or r.get("name") or ""
+            status_raw = r.get('status') or ''
+            if status_raw in ['checked_in', '已報到']:
+                status_display = '已報到'
+            elif status_raw == '替代':
+                status_display = '替代報到'
+            else:
+                status_display = '未報到'
 
             writer.writerow([
-                event_key,
-                generated_text,
-                r.get("id", ""),
-                r.get("admin_user", admin_user),
-                r.get("name", ""),
-                r.get("phone", ""),
-                r.get("email", ""),
-                r.get("company_name", ""),
-                r.get("job_title", ""),
-                r.get("contact_person", ""),
-                r.get("region", ""),
-                r.get("training_level", ""),
-                r.get("contract_period", ""),
-                r.get("participant_count", ""),
-                r.get("seating_chart", ""),
-                r.get("meal_choice", ""),
-                r.get("original_meal_choice", ""),
-                r.get("status", ""),
-                fmt_dt(r.get("checkin_time")),
-                actual_attendee,
-                substitute_name,
-                r.get("substitute_phone", ""),
-                r.get("substitute_email", ""),
-                proxy_name,
-                r.get("proxy_phone", ""),
-                "同意" if r.get("portrait_consent") in [1, True, "1"] else ("不同意" if r.get("portrait_consent") in [0, False, "0"] else ""),
-                r.get("portrait_consent_status", ""),
-                fmt_dt(r.get("portrait_consent_time")),
-                r.get("note", ""),
-                fmt_dt(r.get("created_at")),
-                fmt_dt(r.get("updated_at"))
+                r.get('name') or '',
+                r.get('phone') or '',
+                r.get('email') or '',
+                r.get('company_name') or '',
+                r.get('job_title') or r.get('training_level') or '',
+                r.get('region') or '',
+                r.get('contract_period') or '',
+                r.get('participant_count') or '',
+                r.get('seating_chart') or '',
+                r.get('meal_choice') or '',
+                status_display,
+                fmt_dt(r.get('checkin_time')),
+                r.get('proxy_name') or '',
+                r.get('proxy_phone') or '',
+                fmt_consent(r.get('portrait_consent')),
+                fmt_dt(r.get('portrait_consent_time')),
+                r.get('note') or '',
+                fmt_dt(r.get('created_at')),
             ])
 
         csv_bytes = output.getvalue().encode('utf-8-sig')
@@ -2128,7 +2083,6 @@ def export_csv():
 
         response = app.make_response(csv_bytes)
         response.headers["Content-Type"] = "text/csv; charset=utf-8-sig"
-        # 同時給 ASCII fallback 與 UTF-8 filename，避免中文檔名在不同瀏覽器亂碼
         response.headers["Content-Disposition"] = (
             f"attachment; filename=registration_export_{filename_time}.csv; "
             f"filename*=UTF-8''{quote(download_name)}"
