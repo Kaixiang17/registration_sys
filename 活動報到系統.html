@@ -308,6 +308,23 @@
             .header-title-text { font-size: 0.88rem !important; }
 
         }
+
+        /* ── 手機版背景：偵測觸控裝置或窄螢幕，改用手機專屬背景圖 ── */
+        @media (max-width: 768px), (hover: none) and (pointer: coarse) {
+            body.circuit-background {
+                background-image: url("/smart-ark-mobile-bg.png") !important;
+                background-size: cover !important;
+                background-position: center top !important;
+                background-repeat: no-repeat !important;
+                background-attachment: scroll !important;
+            }
+            #splash-screen {
+                background-image: url("/smart-ark-mobile-bg.png") !important;
+                background-size: cover !important;
+                background-position: center top !important;
+                background-repeat: no-repeat !important;
+            }
+        }
     </style>
 </head>
 <body class="circuit-background">
