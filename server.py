@@ -931,6 +931,7 @@ def checkin(pid):
             return jsonify({"success": True, "data": {
                 "name": user['name'],
                 "company": user['company_name'],
+                "job_title": user['job_title'],
                 "seat": user['seating_chart'],
                 "meal": meal_choice,
                 "original_meal": original_meal,
@@ -1874,6 +1875,52 @@ def api_session_sheet():
     })
 
 
+@app.route('/api/stats/meals')
+def api_meal_stats():
+    """取得餐飲統計資料：葷、素、不吃(備註)"""
+    if not session.get('admin_logged_in'):
+        return jsonify({"success": False, "message": "未授權"}), 403
+    
+    admin_user, event_key = get_admin_and_event_context()
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            # 統計葷素
+            cursor.execute("""
+                SELECT meal_choice, COUNT(*) as count 
+                FROM event_registrations 
+                WHERE admin_user = %s AND event_key = %s
+                GROUP BY meal_choice
+            """, (admin_user, event_key))
+            meal_rows = cursor.fetchall()
+            
+            # 統計備註 (不吃的)
+            cursor.execute("""
+                SELECT name, company_name, note 
+                FROM event_registrations 
+                WHERE admin_user = %s AND event_key = %s 
+                AND note IS NOT NULL AND note != ''
+            """, (admin_user, event_key))
+            note_rows = cursor.fetchall()
+            
+        meals = {"葷": 0, "素": 0, "其他": 0}
+        for row in meal_rows:
+            choice = row['meal_choice'] or "未填寫"
+            if "素" in choice:
+                meals["素"] += row['count']
+            elif "葷" in choice:
+                meals["葷"] += row['count']
+            else:
+                meals["其他"] += row['count']
+                
+        return jsonify({
+            "success": True,
+            "meals": meals,
+            "special_notes": note_rows
+        })
+    finally:
+        conn.close()
+
 @app.route('/api/sheets/list')
 def api_sheets_list():
     """
@@ -2032,19 +2079,19 @@ def export_csv():
             '手機',
             'Email',
             '公司/單位',
-            '職稱/職階',
+            '職稱',
             '地區',
             '合約期間',
             '報名人數',
             '桌號/座位',
-            '餐食',
+            '餐飲選擇',
             '報到狀態',
             '報到時間',
             '替代人姓名',
             '替代人手機',
             '肖像授權',
             '肖像授權時間',
-            '備註',
+            '備註(不吃的)',
             '建立時間',
         ])
 
@@ -2062,7 +2109,7 @@ def export_csv():
                 r.get('phone') or '',
                 r.get('email') or '',
                 r.get('company_name') or '',
-                r.get('job_title') or r.get('training_level') or '',
+                r.get('job_title') or '',
                 r.get('region') or '',
                 r.get('contract_period') or '',
                 r.get('participant_count') or '',
@@ -2107,9 +2154,13 @@ def upload_csv_to_sheet():
     event_key = event_key.replace('.csv', '').replace('.CSV', '').strip() or '活動報到名單'
 
     def decode_csv(file_bytes):
-        for enc in ['utf-8-sig', 'utf-8', 'big5', 'cp950']:
+        # 優先嘗試帶 BOM 的 UTF-8，然後是常用編碼
+        for enc in ['utf-8-sig', 'utf-8', 'big5', 'cp950', 'gbk']:
             try:
-                return file_bytes.decode(enc), enc
+                content = file_bytes.decode(enc)
+                # 檢查是否包含亂碼特徵（如大量 ）
+                if content.count('\ufffd') < len(content) * 0.01:
+                    return content, enc
             except Exception:
                 pass
         return file_bytes.decode('utf-8', errors='ignore'), 'utf-8-ignore'
@@ -2145,7 +2196,8 @@ def upload_csv_to_sheet():
 
         mapping_targets = {
             'region': ['區', '梯次', '地區', '組別', '分區'],
-            'training_level': ['階', '職階', '等級', '職稱'],
+            'training_level': ['職稱', '職階', '等級', '階'],
+            'job_title': ['職稱', '職階', '職位'],
             'company_name': ['公司', '單位', '機關', '部門', '行號', '社團'],
             'contract_period': ['合約', '期間', '合約期'],
             'participant_count': ['人數', '名額', '數量'],
@@ -2154,9 +2206,9 @@ def upload_csv_to_sheet():
             'email': ['電子郵件', 'email', '郵件', '信箱', '電郵'],
             'contact_person': ['窗口', '聯絡人', '負責人'],
             'contact_email': ['窗口信箱', '聯絡人信箱', '經辦email'],
-            'note': ['備註', '說明'],
+            'note': ['備註', '說明', '不吃', '忌口'],
             'seating_chart': ['桌號', '座位', '座次', '桌次'],
-            'meal_choice': ['餐', '便當', '飲食', '葷素']
+            'meal_choice': ['餐', '便當', '飲食', '葷素', '餐飲']
         }
         field_indices = {k: -1 for k in mapping_targets}
         header_row_idx = -1
@@ -2215,7 +2267,7 @@ def upload_csv_to_sheet():
                     cursor.execute(insert_sql, (
                         admin_user, event_key,
                         data.get('region', ''), data.get('training_level', ''), data.get('company_name', ''),
-                        data.get('contract_period', ''), participant_count, name, data.get('training_level', ''),
+                        data.get('contract_period', ''), participant_count, name, data.get('job_title') or data.get('training_level', ''),
                         data.get('phone', ''), data.get('email', ''), data.get('contact_person', ''),
                         data.get('contact_email', ''), data.get('note', ''), data.get('seating_chart', ''),
                         '未報到', meal, meal
