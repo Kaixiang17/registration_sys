@@ -306,21 +306,8 @@
         @media(max-width: 400px) {
             .header-action-buttons .ck-btn-pill { padding: 0.32rem 0.5rem !important; font-size: 0.68rem !important; }
             .header-title-text { font-size: 0.88rem !important; }
-            /* 隱藏「大會投影」只保留其他兩個按鈕 */
-            #projectionBtn { display: none !important; }
-        }
 
-        /* 手機版背景：只切換背景圖，不改其他功能 */
-        @media (max-width: 768px), (pointer: coarse) and (max-width: 1024px) {
-            body.is-mobile-view #splash-screen,
-            body.is-mobile-view .ark-background {
-                background-image: url('smart-ark-mobile-bg.png') !important;
-                background-size: cover !important;
-                background-position: center center !important;
-                background-repeat: no-repeat !important;
-            }
         }
-
     </style>
 </head>
 <body class="circuit-background">
@@ -342,7 +329,7 @@
                 <span id="header-title" class="header-title-text" style="font-size: 1.15rem; letter-spacing: 2px; white-space: nowrap; font-weight: bold; color: var(--text-dark);">首 頁</span>
             </div>
             <div class="header-action-buttons">
-                <a id="projectionBtn" class="ck-btn-pill" href="/dashboard" target="_blank" rel="noopener" style="border-color:rgba(74,222,128,0.4); color:#4ade80; background:rgba(74,222,128,0.05);">📺 大會投影</a>
+                <a id="projectionBtn" class="ck-btn-pill" href="/dashboard" target="_blank" rel="noopener" style="border-color:rgba(74,222,128,0.4); color:#4ade80; background:rgba(74,222,128,0.05);">📺 投影</a>
                 <button id="shopBtn" class="ck-btn-pill" onclick="goToShop()" style="display:none;">🛒 商品</button>
                 <button id="mapBtn" class="ck-btn-pill" onclick="toggleMapModal(true)">🗺️ 地圖</button>
             </div>
@@ -1067,19 +1054,6 @@
                 }
             } catch(e) { console.error("系統初始化同步中"); }
         }
-
-        // 只偵測裝置大小切換背景，不影響其他功能
-        function applyResponsiveBackgroundMode() {
-            const isMobileView = window.matchMedia('(max-width: 768px)').matches ||
-                (window.matchMedia('(pointer: coarse)').matches && window.matchMedia('(max-width: 1024px)').matches);
-
-            document.body.classList.toggle('is-mobile-view', isMobileView);
-        }
-
-        applyResponsiveBackgroundMode();
-        window.addEventListener('resize', applyResponsiveBackgroundMode);
-        window.addEventListener('orientationchange', applyResponsiveBackgroundMode);
-
     </script>
 </body>
 </html>
