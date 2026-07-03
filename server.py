@@ -846,6 +846,7 @@ def search(method):
             for r in res:
                 r['id'] = str(r['id'])
                 r['company'] = r['company_name']
+                r['job_title'] = r.get('job_title') or '學員'
                 r['meal'] = r['meal_choice']
                 r['original_meal'] = r.get('original_meal_choice', r['meal_choice'])
                 r['seat'] = r['seating_chart']
@@ -931,7 +932,7 @@ def checkin(pid):
             return jsonify({"success": True, "data": {
                 "name": user['name'],
                 "company": user['company_name'],
-                "job_title": user['job_title'],
+                "job_title": user.get('job_title') or '學員',
                 "seat": user['seating_chart'],
                 "meal": meal_choice,
                 "original_meal": original_meal,
