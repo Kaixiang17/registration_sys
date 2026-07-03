@@ -259,91 +259,125 @@ body::after {
 
 .empty-msg { text-align: center; padding: 3rem 0; color: var(--muted); font-size: 0.85rem; line-height: 2; }
 
-/* ── AGENDA (vertical) ── */
-.tl { display: flex; flex-direction: column; }
+/* ── AGENDA (clean mission list) ── */
+.tl {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 0.15rem 0;
+}
 
 .tl-item {
-  display: flex; gap: 1rem;
-  padding-bottom: 1.1rem;
+  display: grid;
+  grid-template-columns: 116px minmax(0, 1fr);
+  gap: 0.9rem;
+  align-items: stretch;
   position: relative;
-}
-.tl-item:last-child { padding-bottom: 0; }
-
-/* connector line */
-.tl-item:not(:last-child)::after {
-  content: '';
-  position: absolute;
-  left: 17px; top: 26px; bottom: 0; width: 1px;
-  background: linear-gradient(to bottom, rgba(0,229,255,0.22), rgba(0,229,255,0.03));
 }
 
 .tl-lead {
-  display: flex; flex-direction: column;
-  align-items: center; gap: 4px;
-  flex-shrink: 0; width: 34px; padding-top: 1px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 76px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,229,255,0.18);
+  background: rgba(0,229,255,0.045);
+  overflow: hidden;
 }
-.tl-dot {
-  width: 11px; height: 11px; border-radius: 50%;
-  border: 2px solid rgba(0,229,255,0.22);
-  background: var(--bg); z-index: 1; flex-shrink: 0;
-  transition: all 0.3s;
-}
-.tl-item.done   .tl-dot { border-color: var(--green); background: var(--green); }
-.tl-item.active .tl-dot {
-  border-color: var(--cyan); background: var(--cyan);
-  box-shadow: 0 0 12px rgba(0,229,255,0.65);
-  width: 13px; height: 13px;
-}
-/* Progress Bar */
-.tl-progress-container {
+.tl-lead::before {
+  content: '';
   position: absolute;
-  left: 17px; top: 26px; bottom: 0; width: 3px;
-  background: rgba(0,229,255,0.05);
-  z-index: 0;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 10px;
+  background: rgba(0,229,255,0.5);
+  box-shadow: 0 0 14px rgba(0,229,255,0.35);
 }
-.tl-progress-fill {
-  width: 100%;
-  background: linear-gradient(to bottom, var(--cyan), var(--green));
-  box-shadow: 0 0 8px var(--cyan);
-  transition: height 0.5s ease;
+
+.tl-dot {
+  display: none;
 }
+
 .tl-time {
   font-family: "Michroma", sans-serif;
-  font-size: 0.60rem; color: var(--muted);
-  text-align: center; white-space: nowrap;
-  writing-mode: vertical-lr; transform: rotate(180deg);
+  font-size: 0.68rem;
+  color: var(--cyan);
+  text-align: center;
+  white-space: normal;
+  writing-mode: horizontal-tb;
+  transform: none;
+  line-height: 1.45;
+  letter-spacing: 1px;
+  padding: 0 0.55rem;
 }
-.tl-item.active .tl-time { color: var(--cyan); }
-.tl-item.done   .tl-time { color: var(--green); opacity: .6; }
 
 .tl-card {
-  flex: 1; min-width: 0;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 0.85rem 1.1rem;
+  min-width: 0;
+  min-height: 76px;
+  background: linear-gradient(135deg, rgba(0,229,255,0.055), rgba(255,255,255,0.025));
+  border: 1px solid rgba(0,229,255,0.20);
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
   transition: all 0.25s;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.tl-item.active .tl-lead {
+  border-color: rgba(0,229,255,0.65);
+  background: rgba(0,229,255,0.10);
+  box-shadow: 0 0 18px rgba(0,229,255,0.12);
 }
 .tl-item.active .tl-card {
-  border-color: rgba(0,229,255,0.42);
-  background: rgba(0,229,255,0.055);
-  box-shadow: 0 0 18px rgba(0,229,255,0.07);
+  border-color: rgba(0,229,255,0.55);
+  background: linear-gradient(135deg, rgba(0,229,255,0.13), rgba(255,255,255,0.035));
+  box-shadow: 0 0 24px rgba(0,229,255,0.10), inset 0 0 18px rgba(0,229,255,0.035);
 }
-.tl-item.done .tl-card { opacity: 0.40; }
+.tl-item.done .tl-lead,
+.tl-item.done .tl-card {
+  opacity: 0.55;
+}
 
-.tl-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
-.tl-title { font-size: 0.94rem; font-weight: 900; line-height: 1.45; }
+.tl-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+}
+.tl-title {
+  font-size: 1.02rem;
+  font-weight: 900;
+  line-height: 1.45;
+  letter-spacing: 1px;
+  color: #f2fbff;
+}
 .tl-now {
-  flex-shrink: 0; margin-top: 1px;
-  font-size: 0.58rem; font-weight: 700; letter-spacing: 1px;
-  padding: 2px 8px; border-radius: 20px;
-  color: var(--cyan);
-  background: rgba(0,229,255,0.10);
-  border: 1px solid rgba(0,229,255,0.28);
+  flex-shrink: 0;
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+  padding: 0.22rem 0.62rem;
+  border-radius: 999px;
+  color: #06111f;
+  background: linear-gradient(135deg, #00e5ff, #4ade80);
+  box-shadow: 0 0 14px rgba(0,229,255,0.25);
 }
-.tl-sub { font-size: 0.70rem; color: var(--muted); margin-top: 0.28rem; line-height: 1.5; }
+.tl-sub {
+  font-size: 0.76rem;
+  color: rgba(221,238,255,0.62);
+  margin-top: 0.35rem;
+  line-height: 1.55;
+}
 
-
+@media (max-width: 760px) {
+  .tl-item { grid-template-columns: 1fr; gap: 0.45rem; }
+  .tl-lead { min-height: 44px; justify-content: flex-start; padding-left: 1rem; }
+  .tl-card { min-height: 68px; }
+}
 
 /* ── ENTERPRISE DIRECTORY ── */
 .enterprise-panel {
@@ -450,16 +484,6 @@ body::after {
   .panel-body { padding: 1rem; }
   .donut-wrap { width: 170px; height: 170px; }
   .donut-num  { font-size: 1.9rem; }
-  .hdr-inner { height: 80px; padding: 0 0.75rem; }
-  .hdr-zh { font-size: 1.2rem; letter-spacing: 3px; }
-  .tl-item { gap: 0.75rem; }
-  .tl-lead { width: 28px; }
-  .tl-time { font-size: 0.55rem; }
-  .tl-title { font-size: 0.9rem; }
-  .tl-sub { font-size: 0.75rem; }
-  .enterprise-list { grid-template-columns: 1fr; }
-  .enterprise-card { grid-template-columns: 1fr; }
-  .enterprise-img { width: 100%; height: 120px; margin-bottom: 0.5rem; }
 }
 </style>
 </head>
@@ -606,15 +630,6 @@ window.onload = async () => {
 async function loadCfg() {
   try {
     cfg = await get(`${API}/config?admin=${enc(ADMIN)}&sheet=${enc(SHEET)}`);
-    
-    // 額外獲取議程資料，確保同步
-    try {
-      const agendaRes = await get(`${API}/schedule?admin=${enc(ADMIN)}&sheet=${enc(SHEET)}`);
-      if (agendaRes.success) {
-        cfg.agenda = agendaRes.schedule || agendaRes.data || agendaRes.agenda || [];
-      }
-    } catch (e) { console.warn('agenda_load', e); }
-
     applyHeader();
     renderAgenda();
     renderEnterprises();
@@ -787,11 +802,14 @@ function renderAgenda() {
   const tl = document.getElementById('tl');
   if (!agenda.length) {
     tl.innerHTML = '<div class="empty-msg">📡 後台尚未設定議程</div>';
+    setText('agenda-range', 'CONFERENCE TIMELINE');
     return;
   }
+
   const first = agenda[0].time || agenda[0].start_time || '';
   const last  = agenda[agenda.length-1].time || agenda[agenda.length-1].start_time || '';
-  if (first || last) setText('agenda-range', `${first}${last ? ' ─ '+last : ''}`);
+  const rangeText = (first && last && first !== last) ? `${first} ─ ${last}` : (first || last || 'CONFERENCE TIMELINE');
+  setText('agenda-range', rangeText);
 
   const nm = nowMins();
   let act = -1;
@@ -799,46 +817,27 @@ function renderAgenda() {
     const m = parseT(agenda[i].time || agenda[i].start_time || '');
     if (m !== null && m <= nm) act = i;
   }
+  if (act < 0) act = 0;
 
-  let progressPercent = 0;
-  if (act >= 0) {
-    if (act === agenda.length - 1) {
-      progressPercent = 100;
-    } else {
-      const start = parseT(agenda[act].time || agenda[act].start_time || '');
-      const next = parseT(agenda[act+1].time || agenda[act+1].start_time || '');
-      if (start !== null && next !== null) {
-        const total = next - start;
-        const elapsed = nm - start;
-        progressPercent = Math.min(100, Math.max(0, (act + (elapsed / total)) / (agenda.length - 1) * 100));
-      } else {
-        progressPercent = (act / (agenda.length - 1)) * 100;
-      }
-    }
-  }
-
-  let html = `<div class="tl-progress-container"><div class="tl-progress-fill" style="height: ${progressPercent}%"></div></div>`;
-  html += agenda.map((item,i) => {
-    const t   = esc(item.time || item.start_time || '');
-    const ttl = esc(item.title || item.name || '—');
+  tl.innerHTML = agenda.map((item,i) => {
+    const t   = esc(item.time || item.start_time || '時間待定');
+    const ttl = esc(item.title || item.name || item.event || '—');
     const sub = esc(item.subtitle || item.description || '');
     const cls = i===act ? 'active' : i<act ? 'done' : '';
     return `
     <div class="tl-item ${cls}">
       <div class="tl-lead">
-        <div class="tl-dot"></div>
         <div class="tl-time">${t}</div>
       </div>
       <div class="tl-card">
         <div class="tl-card-top">
-          <div class="tl-title" style="font-size: 1.1rem; color: ${i===act?'#fff':'inherit'}">${ttl}</div>
-          ${i===act ? '<div class="tl-now" style="background: var(--cyan); color: #000; font-weight: 900;">▶ NOW</div>' : ''}
+          <div class="tl-title">${ttl}</div>
+          ${i===act ? '<div class="tl-now">▶ NOW</div>' : ''}
         </div>
-        ${sub ? `<div class="tl-sub" style="opacity: ${i===act?1:0.7}">${sub}</div>` : ''}
+        ${sub ? `<div class="tl-sub">${sub}</div>` : ''}
       </div>
     </div>`;
   }).join('');
-  tl.innerHTML = html;
 }
 
 /* ── helpers ── */
