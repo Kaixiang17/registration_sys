@@ -523,7 +523,7 @@
     <div id="portraitConsentModal" class="portrait-consent-modal">
         <div class="portrait-consent-card">
             <button class="portrait-consent-close" onclick="closePortraitConsentModal()">✕</button>
-            <h3>📸 活動拍攝與肖像使用授權條款</h3>
+            <h3 style="text-align:center;">📸 活動拍攝與肖像使用授權條款</h3>
             <p>本人同意主辦單位（以下簡稱「主辦方」）於本次活動期間，對本人進行拍攝、錄影及錄音，並授權主辦方將相關影像、照片及聲音（以下簡稱「影像資料」）用於以下用途：</p>
             <p><strong style="color:#00e5ff;">一、授權使用範圍</strong><br>
             活動紀錄與存檔、官方網站、社群媒體（Facebook、Instagram、YouTube 等）、宣傳素材、新聞稿及媒體發布、內部教育訓練及企業簡報。</p>
@@ -825,7 +825,7 @@
                     <button type="button" class="portrait-consent-link" onclick="openPortraitConsentModal()">📄 查看完整條款（含不同意選項）</button>
                 </div>
             `;
-            window.selectedMeal = null; window.isOriginal = true;
+            window.selectedMeal = null; window.isOriginal = true; window.portraitDecided = false;
             document.getElementById('finalBtn').disabled = true;
             setAppState('meal');
         }
@@ -860,14 +860,24 @@
             if (cb) { cb.checked = true; checkMealReady(); }
             const cbTemp = document.getElementById('portraitConsentTemp');
             if (cbTemp) { cbTemp.checked = true; }
+            window.portraitDecided = true;
             closePortraitConsentModal();
+            // 如果是從 submitCheckin 觸發的彈窗，選擇後自動繼續
+            if (document.getElementById('mealState').style.display !== 'none' || !document.getElementById('mealState').classList.contains('state-hidden')) {
+                submitCheckin();
+            }
         }
         function disagreePortraitConsent() {
             const cb = document.getElementById('portraitConsent');
             if (cb) { cb.checked = false; checkMealReady(); }
             const cbTemp = document.getElementById('portraitConsentTemp');
             if (cbTemp) { cbTemp.checked = false; }
+            window.portraitDecided = true;
             closePortraitConsentModal();
+            // 如果是從 submitCheckin 觸發的彈窗，選擇後自動繼續
+            if (document.getElementById('mealState').style.display !== 'none' || !document.getElementById('mealState').classList.contains('state-hidden')) {
+                submitCheckin();
+            }
         }
 
         function escapeHtml(value) {
@@ -971,7 +981,16 @@
         async function submitCheckin(autoMeal) {
             const meal = autoMeal || window.selectedMeal;
             const consentEl = document.getElementById('portraitConsent');
+            
+            // 強制彈窗邏輯：如果沒有勾選同意，且不是自動模式，則彈出視窗
+            if (!autoMeal && consentEl && !consentEl.checked && !window.portraitDecided) {
+                openPortraitConsentModal();
+                return;
+            }
+            
             const portraitConsent = consentEl ? consentEl.checked : false;
+            const portraitConsentStatus = portraitConsent ? '同意' : '不同意';
+            
             const proxyInfo = window.isOriginal ? {} : {
                 name: document.getElementById('proxyName').value.trim(),
                 phone: document.getElementById('proxyPhone').value.trim()
@@ -988,7 +1007,7 @@
                         is_original: window.isOriginal,
                         proxy_info: proxyInfo,
                         portrait_consent: portraitConsent,
-                        portrait_consent_status: portraitConsent ? '同意' : '不同意'
+                        portrait_consent_status: portraitConsentStatus
                     })
                 });
                 const json = await res.json();
