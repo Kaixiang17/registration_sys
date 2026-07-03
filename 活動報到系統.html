@@ -878,7 +878,7 @@
 
         function renderArkTerminal(user, meal) {
             const name = escapeHtml(user?.name || selectedUser?.name || '領航員');
-            const jobTitle = escapeHtml(user?.job_title || selectedUser?.job_title || '');
+            const jobTitle = escapeHtml(user?.job_title || selectedUser?.job_title || '學員');
             const company = escapeHtml(user?.company || selectedUser?.company || '智慧方舟');
             const seat = escapeHtml(user?.seat || selectedUser?.seat || '現場安排');
             const mealText = escapeHtml(meal || user?.meal || selectedUser?.meal || '未選擇');
