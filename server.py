@@ -1906,12 +1906,16 @@ def api_meal_stats():
             
         meals = {"葷": 0, "素": 0, "其他": 0}
         for row in meal_rows:
-            choice = row['meal_choice'] or "未填寫"
-            if "素" in choice:
+            choice = str(row['meal_choice'] or "未選擇").strip()
+            # 增加更廣泛的匹配，包含常見的縮寫或錯字
+            if any(k in choice for k in ["素", "蔬", "Vegetarian", "Vegi"]):
                 meals["素"] += row['count']
-            elif "葷" in choice:
+            elif any(k in choice for k in ["葷", "肉", "Meat", "Non-Veg"]):
                 meals["葷"] += row['count']
+            elif choice in ["未選擇", "未填寫", ""]:
+                meals["其他"] += row['count']
             else:
+                # 如果既不是葷也不是素，但有內容，暫歸類為其他
                 meals["其他"] += row['count']
                 
         return jsonify({
@@ -2156,15 +2160,29 @@ def upload_csv_to_sheet():
 
     def decode_csv(file_bytes):
         # 優先嘗試帶 BOM 的 UTF-8，然後是常用編碼
-        for enc in ['utf-8-sig', 'utf-8', 'big5', 'cp950', 'gbk']:
+        # 增加 cp950 (繁體中文 Windows) 與 gbk (簡體中文) 的優先級
+        for enc in ['utf-8-sig', 'utf-8', 'big5', 'cp950', 'gbk', 'shift_jis']:
             try:
                 content = file_bytes.decode(enc)
-                # 檢查是否包含亂碼特徵（如大量 ）
-                if content.count('\ufffd') < len(content) * 0.01:
+                # 檢查是否包含亂碼特徵（如 \ufffd）
+                if '\ufffd' not in content:
+                    return content, enc
+                # 如果亂碼比例極低，也可以接受
+                if content.count('\ufffd') < len(content) * 0.005:
                     return content, enc
             except Exception:
                 pass
-        return file_bytes.decode('utf-8', errors='ignore'), 'utf-8-ignore'
+        
+        # 最終手段：嘗試 chardet (如果有的話) 或強行 decode 並清理
+        try:
+            import chardet
+            detected = chardet.detect(file_bytes)
+            if detected['encoding'] and detected['confidence'] > 0.8:
+                return file_bytes.decode(detected['encoding']), detected['encoding']
+        except ImportError:
+            pass
+            
+        return file_bytes.decode('utf-8', errors='replace').replace('\ufffd', '?'), 'utf-8-replace'
 
     def clean_val(v):
         if v is None:
