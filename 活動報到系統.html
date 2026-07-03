@@ -23,7 +23,7 @@
         main { max-width: 1200px; margin: 0 auto; padding: 2.5rem 2rem 5rem; min-height: calc(100vh - 80px); }
         .state-hidden { display: none !important; }
 
-        .verify-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem; margin-top: 2.5rem; }
+        .verify-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-top: 2.5rem; }
         .verify-card {
             padding: 2.5rem 2rem;
             text-align: center;
@@ -147,7 +147,7 @@
         }
         .ark-mission-meta {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: .8rem;
             margin-bottom: 1.5rem;
         }
@@ -345,7 +345,7 @@
                 <span style="font-size: 1.3rem; flex-shrink: 0;">🏠</span>
                 <span id="header-title" class="header-title-text" style="font-size: 1.15rem; letter-spacing: 2px; white-space: nowrap; font-weight: bold; color: var(--text-dark);">首 頁</span>
             </div>
-            <div class="header-action-buttons">
+            <div class="header-action-buttons" style="display:none;">
                 <a id="projectionBtn" class="ck-btn-pill" href="/dashboard" target="_blank" rel="noopener" style="border-color:rgba(74,222,128,0.4); color:#4ade80; background:rgba(74,222,128,0.05);">📺 投影</a>
                 <button id="shopBtn" class="ck-btn-pill" onclick="goToShop()" style="display:none;">🛒 商品</button>
                 <button id="mapBtn" class="ck-btn-pill" onclick="toggleMapModal(true)">🗺️ 地圖</button>
@@ -458,21 +458,21 @@
                         <div id="arkGreeting" class="ark-user-greeting">您好，領航員</div>
                         <div id="arkTerminalInfo" class="ark-mission-meta"></div>
                         <div class="ark-terminal-grid">
-                            <button type="button" class="ark-nav-card" onclick="openArkMap()">
-                                <div class="ark-card-icon">🧭</div>
+                            <button type="button" class="ark-nav-card" id="arkCard4Btn" onclick="openArkFlow()">
+                                <div class="ark-card-icon">🕘</div>
                                 <div>
-                                    <div class="ark-card-title" id="arkCard1Title">【2026 產業星圖】</div>
-                                    <div class="ark-card-sub" id="arkCard1Sub">領航員名冊與每攤機會</div>
-                                    <div class="ark-card-desc" id="arkCard1Desc">A-MALL.png / Navigator Directory</div>
+                                    <div class="ark-card-title" id="arkCard4Title">【大會時空座標】</div>
+                                    <div class="ark-card-sub" id="arkCard4Sub">實體進化航線預載</div>
+                                    <div class="ark-card-desc" id="arkCard4Desc">09:30 - 17:00 航程時間軸</div>
                                 </div>
                                 <div class="ark-card-arrow">›</div>
                             </button>
                             <button type="button" class="ark-nav-card" id="arkCard2Btn" onclick="openArkGift()">
                                 <div class="ark-card-icon">🎁</div>
                                 <div>
-                                    <div class="ark-card-title" id="arkCard2Title">【方舟物資艙】</div>
-                                    <div class="ark-card-sub" id="arkCard2Sub">傳承伴手禮核心內涵</div>
-                                    <div class="ark-card-desc" id="arkCard2Desc">守護碼 / 禮品說明手冊</div>
+                                    <div class="ark-card-title" id="arkCard2Title">【活動商品專區】</div>
+                                    <div class="ark-card-sub" id="arkCard2Sub">精選伴手禮與補給品</div>
+                                    <div class="ark-card-desc" id="arkCard2Desc">點擊進入物資艙查看</div>
                                 </div>
                                 <div class="ark-card-arrow">›</div>
                             </button>
@@ -485,18 +485,19 @@
                                 </div>
                                 <div class="ark-card-arrow">›</div>
                             </button>
-                            <button type="button" class="ark-nav-card" id="arkCard4Btn" onclick="openArkFlow()">
-                                <div class="ark-card-icon">🕘</div>
+                            <button type="button" class="ark-nav-card" onclick="openArkMap()">
+                                <div class="ark-card-icon">🧭</div>
                                 <div>
-                                    <div class="ark-card-title" id="arkCard4Title">【大會時空座標】</div>
-                                    <div class="ark-card-sub" id="arkCard4Sub">實體進化航線預載</div>
-                                    <div class="ark-card-desc" id="arkCard4Desc">09:30 - 17:00 航程時間軸</div>
+                                    <div class="ark-card-title" id="arkCard1Title">【2026 產業星圖】</div>
+                                    <div class="ark-card-sub" id="arkCard1Sub">領航員名冊與每攤機會</div>
+                                    <div class="ark-card-desc" id="arkCard1Desc">A-MALL.png / Navigator Directory</div>
                                 </div>
                                 <div class="ark-card-arrow">›</div>
                             </button>
                         </div>
                     </div>
                 </div>
+<!-- 底部導覽列已移除 -->
                 <button class="ck-btn ck-btn-ghost" onclick="resetToHome()" style="max-width:280px; margin:2rem auto 0; font-size: 0.95rem;">← 回 到 報 到 首 頁</button>
             </section>
         </div>
@@ -877,6 +878,7 @@
 
         function renderArkTerminal(user, meal) {
             const name = escapeHtml(user?.name || selectedUser?.name || '領航員');
+            const jobTitle = escapeHtml(user?.job_title || selectedUser?.job_title || '');
             const company = escapeHtml(user?.company || selectedUser?.company || '智慧方舟');
             const seat = escapeHtml(user?.seat || selectedUser?.seat || '現場安排');
             const mealText = escapeHtml(meal || user?.meal || selectedUser?.meal || '未選擇');
@@ -885,7 +887,7 @@
             const endRaw   = systemConfig && (systemConfig.event_date_end   || systemConfig.event_end_date   || systemConfig.date_end   || systemConfig.exp_event_date_end   || '');
             const startDate = escapeHtml(startRaw || '未設定');
             const endDate   = escapeHtml(endRaw   || '');
-            document.getElementById('arkGreeting').innerHTML = `您好，領航員 ${name}`;
+            document.getElementById('arkGreeting').innerHTML = `您好，${jobTitle ? jobTitle + ' ' : ''}領航員 ${name}`;
             document.getElementById('arkTerminalInfo').innerHTML = `
                 <div class="ark-meta-chip"><div class="ark-meta-label">MISSION</div><div class="ark-meta-value">${eventName}</div></div>
                 <div class="ark-meta-chip"><div class="ark-meta-label">DATE</div><div class="ark-meta-value">${endDate ? `${startDate} ~ ${endDate}` : startDate}</div></div>
@@ -918,18 +920,21 @@
 
         function applyArkCardsFromConfig() {
             const c = systemConfig || {};
-            setCardText('arkCard2Title', c.gift_title  ? `【${c.gift_title}】`  : '【方舟物資艙】');
-            setCardText('arkCard2Sub',   '傳承伴手禮核心內涵');
-            setCardText('arkCard2Desc',  c.gift_description || '守護碼 / 禮品說明手冊');
+            // 商品專區
+            setCardText('arkCard2Title', c.gift_title  ? `【${c.gift_title}】`  : '【活動商品專區】');
+            setCardText('arkCard2Sub',   '精選伴手禮與補給品');
+            setCardText('arkCard2Desc',  c.gift_description || '點擊進入物資艙查看');
             const b2 = document.getElementById('arkCard2Btn');
             if (b2) b2.style.display = (c.gift_enabled === false) ? 'none' : '';
 
+            // 影片專區
             setCardText('arkCard3Title', c.video_title ? `【${c.video_title}】` : '【核心引擎啟動】');
             setCardText('arkCard3Sub',   '智能全新數位中控系統');
             setCardText('arkCard3Desc',  '三年經營現況影片');
             const b3 = document.getElementById('arkCard3Btn');
             if (b3) b3.style.display = (c.video_enabled === false) ? 'none' : '';
 
+            // 議程專區
             setCardText('arkCard4Title', c.flow_title  ? `【${c.flow_title}】`  : '【大會時空座標】');
             setCardText('arkCard4Sub',   '實體進化航線預載');
             setCardText('arkCard4Desc',  c.flow_description || '09:30 - 17:00 航程時間軸');
