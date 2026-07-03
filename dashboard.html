@@ -294,6 +294,19 @@ body::after {
   box-shadow: 0 0 12px rgba(0,229,255,0.65);
   width: 13px; height: 13px;
 }
+/* Progress Bar */
+.tl-progress-container {
+  position: absolute;
+  left: 17px; top: 26px; bottom: 0; width: 3px;
+  background: rgba(0,229,255,0.05);
+  z-index: 0;
+}
+.tl-progress-fill {
+  width: 100%;
+  background: linear-gradient(to bottom, var(--cyan), var(--green));
+  box-shadow: 0 0 8px var(--cyan);
+  transition: height 0.5s ease;
+}
 .tl-time {
   font-family: "Michroma", sans-serif;
   font-size: 0.60rem; color: var(--muted);
@@ -787,7 +800,25 @@ function renderAgenda() {
     if (m !== null && m <= nm) act = i;
   }
 
-  tl.innerHTML = agenda.map((item,i) => {
+  let progressPercent = 0;
+  if (act >= 0) {
+    if (act === agenda.length - 1) {
+      progressPercent = 100;
+    } else {
+      const start = parseT(agenda[act].time || agenda[act].start_time || '');
+      const next = parseT(agenda[act+1].time || agenda[act+1].start_time || '');
+      if (start !== null && next !== null) {
+        const total = next - start;
+        const elapsed = nm - start;
+        progressPercent = Math.min(100, Math.max(0, (act + (elapsed / total)) / (agenda.length - 1) * 100));
+      } else {
+        progressPercent = (act / (agenda.length - 1)) * 100;
+      }
+    }
+  }
+
+  let html = `<div class="tl-progress-container"><div class="tl-progress-fill" style="height: ${progressPercent}%"></div></div>`;
+  html += agenda.map((item,i) => {
     const t   = esc(item.time || item.start_time || '');
     const ttl = esc(item.title || item.name || '—');
     const sub = esc(item.subtitle || item.description || '');
@@ -800,13 +831,14 @@ function renderAgenda() {
       </div>
       <div class="tl-card">
         <div class="tl-card-top">
-          <div class="tl-title">${ttl}</div>
-          ${i===act ? '<div class="tl-now">▶ NOW</div>' : ''}
+          <div class="tl-title" style="font-size: 1.1rem; color: ${i===act?'#fff':'inherit'}">${ttl}</div>
+          ${i===act ? '<div class="tl-now" style="background: var(--cyan); color: #000; font-weight: 900;">▶ NOW</div>' : ''}
         </div>
-        ${sub ? `<div class="tl-sub">${sub}</div>` : ''}
+        ${sub ? `<div class="tl-sub" style="opacity: ${i===act?1:0.7}">${sub}</div>` : ''}
       </div>
     </div>`;
   }).join('');
+  tl.innerHTML = html;
 }
 
 /* ── helpers ── */
