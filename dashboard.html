@@ -437,6 +437,16 @@ body::after {
   .panel-body { padding: 1rem; }
   .donut-wrap { width: 170px; height: 170px; }
   .donut-num  { font-size: 1.9rem; }
+  .hdr-inner { height: 80px; padding: 0 0.75rem; }
+  .hdr-zh { font-size: 1.2rem; letter-spacing: 3px; }
+  .tl-item { gap: 0.75rem; }
+  .tl-lead { width: 28px; }
+  .tl-time { font-size: 0.55rem; }
+  .tl-title { font-size: 0.9rem; }
+  .tl-sub { font-size: 0.75rem; }
+  .enterprise-list { grid-template-columns: 1fr; }
+  .enterprise-card { grid-template-columns: 1fr; }
+  .enterprise-img { width: 100%; height: 120px; margin-bottom: 0.5rem; }
 }
 </style>
 </head>
@@ -583,6 +593,15 @@ window.onload = async () => {
 async function loadCfg() {
   try {
     cfg = await get(`${API}/config?admin=${enc(ADMIN)}&sheet=${enc(SHEET)}`);
+    
+    // 額外獲取議程資料，確保同步
+    try {
+      const agendaRes = await get(`${API}/schedule?admin=${enc(ADMIN)}&sheet=${enc(SHEET)}`);
+      if (agendaRes.success) {
+        cfg.agenda = agendaRes.schedule || agendaRes.data || agendaRes.agenda || [];
+      }
+    } catch (e) { console.warn('agenda_load', e); }
+
     applyHeader();
     renderAgenda();
     renderEnterprises();
