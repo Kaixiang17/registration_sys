@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智慧方舟 - 艦橋管理中心</title>
+    <title>智匯方舟 - 艦橋管理中心</title>
     <link rel="stylesheet" href="smart-ark-theme.css">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Michroma", "Stick", sans-serif; }
@@ -538,7 +538,7 @@
     <div class="ark-background"></div>
     <header class="panel-border" style="border:none; border-radius: 0;">
         <div class="header-container">
-            <div class="header-title neon-text" style="font-size: 1.2rem;">⚙️ 智慧方舟 - 艦橋管理中心</div>
+            <div class="header-title neon-text" style="font-size: 1.2rem;">⚙️ 智匯方舟 - 艦橋管理中心</div>
             <div class="header-actions">
                 <span id="welcome-msg" class="neon-text" style="font-size: 0.9rem; margin-right: 1rem; color: #4ade80;">歡迎，載入中...</span>
                 <button type="button" class="adm-btn adm-btn-sm" onclick="switchAdminTab('system')">🗺️ 地圖</button>
@@ -616,11 +616,19 @@
                     <div class="form-group"><label>活動副標題</label><input id="exp_event_subtitle" class="cyber-input" placeholder="世代共榮的數位聚合"></div>
                     <div class="form-group"><label>開始日期</label><input id="exp_event_date_start" class="cyber-input" placeholder="2026/06/01"></div>
                     <div class="form-group"><label>結束日期</label><input id="exp_event_date_end" class="cyber-input" placeholder="2026/08/XX"></div>
-                    <div class="form-group"><label>品牌名稱</label><input id="exp_brand_name" class="cyber-input" placeholder="智慧方舟 SMART WISDOM ARK"></div>
+                    <div class="form-group"><label>品牌名稱</label><input id="exp_brand_name" class="cyber-input" placeholder="智匯方舟 SMART WISDOM ARK"></div>
                     <div class="form-group"><label>Logo URL</label><input id="exp_logo_url" class="cyber-input" placeholder="https://..."></div>
                 </div>
 
-                <div class="experience-section-title">二、紀念品圖文說明</div>
+                <div class="experience-section-title">二、議程卡片 / 大會時空座標</div>
+                <div class="experience-grid">
+                    <div class="form-group"><label>議程卡片標題</label><input id="exp_flow_title" class="cyber-input" placeholder="大會時空座標"></div>
+                    <label class="experience-check"><input type="checkbox" id="exp_flow_enabled"> 啟用議程卡片</label>
+                    <div class="form-group experience-grid-full"><label>議程圖片 URL（選填）</label><input id="exp_flow_image_url" class="cyber-input" placeholder="https://..."></div>
+                    <div class="form-group experience-grid-full"><label>議程卡片補充文字</label><textarea id="exp_flow_description" class="cyber-input" rows="3" placeholder="例如：09:30 - 17:00 航程時間軸"></textarea></div>
+                </div>
+
+                <div class="experience-section-title">三、紀念品圖文說明</div>
                 <div class="experience-grid">
                     <div class="form-group"><label>紀念品標題</label><input id="exp_gift_title" class="cyber-input" placeholder="方舟物資艙"></div>
                     <label class="experience-check"><input type="checkbox" id="exp_gift_enabled"> 啟用紀念品卡片</label>
@@ -628,7 +636,7 @@
                     <div class="form-group experience-grid-full"><label>紀念品文字說明</label><textarea id="exp_gift_description" class="cyber-input" rows="4" placeholder="輸入完整圖文說明"></textarea></div>
                 </div>
 
-                <div class="experience-section-title">三、影片連結</div>
+                <div class="experience-section-title">四、影片連結</div>
                 <div class="experience-grid">
                     <div class="form-group"><label>影片標題</label><input id="exp_video_title" class="cyber-input" placeholder="核心引擎啟動"></div>
                     <label class="experience-check"><input type="checkbox" id="exp_video_enabled"> 啟用影片卡片</label>
@@ -636,15 +644,16 @@
                     <label class="experience-check experience-grid-full"><input type="checkbox" id="exp_video_embed_enabled"> YouTube 可嵌入時使用 iframe 播放</label>
                 </div>
 
-                <div class="experience-section-title">四、流程圖片</div>
+                <div class="experience-section-title">五、產業星圖 / 地圖導覽</div>
                 <div class="experience-grid">
-                    <div class="form-group"><label>流程標題</label><input id="exp_flow_title" class="cyber-input" placeholder="大會時空座標"></div>
-                    <label class="experience-check"><input type="checkbox" id="exp_flow_enabled"> 啟用流程圖片卡片</label>
-                    <div class="form-group experience-grid-full"><label>流程圖片 URL</label><input id="exp_flow_image_url" class="cyber-input" placeholder="https://..."></div>
-                    <div class="form-group experience-grid-full"><label>流程補充文字</label><textarea id="exp_flow_description" class="cyber-input" rows="3" placeholder="例如：09:30 - 17:00 航程時間軸"></textarea></div>
+                    <div class="form-group"><label>地圖卡片標題</label><input id="exp_map_title" class="cyber-input" placeholder="2026 產業星圖"></div>
+                    <label class="experience-check"><input type="checkbox" id="exp_map_enabled"> 啟用地圖卡片</label>
+                    <div class="form-group"><label>地圖卡片副標</label><input id="exp_map_subtitle" class="cyber-input" placeholder="領航員名冊與每攤機會"></div>
+                    <div class="form-group"><label>地圖圖片 / 連結 URL</label><input id="exp_map_image_url" class="cyber-input" placeholder="https://..."></div>
+                    <div class="form-group experience-grid-full"><label>地圖卡片補充文字</label><textarea id="exp_map_description" class="cyber-input" rows="3" placeholder="A-MALL.png / Navigator Directory"></textarea></div>
                 </div>
 
-                <div class="experience-section-title">五、投影大標題</div>
+                <div class="experience-section-title">六、投影大標題</div>
                 <div class="experience-grid">
                     <div class="form-group"><label>投影主標</label><input id="exp_projection_title" class="cyber-input" placeholder="世代共榮的數位聚合"></div>
                     <div class="form-group"><label>投影副標</label><input id="exp_projection_subtitle" class="cyber-input" placeholder="DIGITAL CONVERGENCE FOR GENERATIONAL PROSPERITY"></div>
@@ -1433,13 +1442,18 @@
                 group.checked += Number(item.checked || 0);
                 group.total += Number(item.total || 0);
                 group.seats.push(parsed.seatText);
+                const mealCountSource = item.meals || item.meal_counts || item.mealStats || null;
+                if (mealCountSource) {
+                    group.meals = normalizeMealCounts(mealCountSource, []);
+                }
             });
 
             return [...map.values()]
                 .map(group => ({
                     ...group,
                     percent: group.total ? group.checked / group.total * 100 : 0,
-                    seatLabel: formatSeatRange(group.seats)
+                    seatLabel: formatSeatRange(group.seats),
+                    mealLabel: group.meals ? `葷 ${group.meals.葷 || 0}｜素 ${group.meals.素 || 0}｜其他 ${group.meals.其他 || 0}` : ''
                 }))
                 .sort((a, b) => String(a.group).localeCompare(String(b.group), 'zh-Hant-u-kn-true'));
         }
@@ -1454,9 +1468,21 @@
             return '其他';
         }
 
+        function pickMealValue(item = {}) {
+            return item.meal || item.meal_preference || item.food || item.diet || item.餐食 || item.餐飲 || item.meal_type || item.mealType || '';
+        }
+
+        function pickPortraitStatus(item = {}) {
+            const raw = item.portrait_consent_status || item.portrait_status || item.image_consent_status || item.肖像權 || item.肖像授權 || '';
+            if (raw) return String(raw);
+            if (item.portrait_consent === false || item.image_consent === false) return '不同意';
+            if (item.portrait_consent === true || item.image_consent === true) return '同意';
+            return '';
+        }
+
         function collectMealCountsFromLogs(logs = []) {
             return (logs || []).reduce((acc, item) => {
-                const type = normalizeMealType(item.meal || item.meal_preference || item.food || item.diet || item.餐食 || item.餐飲);
+                const type = normalizeMealType(pickMealValue(item));
                 acc[type] += 1;
                 return acc;
             }, {葷: 0, 素: 0, 其他: 0});
@@ -1464,9 +1490,17 @@
 
         function normalizeMealCounts(meals = {}, logs = []) {
             const counts = {葷: 0, 素: 0, 其他: 0};
-            Object.entries(meals || {}).forEach(([key, value]) => {
-                counts[normalizeMealType(key)] += Number(value || 0);
-            });
+            if (Array.isArray(meals)) {
+                meals.forEach(item => {
+                    const key = pickMealValue(item) || item.type || item.name || item.label || item.meal;
+                    const value = item.count ?? item.total ?? item.value ?? 1;
+                    counts[normalizeMealType(key)] += Number(value || 0);
+                });
+            } else {
+                Object.entries(meals || {}).forEach(([key, value]) => {
+                    counts[normalizeMealType(key)] += Number(value || 0);
+                });
+            }
 
             const logCounts = collectMealCountsFromLogs(logs);
             const logChosen = logCounts.葷 + logCounts.素;
@@ -1488,7 +1522,17 @@
             document.getElementById('meal-other').textContent = counts.其他 || 0;
 
             const notesBody = document.getElementById('meal-notes-body');
-            const notes = Array.isArray(specialNotes) ? specialNotes : [];
+            const notes = Array.isArray(specialNotes) ? [...specialNotes] : [];
+            (logs || []).forEach(item => {
+                const status = pickPortraitStatus(item);
+                if (/不同意|拒絕|否|false/i.test(status)) {
+                    notes.push({
+                        name: item.name || item.姓名 || '',
+                        company: item.company || item.company_name || item.公司 || '',
+                        note: '肖像權：不同意'
+                    });
+                }
+            });
             if (notes.length > 0) {
                 notesBody.innerHTML = notes.map(n => `
                     <tr>
@@ -1533,6 +1577,7 @@
                             <div>
                                 <div class="table-stat-card-title">${escapeAdminHtml(item.displayName)}</div>
                                 <div class="table-stat-card-sub">${escapeAdminHtml(item.seatLabel)}</div>
+                                ${item.mealLabel ? `<div class="table-stat-card-sub">餐飲：${escapeAdminHtml(item.mealLabel)}</div>` : ''}
                             </div>
                             <div class="table-stat-card-main">
                                 <div class="table-stat-percent">${percent}%</div>
@@ -1558,17 +1603,21 @@
                 const checked = !!p.checked;
                 const statusLabel = checked ? '已報到' : '未報到';
                 const statusClass = checked ? 'checked' : 'pending';
+                const jobTitle = p.job_title || p.title || p.position || p.職稱 || '';
+                const meal = pickMealValue(p);
+                const portraitStatus = pickPortraitStatus(p);
                 return `
                 <div class="table-person-card ${statusClass}">
                     <div class="table-person-name">
-                        <span>${escapeAdminHtml(p.name || '未命名')}</span>
+                        <span>${escapeAdminHtml(p.name || p.姓名 || '未命名')}${jobTitle ? `｜${escapeAdminHtml(jobTitle)}` : ''}</span>
                         <span class="person-status-badge ${statusClass}">${statusLabel}</span>
                     </div>
                     <div class="table-person-meta">
-                        ${escapeAdminHtml(p.company || '無公司')}<br>
+                        ${escapeAdminHtml(p.company || p.company_name || p.公司 || '無公司')}<br>
                         ${p.seat ? `座位：${escapeAdminHtml(p.seat)}<br>` : ''}
                         ${p.phone ? `手機：${escapeAdminHtml(p.phone)}<br>` : ''}
-                        ${p.meal ? `餐食：${escapeAdminHtml(p.meal)}<br>` : ''}
+                        ${meal ? `餐食：${escapeAdminHtml(meal)}<br>` : ''}
+                        ${portraitStatus ? `肖像權：${escapeAdminHtml(portraitStatus)}<br>` : ''}
                         ${p.checkin_time ? `報到時間：${escapeAdminHtml(p.checkin_time)}` : ''}
                     </div>
                 </div>`;
@@ -2272,6 +2321,7 @@
             'gift_title','gift_image_url','gift_description','gift_enabled',
             'video_title','video_url','video_embed_enabled','video_enabled',
             'flow_title','flow_image_url','flow_description','flow_enabled',
+            'map_title','map_subtitle','map_image_url','map_description','map_enabled',
             'projection_title','projection_subtitle'
         ];
 
@@ -2294,6 +2344,7 @@
                 const res = await fetch(`${API_BASE}/event-config${getActiveEventQuery()}`);
                 const json = await res.json();
                 const cfg = json.config || {};
+                if (!cfg.map_image_url && currentConfig && currentConfig.map_image_url) cfg.map_image_url = currentConfig.map_image_url;
                 expKeys.forEach(k => writeExpField(k, cfg[k]));
             } catch (e) {
                 console.warn('Navigator 設定載入失敗', e);
@@ -2301,8 +2352,17 @@
         }
 
         async function saveExperienceConfig() {
-            const payload = {};
+            let existing = {};
+            try {
+                const currentRes = await fetch(`${API_BASE}/event-config${getActiveEventQuery()}&_t=${Date.now()}`);
+                const currentJson = await currentRes.json();
+                existing = currentJson.config || {};
+            } catch (e) {
+                existing = currentConfig || {};
+            }
+            const payload = Object.assign({}, existing);
             expKeys.forEach(k => payload[k] = readExpField(k));
+            if (payload.map_image_url) payload.map_image_url = String(payload.map_image_url).trim();
             try {
                 const res = await fetch(`${API_BASE}/admin/event-config${getActiveEventQuery()}`, {
                     method: 'PUT',
