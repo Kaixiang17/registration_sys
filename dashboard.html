@@ -636,7 +636,7 @@ function setupDashboardRefreshListener() {
   if ('BroadcastChannel' in window) {
     dashboardRefreshChannel = new BroadcastChannel('smart-ark-dashboard');
     dashboardRefreshChannel.onmessage = (event) => {
-      if (event.data && event.data.type === 'agenda-updated') loadCfg();
+      if (event.data && ['agenda-updated', 'navigator-config-updated'].includes(event.data.type)) loadCfg();
     };
   }
 }
@@ -660,15 +660,20 @@ function cleanEventTitle(value) {
 function applyHeader() {
   if (!cfg) return;
   const eventName = cleanEventTitle(cfg.event_title || cfg.exp_event_title || cfg.google_sheet_name);
-  const subtitle = cfg.event_subtitle || cfg.exp_event_subtitle || '世代共榮的數位聚合';
+  const subtitle = cfg.projection_title || cfg.event_subtitle || cfg.exp_event_subtitle || '世代共榮的數位聚合';
+  const projectionSub = cfg.projection_subtitle || 'GLOBAL FACE TO FACE';
   setText('hdr-event', eventName);
-  setText('hdr-en', 'GLOBAL FACE TO FACE');
+  setText('hdr-en', projectionSub);
   setText('hdr-zh', subtitle);
   const ds = cfg.date_start || cfg.event_date_start || cfg.exp_event_date_start || '';
   const de = cfg.date_end || cfg.event_date_end || cfg.exp_event_date_end || '';
   setText('hdr-dates', ds || de ? `${ds}${de ? ' ─ '+de : ''}` : '');
-  setText('b-mid', `${eventName} · GLOBAL FACE TO FACE`);
+  setText('b-mid', `${eventName} · ${projectionSub}`);
   const brand = cfg.brand_name || cfg.exp_brand_name || '聯聖集團';
+  const brandName = document.querySelector('.brand-name');
+  const bTags = document.querySelectorAll('.b-tag');
+  if (brandName) brandName.textContent = brand;
+  bTags.forEach(tag => tag.textContent = brand);
   setText('ftr-l', `SMART ARK CONTROL TERMINAL © 2026 ${brand}`);
 }
 
