@@ -14,8 +14,22 @@
             z-index: 0 !important;
             pointer-events: none !important;
         }
+        body.circuit-background {
+            background-color: #020817 !important;
+        }
+        body.circuit-background::before {
+            opacity: 0.32 !important;
+            filter: brightness(0.55) contrast(1.08);
+        }
+        body.circuit-background::after {
+            content: '' !important;
+            position: fixed !important;
+            inset: 0 !important;
+            background: rgba(1, 7, 18, 0.58) !important;
+        }
         .ark-background {
-            opacity: 0.55;
+            opacity: 0.24;
+            filter: brightness(0.58) contrast(1.12);
         }
         header { background: rgba(10, 20, 35, 0.8); border-bottom: 1px solid var(--accent-gray); padding: 1rem 0; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
         .header-container { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; }
@@ -977,6 +991,7 @@
         const API_BASE = '/api';
         let currentConfig = null;
         let currentUser = 'admin';
+        let activeSheetName = new URLSearchParams(window.location.search).get('sheet') || '';
         let companyOptions = [];
         let editingIdx = null;
         let deleteIdx = null;
@@ -984,7 +999,7 @@
 
         function getActiveEventQuery() {
             const sheetEl = document.getElementById('googleSheetName');
-            const sheet = (sheetEl && sheetEl.value) || (currentConfig && currentConfig.google_sheet_name) || '活動報到名單';
+            const sheet = activeSheetName || (sheetEl && sheetEl.value) || (currentConfig && currentConfig.google_sheet_name) || '活動報到名單';
             return `?admin=${encodeURIComponent(currentUser || 'admin')}&sheet=${encodeURIComponent(sheet)}`;
         }
 
@@ -1187,11 +1202,13 @@
                 const json = await res.json();
                 if (json.success && json.sheets.length > 0) {
                     const select = document.getElementById('googleSheetName');
-                    const currentValue = currentConfig.google_sheet_name || '';
+                    const currentValue = activeSheetName || currentConfig.google_sheet_name || '';
                     
                     select.innerHTML = json.sheets.map(name => `
                         <option value="${name}" ${name === currentValue ? 'selected' : ''}>📊 ${name}</option>
                     `).join('');
+                    if (!activeSheetName && select.value) activeSheetName = select.value;
+                    if (activeSheetName && [...select.options].some(opt => opt.value === activeSheetName)) select.value = activeSheetName;
                     renderEventLinkList(json.sheets);
                     updateEventLink();
                     renderEventQrCode();
@@ -1307,8 +1324,10 @@
 
         async function loadConfig() {
             try {
-                const res = await fetch(`${API_BASE}/config`);
+                const res = await fetch(`${API_BASE}/config${getActiveEventQuery()}`);
                 currentConfig = await res.json();
+                if (activeSheetName) currentConfig.google_sheet_name = activeSheetName;
+                else if (currentConfig.google_sheet_name) activeSheetName = currentConfig.google_sheet_name;
                 renderProducts();
                 renderCategoryManager();
 
@@ -1744,7 +1763,13 @@
                 }
 
                 // 強制更新全域場次變數
+                activeSheetName = sheet;
                 currentConfig.google_sheet_name = sheet;
+                if (select) select.value = sheet;
+                const url = new URL(window.location.href);
+                url.searchParams.set('admin', currentUser || 'admin');
+                url.searchParams.set('sheet', sheet);
+                window.history.replaceState({}, '', url.toString());
                 
                 // 立即重新載入所有分頁的數據
                 await Promise.allSettled([
@@ -1910,6 +1935,7 @@
 
         function updateEventLink() {
             const sheet = document.getElementById('googleSheetName')?.value || '';
+            if (sheet) activeSheetName = sheet;
             const linkInput = document.getElementById('event_link');
             const dashboardInput = document.getElementById('dashboard_link');
             if(linkInput) linkInput.value = buildEventUrl(sheet, 'front');
