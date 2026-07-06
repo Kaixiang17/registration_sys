@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>智慧方舟 · 大會看板</title>
+<title>智匯方舟 · 大會看板</title>
 <link href="https://fonts.googleapis.com/css2?family=Michroma&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -496,7 +496,7 @@ body::after {
       <div class="brand-logo">⛵</div>
       <div>
         <div class="brand-name">SMART WISDOM ARK</div>
-        <div class="brand-sub">智慧方舟 · 大會投影看板</div>
+        <div class="brand-sub">智匯方舟 · 大會投影看板</div>
       </div>
     </div>
     <div class="hdr-center">
@@ -580,7 +580,7 @@ body::after {
 
 <!-- FOOTER -->
 <footer class="ftr">
-  <span id="ftr-l" class="ftr-l">SMART ARK CONTROL TERMINAL © 2026 聯聖集團</span>
+  <span id="ftr-l" class="ftr-l">SMART ARK CONTROL TERMINAL © 2026 智匯方舟</span>
   <span id="ftr-r" class="ftr-r" style="color:var(--muted)">● CONNECTING…</span>
 </footer>
 
@@ -610,6 +610,12 @@ const PALETTE = [
 let cfg            = null;
 let lastCheckCount = -1;   // only redraw donut when this changes
 let dashboardRefreshChannel = null;
+const DASHBOARD_TEMPLATE = {
+  brand_name: '智匯方舟',
+  event_title: '2026 全球面對面',
+  event_subtitle: '世代共榮的數位聚合',
+  projection_subtitle: 'GLOBAL FACE TO FACE'
+};
 
 /* ── boot ── */
 window.onload = async () => {
@@ -644,7 +650,13 @@ function setupDashboardRefreshListener() {
 /* ── config ── */
 async function loadCfg() {
   try {
-    cfg = await get(`${API}/config?admin=${enc(ADMIN)}&sheet=${enc(SHEET)}`);
+    const baseCfg = await get(`${API}/config?admin=${enc(ADMIN)}&sheet=${enc(SHEET)}`);
+    let eventCfg = {};
+    try {
+      const eventJson = await get(`${API}/event-config?admin=${enc(ADMIN)}&sheet=${enc(SHEET)}`);
+      if (eventJson.success && eventJson.config) eventCfg = eventJson.config;
+    } catch {}
+    cfg = Object.assign({}, baseCfg || {}, eventCfg || {});
     applyHeader();
     renderAgenda();
     renderEnterprises();
@@ -653,15 +665,15 @@ async function loadCfg() {
 
 function cleanEventTitle(value) {
   const v = String(value || '').trim();
-  if (!v || v === '活動報到名單' || v === '活動報名表單') return '2026 全球面對面';
-  return v.replace(/活動報名表單/g, '').replace(/活動報到名單/g, '').trim() || '2026 全球面對面';
+  if (!v || v === '活動報到名單' || v === '活動報名表單') return DASHBOARD_TEMPLATE.event_title;
+  return v.replace(/活動報名表單/g, '').replace(/活動報到名單/g, '').trim() || DASHBOARD_TEMPLATE.event_title;
 }
 
 function applyHeader() {
   if (!cfg) return;
   const eventName = cleanEventTitle(cfg.event_title || cfg.exp_event_title || cfg.google_sheet_name);
-  const subtitle = cfg.projection_title || cfg.event_subtitle || cfg.exp_event_subtitle || '世代共榮的數位聚合';
-  const projectionSub = cfg.projection_subtitle || 'GLOBAL FACE TO FACE';
+  const subtitle = cfg.projection_title || cfg.event_subtitle || cfg.exp_event_subtitle || DASHBOARD_TEMPLATE.event_subtitle;
+  const projectionSub = cfg.projection_subtitle || DASHBOARD_TEMPLATE.projection_subtitle;
   setText('hdr-event', eventName);
   setText('hdr-en', projectionSub);
   setText('hdr-zh', subtitle);
@@ -669,7 +681,7 @@ function applyHeader() {
   const de = cfg.date_end || cfg.event_date_end || cfg.exp_event_date_end || '';
   setText('hdr-dates', ds || de ? `${ds}${de ? ' ─ '+de : ''}` : '');
   setText('b-mid', `${eventName} · ${projectionSub}`);
-  const brand = cfg.brand_name || cfg.exp_brand_name || '聯聖集團';
+  const brand = cfg.brand_name || cfg.exp_brand_name || DASHBOARD_TEMPLATE.brand_name;
   const brandName = document.querySelector('.brand-name');
   const bTags = document.querySelectorAll('.b-tag');
   if (brandName) brandName.textContent = brand;
