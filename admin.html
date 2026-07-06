@@ -630,7 +630,7 @@
                 <div style="display:flex; gap:.8rem; flex-wrap:wrap; margin-top:1.2rem;">
                     <button class="adm-btn adm-btn-primary adm-btn-lg" onclick="saveExperienceConfig()">💾 儲存 Navigator 設定</button>
                     <a class="adm-btn adm-btn-sm" target="_blank" href="/">📱 預覽前台</a>
-                    <a class="adm-btn adm-btn-sm" target="_blank" href="/projection">🖥️ 預覽投影</a>
+                    <a class="adm-btn adm-btn-sm" target="_blank" href="/dashboard">🖥️ 預覽投影</a>
                 </div>
             </div>
 
@@ -2181,7 +2181,7 @@
         function writeExpField(key, value) {
             const el = expEl(key);
             if (!el) return;
-            if (el.type === 'checkbox') el.checked = !!value;
+            if (el.type === 'checkbox') el.checked = value === undefined || value === null ? true : !!value;
             else el.value = value || '';
         }
 
@@ -2206,6 +2206,14 @@
                     body: JSON.stringify(payload)
                 });
                 const json = await res.json();
+                if (json.success) {
+                    localStorage.setItem('dashboard_refresh_signal', String(Date.now()));
+                    if ('BroadcastChannel' in window) {
+                        const ch = new BroadcastChannel('smart-ark-dashboard');
+                        ch.postMessage({type:'navigator-config-updated', at: Date.now()});
+                        ch.close();
+                    }
+                }
                 alert(json.success ? 'Navigator 設定已儲存' : ('儲存失敗：' + (json.message || '未知錯誤')));
             } catch (e) {
                 alert('Navigator 設定儲存失敗：' + e.message);
