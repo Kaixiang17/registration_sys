@@ -160,14 +160,14 @@
         .ark-meta-label { color: rgba(255,255,255,0.45); font-size: .7rem; letter-spacing: .05em; margin-bottom: 0.15rem; }
         .ark-meta-value { color: #00e5ff; font-weight: bold; font-size: .95rem; word-break: break-word; }
 
-        .ark-terminal-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+        .ark-terminal-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; align-items: stretch; }
         .ark-nav-card {
             border-radius: 1rem;
             padding: 1.1rem;
             border: 1px solid rgba(0,229,255,.25);
             background: linear-gradient(135deg, rgba(0,229,255,.06), rgba(5,15,35,.5));
             display: grid;
-            grid-template-columns: 44px 1fr auto;
+            grid-template-columns: 44px minmax(0, 1fr) 18px;
             gap: 1rem;
             align-items: center;
             cursor: pointer;
@@ -175,6 +175,8 @@
             text-align: left;
             color: inherit;
             width: 100%;
+            height: 100%;
+            min-height: 118px;
         }
         .ark-nav-card:hover {
             transform: translateY(-2px);
@@ -187,9 +189,9 @@
             background: rgba(0,229,255,.1); border: 1px solid rgba(0,229,255,.25);
             color: #00e5ff; font-size: 1.3rem;
         }
-        .ark-card-title { color: #f4ffff; font-weight: bold; font-size: 1rem; }
-        .ark-card-sub { color: #00e5ff; font-weight: 600; font-size: .85rem; margin-top: .1rem; }
-        .ark-card-desc { color: rgba(255,255,255,0.5); font-size: .75rem; margin-top: .2rem; line-height: 1.4; }
+        .ark-card-title { color: #f4ffff; font-weight: bold; font-size: 1rem; line-height: 1.35; overflow-wrap: anywhere; }
+        .ark-card-sub { color: #00e5ff; font-weight: 600; font-size: .85rem; margin-top: .1rem; line-height: 1.4; overflow-wrap: anywhere; }
+        .ark-card-desc { color: rgba(255,255,255,0.5); font-size: .75rem; margin-top: .2rem; line-height: 1.45; overflow-wrap: anywhere; }
         .ark-card-arrow { color: rgba(0,229,255,.6); font-size: 1.2rem; transition: 0.2s; }
         .ark-nav-card:hover .ark-card-arrow { color: #00e5ff; transform: translateX(2px); }
 
@@ -209,9 +211,10 @@
         .ark-bottom-icon { font-size: 1.1rem; line-height: 1; }
 
         @media(min-width: 760px) {
-            .ark-terminal-shell { max-width: 720px; }
-            .ark-terminal-grid { grid-template-columns: 1fr 1fr; }
-            .ark-terminal-footer { max-width: 720px; }
+            .ark-terminal-shell { max-width: 860px; }
+            .ark-terminal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
+            .ark-nav-card { min-height: 136px; padding: 1.25rem; }
+            .ark-terminal-footer { max-width: 860px; }
         }
 
         /* 肖像授權同意 */
@@ -294,7 +297,7 @@
             .products-grid { grid-template-columns: 1fr !important; gap: 1.5rem !important; }
             /* ARK terminal */
             .ark-terminal-panel { padding: 1.25rem; border-radius: 1.25rem; }
-            .ark-nav-card { grid-template-columns: 40px 1fr auto; gap: .75rem; padding: .9rem; }
+            .ark-nav-card { grid-template-columns: 40px minmax(0, 1fr) 18px; gap: .75rem; padding: .9rem; min-height: 104px; }
             .ark-card-icon { width: 40px; height: 40px; font-size: 1.15rem; }
             .ark-mission-meta { grid-template-columns: 1fr; gap: 0.5rem; }
             /* inputs & buttons */
@@ -904,6 +907,7 @@
                 <div class="ark-meta-chip"><div class="ark-meta-label">COMPANY</div><div class="ark-meta-value">${company}</div></div>
                 <div class="ark-meta-chip"><div class="ark-meta-label">SEAT / MEAL</div><div class="ark-meta-value">${seat}｜${mealText}</div></div>
             `;
+            applyArkBrandFromConfig();
             applyArkCardsFromConfig();
         }
 
@@ -930,6 +934,7 @@
 
         function applyArkCardsFromConfig() {
             const c = systemConfig || {};
+            applyArkBrandFromConfig();
             // 商品專區
             setCardText('arkCard2Title', c.gift_title  ? `【${c.gift_title}】`  : '【活動商品專區】');
             setCardText('arkCard2Sub',   '精選伴手禮與補給品');
@@ -946,10 +951,20 @@
 
             // 議程專區
             setCardText('arkCard4Title', c.flow_title  ? `【${c.flow_title}】`  : '【大會時空座標】');
-            setCardText('arkCard4Sub',   '實體進化航線預載');
+            setCardText('arkCard4Sub',   '議程與投影 Dashboard');
             setCardText('arkCard4Desc',  c.flow_description || '09:30 - 17:00 航程時間軸');
             const b4 = document.getElementById('arkCard4Btn');
             if (b4) b4.style.display = (c.flow_enabled === false) ? 'none' : '';
+        }
+
+        function applyArkBrandFromConfig() {
+            const c = systemConfig || {};
+            const brand = c.brand_name || c.exp_brand_name || '智慧方舟';
+            const subtitle = c.event_subtitle || c.exp_event_subtitle || c.projection_title || '世代共榮的數位聚合';
+            const titleEl = document.querySelector('.ark-terminal-title');
+            const subEl = document.querySelector('.ark-terminal-subtitle');
+            if (titleEl) titleEl.textContent = brand;
+            if (subEl) subEl.textContent = `SMART WISDOM ARK｜${subtitle}`;
         }
 
         function setCardText(id, value) {
@@ -965,17 +980,8 @@
             alert('⚡ 核心引擎影像傳輸鏈結建立中，請稍後再試。');
         }
         function openArkFlow() {
-            const flowUrl = systemConfig?.flow_image_url || systemConfig?.schedule_image_url || systemConfig?.agenda_image_url || '';
-            if (flowUrl) {
-                const modal = document.getElementById('mapModal');
-                const img = document.getElementById('mapDisplayImage');
-                const frame = document.getElementById('mapDisplayFrame');
-                frame.style.display = 'none'; frame.removeAttribute('src');
-                img.src = flowUrl; img.style.display = 'block';
-                modal.classList.remove('state-hidden');
-                return;
-            }
-            alert('⏳ 大會時空座標與實體進化航線正在預載中。');
+            const q = `?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`;
+            window.open(`/dashboard.html${q}`, '_blank', 'noopener');
         }
 
         async function submitCheckin(autoMeal) {
