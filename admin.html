@@ -1924,22 +1924,10 @@
 
 
         function agendaRowTemplate(item = {}) {
-            const times = [];
-            for(let h=0; h<24; h++) {
-                for(let m=0; m<60; m+=10) {
-                    const hh = h.toString().padStart(2, '0');
-                    const mm = m.toString().padStart(2, '0');
-                    times.push(`${hh}:${mm}`);
-                }
-            }
             const currentVal = item.time || '';
-            const options = times.map(t => `<option value="${t}" ${currentVal === t ? 'selected' : ''}>${t}</option>`).join('');
             
             return `<div class="agenda-row" style="display:grid; grid-template-columns:140px 1fr auto; gap:0.8rem; align-items:center;">
-                <select class="cyber-input agenda-time-input" style="margin:0; appearance: auto; background-color: #060f1e; color: #fff;">
-                    ${currentVal && !times.includes(currentVal) ? `<option value="${currentVal}" selected>${currentVal}</option>` : ''}
-                    ${options}
-                </select>
+                <input type="text" class="cyber-input agenda-time-input" style="margin:0;" placeholder="09:30" value="${currentVal}">
                 <input class="cyber-input agenda-event-input" style="margin:0;" placeholder="議程內容" value="${item.event || ''}">
                 <button class="adm-btn adm-btn-danger adm-btn-sm" onclick="this.closest('.agenda-row').remove()">刪除</button>
             </div>`;
@@ -1963,6 +1951,17 @@
             })).filter(x => x.time || x.event);
             const res = await fetch(`/api/agenda${getActiveEventQuery()}`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({agenda})});
             const json = await res.json();
+            if (json.success) {
+                try {
+                    const payload = {type: 'agenda-updated', at: Date.now()};
+                    localStorage.setItem('dashboard_refresh_signal', String(payload.at));
+                    if ('BroadcastChannel' in window) {
+                        const ch = new BroadcastChannel('smart-ark-dashboard');
+                        ch.postMessage(payload);
+                        ch.close();
+                    }
+                } catch(e) {}
+            }
             alert(json.success ? '議程已儲存到資料庫，Dashboard 會同步顯示。' : (json.message || '議程儲存失敗'));
         }
 
