@@ -1670,14 +1670,14 @@
             const sheet = select ? select.value : '';
             if (!sheet) return alert('請先選擇活動場次');
 
-            if (status) status.innerHTML = '<span style="color:#00e5ff">⏳ 正在快速切換場次...</span>';
+            if (status) status.innerHTML = '<span style="color:#00e5ff">⏳ 正在同步場次數據...</span>';
             if (select) select.disabled = true;
 
             try {
                 const res = await fetch('/api/session/sheet', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({sheet})
+                    body: JSON.stringify({sheet, admin: currentUser})
                 });
                 const json = await res.json();
 
@@ -1686,9 +1686,10 @@
                     return alert(json.message || '切換失敗');
                 }
 
+                // 強制更新全域場次變數
                 currentConfig.google_sheet_name = sheet;
-                updateEventLink();
-
+                
+                // 立即重新載入所有分頁的數據
                 await Promise.allSettled([
                     loadConfig(),
                     updateDashboard(),
@@ -1700,12 +1701,21 @@
                     loadExperienceSchedule()
                 ]);
 
-                if (status) status.innerHTML = `<span style="color:#4ade80">✓ 已切換到：${sheet}</span>`;
-                showMessage(`已快速切換到「${sheet}」`, 'success');
+                // 更新連結與 QR Code
+                updateEventLink();
+
+                // 重新渲染當前分頁
+                const activeTabEl = document.querySelector('.tab-content.active');
+                if (activeTabEl) {
+                    await preloadTabData(activeTabEl.id);
+                }
+
+                if (status) status.innerHTML = `<span style="color:#4ade80">✓ 已同步場次：${sheet}</span>`;
+                showMessage(`已成功同步「${sheet}」的所有設定與數據`, 'success');
             } catch (e) {
                 console.error(e);
-                if (status) status.innerHTML = '<span style="color:#f87171">✕ 網路連線異常，切換失敗</span>';
-                alert('網路連線異常，切換失敗');
+                if (status) status.innerHTML = '<span style="color:#f87171">✕ 同步異常</span>';
+                alert('場次同步失敗，請重新整理頁面');
             } finally {
                 if (select) select.disabled = false;
             }
@@ -1914,8 +1924,22 @@
 
 
         function agendaRowTemplate(item = {}) {
+            const times = [];
+            for(let h=0; h<24; h++) {
+                for(let m=0; m<60; m+=10) {
+                    const hh = h.toString().padStart(2, '0');
+                    const mm = m.toString().padStart(2, '0');
+                    times.push(`${hh}:${mm}`);
+                }
+            }
+            const currentVal = item.time || '';
+            const options = times.map(t => `<option value="${t}" ${currentVal === t ? 'selected' : ''}>${t}</option>`).join('');
+            
             return `<div class="agenda-row" style="display:grid; grid-template-columns:140px 1fr auto; gap:0.8rem; align-items:center;">
-                <input class="cyber-input agenda-time-input" style="margin:0;" placeholder="09:00" value="${item.time || ''}">
+                <select class="cyber-input agenda-time-input" style="margin:0; appearance: auto; background-color: #060f1e; color: #fff;">
+                    ${currentVal && !times.includes(currentVal) ? `<option value="${currentVal}" selected>${currentVal}</option>` : ''}
+                    ${options}
+                </select>
                 <input class="cyber-input agenda-event-input" style="margin:0;" placeholder="議程內容" value="${item.event || ''}">
                 <button class="adm-btn adm-btn-danger adm-btn-sm" onclick="this.closest('.agenda-row').remove()">刪除</button>
             </div>`;
