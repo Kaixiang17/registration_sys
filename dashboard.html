@@ -609,10 +609,12 @@ const PALETTE = [
 /* ── state ── */
 let cfg            = null;
 let lastCheckCount = -1;   // only redraw donut when this changes
+let dashboardRefreshChannel = null;
 
 /* ── boot ── */
 window.onload = async () => {
   tick(); setInterval(tick, 1000);
+  setupDashboardRefreshListener();
 
   if (!SHEET) {
     try {
@@ -624,7 +626,20 @@ window.onload = async () => {
   await loadCfg();
   await poll();
   setInterval(poll, 12000);
+  setInterval(loadCfg, 30000);
 };
+
+function setupDashboardRefreshListener() {
+  window.addEventListener('storage', (event) => {
+    if (event.key === 'dashboard_refresh_signal') loadCfg();
+  });
+  if ('BroadcastChannel' in window) {
+    dashboardRefreshChannel = new BroadcastChannel('smart-ark-dashboard');
+    dashboardRefreshChannel.onmessage = (event) => {
+      if (event.data && event.data.type === 'agenda-updated') loadCfg();
+    };
+  }
+}
 
 /* ── config ── */
 async function loadCfg() {
