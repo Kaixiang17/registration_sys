@@ -1,1147 +1,880 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智慧方舟 - 航空登機系統</title>
-    <link rel="stylesheet" href="smart-ark-theme.css?v=9">
-    <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; font-family: "PingFang TC", "Michroma", "Stick", sans-serif; }
-        body { line-height: 1.6; color: #fff; overflow-x: hidden; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智慧方舟 · 大會看板</title>
+<link href="https://fonts.googleapis.com/css2?family=Michroma&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        header {
-            padding: 1rem 0;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            border-bottom: 1px solid var(--accent-gray);
-            background: rgba(8, 16, 28, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-        }
-        .header-container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; display: flex; justify-content: space-between; align-items: center; }
-        main { max-width: 1200px; margin: 0 auto; padding: 2.5rem 2rem 5rem; min-height: calc(100vh - 80px); }
-        .state-hidden { display: none !important; }
+:root {
+  --bg:      #020c1b;
+  --panel:   rgba(5,16,36,0.82);
+  --card:    rgba(8,24,50,0.60);
+  --cyan:    #00e5ff;
+  --green:   #4ade80;
+  --border:  rgba(0,229,255,0.14);
+  --text:    #ddeeff;
+  --muted:   rgba(180,210,240,0.45);
+  --glow:    0 0 22px rgba(0,229,255,0.32);
+}
 
-        .verify-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-top: 2.5rem; }
-        .verify-card {
-            padding: 2.5rem 2rem;
-            text-align: center;
-            cursor: pointer;
-            border-radius: 1rem;
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .form-card { max-width: 600px; margin: 0 auto; padding: 3.5rem 3rem; text-align: center; border-radius: 1.5rem; }
-        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2.5rem; }
-        .product-img { width: 100%; height: 220px; object-fit: contain; background: rgba(0,0,0,0.4); border-bottom: 1px solid var(--accent-gray); }
+html, body { height: 100%; }
 
-        .btn-back-nav {
-            background: transparent;
-            border: 1px solid var(--accent-gray);
-            color: var(--text-dark);
-            padding: 0.6rem 1.4rem;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.2s;
-            margin-bottom: 2rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .btn-back-nav:hover { border-color: var(--text-dark); background: rgba(0, 229, 255, 0.08); transform: translateX(-2px); }
-        .cyber-input { width: 100%; margin-bottom: 1.5rem; padding: 1.2rem; font-size: 1.1rem; border-radius: 0.6rem; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Noto Sans TC", "PingFang TC", sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
 
-        .group-item { padding: 1.5rem; border-bottom: 1px solid rgba(0,229,255,0.15); cursor: pointer; transition: 0.2s; text-align: left; display: flex; justify-content: space-between; align-items: center;}
-        .group-item:hover { background: rgba(0,229,255,0.08); }
+/* grid mesh background */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 5%,  rgba(0,50,110,0.30) 0%, transparent 60%),
+    radial-gradient(ellipse 65% 50% at 90% 92%, rgba(0,80,160,0.20) 0%, transparent 55%);
+}
+body::after {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(0,229,255,0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,0.022) 1px, transparent 1px);
+  background-size: 55px 55px;
+  mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 0%, transparent 100%);
+}
 
-        .meal-selected, .is-original-selected {
-            border-color: #00e5ff !important;
-            background: rgba(0, 229, 255, 0.25) !important;
-            box-shadow: 0 0 20px rgba(0, 229, 255, 0.4), inset 0 0 10px rgba(0, 229, 255, 0.2) !important;
-            font-weight: bold !important;
-            transform: translateY(-2px);
-        }
-        .proxy-selected {
-            border-color: #ffa500 !important;
-            background: rgba(255, 165, 0, 0.2) !important;
-            box-shadow: 0 0 20px rgba(255, 165, 0, 0.3) !important;
-            transform: translateY(-2px);
-        }
+/* ── HEADER ── */
+.hdr {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(2,8,20,0.93);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(16px);
+}
+.hdr-inner {
+  max-width: 1600px; margin: 0 auto;
+  padding: 0 1.75rem;
+  height: 100px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 1.25rem;
+}
 
-        /* ── ARK TERMINAL ── */
-        .ark-terminal-shell {
-            max-width: 560px;
-            margin: 0 auto;
-            padding: 1rem 1rem 6rem;
-            min-height: calc(100vh - 140px);
-            position: relative;
-        }
-        .ark-terminal-panel {
-            position: relative;
-            overflow: hidden;
-            border-radius: 1.8rem;
-            padding: 1.75rem;
-            background: linear-gradient(180deg, rgba(6, 22, 46, 0.94), rgba(3, 10, 26, 0.98));
-            border: 1px solid rgba(0,229,255,.3);
-            box-shadow: 0 15px 35px rgba(0,0,0,.4), 0 0 30px rgba(0,229,255,.15);
-        }
-        .ark-terminal-panel::before {
-            content: '';
-            position: absolute;
-            inset: -40%;
-            background:
-                radial-gradient(circle at 25% 20%, rgba(0,229,255,.18), transparent 30%),
-                radial-gradient(circle at 85% 8%, rgba(81,169,255,.15), transparent 26%);
-            pointer-events: none;
-        }
-        .ark-terminal-content { position: relative; z-index: 1; }
-        .ark-brand-kicker {
-            display: flex;
-            justify-content: space-between;
-            gap: .75rem;
-            align-items: center;
-            color: rgba(203,246,255,.7);
-            font-size: .75rem;
-            letter-spacing: .1em;
-            text-transform: uppercase;
-            margin-bottom: 1.2rem;
-            border-bottom: 1px solid rgba(0,229,255,0.15);
-            padding-bottom: 0.75rem;
-        }
-        .ark-logo-mark {
-            width: 38px;
-            height: 38px;
-            border-radius: 10px;
-            border: 1px solid rgba(0,229,255,.3);
-            background: rgba(0,229,255,.05);
-            display: grid;
-            place-items: center;
-            font-size: 1.2rem;
-        }
-        .ark-terminal-title {
-            font-size: clamp(2rem, 6vw, 2.8rem);
-            line-height: 1.1;
-            letter-spacing: .06em;
-            color: #f4ffff;
-            text-shadow: 0 0 12px rgba(0,229,255,.6);
-            font-weight: 900;
-            margin-bottom: .25rem;
-        }
-        .ark-terminal-subtitle {
-            color: rgba(0, 229, 255, 0.8);
-            font-size: .88rem;
-            letter-spacing: .1em;
-            margin-bottom: 1.5rem;
-        }
-        .ark-user-greeting {
-            padding: 1rem 1.25rem;
-            border-radius: 0.75rem;
-            background: rgba(0,229,255,.06);
-            border: 1px solid rgba(0,229,255,.2);
-            color: #eaffff;
-            font-weight: bold;
-            font-size: 1.1rem;
-            letter-spacing: .05em;
-            margin-bottom: 1.25rem;
-        }
-        .ark-mission-meta {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: .8rem;
-            margin-bottom: 1.5rem;
-        }
-        .ark-meta-chip {
-            border-radius: .75rem;
-            border: 1px solid rgba(255,255,255,.08);
-            background: rgba(255,255,255,.03);
-            padding: .8rem 1rem;
-        }
-        .ark-meta-label { color: rgba(255,255,255,0.45); font-size: .7rem; letter-spacing: .05em; margin-bottom: 0.15rem; }
-        .ark-meta-value { color: #00e5ff; font-weight: bold; font-size: .95rem; word-break: break-word; }
+.brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.brand-logo {
+  width: 44px; height: 44px;
+  border: 1.5px solid var(--cyan);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.35rem;
+  box-shadow: var(--glow);
+}
+.brand-name {
+  font-family: "Michroma", sans-serif;
+  font-size: 0.88rem; letter-spacing: 4px;
+  color: var(--cyan); text-shadow: var(--glow);
+}
+.brand-sub { font-size: 0.65rem; color: var(--muted); letter-spacing: 2px; margin-top: 2px; }
 
-        .ark-terminal-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; align-items: stretch; }
-        .ark-nav-card {
-            border-radius: 1rem;
-            padding: 1.1rem;
-            border: 1px solid rgba(0,229,255,.25);
-            background: linear-gradient(135deg, rgba(0,229,255,.06), rgba(5,15,35,.5));
-            display: grid;
-            grid-template-columns: 44px minmax(0, 1fr) 18px;
-            gap: 1rem;
-            align-items: center;
-            cursor: pointer;
-            transition: all .2s ease;
-            text-align: left;
-            color: inherit;
-            width: 100%;
-            height: 100%;
-            min-height: 118px;
-        }
-        .ark-nav-card:hover {
-            transform: translateY(-2px);
-            border-color: rgba(0,229,255,.7);
-            box-shadow: 0 5px 15px rgba(0,229,255,.1);
-        }
-        .ark-card-icon {
-            width: 44px; height: 44px; border-radius: 12px;
-            display: grid; place-items: center;
-            background: rgba(0,229,255,.1); border: 1px solid rgba(0,229,255,.25);
-            color: #00e5ff; font-size: 1.3rem;
-        }
-        .ark-card-title { color: #f4ffff; font-weight: bold; font-size: 1rem; line-height: 1.35; overflow-wrap: anywhere; }
-        .ark-card-sub { color: #00e5ff; font-weight: 600; font-size: .85rem; margin-top: .1rem; line-height: 1.4; overflow-wrap: anywhere; }
-        .ark-card-desc { color: rgba(255,255,255,0.5); font-size: .75rem; margin-top: .2rem; line-height: 1.45; overflow-wrap: anywhere; }
-        .ark-card-arrow { color: rgba(0,229,255,.6); font-size: 1.2rem; transition: 0.2s; }
-        .ark-nav-card:hover .ark-card-arrow { color: #00e5ff; transform: translateX(2px); }
+.hdr-center { flex: 1; text-align: center; min-width: 0; }
+.hdr-event {
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #fff;
+  line-height: 1.1;
+  text-shadow: 0 0 18px rgba(255,255,255,0.20), var(--glow);
+}
+.hdr-en {
+  font-family: "Michroma", sans-serif;
+  font-size: 0.72rem; letter-spacing: 5px; color: var(--cyan); opacity: .65;
+  margin-bottom: 6px;
+}
+.hdr-zh {
+  font-size: clamp(1.6rem, 3.5vw, 2.6rem);
+  font-weight: 900; letter-spacing: 6px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  text-shadow: 0 0 30px rgba(255,255,255,0.15), 0 2px 4px rgba(0,0,0,0.4);
+  line-height: 1.1;
+}
+.hdr-dates { font-size: 0.6rem; color: var(--muted); letter-spacing: 2px; margin-top: 2px; }
 
-        .ark-terminal-footer {
-            position: sticky; bottom: 1rem; margin: 1.5rem auto 0; max-width: 560px;
-            display: grid; grid-template-columns: repeat(5,1fr); gap: .4rem; padding: .5rem;
-            border-radius: 1.25rem; background: rgba(4, 12, 24, 0.9);
-            border: 1px solid rgba(0,229,255,.2); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            box-shadow: 0 10px 30px rgba(0,0,0,.5);
-        }
-        .ark-bottom-item {
-            border: 0; background: transparent; color: rgba(255,255,255,0.6);
-            display: grid; place-items: center; gap: .2rem; padding: .5rem .2rem;
-            border-radius: .75rem; cursor: pointer; font-size: .7rem; transition: 0.2s;
-        }
-        .ark-bottom-item.active, .ark-bottom-item:hover { color: #00e5ff; background: rgba(0,229,255,.08); }
-        .ark-bottom-icon { font-size: 1.1rem; line-height: 1; }
+.hdr-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.live-pill {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 1.5px;
+  color: var(--green);
+  background: rgba(74,222,128,0.08);
+  border: 1px solid rgba(74,222,128,0.22);
+  padding: 5px 13px; border-radius: 20px;
+}
+.live-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--green);
+  animation: blink 1.5s infinite;
+}
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:.3} }
+.clock {
+  font-family: "Michroma", sans-serif;
+  font-size: 1rem; color: var(--cyan); letter-spacing: 2px;
+}
 
-        @media(min-width: 760px) {
-            .ark-terminal-shell { max-width: 860px; }
-            .ark-terminal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
-            .ark-nav-card { min-height: 136px; padding: 1.25rem; }
-            .ark-terminal-footer { max-width: 860px; }
-        }
+/* ── BANNER ── */
+.banner {
+  position: relative; z-index: 10;
+  background: rgba(0,229,255,0.04);
+  border-bottom: 1px solid var(--border);
+}
+.banner-inner {
+  max-width: 1600px; margin: 0 auto;
+  padding: 0.65rem 1.75rem;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.b-tag   { font-family: "Michroma", sans-serif; font-size: 0.60rem; letter-spacing: 3px; color: var(--muted); }
+.b-label { font-size: 0.82rem; letter-spacing: 4px; color: var(--cyan); font-weight: 900; text-shadow: var(--glow); }
 
-        /* 肖像授權同意 */
-        .portrait-consent-box { margin: 1.5rem 0 1.2rem; padding: 1rem; border: 1px solid rgba(0, 229, 255, 0.15); border-radius: 0.75rem; background: rgba(0, 229, 255, 0.03); text-align: left; }
-        .portrait-consent-check { display: flex; align-items: flex-start; gap: 0.6rem; color: #dffaff; font-size: 0.9rem; line-height: 1.5; cursor: pointer; }
-        .portrait-consent-check input { margin-top: 0.2rem; width: 16px; height: 16px; flex: 0 0 auto; accent-color: #00e5ff; }
-        .portrait-consent-link { border: none; background: transparent; color: #00e5ff; font-size: 0.85rem; font-weight: bold; text-decoration: underline; cursor: pointer; padding: 0; margin-top: 0.4rem; display: inline-block; }
+/* ── MAIN ── */
+.main {
+  position: relative; z-index: 5;
+  max-width: 1600px; margin: 0 auto;
+  padding: 1.5rem 1.75rem 2rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  /* fill viewport height */
+  min-height: calc(100dvh - 62px - 34px - 38px);
+}
 
-        .portrait-consent-modal { position: fixed; inset: 0; z-index: 9999; display: none; align-items: center; justify-content: center; padding: 1.5rem; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-        .portrait-consent-modal.active { display: flex; }
-        .portrait-consent-card { width: min(92vw, 540px); max-height: 75vh; overflow-y: auto; padding: 2rem; border-radius: 1.25rem; border: 1px solid rgba(0, 229, 255, 0.3); background: rgba(6, 15, 30, 0.98); color: #eaffff; box-shadow: 0 20px 40px rgba(0,0,0,0.5); text-align: left; }
-        .portrait-consent-card h3 { color: #00e5ff; margin-bottom: 1rem; font-size: 1.3rem; }
-        .portrait-consent-card p { color: rgba(255,255,255,0.7); line-height: 1.6; font-size: 0.9rem; margin-bottom: 0.8rem; }
-        .portrait-consent-close { float: right; border: 1px solid rgba(255,255,255,0.2); background: rgba(255, 255, 255, 0.05); color: #fff; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+/* ── PANEL ── */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  backdrop-filter: blur(14px);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.panel::before {
+  content: '';
+  display: block; flex-shrink: 0; height: 1px;
+  background: linear-gradient(90deg, transparent 5%, var(--cyan) 40%, var(--cyan) 60%, transparent 95%);
+  opacity: 0.20;
+}
+.panel-head {
+  padding: 1rem 1.4rem 0.85rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.panel-title {
+  font-size: 0.86rem; font-weight: 900;
+  letter-spacing: 2px; color: var(--text);
+  display: flex; align-items: center; gap: 7px;
+}
+.panel-en {
+  font-family: "Michroma", sans-serif;
+  font-size: 0.58rem; letter-spacing: 2px; color: var(--muted);
+}
 
-        /* ── 前台按鈕系統 ── */
-        .ck-btn {
-            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
-            width: 100%; padding: 1rem 1.5rem; font-family: inherit; font-size: 1.05rem; font-weight: bold;
-            letter-spacing: 2px; border-radius: 0.6rem; border: 1px solid rgba(0,229,255,0.4); color: #00e5ff;
-            background: rgba(0,229,255,0.06); cursor: pointer; transition: all 0.2s ease; text-decoration: none;
-        }
-        .ck-btn:hover:not(:disabled) { background: rgba(0,229,255,0.15); border-color: #00e5ff; box-shadow: 0 0 15px rgba(0,229,255,0.2); }
-        .ck-btn:active:not(:disabled) { transform: scale(0.99); }
-        .ck-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-        .ck-btn-confirm { border-color: rgba(74,222,128,0.5); color: #4ade80; background: rgba(74,222,128,0.08); font-size: 1.1rem; }
-        .ck-btn-confirm:hover:not(:disabled) { background: rgba(74,222,128,0.18); border-color: #4ade80; box-shadow: 0 0 15px rgba(74,222,128,0.25); }
-        .ck-btn-warn { border-color: rgba(255,165,0,0.5); color: #ffa500; background: rgba(255,165,0,0.06); }
-        .ck-btn-warn:hover:not(:disabled) { background: rgba(255,165,0,0.15); border-color: #ffa500; }
-        .ck-btn-ghost { border-color: rgba(255,255,255,0.15); color: #aaa; background: transparent; }
-        .ck-btn-ghost:hover:not(:disabled) { border-color: rgba(255,255,255,0.3); color: #fff; background: rgba(255,255,255,0.05); }
-        .ck-btn-pill {
-            width: auto; padding: 0.45rem 1.1rem; font-size: 0.85rem; letter-spacing: 1px;
-            border-radius: 30px; border: 1px solid rgba(0,229,255,0.3); color: #00e5ff; background: rgba(0,229,255,0.05);
-            cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.4rem; font-family: inherit; font-weight: 600; text-decoration: none;
-        }
-        .ck-btn-pill:hover { background: rgba(0,229,255,0.15); border-color: #00e5ff; }
-        .ck-tag { padding: 0.4rem 1.2rem; border-radius: 30px; font-size: 0.85rem; font-weight: 600; border: 1px solid rgba(0,229,255,0.2); color: #aaa; background: transparent; cursor: pointer; transition: all 0.18s; font-family: inherit; }
-        .ck-tag:hover, .ck-tag.active { border-color: #00e5ff; color: #00e5ff; background: rgba(0,229,255,0.08); }
+.panel-body {
+  flex: 1;
+  padding: 1.4rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.panel-body::-webkit-scrollbar { width: 3px; }
+.panel-body::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.18); border-radius: 3px; }
 
-        /* header 按鈕區 */
-        .header-action-buttons { display: flex; align-items: center; justify-content: flex-end; gap: 12px; flex-shrink: 0; }
+/* ── DONUT ── */
+.donut-layout {
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 2.6rem;
+}
 
-        /* ══════════════════════════════════════
-           手機版全面修正
-        ══════════════════════════════════════ */
-        @media(max-width: 768px) {
-            /* header */
-            .header-container { padding: 0 1rem !important; gap: 8px !important; }
-            .header-action-buttons { gap: 5px !important; }
-            /* 右側 pill 按鈕縮小，防止擠壓左側標題 */
-            .header-action-buttons .ck-btn-pill {
-                padding: 0.38rem 0.65rem !important;
-                font-size: 0.72rem !important;
-                letter-spacing: 0 !important;
-                white-space: nowrap !important;
-            }
-            /* 左側「首頁」文字適度縮小 */
-            .header-title-text {
-                font-size: 0.95rem !important;
-                letter-spacing: 0.5px !important;
-                white-space: nowrap !important;
-            }
-            /* main 內距 */
-            main { padding: 1.5rem 1rem 4rem !important; }
-            /* form card */
-            .form-card { padding: 2.5rem 1.5rem !important; border-radius: 1rem; }
-            /* heading */
-            h2.neon-text { font-size: 1.6rem !important; text-align: center; line-height: 1.3; }
-            #actionState h2.neon-text { font-size: 1.8rem !important; margin-bottom: 2rem !important; }
-            /* 選擇方式卡片：手機單欄 */
-            .verify-grid { grid-template-columns: 1fr !important; gap: 1rem !important; margin-top: 1.5rem; }
-            .verify-card { padding: 1.75rem 1.25rem !important; }
-            /* 餐點選擇 */
-            #mealOptions > div[style*="grid-template-columns"],
-            #tempMealRadioGroup { grid-template-columns: 1fr !important; gap: 0.75rem !important; }
-            /* 商品頁 */
-            #productState > div:first-child { flex-direction: column !important; align-items: stretch !important; gap: 1rem !important; margin-bottom: 2rem !important; }
-            #productState h1.neon-text { font-size: 1.8rem !important; text-align: left; }
-            .products-grid { grid-template-columns: 1fr !important; gap: 1.5rem !important; }
-            /* ARK terminal */
-            .ark-terminal-panel { padding: 1.25rem; border-radius: 1.25rem; }
-            .ark-nav-card { grid-template-columns: 40px minmax(0, 1fr) 18px; gap: .75rem; padding: .9rem; min-height: 104px; }
-            .ark-card-icon { width: 40px; height: 40px; font-size: 1.15rem; }
-            .ark-mission-meta { grid-template-columns: 1fr; gap: 0.5rem; }
-            /* inputs & buttons */
-            .cyber-input { padding: 1rem !important; font-size: 1rem !important; }
-            .ck-btn { font-size: 1rem !important; letter-spacing: 1.5px !important; }
-        }
+.donut-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 260px;
+  height: 260px;
+}
+#donut-svg {
+  display: block;
+  filter: drop-shadow(0 0 20px rgba(0,229,255,0.18));
+}
+.donut-center {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  pointer-events: none; text-align: center;
+}
+.donut-num {
+  font-family: "Michroma", sans-serif;
+  font-size: 2.8rem; font-weight: 900; line-height: 1;
+  color: var(--cyan); text-shadow: var(--glow);
+}
+.donut-lbl { font-size: 0.62rem; color: var(--muted); letter-spacing: 2px; margin-top: 5px; }
 
-        /* 極小螢幕 (<400px) 額外保護 */
-        @media(max-width: 400px) {
-            .header-action-buttons .ck-btn-pill { padding: 0.32rem 0.5rem !important; font-size: 0.68rem !important; }
-            .header-title-text { font-size: 0.88rem !important; }
+/* legend — right side of donut */
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  width: 320px;
+  max-width: 320px;
+  align-self: center;
+}
+.leg {
+  display: grid;
+  grid-template-columns: 14px 1fr auto;
+  align-items: center;
+  column-gap: 12px;
+}
+.leg-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.leg-name {
+  font-size: 0.92rem;
+  color: var(--text);
+  font-weight: 800;
+  line-height: 1.35;
+}
+.leg-val  {
+  font-family: "Michroma", sans-serif;
+  font-size: 0.9rem;
+  color: var(--muted);
+  white-space: nowrap;
+  text-align: right;
+  min-width: 72px;
+}
 
-        }
+.empty-msg { text-align: center; padding: 3rem 0; color: var(--muted); font-size: 0.85rem; line-height: 2; }
 
-        /* ── 手機版背景：偵測觸控裝置或窄螢幕，改用手機專屬背景圖 ── */
-        @media (max-width: 768px), (hover: none) and (pointer: coarse) {
-            body.circuit-background {
-                background-image: url("/smart-ark-mobile-bg.png") !important;
-                background-size: cover !important;
-                background-position: center top !important;
-                background-repeat: no-repeat !important;
-                background-attachment: scroll !important;
-            }
-            #splash-screen {
-                background-image: url("/smart-ark-mobile-bg.png") !important;
-                background-size: cover !important;
-                background-position: center top !important;
-                background-repeat: no-repeat !important;
-            }
-        }
-    </style>
+/* ── AGENDA (clean mission list) ── */
+.tl {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 0.15rem 0;
+}
+
+.tl-item {
+  display: grid;
+  grid-template-columns: 116px minmax(0, 1fr);
+  gap: 0.9rem;
+  align-items: stretch;
+  position: relative;
+}
+
+.tl-lead {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 76px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,229,255,0.18);
+  background: rgba(0,229,255,0.045);
+  overflow: hidden;
+}
+.tl-lead::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 10px;
+  background: rgba(0,229,255,0.5);
+  box-shadow: 0 0 14px rgba(0,229,255,0.35);
+}
+
+.tl-dot {
+  display: none;
+}
+
+.tl-time {
+  font-family: "Michroma", sans-serif;
+  font-size: 0.68rem;
+  color: var(--cyan);
+  text-align: center;
+  white-space: normal;
+  writing-mode: horizontal-tb;
+  transform: none;
+  line-height: 1.45;
+  letter-spacing: 1px;
+  padding: 0 0.55rem;
+}
+
+.tl-card {
+  min-width: 0;
+  min-height: 76px;
+  background: linear-gradient(135deg, rgba(0,229,255,0.055), rgba(255,255,255,0.025));
+  border: 1px solid rgba(0,229,255,0.20);
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  transition: all 0.25s;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.tl-item.active .tl-lead {
+  border-color: rgba(0,229,255,0.65);
+  background: rgba(0,229,255,0.10);
+  box-shadow: 0 0 18px rgba(0,229,255,0.12);
+}
+.tl-item.active .tl-card {
+  border-color: rgba(0,229,255,0.55);
+  background: linear-gradient(135deg, rgba(0,229,255,0.13), rgba(255,255,255,0.035));
+  box-shadow: 0 0 24px rgba(0,229,255,0.10), inset 0 0 18px rgba(0,229,255,0.035);
+}
+.tl-item.done .tl-lead,
+.tl-item.done .tl-card {
+  opacity: 0.55;
+}
+
+.tl-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+}
+.tl-title {
+  font-size: 1.02rem;
+  font-weight: 900;
+  line-height: 1.45;
+  letter-spacing: 1px;
+  color: #f2fbff;
+}
+.tl-now {
+  flex-shrink: 0;
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+  padding: 0.22rem 0.62rem;
+  border-radius: 999px;
+  color: #06111f;
+  background: linear-gradient(135deg, #00e5ff, #4ade80);
+  box-shadow: 0 0 14px rgba(0,229,255,0.25);
+}
+.tl-sub {
+  font-size: 0.76rem;
+  color: rgba(221,238,255,0.62);
+  margin-top: 0.35rem;
+  line-height: 1.55;
+}
+
+@media (max-width: 760px) {
+  .tl-item { grid-template-columns: 1fr; gap: 0.45rem; }
+  .tl-lead { min-height: 44px; justify-content: flex-start; padding-left: 1rem; }
+  .tl-card { min-height: 68px; }
+}
+
+/* ── ENTERPRISE DIRECTORY ── */
+.enterprise-panel {
+  grid-column: 1 / -1;
+  min-height: 360px;
+}
+.enterprise-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.9rem;
+}
+.enterprise-card {
+  display: grid;
+  grid-template-columns: 108px 1fr;
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid rgba(0,229,255,0.18);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(0,229,255,0.065), rgba(255,255,255,0.025));
+  box-shadow: inset 0 0 26px rgba(0,229,255,0.035);
+}
+.enterprise-img {
+  width: 108px;
+  height: 78px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,229,255,0.22);
+  background: rgba(255,255,255,0.045);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cyan);
+  font-size: 1.8rem;
+  font-weight: 900;
+  box-shadow: 0 0 14px rgba(0,229,255,0.10);
+}
+.enterprise-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.enterprise-meta { min-width: 0; }
+.enterprise-name {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #f2fbff;
+  letter-spacing: 1px;
+  margin-bottom: 0.25rem;
+}
+.enterprise-industry {
+  display: inline-flex;
+  color: #06111f;
+  background: linear-gradient(135deg, #00e5ff, #4ade80);
+  border-radius: 999px;
+  padding: 0.18rem 0.62rem;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+  margin-bottom: 0.45rem;
+}
+.enterprise-desc {
+  color: rgba(221,238,255,0.68);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+@media (max-width: 760px) {
+  .enterprise-card { grid-template-columns: 80px 1fr; }
+  .enterprise-img { width: 80px; height: 64px; }
+}
+
+/* ── FOOTER ── */
+.ftr {
+  position: relative; z-index: 10;
+  border-top: 1px solid var(--border);
+  background: rgba(2,8,20,0.88);
+  height: 38px;
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 0 1.75rem;
+}
+.ftr-l { font-size: 0.60rem; color: var(--muted); letter-spacing: 1.5px; }
+.ftr-r { font-family: "Michroma", sans-serif; font-size: 0.62rem; letter-spacing: 1.5px; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 860px) {
+  .main {
+    grid-template-columns: 1fr;
+    min-height: unset;
+    padding: 1rem 1rem 1.5rem;
+  }
+  .donut-layout { flex-direction: column; gap: 1.5rem; }
+  .legend { width: 100%; max-width: 340px; }
+  .donut-wrap { width: 200px; height: 200px; }
+  .donut-num  { font-size: 2.2rem; }
+  .brand-sub  { display: none; }
+  .hdr-inner  { padding: 0 1rem; }
+  .banner-inner { padding: 0.4rem 1rem; }
+}
+@media (max-width: 480px) {
+  .hdr-en, .hdr-dates { display: none; }
+  .clock { font-size: 0.78rem; }
+  .panel-body { padding: 1rem; }
+  .donut-wrap { width: 170px; height: 170px; }
+  .donut-num  { font-size: 1.9rem; }
+}
+</style>
 </head>
-<body class="circuit-background">
-    <div class="ark-background"></div>
+<body>
 
-    <div id="splash-screen" onclick="startRegistration()">
-        <div class="click-hint">點 擊 畫 面 開 始 報 名</div>
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-inner">
+    <div class="brand">
+      <div class="brand-logo">⛵</div>
+      <div>
+        <div class="brand-name">SMART WISDOM ARK</div>
+        <div class="brand-sub">智慧方舟 · 大會投影看板</div>
+      </div>
     </div>
-
-    <div id="banner-container" style="width: 100%; max-width: 1200px; margin: 0 auto; display: none;">
-        <img id="event-banner" src="" style="width: 100%; border-radius: 0 0 15px 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);">
+    <div class="hdr-center">
+      <div id="hdr-event" class="hdr-event">2026 全球面對面</div>
+      <div id="hdr-en" class="hdr-en">GLOBAL FACE TO FACE</div>
+      <div id="hdr-zh" class="hdr-zh">世代共榮的數位聚合</div>
+      <div id="hdr-dates" class="hdr-dates">2026/06/01 ─ 2026/08/XX</div>
     </div>
-
-    <header>
-        <div class="header-container">
-            <!-- 左上：固定顯示「首頁」，點擊回到選擇方式 -->
-            <div onclick="resetToHome()" style="cursor:pointer; display: flex; align-items: center; gap: 8px; min-width: 0; flex-shrink: 1;">
-                <span style="font-size: 1.3rem; flex-shrink: 0;">🏠</span>
-                <span id="header-title" class="header-title-text" style="font-size: 1.15rem; letter-spacing: 2px; white-space: nowrap; font-weight: bold; color: var(--text-dark);">首 頁</span>
-            </div>
-            <div class="header-action-buttons" style="display:none;">
-                <a id="projectionBtn" class="ck-btn-pill" href="/dashboard" target="_blank" rel="noopener" style="border-color:rgba(74,222,128,0.4); color:#4ade80; background:rgba(74,222,128,0.05);">📺 投影</a>
-                <button id="shopBtn" class="ck-btn-pill" onclick="goToShop()" style="display:none;">🛒 商品</button>
-                <button id="mapBtn" class="ck-btn-pill" onclick="toggleMapModal(true)">🗺️ 地圖</button>
-            </div>
-        </div>
-    </header>
-
-    <main>
-        <div id="methodSelectionState" class="state-hidden">
-            <div style="max-width:800px; margin: 0 auto;">
-                <div style="text-align: center;"><h2 class="neon-text" style="font-size: 2.2rem;">請 選 擇 登 機 方 式</h2></div>
-                <div class="verify-grid">
-                    <div class="verify-card cyber-card" onclick="prepareSearch('name', '姓名')">
-                        <div style="font-size:3rem; margin-bottom: 0.5rem;">📝</div><h3 class="neon-text">姓 名 報 到</h3>
-                    </div>
-                    <div class="verify-card cyber-card" onclick="prepareSearch('phone', '手機')">
-                        <div style="font-size:3rem; margin-bottom: 0.5rem;">📱</div><h3 class="neon-text">手 機 報 到</h3>
-                    </div>
-                    <div class="verify-card cyber-card" onclick="prepareSearch('email', 'Email')">
-                        <div style="font-size:3rem; margin-bottom: 0.5rem;">✉️</div><h3 class="neon-text">Email 報 到</h3>
-                    </div>
-                    <div class="verify-card cyber-card" onclick="prepareSearch('company', '公司')">
-                        <div style="font-size:3rem; margin-bottom: 0.5rem;">🏢</div><h3 class="neon-text">公 司 報 到</h3>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="actionState" class="state-hidden">
-            <button class="btn-back-nav" onclick="setAppState('methodSelection')">← 重新選擇方式</button>
-            <div class="form-card cyber-card">
-                <h2 id="actionTitle" class="neon-text" style="margin-bottom: 2.5rem; font-size: 2.2rem;">登 機 驗 證</h2>
-                <input type="text" id="actionInput" class="cyber-input" placeholder="請輸入資訊">
-                <button class="ck-btn" onclick="handleAction()" style="letter-spacing:3px;">🔍 開 始 驗 證</button>
-            </div>
-
-            <div id="tempRegistrationSection" class="form-card cyber-card state-hidden" style="margin-top: 2.5rem; border: 1px solid #ffa500 !important; box-shadow: 0 0 25px rgba(255, 165, 0, 0.2); background: rgba(12, 22, 38, 0.95); text-align: left;">
-                <h3 style="color: #ffa500; font-size: 1.25rem; margin-bottom: 1.5rem; text-shadow: 0 0 10px rgba(255,165,0,0.3); font-weight: bold; text-align: center; line-height: 1.4;">⚠️ 查無此旅客登機紀錄！<br>是否開啟現場補位功能？</h3>
-
-                <div style="margin-bottom: 1.2rem;">
-                    <label style="color: #ffa500; display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: bold;">旅客姓名 *</label>
-                    <input type="text" id="addName" class="cyber-input" placeholder="請輸入姓名" style="margin-bottom: 0;">
-                </div>
-                <div style="margin-bottom: 1.2rem;">
-                    <label style="color: #ffa500; display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: bold;">行動電話 *</label>
-                    <input type="text" id="addPhone" class="cyber-input" placeholder="請輸入手機" style="margin-bottom: 0;">
-                </div>
-                <div style="margin-bottom: 1.2rem;">
-                    <label style="color: #8fa0b0; display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">服務單位 / 公司名稱</label>
-                    <input type="text" id="addCompany" class="cyber-input" placeholder="請輸入公司名稱" style="margin-bottom: 0;">
-                </div>
-                <div style="margin-bottom: 1.5rem;">
-                    <label style="color: #8fa0b0; display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">桌號 / 座位安排</label>
-                    <input type="text" id="addSeat" class="cyber-input" placeholder="例如: 08桌 (留空則現場安排)" style="margin-bottom: 0;">
-                </div>
-
-                <div style="margin-bottom: 1.5rem;">
-                    <label style="color: #8fa0b0; display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">當日餐飲偏好</label>
-                    <div id="tempMealRadioGroup" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem;">
-                        <button type="button" class="verify-card cyber-card meal-opt-temp temp-meal-selected" data-meal="葷食" onclick="selectTempMeal(this, '葷食')" style="padding: 1rem 0.5rem; font-size: 0.95rem; font-weight: bold; border-radius: 0.5rem; cursor: pointer; background: rgba(0,0,0,0.3); border: 1px solid var(--accent-gray); color: #fff;">🥩 葷食</button>
-                        <button type="button" class="verify-card cyber-card meal-opt-temp" data-meal="素食" onclick="selectTempMeal(this, '素食')" style="padding: 1rem 0.5rem; font-size: 0.95rem; font-weight: bold; border-radius: 0.5rem; cursor: pointer; background: rgba(0,0,0,0.3); border: 1px solid var(--accent-gray); color: #fff;">🥬 素食</button>
-                        <button type="button" class="verify-card cyber-card meal-opt-temp" data-meal="不需餐食" onclick="selectTempMeal(this, '不需餐食')" style="padding: 1rem 0.5rem; font-size: 0.95rem; font-weight: bold; border-radius: 0.5rem; cursor: pointer; background: rgba(0,0,0,0.3); border: 1px solid var(--accent-gray); color: #fff;">❌ 不需餐食</button>
-                    </div>
-                </div>
-
-                <div class="portrait-consent-box" style="margin-bottom:1.5rem;">
-                    <label class="portrait-consent-check" onclick="event.preventDefault(); openPortraitConsentModal();" style="cursor:pointer;">
-                        <input type="checkbox" id="portraitConsentTemp" onclick="event.stopPropagation();">
-                        <span>我已閱讀並同意活動拍攝與肖像使用授權條款<br><small style="color:rgba(255,255,255,0.45);">未勾選代表不同意，仍可完成報到並由系統記錄</small></span>
-                    </label>
-                    <button type="button" class="portrait-consent-link" onclick="openPortraitConsentModal()">📄 查看完整條款（含不同意選項）</button>
-                </div>
-                <div style="display: flex; gap: 1rem; margin-top: 0;">
-                    <button class="ck-btn ck-btn-warn" onclick="submitAddRegistration()" style="margin-top:0;">✓ 確認外加報到</button>
-                    <button class="ck-btn ck-btn-ghost" onclick="hideTempSection()" style="margin-top:0;">取消</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="groupListState" class="state-hidden">
-            <button class="btn-back-nav" onclick="setAppState('action')">← 重新搜尋</button>
-            <div class="form-card cyber-card" style="max-width: 700px;">
-                <h2 id="groupName" class="neon-text" style="margin-bottom: 2rem;">請 選 擇 旅 客</h2>
-                <div id="groupList" class="panel-border" style="background: rgba(4,10,20,0.4); border-radius: 1rem; overflow: hidden;"></div>
-            </div>
-        </div>
-
-        <div id="mealState" class="state-hidden">
-            <button class="btn-back-nav" onclick="resetToHome()">← 取消</button>
-            <div class="form-card cyber-card">
-                <h2 class="neon-text" style="margin-bottom:2rem;">🍽️ 機 上 餐 飲 偏 好</h2>
-                <div id="mealOptions"></div>
-                <button id="finalBtn" class="ck-btn ck-btn-confirm" disabled onclick="submitCheckin()">✈️ 確 認 並 核 發 登 機 證</button>
-            </div>
-        </div>
-
-        <div id="successState" class="state-hidden">
-            <section class="ark-terminal-shell">
-                <div id="arkTerminalPanel" class="ark-terminal-panel">
-                    <div class="ark-terminal-content">
-                        <div class="ark-brand-kicker">
-                            <div>
-                                <div>方舟終端機</div>
-                                <div>ARK TERMINAL</div>
-                            </div>
-                            <div class="ark-logo-mark">⚓</div>
-                        </div>
-                        <div class="ark-terminal-title">智慧方舟</div>
-                        <div class="ark-terminal-subtitle">SMART WISDOM ARK｜世代共榮的數位聚合</div>
-                        <div id="arkGreeting" class="ark-user-greeting">您好，領航員</div>
-                        <div id="arkTerminalInfo" class="ark-mission-meta"></div>
-                        <div class="ark-terminal-grid">
-                            <button type="button" class="ark-nav-card" id="arkCard4Btn" onclick="openArkFlow()">
-                                <div class="ark-card-icon">🕘</div>
-                                <div>
-                                    <div class="ark-card-title" id="arkCard4Title">【大會時空座標】</div>
-                                    <div class="ark-card-sub" id="arkCard4Sub">實體進化航線預載</div>
-                                    <div class="ark-card-desc" id="arkCard4Desc">09:30 - 17:00 航程時間軸</div>
-                                </div>
-                                <div class="ark-card-arrow">›</div>
-                            </button>
-                            <button type="button" class="ark-nav-card" id="arkCard2Btn" onclick="openArkGift()">
-                                <div class="ark-card-icon">🎁</div>
-                                <div>
-                                    <div class="ark-card-title" id="arkCard2Title">【活動商品專區】</div>
-                                    <div class="ark-card-sub" id="arkCard2Sub">精選伴手禮與補給品</div>
-                                    <div class="ark-card-desc" id="arkCard2Desc">點擊進入物資艙查看</div>
-                                </div>
-                                <div class="ark-card-arrow">›</div>
-                            </button>
-                            <button type="button" class="ark-nav-card" id="arkCard3Btn" onclick="openArkVideo()">
-                                <div class="ark-card-icon">▶</div>
-                                <div>
-                                    <div class="ark-card-title" id="arkCard3Title">【核心引擎啟動】</div>
-                                    <div class="ark-card-sub" id="arkCard3Sub">智能全新數位中控系統</div>
-                                    <div class="ark-card-desc" id="arkCard3Desc">三年經營現況影片</div>
-                                </div>
-                                <div class="ark-card-arrow">›</div>
-                            </button>
-                            <button type="button" class="ark-nav-card" onclick="openArkMap()">
-                                <div class="ark-card-icon">🧭</div>
-                                <div>
-                                    <div class="ark-card-title" id="arkCard1Title">【2026 產業星圖】</div>
-                                    <div class="ark-card-sub" id="arkCard1Sub">領航員名冊與每攤機會</div>
-                                    <div class="ark-card-desc" id="arkCard1Desc">A-MALL.png / Navigator Directory</div>
-                                </div>
-                                <div class="ark-card-arrow">›</div>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-<!-- 底部導覽列已移除 -->
-                <button class="ck-btn ck-btn-ghost" onclick="resetToHome()" style="max-width:280px; margin:2rem auto 0; font-size: 0.95rem;">← 回 到 報 到 首 頁</button>
-            </section>
-        </div>
-
-        <div id="productState" class="state-hidden">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3rem;">
-                <h1 class="neon-text" style="font-size: 2.2rem;">🛍️ 活 動 商 品 專 區</h1>
-                <button class="ck-btn-pill ck-btn-ghost" onclick="resetToHome()">← 返 回</button>
-            </div>
-            <div id="giftsSection" class="state-hidden">
-                <h2 class="neon-text" style="margin-bottom: 1.5rem; font-size: 1.5rem;">🎁 精 選 伴 手 禮</h2>
-                <div id="giftsGrid" class="products-grid"></div>
-            </div>
-            <div id="normalProductsSection" style="margin-top: 4rem;">
-                <h2 class="neon-text" style="margin-bottom: 1.5rem; font-size: 1.5rem;">📚 補 給 品 清 單</h2>
-                <div id="categoryFilters" style="margin-bottom: 2.5rem; display: flex; flex-wrap: wrap; gap: 0.8rem;"></div>
-                <div id="productsGrid" class="products-grid"></div>
-            </div>
-        </div>
-    </main>
-
-    <!-- 肖像授權條款 Modal -->
-    <div id="portraitConsentModal" class="portrait-consent-modal">
-        <div class="portrait-consent-card">
-            <button class="portrait-consent-close" onclick="closePortraitConsentModal()">✕</button>
-            <h3 style="text-align:center;">📸 活動拍攝與肖像使用授權條款</h3>
-            <p>本人同意主辦單位（以下簡稱「主辦方」）於本次活動期間，對本人進行拍攝、錄影及錄音，並授權主辦方將相關影像、照片及聲音（以下簡稱「影像資料」）用於以下用途：</p>
-            <p><strong style="color:#00e5ff;">一、授權使用範圍</strong><br>
-            活動紀錄與存檔、官方網站、社群媒體（Facebook、Instagram、YouTube 等）、宣傳素材、新聞稿及媒體發布、內部教育訓練及企業簡報。</p>
-            <p><strong style="color:#00e5ff;">二、授權期間</strong><br>
-            本授權自本人簽署同意起，永久有效，且不限地域範圍。</p>
-            <p><strong style="color:#00e5ff;">三、免責聲明</strong><br>
-            主辦方保證影像資料之使用不涉及任何誹謗、損害本人名譽或違法之行為。如有任何疑慮，請於報到前向工作人員提出。</p>
-            <p><strong style="color:#00e5ff;">四、不同意之處理</strong><br>
-            若本人不同意上述條款，請告知現場工作人員，主辦方將盡力安排避免拍攝，但仍可正常參與活動。</p>
-            <p style="color: rgba(255,255,255,0.5); font-size: 0.82rem; margin-top: 1rem;">如對本條款有任何疑問，請洽詢現場工作人員或主辦方聯絡窗口。</p>
-            <div style="display:flex; gap:1rem; margin-top:1.5rem;">
-                <button class="ck-btn ck-btn-confirm" style="font-size:0.95rem;" onclick="agreePortraitConsent()">✓ 我已閱讀並同意</button>
-                <button class="ck-btn ck-btn-ghost" style="font-size:0.95rem;" onclick="disagreePortraitConsent()">✕ 不同意</button>
-            </div>
-        </div>
+    <div class="hdr-right">
+      <div class="live-pill"><span class="live-dot"></span>LIVE</div>
+      <div id="clock" class="clock">--:--:--</div>
     </div>
+  </div>
+</header>
 
-    <div id="mapModal" class="state-hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
-        <div style="position: relative; width: 90%; height: 85vh; max-width: 1200px; display: flex; flex-direction: column;">
-            <button onclick="toggleMapModal(false)" style="align-self: flex-end; margin-bottom: 12px; background: #00e5ff; color: #000; border: none; padding: 10px 24px; border-radius: 30px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 15px rgba(0,229,255,0.3); transition: 0.2s;">✕ 關 閉 地 圖</button>
-            <div style="flex-grow: 1; background: #060f1e; border-radius: 12px; overflow: hidden; border: 1px solid rgba(0,229,255,0.25); display: flex; justify-content: center; align-items: center; box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
-                <img id="mapDisplayImage" src="" style="width: 100%; height: 100%; object-fit: contain; display: none;">
-                <iframe id="mapDisplayFrame" src="" style="width: 100%; height: 100%; border: none; display: none;"></iframe>
-            </div>
-        </div>
+<!-- BANNER -->
+<div class="banner">
+  <div class="banner-inner">
+    <span class="b-tag">智匯方舟 | SMART WISDOM ARK</span>
+    <span id="b-mid" class="b-label">2026 全球面對面 · GLOBAL FACE TO FACE</span>
+    <span class="b-tag">智匯方舟 | SMART WISDOM ARK</span>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- LEFT: Donut -->
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">🌐 實時登艦產業生態分佈</div>
+      <span class="panel-en">INDUSTRY ECOSYSTEM</span>
     </div>
+    <div class="panel-body">
+      <div class="donut-layout">
+        <div class="donut-wrap">
+          <svg id="donut-svg" viewBox="0 0 240 240" width="240" height="240"
+               style="transform:rotate(-90deg);">
+            <circle cx="120" cy="120" r="85" fill="none"
+                    stroke="rgba(255,255,255,0.05)" stroke-width="32"/>
+          </svg>
+          <div class="donut-center">
+            <div class="donut-num" id="donut-num" style="font-size:1.4rem;line-height:1.2"></div>
+            <div class="donut-lbl" id="donut-lbl"></div>
+          </div>
+        </div>
+        <div class="legend" id="legend">
+          <div class="empty-msg" style="padding:.5rem 0">📡 連線中…</div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        let currentSheet = urlParams.get('sheet') || '';
-        const sheetLockedByUrl = urlParams.has('sheet');
-        const currentAdmin = urlParams.get('admin') || 'admin';
-        const API_BASE = '/api';
-        let searchMethod = '', selectedUser = null, systemConfig = null;
-        window.allProducts = [];
-        window.currentCategory = '全部';
-        window.selectedTempMealChoice = '葷食';
+  <!-- RIGHT: Agenda -->
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">🗓 大會時空座標 · 議程</div>
+      <span id="agenda-range" class="panel-en">CONFERENCE TIMELINE</span>
+    </div>
+    <div class="panel-body">
+      <div id="tl" class="tl">
+        <div class="empty-msg">📡 載入議程中…</div>
+      </div>
+    </div>
+  </div>
 
-        window.onload = function() {
-            if (!currentSheet) { fetchCurrentSheet(); } else { initSystem(); }
-            if (!sheetLockedByUrl) setInterval(fetchCurrentSheet, 30000);
-        };
+  <!-- BOTTOM: Enterprise Directory -->
+  <div class="panel enterprise-panel">
+    <div class="panel-head">
+      <div class="panel-title">🏢 今日參與企業</div>
+      <span class="panel-en">PARTNER DIRECTORY</span>
+    </div>
+    <div class="panel-body">
+      <div id="enterprise-list" class="enterprise-list">
+        <div class="empty-msg">📡 載入參與企業中…</div>
+      </div>
+    </div>
+  </div>
 
-        function fetchCurrentSheet() {
-            fetch(`${API_BASE}/current_sheet?admin=${encodeURIComponent(currentAdmin)}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        const newSheet = data.current_sheet;
-                        if (newSheet !== currentSheet) { currentSheet = newSheet; initSystem(); }
-                    }
-                })
-                .catch(err => console.error("同步數據異常中斷", err));
-        }
+</div>
 
-        function getCheckinStateKey() {
-            return `smartArk:lastCheckin:${currentAdmin}:${currentSheet || 'default'}`;
-        }
+<!-- FOOTER -->
+<footer class="ftr">
+  <span id="ftr-l" class="ftr-l">SMART ARK CONTROL TERMINAL © 2026 聯聖集團</span>
+  <span id="ftr-r" class="ftr-r" style="color:var(--muted)">● CONNECTING…</span>
+</footer>
 
-        function rememberCheckinState(user, meal) {
-            try {
-                sessionStorage.setItem(getCheckinStateKey(), JSON.stringify({
-                    user,
-                    meal,
-                    savedAt: Date.now()
-                }));
-            } catch(e) { /* ignore storage errors */ }
-        }
+<script>
+/* ── URL params ── */
+const UP    = new URLSearchParams(location.search);
+let   SHEET = UP.get('sheet') || '';
+const ADMIN = UP.get('admin') || 'admin';
+const API   = '/api';
 
-        function clearCheckinState() {
-            try { sessionStorage.removeItem(getCheckinStateKey()); } catch(e) {}
-        }
+const PALETTE = [
+  '#00E5FF', // 亮青
+  '#FF2D95', // 桃紅
+  '#FFD600', // 黃
+  '#00E676', // 綠
+  '#7C4DFF', // 紫
+  '#FF6D00', // 橘
+  '#40C4FF', // 藍
+  '#FF5252', // 紅
+  '#C6FF00', // 黃綠
+  '#B388FF', // 淺紫
+  '#69F0AE', // 淺綠
+  '#FFAB40'  // 淺橘
+];
 
-        async function restoreLastCheckinState() {
-            try {
-                const raw = sessionStorage.getItem(getCheckinStateKey());
-                if (!raw) return false;
-                const saved = JSON.parse(raw);
-                if (!saved || !saved.user) return false;
-                selectedUser = saved.user;
-                await mergeExperienceConfig();
-                renderArkTerminal(saved.user, saved.meal || saved.user.meal || '');
-                const splash = document.getElementById('splash-screen');
-                if (splash) splash.style.display = 'none';
-                document.getElementById('shopBtn').style.display = 'block';
-                setAppState('success');
-                return true;
-            } catch(e) {
-                clearCheckinState();
-                return false;
-            }
-        }
+/* ── state ── */
+let cfg            = null;
+let lastCheckCount = -1;   // only redraw donut when this changes
+let dashboardRefreshChannel = null;
 
-        async function initSystem() {
-            await loadSystemConfig();
-            await restoreLastCheckinState();
-            updateProjectionLink();
-            document.title = `${currentSheet || '活動'} - 活動報到系統`;
-        }
+/* ── boot ── */
+window.onload = async () => {
+  tick(); setInterval(tick, 1000);
+  setupDashboardRefreshListener();
 
-        function updateProjectionLink() {
-            const btn = document.getElementById('projectionBtn');
-            if (!btn) return;
-            btn.href = `/dashboard.html?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet || '')}`;
-        }
+  if (!SHEET) {
+    try {
+      const r = await get(`${API}/current_sheet?admin=${enc(ADMIN)}`);
+      if (r.success && r.current_sheet) SHEET = r.current_sheet;
+    } catch {}
+  }
 
-        function startRegistration() {
-            const splash = document.getElementById('splash-screen');
-            splash.style.opacity = '0';
-            splash.style.visibility = 'hidden';
-            setTimeout(() => {
-                splash.style.display = 'none';
-                setAppState('methodSelection');
-                document.getElementById('shopBtn').style.display = 'block';
-            }, 800);
-        }
+  await loadCfg();
+  await poll();
+  setInterval(poll, 12000);
+  setInterval(loadCfg, 30000);
+};
 
-        function goToShop() {
-            const splash = document.getElementById('splash-screen');
-            if (splash && splash.style.display !== 'none') { splash.style.display = 'none'; }
-            showProducts();
-        }
+function setupDashboardRefreshListener() {
+  window.addEventListener('storage', (event) => {
+    if (event.key === 'dashboard_refresh_signal') loadCfg();
+  });
+  if ('BroadcastChannel' in window) {
+    dashboardRefreshChannel = new BroadcastChannel('smart-ark-dashboard');
+    dashboardRefreshChannel.onmessage = (event) => {
+      if (event.data && ['agenda-updated', 'navigator-config-updated'].includes(event.data.type)) loadCfg();
+    };
+  }
+}
 
-        function setAppState(s) {
-            ['methodSelection', 'action', 'groupList', 'meal', 'success', 'product'].forEach(x => {
-                const el = document.getElementById(x+'State');
-                if(el) el.classList.add('state-hidden');
-            });
-            document.getElementById(s+'State').classList.remove('state-hidden');
-            hideTempSection();
-            window.scrollTo(0, 0);
-        }
+/* ── config ── */
+async function loadCfg() {
+  try {
+    cfg = await get(`${API}/config?admin=${enc(ADMIN)}&sheet=${enc(SHEET)}`);
+    applyHeader();
+    renderAgenda();
+    renderEnterprises();
+  } catch (e) { console.warn('cfg', e); }
+}
 
-        function resetToHome() { clearCheckinState(); setAppState('methodSelection'); }
+function cleanEventTitle(value) {
+  const v = String(value || '').trim();
+  if (!v || v === '活動報到名單' || v === '活動報名表單') return '2026 全球面對面';
+  return v.replace(/活動報名表單/g, '').replace(/活動報到名單/g, '').trim() || '2026 全球面對面';
+}
 
-        function hideTempSection() {
-            const tempSec = document.getElementById('tempRegistrationSection');
-            if(tempSec) tempSec.classList.add('state-hidden');
-        }
+function applyHeader() {
+  if (!cfg) return;
+  const eventName = cleanEventTitle(cfg.event_title || cfg.exp_event_title || cfg.google_sheet_name);
+  const subtitle = cfg.projection_title || cfg.event_subtitle || cfg.exp_event_subtitle || '世代共榮的數位聚合';
+  const projectionSub = cfg.projection_subtitle || 'GLOBAL FACE TO FACE';
+  setText('hdr-event', eventName);
+  setText('hdr-en', projectionSub);
+  setText('hdr-zh', subtitle);
+  const ds = cfg.date_start || cfg.event_date_start || cfg.exp_event_date_start || '';
+  const de = cfg.date_end || cfg.event_date_end || cfg.exp_event_date_end || '';
+  setText('hdr-dates', ds || de ? `${ds}${de ? ' ─ '+de : ''}` : '');
+  setText('b-mid', `${eventName} · ${projectionSub}`);
+  const brand = cfg.brand_name || cfg.exp_brand_name || '聯聖集團';
+  const brandName = document.querySelector('.brand-name');
+  const bTags = document.querySelectorAll('.b-tag');
+  if (brandName) brandName.textContent = brand;
+  bTags.forEach(tag => tag.textContent = brand);
+  setText('ftr-l', `SMART ARK CONTROL TERMINAL © 2026 ${brand}`);
+}
 
-        function selectTempMeal(el, meal) {
-            window.selectedTempMealChoice = meal;
-            document.querySelectorAll('#tempMealRadioGroup .meal-opt-temp').forEach(btn => {
-                btn.style.borderColor = 'var(--accent-gray)';
-                btn.style.background = 'rgba(0,0,0,0.3)';
-                btn.style.boxShadow = 'none';
-                btn.style.color = '#fff';
-            });
-            el.style.borderColor = '#ffa500';
-            el.style.background = 'rgba(255, 165, 0, 0.15)';
-            el.style.boxShadow = '0 0 12px rgba(255, 165, 0, 0.3)';
-            el.style.color = '#ffa500';
-        }
+/* ── poll: only redraws donut when new check-ins occur ── */
+async function poll() {
+  try {
+    const d = await get(`${API}/dashboard_stats?admin=${enc(ADMIN)}&sheet=${enc(SHEET)}`);
+    if (!d.success) return;
+    const s = d.stats;
 
-        async function submitAddRegistration() {
-            const consentTemp = document.getElementById('portraitConsentTemp');
-            const portraitConsent = consentTemp ? consentTemp.checked : false;
-            const data = {
-                name: document.getElementById('addName').value.trim(),
-                phone: document.getElementById('addPhone').value.trim(),
-                company: document.getElementById('addCompany').value.trim(),
-                seat: document.getElementById('addSeat').value.trim() || '現場安排',
-                meal: window.selectedTempMealChoice,
-                portrait_consent: portraitConsent,
-                portrait_consent_status: portraitConsent ? '同意' : '不同意',
-                admin: currentAdmin,
-                sheet: currentSheet
-            };
-            if(!data.name || !data.phone) return alert('❌ 請完整填寫學員姓名與手機核心欄位！');
-            try {
-                const res = await fetch('/api/registrations/add', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(data)
-                });
-                const result = await res.json();
-                if(result.success) {
-                    hideTempSection();
-                    alert(`🎉 臨時補單報到成功！歡迎登機。`);
-                    resetToHome();
-                } else {
-                    alert('報到未完成：' + result.message);
-                }
-            } catch(e) { alert('通訊矩陣回應異常，無法外加名單'); }
-        }
+    // fingerprint = total + checked_in
+    const fingerprint = (s.total ?? 0) * 100000 + (s.checked_in ?? 0);
 
-        async function toggleMapModal(show) {
-            const modal = document.getElementById('mapModal');
-            const img = document.getElementById('mapDisplayImage');
-            const frame = document.getElementById('mapDisplayFrame');
-            if (show) {
-                modal.classList.remove('state-hidden');
-                try {
-                    const res = await fetch(`${API_BASE}/config?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}&t=` + new Date().getTime());
-                    const config = await res.json();
-                    let url = config.map_image_url ? config.map_image_url.trim() : '';
-                    if (url) {
-                        const lowerUrl = url.toLowerCase();
-                        const isImage = lowerUrl.endsWith('.png') || lowerUrl.endsWith('.jpg') || lowerUrl.endsWith('.jpeg') || lowerUrl.endsWith('.gif') || lowerUrl.endsWith('.webp') || url.startsWith('data:image/');
-                        if (isImage) {
-                            frame.style.display = 'none'; frame.removeAttribute('src');
-                            img.src = url; img.style.display = 'block';
-                        } else {
-                            img.style.display = 'none'; img.removeAttribute('src');
-                            frame.src = url; frame.style.display = 'block';
-                        }
-                    } else {
-                        alert('✨ 產業星圖正由方舟中樞更新載入中，稍後將開放導覽。');
-                        modal.classList.add('state-hidden');
-                    }
-                } catch(e) { modal.classList.add('state-hidden'); }
-            } else {
-                modal.classList.add('state-hidden'); img.removeAttribute('src'); frame.removeAttribute('src');
-            }
-        }
+    
+    const checked = s.checked_in ?? 0;
+    const tot = s.total ?? 0;
+    setText('donut-num', checked > 0 ? '100%' : '—');
+    setText('donut-lbl', checked > 0 ? '已報到' : '');
 
-        function prepareSearch(method, label) {
-            searchMethod = method;
-            document.getElementById('actionTitle').textContent = `請 輸 入 旅 客 ${label}`;
-            document.getElementById('actionInput').value = '';
-            setAppState('action');
-        }
+    if (fingerprint !== lastCheckCount) {
+      lastCheckCount = fingerprint;
+      buildDonut(s.logs || [], s.total ?? 0);
+    }
 
-        async function handleAction() {
-            const val = document.getElementById('actionInput').value.trim();
-            if(!val) return;
-            hideTempSection();
-            try {
-                const res = await fetch(`${API_BASE}/search/${searchMethod}?${searchMethod}=${encodeURIComponent(val)}&admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
-                const json = await res.json();
-                if (json.data && json.data.length > 0) {
-                    if (searchMethod === 'company') {
-                        const first = json.data[0];
-                        const looksLikePassengerRows = (typeof first === 'object' && first !== null) && (
-                            'id' in first || 'phone' in first || 'email' in first || 'seat' in first || 'status' in first ||
-                            ('name' in first && ('company' in first || '公司' in first || '公司名稱' in first))
-                        );
-                        if (looksLikePassengerRows) {
-                            if (json.data.length === 1) {
-                                const u = json.data[0];
-                                if (u.status === 'checked_in' || u.status === '已報到' || u.status === '替代') {
-                                    selectedUser = u; renderArkTerminalFromUser(u); setAppState('success'); return;
-                                }
-                                selectedUser = u; renderMealOptions();
-                            } else {
-                                renderUserList(json.data, `請 選 擇 ${val} 的 旅 客`);
-                            }
-                        } else {
-                            renderCompanyList(json.data);
-                        }
-                    }
-                    else if (json.data.length === 1) {
-                        const u = json.data[0];
-                        if (u.status === 'checked_in' || u.status === '已報到' || u.status === '替代') {
-                            selectedUser = u; renderArkTerminalFromUser(u); setAppState('success'); return;
-                        }
-                        selectedUser = u; renderMealOptions();
-                    }
-                    else { window.tempData = json.data; renderUserList(json.data, '搜尋結果'); }
-                } else {
-                    document.getElementById('addName').value = '';
-                    document.getElementById('addPhone').value = '';
-                    document.getElementById('addCompany').value = '';
-                    document.getElementById('addSeat').value = '';
-                    const defaultMealBtn = document.querySelector('#tempMealRadioGroup [data-meal="葷食"]');
-                    if(defaultMealBtn) selectTempMeal(defaultMealBtn, '葷食');
-                    document.getElementById('tempRegistrationSection').classList.remove('state-hidden');
-                    if (searchMethod === 'company') { document.getElementById('addCompany').value = val; }
-                    else if (searchMethod === 'phone') { document.getElementById('addPhone').value = val; }
-                    else if (searchMethod === 'name') { document.getElementById('addName').value = val; }
-                }
-            } catch(e) { alert('通訊矩陣連線中斷'); }
-        }
+    // always refresh agenda active state
+    renderAgenda();
+    renderEnterprises();
 
-        function renderCompanyList(companies) {
-            const list = document.getElementById('groupList');
-            list.innerHTML = '';
-            companies.forEach(c => {
-                const companyName = (typeof c === 'object' && c !== null)
-                    ? (c.company || c['公司'] || c['公司名稱'] || c.name || '')
-                    : String(c);
-                const div = document.createElement('div'); div.className = 'group-item';
-                div.innerHTML = `<span>🏢 ${escapeHtml(companyName)}</span><span style="color: var(--text-dark)">➔</span>`;
-                div.onclick = async () => {
-                    try {
-                        const res = await fetch(`${API_BASE}/search/company_members?name=${encodeURIComponent(companyName)}&admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
-                        const json = await res.json(); renderUserList(json.data, companyName);
-                    } catch(e) { alert('無法讀取數據結構'); }
-                };
-                list.appendChild(div);
-            });
-            document.getElementById('groupName').textContent = '請 選 擇 所 屬 公 司';
-            setAppState('groupList');
-        }
+    setStatus('● LIVE', '#4ade80');
+  } catch {
+    setStatus('● OFFLINE', '#f87171');
+  }
+}
 
-        function renderUserList(users, title) {
-            const list = document.getElementById('groupList');
-            list.innerHTML = '';
-            users.forEach(u => {
-                const div = document.createElement('div'); div.className = 'group-item';
-                const isRegistered = (u.status === 'checked_in' || u.status === '已報到' || u.status === '替代');
-                const statusTag = isRegistered ? '<span style="color:#f87171; font-weight:bold;">[已報到]</span>' : '<span style="color: var(--text-dark)">➔</span>';
-                const userName = escapeHtml(u.name || u['姓名'] || '未命名旅客');
-                const userCompany = escapeHtml(u.company || u['公司'] || u['公司名稱'] || '');
-                div.innerHTML = `<div><div style="font-weight:bold; font-size:1.15rem; color:#fff;">${userName}</div><div style="font-size:0.85rem; color:#8fa0b0; margin-top:0.2rem;">${userCompany}</div></div>${statusTag}`;
-                div.onclick = () => {
-                    if (isRegistered) { selectedUser = u; renderArkTerminalFromUser(u); setAppState('success'); }
-                    else { selectedUser = u; renderMealOptions(); }
-                };
-                list.appendChild(div);
-            });
-            document.getElementById('groupName').textContent = title;
-            setAppState('groupList');
-        }
+/* ── donut ── */
+function buildDonut(logs, total) {
+  const mappings = cfg?.industry_mappings || [];
+  const counter  = {};
 
-        async function renderMealOptions() {
-            const res = await fetch(`${API_BASE}/config?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
-            systemConfig = await res.json();
-            await mergeExperienceConfig();
-            if (!systemConfig.show_meal_options) { submitCheckin('不需要'); return; }
-            const container = document.getElementById('mealOptions');
-            container.innerHTML = `
-                <div style="margin-bottom:2rem; text-align:left; padding:1.2rem; background:rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.2); border-radius:0.6rem;">
-                    <div style="font-size:0.85rem; color:rgba(0,229,255,0.7); letter-spacing:1px; margin-bottom:0.2rem;">旅 客 姓 名</div>
-                    <div style="font-size:1.4rem; font-weight:bold; color:#fff;">${selectedUser.name}</div>
-                </div>
-                <div class="two-col-grid" style="margin-bottom:2rem;">
-                    <div id="btnOrig" class="verify-card cyber-card is-original-selected" onclick="toggleIdentity(true)" style="padding:1.2rem; font-weight:bold;">本 人 報 到</div>
-                    <div id="btnProxy" class="verify-card cyber-card" onclick="toggleIdentity(false)" style="padding:1.2rem; font-weight:bold;">替 代 報 到</div>
-                </div>
-                <div id="proxyForm" class="state-hidden" style="margin-bottom:2rem; text-align:left; border:1px solid rgba(255,165,0,0.4); background:rgba(255,165,0,0.03); padding:1.5rem; border-radius:0.75rem;">
-                    <p style="color:#ffa500; margin-bottom:1rem; font-size:0.95rem; font-weight:bold;">請 輸 入 替 代 人 資 訊 ：</p>
-                    <input type="text" id="proxyName" class="cyber-input" placeholder="替代人姓名" style="margin-bottom:0.8rem; padding:0.9rem;">
-                    <input type="text" id="proxyPhone" class="cyber-input" placeholder="替代人手機" style="margin-bottom:0; padding:0.9rem;">
-                </div>
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem; margin-bottom:1.5rem;">
-                    <div class="verify-card cyber-card meal-opt" onclick="selectMeal(this, '葷食')" style="padding:1.2rem 0.5rem; font-weight:bold;">🥩 葷食</div>
-                    <div class="verify-card cyber-card meal-opt" onclick="selectMeal(this, '素食')" style="padding:1.2rem 0.5rem; font-weight:bold;">🥬 素食</div>
-                    <div class="verify-card cyber-card meal-opt" onclick="selectMeal(this, '不需餐食')" style="padding:1.2rem 0.5rem; font-weight:bold;">❌ 不需餐食</div>
-                </div>
-                <div class="portrait-consent-box">
-                    <label class="portrait-consent-check" onclick="event.preventDefault(); openPortraitConsentModal();" style="cursor:pointer;">
-                        <input type="checkbox" id="portraitConsent" onchange="checkMealReady()" onclick="event.stopPropagation();">
-                        <span>我已閱讀並同意活動拍攝與肖像使用授權條款<br><small style="color:rgba(255,255,255,0.45);">未勾選代表不同意，仍可完成報到並由系統記錄</small></span>
-                    </label>
-                    <button type="button" class="portrait-consent-link" onclick="openPortraitConsentModal()">📄 查看完整條款（含不同意選項）</button>
-                </div>
-            `;
-            window.selectedMeal = null; window.isOriginal = true; window.portraitDecided = false;
-            document.getElementById('finalBtn').disabled = true;
-            setAppState('meal');
-        }
+  for (const log of logs) {
+    const co  = String(log.company || '');
+    let   cat = '其他';
+    for (const m of mappings) {
+      if (m.keyword && co.includes(m.keyword.trim())) { cat = m.category.trim(); break; }
+    }
+    counter[cat] = (counter[cat] || 0) + 1;
+  }
 
-        function toggleIdentity(isOrig) {
-            window.isOriginal = isOrig;
-            document.getElementById('btnOrig').classList.toggle('is-original-selected', isOrig);
-            document.getElementById('btnProxy').classList.toggle('proxy-selected', !isOrig);
-            document.getElementById('proxyForm').classList.toggle('state-hidden', isOrig);
-            checkMealReady();
-        }
 
-        function selectMeal(el, m) {
-            document.querySelectorAll('.meal-opt').forEach(x => x.classList.remove('meal-selected'));
-            el.classList.add('meal-selected');
-            window.selectedMeal = m; checkMealReady();
-        }
+  const logTotal = Object.values(counter).reduce((a,b) => a+b, 0) || 1;
+  const segs = Object.entries(counter)
+    .sort((a,b) => b[1]-a[1])
+    .map(([name, count], i) => ({
+      name, count,
+      pct: +(count/logTotal*100).toFixed(1),
+      color: PALETTE[i % PALETTE.length],
+    }));
 
-        function checkMealReady() {
-            const finalBtn = document.getElementById('finalBtn');
-            finalBtn.disabled = !window.selectedMeal;
-        }
+  drawDonut(segs, total);
+  drawLegend(segs);
+}
 
-        function openPortraitConsentModal() {
-            document.getElementById('portraitConsentModal').classList.add('active');
-        }
-        function closePortraitConsentModal() {
-            document.getElementById('portraitConsentModal').classList.remove('active');
-        }
-        function agreePortraitConsent() {
-            const cb = document.getElementById('portraitConsent');
-            if (cb) { cb.checked = true; checkMealReady(); }
-            const cbTemp = document.getElementById('portraitConsentTemp');
-            if (cbTemp) { cbTemp.checked = true; }
-            window.portraitDecided = true;
-            closePortraitConsentModal();
-            // 如果是從 submitCheckin 觸發的彈窗，選擇後自動繼續
-            if (document.getElementById('mealState').style.display !== 'none' || !document.getElementById('mealState').classList.contains('state-hidden')) {
-                submitCheckin();
-            }
-        }
-        function disagreePortraitConsent() {
-            const cb = document.getElementById('portraitConsent');
-            if (cb) { cb.checked = false; checkMealReady(); }
-            const cbTemp = document.getElementById('portraitConsentTemp');
-            if (cbTemp) { cbTemp.checked = false; }
-            window.portraitDecided = true;
-            closePortraitConsentModal();
-            // 如果是從 submitCheckin 觸發的彈窗，選擇後自動繼續
-            if (document.getElementById('mealState').style.display !== 'none' || !document.getElementById('mealState').classList.contains('state-hidden')) {
-                submitCheckin();
-            }
-        }
+function drawDonut(segs, total) {
+  const svg = document.getElementById('donut-svg');
+  svg.querySelectorAll('.ds').forEach(n => n.remove());
+  const C = 2 * Math.PI * 85; // r=85
+  let off = 0;
+  for (const s of segs) {
+    const len = (s.pct / 100) * C;
+    if (len <= 0) continue;
+    const el = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    el.setAttribute('class','ds');
+    el.setAttribute('cx','120'); el.setAttribute('cy','120'); el.setAttribute('r','85');
+    el.setAttribute('fill','none');
+    el.setAttribute('stroke', s.color);
+    el.setAttribute('stroke-width','32');
+    el.setAttribute('stroke-dasharray', `0 ${C}`);
+    el.setAttribute('stroke-dashoffset', String(-off));
+    svg.appendChild(el);
+    requestAnimationFrame(() => setTimeout(() => {
+      el.style.transition = 'stroke-dasharray 1s cubic-bezier(.4,0,.2,1)';
+      el.setAttribute('stroke-dasharray', `${len} ${C-len}`);
+    }, 60));
+    off += len;
+  }
+}
 
-        function escapeHtml(value) {
-            return String(value ?? '').replace(/[&<>"']/g, function(ch) {
-                return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[ch];
-            });
-        }
+function drawLegend(segs) {
+  const el = document.getElementById('legend');
+  if (!segs.length) {
+    el.innerHTML = '<div class="empty-msg" style="padding:.5rem 0">⚙️ 請至後台設定行業分類對照表</div>';
+    return;
+  }
+  el.innerHTML = segs.map(s => `
+    <div class="leg">
+      <div class="leg-dot" style="background:${s.color};box-shadow:0 0 10px ${s.color}aa, 0 0 18px ${s.color}55;"></div>
+      <span class="leg-name">${esc(s.name)}</span>
+      <span class="leg-val">${s.pct}%</span>
+    </div>
+  `).join('');
+}
 
-        function renderArkTerminal(user, meal) {
-            const name = escapeHtml(user?.name || selectedUser?.name || '領航員');
-            const jobTitle = escapeHtml(user?.job_title || selectedUser?.job_title || '學員');
-            const company = escapeHtml(user?.company || selectedUser?.company || '智慧方舟');
-            const seat = escapeHtml(user?.seat || selectedUser?.seat || '現場安排');
-            const mealText = escapeHtml(meal || user?.meal || selectedUser?.meal || '未選擇');
-            const eventName = escapeHtml((systemConfig && (systemConfig.event_title || systemConfig.google_sheet_name)) || currentSheet || '活動報到名單');
-            const startRaw = systemConfig && (systemConfig.event_date_start || systemConfig.event_start_date || systemConfig.date_start || systemConfig.exp_event_date_start || '');
-            const endRaw   = systemConfig && (systemConfig.event_date_end   || systemConfig.event_end_date   || systemConfig.date_end   || systemConfig.exp_event_date_end   || '');
-            const startDate = escapeHtml(startRaw || '未設定');
-            const endDate   = escapeHtml(endRaw   || '');
-            document.getElementById('arkGreeting').innerHTML = `您好，${jobTitle ? jobTitle + ' ' : ''}領航員 ${name}`;
-            document.getElementById('arkTerminalInfo').innerHTML = `
-                <div class="ark-meta-chip"><div class="ark-meta-label">MISSION</div><div class="ark-meta-value">${eventName}</div></div>
-                <div class="ark-meta-chip"><div class="ark-meta-label">DATE</div><div class="ark-meta-value">${endDate ? `${startDate} ~ ${endDate}` : startDate}</div></div>
-                <div class="ark-meta-chip"><div class="ark-meta-label">COMPANY</div><div class="ark-meta-value">${company}</div></div>
-                <div class="ark-meta-chip"><div class="ark-meta-label">SEAT / MEAL</div><div class="ark-meta-value">${seat}｜${mealText}</div></div>
-            `;
-            applyArkBrandFromConfig();
-            applyArkCardsFromConfig();
-        }
 
-        async function renderArkTerminalFromUser(user) {
-            if (!systemConfig) {
-                try {
-                    const r = await fetch(`${API_BASE}/config?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
-                    systemConfig = await r.json();
-                } catch(e) { systemConfig = systemConfig || {}; }
-            }
-            await mergeExperienceConfig();
-            renderArkTerminal(user, user.meal || '');
-        }
+/* ── enterprise directory ── */
+let lastEnterpriseRenderAt = 0;
+async function renderEnterprises(force=false) {
+  const list = document.getElementById('enterprise-list');
+  if (!list) return;
+  const nowTs = Date.now();
+  if (!force && nowTs - lastEnterpriseRenderAt < 11000) return;
+  lastEnterpriseRenderAt = nowTs;
+  try {
+    const json = await get(`${API}/exhibitors?admin=${enc(ADMIN)}&sheet=${enc(SHEET)}`);
+    if (!json.success) throw new Error(json.message || '企業資料載入失敗');
+    const items = (json.exhibitors || [])
+      .filter(x => (x.name || x.company_name || '').trim())
+      .slice(0, 18);
+    if (!items.length) {
+      list.innerHTML = '<div class="empty-msg">後台尚未新增參與企業。請到後台「企業展示」手動新增，或按「帶入全部表單公司」後再儲存。</div>';
+      return;
+    }
+    list.innerHTML = items.map(item => {
+      const name = esc(item.name || item.company_name || '');
+      const industry = esc(item.industry || '未分類');
+      const desc = esc(item.description || '尚未設定公司簡介，可於後台「企業展示」補上介紹與圖片。');
+      const img = item.image_url || item.image || '';
+      return `
+        <div class="enterprise-card">
+          <div class="enterprise-img">${img ? `<img src="${esc(img)}" alt="${name}">` : `<span>${name.slice(0,1) || '企'}</span>`}</div>
+          <div class="enterprise-meta">
+            <div class="enterprise-name">${name}</div>
+            <div class="enterprise-industry">${industry}</div>
+            <div class="enterprise-desc">${desc}</div>
+          </div>
+        </div>`;
+    }).join('');
+  } catch (e) {
+    console.warn('enterprises', e);
+    list.innerHTML = '<div class="empty-msg">企業資料同步中…</div>';
+  }
+}
 
-        async function mergeExperienceConfig() {
-            try {
-                const res = await fetch(`${API_BASE}/event-config?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
-                const json = await res.json();
-                if (json.success && json.config) {
-                    systemConfig = Object.assign({}, systemConfig, json.config);
-                }
-            } catch(e) { /* silent */ }
-        }
+/* ── agenda ── */
+function renderAgenda() {
+  const agenda = cfg?.agenda || [];
+  const tl = document.getElementById('tl');
+  if (!agenda.length) {
+    tl.innerHTML = '<div class="empty-msg">📡 後台尚未設定議程</div>';
+    setText('agenda-range', 'CONFERENCE TIMELINE');
+    return;
+  }
 
-        function applyArkCardsFromConfig() {
-            const c = systemConfig || {};
-            applyArkBrandFromConfig();
-            // 商品專區
-            setCardText('arkCard2Title', c.gift_title  ? `【${c.gift_title}】`  : '【活動商品專區】');
-            setCardText('arkCard2Sub',   '精選伴手禮與補給品');
-            setCardText('arkCard2Desc',  c.gift_description || '點擊進入物資艙查看');
-            const b2 = document.getElementById('arkCard2Btn');
-            if (b2) b2.style.display = (c.gift_enabled === false) ? 'none' : '';
+  const first = agenda[0].time || agenda[0].start_time || '';
+  const last  = agenda[agenda.length-1].time || agenda[agenda.length-1].start_time || '';
+  const rangeText = (first && last && first !== last) ? `${first} ─ ${last}` : (first || last || 'CONFERENCE TIMELINE');
+  setText('agenda-range', rangeText);
 
-            // 影片專區
-            setCardText('arkCard3Title', c.video_title ? `【${c.video_title}】` : '【核心引擎啟動】');
-            setCardText('arkCard3Sub',   '智能全新數位中控系統');
-            setCardText('arkCard3Desc',  '三年經營現況影片');
-            const b3 = document.getElementById('arkCard3Btn');
-            if (b3) b3.style.display = (c.video_enabled === false) ? 'none' : '';
+  const nm = nowMins();
+  let act = -1;
+  for (let i = 0; i < agenda.length; i++) {
+    const m = parseT(agenda[i].time || agenda[i].start_time || '');
+    if (m !== null && m <= nm) act = i;
+  }
+  if (act < 0) act = 0;
 
-            // 議程專區
-            setCardText('arkCard4Title', c.flow_title  ? `【${c.flow_title}】`  : '【大會時空座標】');
-            setCardText('arkCard4Sub',   '實體進化航線預載');
-            setCardText('arkCard4Desc',  c.flow_description || '09:30 - 17:00 航程時間軸');
-            const b4 = document.getElementById('arkCard4Btn');
-            if (b4) b4.style.display = (c.flow_enabled === false) ? 'none' : '';
-        }
+  tl.innerHTML = agenda.map((item,i) => {
+    const t   = esc(item.time || item.start_time || '時間待定');
+    const ttl = esc(item.title || item.name || item.event || '—');
+    const sub = esc(item.subtitle || item.description || '');
+    const cls = i===act ? 'active' : i<act ? 'done' : '';
+    return `
+    <div class="tl-item ${cls}">
+      <div class="tl-lead">
+        <div class="tl-time">${t}</div>
+      </div>
+      <div class="tl-card">
+        <div class="tl-card-top">
+          <div class="tl-title">${ttl}</div>
+          ${i===act ? '<div class="tl-now">▶ NOW</div>' : ''}
+        </div>
+        ${sub ? `<div class="tl-sub">${sub}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
 
-        function applyArkBrandFromConfig() {
-            const c = systemConfig || {};
-            const brand = c.brand_name || c.exp_brand_name || '智慧方舟';
-            const subtitle = c.event_subtitle || c.exp_event_subtitle || c.projection_title || '世代共榮的數位聚合';
-            const titleEl = document.querySelector('.ark-terminal-title');
-            const subEl = document.querySelector('.ark-terminal-subtitle');
-            if (titleEl) titleEl.textContent = brand;
-            if (subEl) subEl.textContent = `SMART WISDOM ARK｜${subtitle}`;
-        }
-
-        function setCardText(id, value) {
-            const el = document.getElementById(id);
-            if (el && value) el.textContent = value;
-        }
-
-        function openArkMap() { if (typeof toggleMapModal === 'function') return toggleMapModal(true); alert('✨ 產業星圖正由方舟中樞更新載入中。'); }
-        function openArkGift() { if (typeof showProducts === 'function') return showProducts(); alert('物資明細資料庫同步中。'); }
-        function openArkVideo() {
-            const url = systemConfig?.video_url || systemConfig?.event_video_url || systemConfig?.gift_video_url || '';
-            if (url) return window.open(url, '_blank', 'noopener');
-            alert('⚡ 核心引擎影像傳輸鏈結建立中，請稍後再試。');
-        }
-        function openArkFlow() {
-            const q = `?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`;
-            window.open(`/dashboard.html${q}`, '_blank', 'noopener');
-        }
-
-        async function submitCheckin(autoMeal) {
-            const meal = autoMeal || window.selectedMeal;
-            const consentEl = document.getElementById('portraitConsent');
-            
-            // 強制彈窗邏輯：如果沒有勾選同意，且不是自動模式，則彈出視窗
-            if (!autoMeal && consentEl && !consentEl.checked && !window.portraitDecided) {
-                openPortraitConsentModal();
-                return;
-            }
-            
-            const portraitConsent = consentEl ? consentEl.checked : false;
-            const portraitConsentStatus = portraitConsent ? '同意' : '不同意';
-            
-            const proxyInfo = window.isOriginal ? {} : {
-                name: document.getElementById('proxyName').value.trim(),
-                phone: document.getElementById('proxyPhone').value.trim()
-            };
-            if (!window.isOriginal && !proxyInfo.name) { alert('請輸入替代人姓名'); return; }
-            const btn = document.getElementById('finalBtn');
-            btn.disabled = true; btn.innerHTML = '<span>登 機 核 對 中 ...</span>';
-            try {
-                const res = await fetch(`${API_BASE}/checkin/${selectedUser.id}?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        meal,
-                        is_original: window.isOriginal,
-                        proxy_info: proxyInfo,
-                        portrait_consent: portraitConsent,
-                        portrait_consent_status: portraitConsentStatus
-                    })
-                });
-                const json = await res.json();
-                if (json.success) {
-                    const u = json.data;
-                    rememberCheckinState(u, meal);
-                    renderArkTerminal(u, meal);
-                    setAppState('success');
-                } else {
-                    if (json.error === 'already_done') { alert('🛬 旅客已完成登機報到手續！'); }
-                    else { alert('登機確認手續未完成'); }
-                    btn.disabled = false; btn.innerHTML = '<span>確 認 並 核 發 登 機 證</span>';
-                }
-            } catch(e) {
-                alert('網路序列傳輸異常'); btn.disabled = false; btn.innerHTML = '<span>確 認 並 核 發 登 機 證</span>';
-            }
-        }
-
-        async function showProducts() {
-            try {
-                const res = await fetch(`${API_BASE}/config?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
-                const config = await res.json();
-                window.allProducts = config.products || [];
-                const gifts = window.allProducts.filter(p => p.isGift);
-                const normals = window.allProducts.filter(p => !p.isGift);
-                const giftsSection = document.getElementById('giftsSection');
-                if (gifts.length > 0) {
-                    giftsSection.classList.remove('state-hidden'); renderGrid('giftsGrid', gifts);
-                } else giftsSection.classList.add('state-hidden');
-                const categories = ['全 部', ...new Set(normals.map(p => p.category).filter(c => c))];
-                const filterContainer = document.getElementById('categoryFilters');
-                filterContainer.innerHTML = categories.map(c => `
-                    <button class="ck-tag ${window.currentCategory === c ? 'active' : ''}"
-                         onclick="filterCategory('${c}')">${c}</button>
-                `).join('');
-                filterCategory(window.currentCategory); setAppState('product');
-            } catch(e) { alert('物資艙清單載入中'); }
-        }
-
-        function filterCategory(cat) {
-            window.currentCategory = cat;
-            document.querySelectorAll('#categoryFilters .ck-tag').forEach(btn => {
-                const isActive = btn.textContent === cat;
-                btn.style.background = isActive ? 'var(--text-dark)' : 'transparent';
-                btn.style.color = isActive ? '#000' : '#aaa';
-                btn.style.borderColor = isActive ? 'var(--text-dark)' : 'rgba(0,229,255,0.2)';
-            });
-            const filtered = window.currentCategory === '全 部' ? window.allProducts.filter(p => !p.isGift) : window.allProducts.filter(p => !p.isGift && p.category === cat);
-            renderGrid('productsGrid', filtered);
-        }
-
-        function renderGrid(id, items) {
-            const grid = document.getElementById(id);
-            grid.innerHTML = items.map(p => `
-                <div class="cyber-card" style="padding:0; overflow:hidden; display:flex; flex-direction:column; border-radius: 0.75rem !important;">
-                    ${p.image ? `<img src="${p.image}" class="product-img">` : '<div class="product-img" style="display:flex; align-items:center; justify-content:center; font-size:3rem;">📦</div>'}
-                    <div style="padding:1.5rem; flex-grow:1; display:flex; flex-direction:column;">
-                        <div style="color:var(--text-dark); font-size:0.8rem; margin-bottom:0.5rem; font-weight: bold;"># ${p.category || '一 般'}</div>
-                        <h3 style="margin-bottom:0.8rem; font-size:1.25rem; color:#fff;">${p.name}</h3>
-                        <p style="font-size:0.9rem; color:rgba(255,255,255,0.6); margin-bottom:1.5rem; flex-grow:1; line-height:1.5;">${p.description || ''}</p>
-                        ${p.link ? `<a href="${p.link}" target="_blank" class="ck-btn" style="text-decoration:none; padding:0.6rem 1rem; font-size:0.9rem; letter-spacing:1px;">立 即 查 看 →</a>` : ''}
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        async function loadSystemConfig() {
-            try {
-                const res = await fetch(`${API_BASE}/config?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}`);
-                systemConfig = await res.json();
-                /* 標題固定顯示「首頁」，不被活動名稱覆蓋 */
-                document.title = `${systemConfig?.event_title || currentSheet || '活動'} - 活動報到系統`;
-                const banner = document.getElementById('event-banner');
-                if(systemConfig && systemConfig.banner_image_url) {
-                    banner.src = systemConfig.banner_image_url;
-                    document.getElementById('banner-container').style.display = 'block';
-                } else {
-                    document.getElementById('banner-container').style.display = 'none';
-                }
-            } catch(e) { console.error("系統初始化同步中"); }
-        }
-    </script>
+/* ── helpers ── */
+async function get(url) {
+  const r = await fetch(url + (url.includes('?')?'&':'?') + `_t=${Date.now()}`);
+  return r.json();
+}
+function setStatus(msg, color) {
+  const el = document.getElementById('ftr-r');
+  if (el) { el.textContent = msg; el.style.color = color; }
+}
+function tick()    { setText('clock', new Date().toTimeString().slice(0,8)); }
+function nowMins() { const n = new Date(); return n.getHours()*60+n.getMinutes(); }
+function parseT(s) { const m = String(s).match(/(\d{1,2}):(\d{2})/); return m ? +m[1]*60+ +m[2] : null; }
+function setText(id,v) { const e=document.getElementById(id); if(e) e.textContent=String(v??''); }
+function esc(v) { return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+function enc(v) { return encodeURIComponent(v); }
+</script>
 </body>
 </html>
