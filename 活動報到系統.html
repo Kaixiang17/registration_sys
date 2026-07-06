@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智慧方舟 - 航空登機系統</title>
+    <title>智匯方舟 - 航空登機系統</title>
     <link rel="stylesheet" href="smart-ark-theme.css?v=9">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; font-family: "PingFang TC", "Michroma", "Stick", sans-serif; }
@@ -456,7 +456,7 @@
                             </div>
                             <div class="ark-logo-mark">⚓</div>
                         </div>
-                        <div class="ark-terminal-title">智慧方舟</div>
+                        <div class="ark-terminal-title">智匯方舟</div>
                         <div class="ark-terminal-subtitle">SMART WISDOM ARK｜世代共榮的數位聚合</div>
                         <div id="arkGreeting" class="ark-user-greeting">您好，領航員</div>
                         <div id="arkTerminalInfo" class="ark-mission-meta"></div>
@@ -488,7 +488,7 @@
                                 </div>
                                 <div class="ark-card-arrow">›</div>
                             </button>
-                            <button type="button" class="ark-nav-card" onclick="openArkMap()">
+                            <button type="button" class="ark-nav-card" id="arkCard1Btn" onclick="openArkMap()">
                                 <div class="ark-card-icon">🧭</div>
                                 <div>
                                     <div class="ark-card-title" id="arkCard1Title">【2026 產業星圖】</div>
@@ -564,6 +564,24 @@
         window.allProducts = [];
         window.currentCategory = '全部';
         window.selectedTempMealChoice = '葷食';
+        const NAVIGATOR_TEMPLATE = {
+            brand_name: '智匯方舟',
+            event_subtitle: '世代共榮的數位聚合',
+            gift_title: '活動商品專區',
+            gift_description: '點擊進入物資艙查看',
+            video_title: '核心引擎啟動',
+            video_description: '三年經營現況影片',
+            flow_title: '大會時空座標',
+            flow_description: '09:30 - 17:00 航程時間軸',
+            map_title: '2026 產業星圖',
+            map_subtitle: '領航員名冊與每攤機會',
+            map_description: 'A-MALL.png / Navigator Directory'
+        };
+
+        function navTpl(key) {
+            const value = systemConfig && systemConfig[key];
+            return value === undefined || value === null || value === '' ? NAVIGATOR_TEMPLATE[key] : value;
+        }
 
         window.onload = function() {
             if (!currentSheet) { fetchCurrentSheet(); } else { initSystem(); }
@@ -708,11 +726,12 @@
                     alert(`🎉 臨時補單報到成功！歡迎登機。`);
                     resetToHome();
                 } else {
-                    alert('報到未完成：' + result.message);
+                    alert('報到未完成：' + (result.message || '請確認名單資料'));
                 }
-            } catch(e) { alert('通訊矩陣回應異常，無法外加名單'); }
+            } catch(e) {
+                alert('通訊矩陣回應異常，無法外加名單');
+            }
         }
-
         async function toggleMapModal(show) {
             const modal = document.getElementById('mapModal');
             const img = document.getElementById('mapDisplayImage');
@@ -722,7 +741,12 @@
                 try {
                     const res = await fetch(`${API_BASE}/config?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}&t=` + new Date().getTime());
                     const config = await res.json();
-                    let url = config.map_image_url ? config.map_image_url.trim() : '';
+                    try {
+                        const expRes = await fetch(`${API_BASE}/event-config?admin=${encodeURIComponent(currentAdmin)}&sheet=${encodeURIComponent(currentSheet)}&t=` + new Date().getTime());
+                        const expJson = await expRes.json();
+                        if (expJson.success && expJson.config) Object.assign(config, expJson.config);
+                    } catch(e) {}
+                    let url = (config.map_image_url || config.exp_map_image_url || '').trim();
                     if (url) {
                         const lowerUrl = url.toLowerCase();
                         const isImage = lowerUrl.endsWith('.png') || lowerUrl.endsWith('.jpg') || lowerUrl.endsWith('.jpeg') || lowerUrl.endsWith('.gif') || lowerUrl.endsWith('.webp') || url.startsWith('data:image/');
@@ -830,8 +854,9 @@
                 const isRegistered = (u.status === 'checked_in' || u.status === '已報到' || u.status === '替代');
                 const statusTag = isRegistered ? '<span style="color:#f87171; font-weight:bold;">[已報到]</span>' : '<span style="color: var(--text-dark)">➔</span>';
                 const userName = escapeHtml(u.name || u['姓名'] || '未命名旅客');
+                const userTitle = escapeHtml(u.job_title || u.title || u.position || u['職稱'] || '');
                 const userCompany = escapeHtml(u.company || u['公司'] || u['公司名稱'] || '');
-                div.innerHTML = `<div><div style="font-weight:bold; font-size:1.15rem; color:#fff;">${userName}</div><div style="font-size:0.85rem; color:#8fa0b0; margin-top:0.2rem;">${userCompany}</div></div>${statusTag}`;
+                div.innerHTML = `<div><div style="font-weight:bold; font-size:1.15rem; color:#fff;">${userName}${userTitle ? `｜${userTitle}` : ''}</div><div style="font-size:0.85rem; color:#8fa0b0; margin-top:0.2rem;">${userCompany}</div></div>${statusTag}`;
                 div.onclick = () => {
                     if (isRegistered) { selectedUser = u; renderArkTerminalFromUser(u); setAppState('success'); }
                     else { selectedUser = u; renderMealOptions(); }
@@ -851,11 +876,12 @@
             container.innerHTML = `
                 <div style="margin-bottom:2rem; text-align:left; padding:1.2rem; background:rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.2); border-radius:0.6rem;">
                     <div style="font-size:0.85rem; color:rgba(0,229,255,0.7); letter-spacing:1px; margin-bottom:0.2rem;">旅 客 姓 名</div>
-                    <div style="font-size:1.4rem; font-weight:bold; color:#fff;">${selectedUser.name}</div>
+                    <div style="font-size:1.4rem; font-weight:bold; color:#fff;">${escapeHtml(selectedUser.name || selectedUser['姓名'] || '')}${(selectedUser.job_title || selectedUser.title || selectedUser.position || selectedUser['職稱']) ? '｜' + escapeHtml(selectedUser.job_title || selectedUser.title || selectedUser.position || selectedUser['職稱']) : ''}</div>
+                    <div style="font-size:0.9rem; color:#8fa0b0; margin-top:0.35rem;">${escapeHtml(selectedUser.company || selectedUser['公司'] || selectedUser['公司名稱'] || '')}</div>
                 </div>
                 <div class="two-col-grid" style="margin-bottom:2rem;">
                     <div id="btnOrig" class="verify-card cyber-card is-original-selected" onclick="toggleIdentity(true)" style="padding:1.2rem; font-weight:bold;">本 人 報 到</div>
-                    <div id="btnProxy" class="verify-card cyber-card" onclick="toggleIdentity(false)" style="padding:1.2rem; font-weight:bold;">替 代 報 到</div>
+                    <div id="btnProxy" class="verify-card cyber-card" onclick="toggleIdentity(false)" style="padding:1.2rem; font-weight:bold;">👤 替 代 主 管 報 到</div>
                 </div>
                 <div id="proxyForm" class="state-hidden" style="margin-bottom:2rem; text-align:left; border:1px solid rgba(255,165,0,0.4); background:rgba(255,165,0,0.03); padding:1.5rem; border-radius:0.75rem;">
                     <p style="color:#ffa500; margin-bottom:1rem; font-size:0.95rem; font-weight:bold;">請 輸 入 替 代 人 資 訊 ：</p>
@@ -937,9 +963,9 @@
         }
 
         function renderArkTerminal(user, meal) {
-            const name = escapeHtml(user?.name || selectedUser?.name || '領航員');
-            const jobTitle = escapeHtml(user?.job_title || selectedUser?.job_title || '學員');
-            const company = escapeHtml(user?.company || selectedUser?.company || '智慧方舟');
+            const name = escapeHtml(user?.name || user?.['姓名'] || selectedUser?.name || selectedUser?.['姓名'] || '領航員');
+            const jobTitle = escapeHtml(user?.job_title || user?.title || user?.position || user?.['職稱'] || selectedUser?.job_title || selectedUser?.title || selectedUser?.position || selectedUser?.['職稱'] || '');
+            const company = escapeHtml(user?.company || user?.['公司'] || user?.['公司名稱'] || selectedUser?.company || selectedUser?.['公司'] || selectedUser?.['公司名稱'] || '智匯方舟');
             const seat = escapeHtml(user?.seat || selectedUser?.seat || '現場安排');
             const mealText = escapeHtml(meal || user?.meal || selectedUser?.meal || '未選擇');
             const eventName = escapeHtml((systemConfig && (systemConfig.event_title || systemConfig.google_sheet_name)) || currentSheet || '活動報到名單');
@@ -947,11 +973,11 @@
             const endRaw   = systemConfig && (systemConfig.event_date_end   || systemConfig.event_end_date   || systemConfig.date_end   || systemConfig.exp_event_date_end   || '');
             const startDate = escapeHtml(startRaw || '未設定');
             const endDate   = escapeHtml(endRaw   || '');
-            document.getElementById('arkGreeting').innerHTML = `您好，${jobTitle ? jobTitle + ' ' : ''}領航員 ${name}`;
+            document.getElementById('arkGreeting').innerHTML = `您好，領航員 ${name}${jobTitle ? ' ' + jobTitle : ''}`;
             document.getElementById('arkTerminalInfo').innerHTML = `
                 <div class="ark-meta-chip"><div class="ark-meta-label">MISSION</div><div class="ark-meta-value">${eventName}</div></div>
                 <div class="ark-meta-chip"><div class="ark-meta-label">DATE</div><div class="ark-meta-value">${endDate ? `${startDate} ~ ${endDate}` : startDate}</div></div>
-                <div class="ark-meta-chip"><div class="ark-meta-label">COMPANY</div><div class="ark-meta-value">${company}</div></div>
+                <div class="ark-meta-chip"><div class="ark-meta-label">COMPANY</div><div class="ark-meta-value">${company}${jobTitle ? `｜${jobTitle}` : ''}</div></div>
                 <div class="ark-meta-chip"><div class="ark-meta-label">SEAT / MEAL</div><div class="ark-meta-value">${seat}｜${mealText}</div></div>
             `;
             applyArkBrandFromConfig();
@@ -983,31 +1009,38 @@
             const c = systemConfig || {};
             applyArkBrandFromConfig();
             // 商品專區
-            setCardText('arkCard2Title', c.gift_title  ? `【${c.gift_title}】`  : '【活動商品專區】');
+            setCardText('arkCard2Title', `【${navTpl('gift_title')}】`);
             setCardText('arkCard2Sub',   '精選伴手禮與補給品');
-            setCardText('arkCard2Desc',  c.gift_description || '點擊進入物資艙查看');
+            setCardText('arkCard2Desc',  navTpl('gift_description'));
             const b2 = document.getElementById('arkCard2Btn');
             if (b2) b2.style.display = (c.gift_enabled === false) ? 'none' : '';
 
             // 影片專區
-            setCardText('arkCard3Title', c.video_title ? `【${c.video_title}】` : '【核心引擎啟動】');
+            setCardText('arkCard3Title', `【${navTpl('video_title')}】`);
             setCardText('arkCard3Sub',   '智能全新數位中控系統');
-            setCardText('arkCard3Desc',  '三年經營現況影片');
+            setCardText('arkCard3Desc',  navTpl('video_description'));
             const b3 = document.getElementById('arkCard3Btn');
             if (b3) b3.style.display = (c.video_enabled === false) ? 'none' : '';
 
             // 議程專區
-            setCardText('arkCard4Title', c.flow_title  ? `【${c.flow_title}】`  : '【大會時空座標】');
+            setCardText('arkCard4Title', `【${navTpl('flow_title')}】`);
             setCardText('arkCard4Sub',   '實體進化航線預載');
-            setCardText('arkCard4Desc',  c.flow_description || '09:30 - 17:00 航程時間軸');
+            setCardText('arkCard4Desc',  navTpl('flow_description'));
             const b4 = document.getElementById('arkCard4Btn');
             if (b4) b4.style.display = (c.flow_enabled === false) ? 'none' : '';
+
+            // 產業星圖 / 地圖導覽
+            setCardText('arkCard1Title', `【${navTpl('map_title')}】`);
+            setCardText('arkCard1Sub',   navTpl('map_subtitle'));
+            setCardText('arkCard1Desc',  navTpl('map_description'));
+            const b1 = document.getElementById('arkCard1Btn');
+            if (b1) b1.style.display = (c.map_enabled === false) ? 'none' : '';
         }
 
         function applyArkBrandFromConfig() {
             const c = systemConfig || {};
-            const brand = c.brand_name || c.exp_brand_name || '智慧方舟';
-            const subtitle = c.event_subtitle || c.exp_event_subtitle || c.projection_title || '世代共榮的數位聚合';
+            const brand = c.brand_name || c.exp_brand_name || NAVIGATOR_TEMPLATE.brand_name;
+            const subtitle = c.event_subtitle || c.exp_event_subtitle || c.projection_title || NAVIGATOR_TEMPLATE.event_subtitle;
             const titleEl = document.querySelector('.ark-terminal-title');
             const subEl = document.querySelector('.ark-terminal-subtitle');
             if (titleEl) titleEl.textContent = brand;
