@@ -1,243 +1,91 @@
-/* ============================================
-   智慧方舟 (Smart Ark) - 暗黑科技透視版 (Glassmorphism)
-   ============================================ */
-
-@import url('https://fonts.googleapis.com/css2?family=Michroma&family=Noto+Sans+TC:wght@900&family=Stick&display=swap');
-
 :root {
-    --text-dark: #00e5ff;           
-    --text-glow: rgba(0, 229, 255, 0.6);
-    --accent-gray: rgba(0, 229, 255, 0.3); 
-    --font-main: 'Michroma', 'Stick', 'Noto Sans TC', sans-serif;
+  --ark-bg: #061A18;
+  --ark-primary: #14B8A6;
+  --ark-accent: #5EEAD4;
+  --ark-text: #ECFEFF;
+  --ark-panel: rgba(6, 26, 24, 0.88);
+  --ark-border: rgba(94, 234, 212, 0.24);
+  --ark-glow: 0 0 22px rgba(94, 234, 212, 0.28);
 }
 
+html,
 body {
-    font-family: var(--font-main);
-    color: #e0e0e0; 
+  background-color: var(--ark-bg);
+  color: var(--ark-text);
 }
 
-/* --- 核心修復：背景圖片層 --- */
-.ark-background {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw; /* 👑 解決手機轉橫的黑邊問題 */
-    height: 100vh; /* 👑 解決手機轉橫的黑邊問題 */
-    background-image: url('main-visual.jpg'); 
-    background-size: cover !important; /* 👑 強制填滿不留黑邊 */
-    background-position: center 5%; /* ⚠️ 完全保留你不動的設定 */
-    background-repeat: no-repeat !important;
-    z-index: -1;
-    filter: brightness(0.35) contrast(1.2); 
-}
-
-/* --- 核心修復：透明電路板紋理 --- */
 .circuit-background {
-    background-color: transparent !important; 
-    background-image: 
-        linear-gradient(rgba(0, 229, 255, 0.1) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 229, 255, 0.1) 1px, transparent 1px);
-    background-size: 40px 40px;
-    position: relative;
-    min-height: 100vh;
-    width: 100%;
+  background-color: var(--ark-bg) !important;
 }
 
-/* --- 霓虹發光標題 --- */
-.neon-text {
-    font-family: var(--font-main);
-    color: var(--text-dark);
-    text-shadow: 0 0 12px var(--text-glow);
-    letter-spacing: 2px;
-    font-weight: 700;
-    display: inline-block;
+.ark-background,
+body.circuit-background::before {
+  background:
+    radial-gradient(circle at 18% 12%, rgba(20, 184, 166, 0.26), transparent 34%),
+    radial-gradient(circle at 84% 78%, rgba(94, 234, 212, 0.18), transparent 34%),
+    var(--ark-bg) !important;
 }
 
-/* --- 毛玻璃面板 --- */
-.panel-border, .cyber-card {
-    background: rgba(10, 20, 35, 0.65) !important; 
-    backdrop-filter: blur(10px); 
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid var(--accent-gray) !important;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(0, 229, 255, 0.1);
-    color: #ffffff;
+.cyber-card,
+.panel,
+.form-card,
+.modal-content {
+  background: var(--ark-panel);
+  border-color: var(--ark-border);
+  color: var(--ark-text);
 }
 
-.cyber-card {
-    border-left: 4px solid var(--text-dark) !important;
-    border-radius: 0.5rem !important;
-    transition: 0.3s;
+.neon-text,
+.card-title,
+.panel-title {
+  color: var(--ark-accent);
+  text-shadow: var(--ark-glow);
 }
 
-.cyber-card:hover {
-    background: rgba(15, 30, 50, 0.8) !important;
-    border-left: 8px solid var(--text-dark) !important;
-    box-shadow: 0 0 20px rgba(0, 229, 255, 0.2);
-    transform: translateY(-3px);
+button,
+.adm-btn,
+.ck-btn,
+.ck-btn-pill,
+.nav-link-btn,
+.tab-btn.active {
+  border-color: var(--ark-border);
 }
 
-/* --- 科幻按鈕 --- */
-.cyber-button {
-    background: rgba(0, 229, 255, 0.1) !important;
-    color: var(--text-dark) !important;
-    border: 1px solid var(--text-dark) !important;
-    transition: 0.3s;
-    text-shadow: 0 0 5px rgba(0, 229, 255, 0.5);
+.adm-btn-primary,
+.ck-btn-confirm {
+  color: var(--ark-primary);
+  border-color: rgba(20, 184, 166, 0.5);
+  background: rgba(20, 184, 166, 0.08);
 }
 
-.cyber-button:hover {
-    background: var(--text-dark) !important;
-    color: #000 !important;
-    box-shadow: 0 0 15px var(--text-glow);
+.adm-btn-primary:hover,
+.ck-btn-confirm:hover:not(:disabled) {
+  border-color: var(--ark-primary);
+  background: rgba(20, 184, 166, 0.18);
 }
 
-.cyber-button:disabled {
-    background: rgba(255,255,255,0.1) !important;
-    border-color: #555 !important;
-    color: #777 !important;
-    box-shadow: none;
-    cursor: not-allowed;
-}
-
-/* --- 暗黑輸入框 --- */
+input,
+textarea,
+select,
 .cyber-input {
-    background: rgba(0, 0, 0, 0.4) !important;
-    border: 1px solid var(--accent-gray) !important;
-    border-bottom: 3px solid var(--text-dark) !important;
-    color: #00e5ff !important;
+  background: rgba(2, 12, 11, 0.58);
+  color: var(--ark-text);
+  border-color: var(--ark-border);
 }
 
+input:focus,
+textarea:focus,
+select:focus,
 .cyber-input:focus {
-    outline: none;
-    background: rgba(0, 20, 40, 0.6) !important;
-    box-shadow: 0 5px 15px rgba(0, 229, 255, 0.2);
+  border-color: var(--ark-accent);
+  box-shadow: 0 0 0 3px rgba(94, 234, 212, 0.12);
+  outline: none;
 }
 
-.cyber-input::placeholder { color: rgba(255, 255, 255, 0.3); }
-
-/* --- 餐食選項與名單微調 --- */
-.meal-option, .group-item {
-    background: rgba(0, 0, 0, 0.3);
-    border-color: var(--accent-gray) !important;
-    color: #e0e0e0;
-}
-.meal-option.selected {
-    background: rgba(0, 229, 255, 0.2);
-    border-color: var(--text-dark) !important;
-    box-shadow: inset 0 0 10px rgba(0, 229, 255, 0.3);
-}
-
-/* 👑 選項按鈕排列容器 (電腦版保持左右雙排) */
-.two-col-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-}
-
-/* ============================================
-   新增：全螢幕主視覺點擊入口
-   ============================================ */
-#splash-screen {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    background-image: url('main-visual.jpg'); 
-    background-size: cover !important; /* 👑 強制填滿不留黑邊 */
-    background-position: center 10%; /* ⚠️ 完全保留你不動的設定 */
-    background-repeat: no-repeat !important;
-    z-index: 9999;
-    display: block; 
-    cursor: pointer;
-    transition: opacity 0.8s ease, visibility 0.8s ease;
-}
-
-.click-hint {
-    position: absolute;
-    /* 🎯 關鍵修正：往下壓到底部 8% 邊緣，絕對不會擋到中間的圖！ */
-    bottom: 8%; 
-    left: 50%;
-    transform: translateX(-50%);
-    white-space: nowrap; 
-    color: #ffffff;
-    font-size: 28px;
-    font-weight: bold;
-    letter-spacing: 6px;
-    text-shadow: 0 0 15px #00f0ff, 0 0 30px #00f0ff, 0 0 50px #000;
-    animation: blink 1.5s infinite;
-}
-
-@keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.2; }
-}
-
-/* ============================================
-   手機版專屬視覺調整 (響應式偵測 RWD)
-   ============================================ */
 @media (max-width: 768px) {
-    /* 1. 微調手機直向螢幕的圖片對齊位置 */
-    .ark-background, #splash-screen {
-        background-position: center 15%; /* ⚠️ 完全保留你不動的設定 */
-    }
-    
-    /* 2. 精準微調手機版「開始報名」閃爍字的高度與大小，往下推到底部防遮擋 */
-    .click-hint {
-        font-size: 20px !important;
-        letter-spacing: 4px !important;
-        bottom: 8% !important; /* 🎯 修正：手機版也降到最低 */
-    }
-    
-    /* 3. 把四個報到按鈕往下推，將螢幕上半部讓給主視覺圖片 */
-    #methodSelectionState {
-        margin-top: 25vh; 
-    }
-    
-    main {
-        padding-top: 1.5rem !important;
-        padding-left: 0.8rem !important;
-        padding-right: 0.8rem !important;
-    }
-
-    /* 4. 頂部導覽列手機版自動改變縮放顯示 */
-    .header-container {
-        padding: 0 10px !important;
-    }
-    
-    .header-title-text {
-        font-size: 0.95rem !important;
-        letter-spacing: 1px !important;
-    }
-    
-    #mapBtn, #shopBtn {
-        padding: 5px 10px !important;
-        font-size: 0.75rem !important;
-    }
-
-    /* 5. 強迫手機版的報到與餐點按鈕變為上下單排排列 */
-    .two-col-grid {
-        grid-template-columns: 1fr !important;
-        gap: 0.8rem !important;
-    }
-}
-
-/* ============================================
-   👑 手機轉橫螢幕 (Landscape) 極端防禦修正
-   ============================================ */
-@media (max-width: 950px) and (orientation: landscape) {
-    .ark-background, #splash-screen {
-        width: 100vw !important;
-        height: 100vh !important;
-        background-size: cover !important;
-        /* 橫向時維持你的原本對齊邏輯，不做多餘干預 */
-    }
-    
-    /* 橫向時螢幕高度極低，取消大推擠 margin，避免報到按鈕跑出版面無法滑動 */
-    #methodSelectionState {
-        margin-top: 2rem !important; 
-    }
-    
-    .click-hint {
-        bottom: 5% !important; /* 橫屏因為高度很短，壓到 5% 最保險 */
-        font-size: 18px !important;
-    }
+  body.is-mobile-view .cyber-card,
+  body.is-mobile-view .form-card,
+  body.is-mobile-view .panel {
+    border-radius: 0.9rem;
+  }
 }
