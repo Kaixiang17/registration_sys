@@ -7,469 +7,80 @@
 <link href="https://fonts.googleapis.com/css2?family=Michroma&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
 :root {
-  --bg:      #020c1b;
-  --panel:   rgba(5,16,36,0.82);
-  --card:    rgba(8,24,50,0.60);
-  --cyan:    #00e5ff;
-  --green:   #4ade80;
-  --border:  rgba(0,229,255,0.14);
-  --text:    #ddeeff;
-  --muted:   rgba(180,210,240,0.45);
-  --glow:    0 0 22px rgba(0,229,255,0.32);
+  --bg:      #061A18;
+  --panel:   rgba(6, 26, 24, 0.82);
+  --card:    rgba(6, 26, 24, 0.60);
+  --cyan:    #14B8A6;
+  --green:   #5EEAD4;
+  --border:  rgba(20, 184, 166, 0.14);
+  --text:    #ECFEFF;
+  --muted:   rgba(236, 254, 255, 0.45);
+  --glow:    0 0 22px rgba(20, 184, 166, 0.32);
 }
-
 html, body { height: 100%; }
+body { background: var(--bg); color: var(--text); font-family: "Noto Sans TC", sans-serif; min-height: 100vh; overflow-x: hidden; }
+body::before { content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none; background: radial-gradient(ellipse 80% 60% at 10% 5%,  rgba(20,184,166,0.15) 0%, transparent 60%), radial-gradient(ellipse 65% 50% at 90% 92%, rgba(20,184,166,0.10) 0%, transparent 55%); }
+body::after { content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none; background-image: linear-gradient(rgba(20,184,166,0.022) 1px, transparent 1px), linear-gradient(90deg, rgba(20,184,166,0.022) 1px, transparent 1px); background-size: 55px 55px; mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 0%, transparent 100%); }
 
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: "Noto Sans TC", "PingFang TC", sans-serif;
-  min-height: 100vh;
-  overflow-x: hidden;
-}
-
-/* grid mesh background */
-body::before {
-  content: '';
-  position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background:
-    radial-gradient(ellipse 80% 60% at 10% 5%,  rgba(0,50,110,0.30) 0%, transparent 60%),
-    radial-gradient(ellipse 65% 50% at 90% 92%, rgba(0,80,160,0.20) 0%, transparent 55%);
-}
-body::after {
-  content: '';
-  position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background-image:
-    linear-gradient(rgba(0,229,255,0.022) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,229,255,0.022) 1px, transparent 1px);
-  background-size: 55px 55px;
-  mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 0%, transparent 100%);
-}
-
-/* ── HEADER ── */
-.hdr {
-  position: sticky; top: 0; z-index: 100;
-  background: rgba(2,8,20,0.93);
-  border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(16px);
-}
-.hdr-inner {
-  max-width: 1600px; margin: 0 auto;
-  padding: 0 1.75rem;
-  height: 100px;
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 1.25rem;
-}
-
-.brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.brand-logo {
-  width: 44px; height: 44px;
-  border: 1.5px solid var(--cyan);
-  border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.35rem;
-  box-shadow: var(--glow);
-}
-.brand-name {
-  font-family: "Michroma", sans-serif;
-  font-size: 0.88rem; letter-spacing: 4px;
-  color: var(--cyan); text-shadow: var(--glow);
-}
+.hdr { position: sticky; top: 0; z-index: 100; background: rgba(6,26,24,0.93); border-bottom: 1px solid var(--border); backdrop-filter: blur(16px); }
+.hdr-inner { max-width: 1600px; margin: 0 auto; padding: 0 1.75rem; height: 100px; display: flex; align-items: center; justify-content: space-between; gap: 1.25rem; }
+.brand-logo { width: 44px; height: 44px; border: 1.5px solid var(--cyan); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.35rem; box-shadow: var(--glow); }
+.brand-name { font-family: "Michroma", sans-serif; font-size: 0.88rem; letter-spacing: 4px; color: var(--cyan); text-shadow: var(--glow); }
 .brand-sub { font-size: 0.65rem; color: var(--muted); letter-spacing: 2px; margin-top: 2px; }
-
 .hdr-center { flex: 1; text-align: center; min-width: 0; }
-.hdr-event {
-  font-size: 1rem;
-  font-weight: 900;
-  letter-spacing: 2px;
-  color: #fff;
-  line-height: 1.1;
-  text-shadow: 0 0 18px rgba(255,255,255,0.20), var(--glow);
-}
-.hdr-en {
-  font-family: "Michroma", sans-serif;
-  font-size: 0.72rem; letter-spacing: 5px; color: var(--cyan); opacity: .65;
-  margin-bottom: 6px;
-}
-.hdr-zh {
-  font-size: clamp(1.6rem, 3.5vw, 2.6rem);
-  font-weight: 900; letter-spacing: 6px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  text-shadow: 0 0 30px rgba(255,255,255,0.15), 0 2px 4px rgba(0,0,0,0.4);
-  line-height: 1.1;
-}
+.hdr-event { font-size: 1rem; font-weight: 900; letter-spacing: 2px; color: #fff; line-height: 1.1; text-shadow: 0 0 18px rgba(255,255,255,0.20), var(--glow); }
+.hdr-en { font-family: "Michroma", sans-serif; font-size: 0.72rem; letter-spacing: 5px; color: var(--cyan); opacity: .65; margin-bottom: 6px; }
+.hdr-zh { font-size: clamp(1.6rem, 3.5vw, 2.6rem); font-weight: 900; letter-spacing: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 0 30px rgba(20,184,166,0.15), 0 2px 4px rgba(0,0,0,0.4); line-height: 1.1; }
 .hdr-dates { font-size: 0.6rem; color: var(--muted); letter-spacing: 2px; margin-top: 2px; }
-
 .hdr-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.live-pill {
-  display: flex; align-items: center; gap: 5px;
-  font-size: 0.68rem; font-weight: 700; letter-spacing: 1.5px;
-  color: var(--green);
-  background: rgba(74,222,128,0.08);
-  border: 1px solid rgba(74,222,128,0.22);
-  padding: 5px 13px; border-radius: 20px;
-}
-.live-dot {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: var(--green);
-  animation: blink 1.5s infinite;
-}
-@keyframes blink { 0%,100%{opacity:1}50%{opacity:.3} }
-.clock {
-  font-family: "Michroma", sans-serif;
-  font-size: 1rem; color: var(--cyan); letter-spacing: 2px;
-}
+.live-pill { display: flex; align-items: center; gap: 5px; font-size: 0.68rem; font-weight: 700; letter-spacing: 1.5px; color: var(--green); background: rgba(94,234,212,0.08); border: 1px solid rgba(94,234,212,0.22); padding: 5px 13px; border-radius: 20px; }
+.clock { font-family: "Michroma", sans-serif; font-size: 1rem; color: var(--cyan); letter-spacing: 2px; }
 
-/* ── BANNER ── */
-.banner {
-  position: relative; z-index: 10;
-  background: rgba(0,229,255,0.04);
-  border-bottom: 1px solid var(--border);
-}
-.banner-inner {
-  max-width: 1600px; margin: 0 auto;
-  padding: 0.65rem 1.75rem;
-  display: flex; justify-content: space-between; align-items: center;
-}
+.banner { position: relative; z-index: 10; background: rgba(20,184,166,0.04); border-bottom: 1px solid var(--border); }
+.banner-inner { max-width: 1600px; margin: 0 auto; padding: 0.65rem 1.75rem; display: flex; justify-content: space-between; align-items: center; }
 .b-tag   { font-family: "Michroma", sans-serif; font-size: 0.60rem; letter-spacing: 3px; color: var(--muted); }
 .b-label { font-size: 0.82rem; letter-spacing: 4px; color: var(--cyan); font-weight: 900; text-shadow: var(--glow); }
 
-/* ── MAIN ── */
-.main {
-  position: relative; z-index: 5;
-  max-width: 1600px; margin: 0 auto;
-  padding: 1.5rem 1.75rem 2rem;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  /* fill viewport height */
-  min-height: calc(100dvh - 62px - 34px - 38px);
-}
-
-/* ── PANEL ── */
-.panel {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  backdrop-filter: blur(14px);
-  display: flex; flex-direction: column;
-  overflow: hidden;
-}
-.panel::before {
-  content: '';
-  display: block; flex-shrink: 0; height: 1px;
-  background: linear-gradient(90deg, transparent 5%, var(--cyan) 40%, var(--cyan) 60%, transparent 95%);
-  opacity: 0.20;
-}
-.panel-head {
-  padding: 1rem 1.4rem 0.85rem;
-  border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between;
-  flex-shrink: 0;
-}
-.panel-title {
-  font-size: 0.86rem; font-weight: 900;
-  letter-spacing: 2px; color: var(--text);
-  display: flex; align-items: center; gap: 7px;
-}
-.panel-en {
-  font-family: "Michroma", sans-serif;
-  font-size: 0.58rem; letter-spacing: 2px; color: var(--muted);
-}
-
-.panel-body {
-  flex: 1;
-  padding: 1.4rem;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-.panel-body::-webkit-scrollbar { width: 3px; }
-.panel-body::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.18); border-radius: 3px; }
-
-/* ── DONUT ── */
-.donut-layout {
-  height: 100%;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 2.6rem;
-}
-
-.donut-wrap {
-  position: relative;
-  flex-shrink: 0;
-  width: 260px;
-  height: 260px;
-}
-#donut-svg {
-  display: block;
-  filter: drop-shadow(0 0 20px rgba(0,229,255,0.18));
-}
-.donut-center {
-  position: absolute; inset: 0;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  pointer-events: none; text-align: center;
-}
-.donut-num {
-  font-family: "Michroma", sans-serif;
-  font-size: 2.8rem; font-weight: 900; line-height: 1;
-  color: var(--cyan); text-shadow: var(--glow);
-}
+.main { position: relative; z-index: 5; max-width: 1600px; margin: 0 auto; padding: 1.5rem 1.75rem 2rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; min-height: calc(100dvh - 62px - 34px - 38px); }
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: 18px; backdrop-filter: blur(14px); display: flex; flex-direction: column; overflow: hidden; }
+.panel-head { padding: 1rem 1.4rem 0.85rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.panel-title { font-size: 0.86rem; font-weight: 900; letter-spacing: 2px; color: var(--text); display: flex; align-items: center; gap: 7px; }
+.panel-body { flex: 1; padding: 1.4rem; overflow-y: auto; }
+.donut-layout { height: 100%; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 2.6rem; flex-wrap: wrap; }
+.donut-wrap { position: relative; flex-shrink: 0; width: 260px; height: 260px; }
+#donut-svg { display: block; filter: drop-shadow(0 0 20px rgba(20,184,166,0.18)); }
+.donut-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; text-align: center; }
+.donut-num { font-family: "Michroma", sans-serif; font-size: 2.8rem; font-weight: 900; line-height: 1; color: var(--cyan); text-shadow: var(--glow); }
 .donut-lbl { font-size: 0.62rem; color: var(--muted); letter-spacing: 2px; margin-top: 5px; }
+.legend { display: flex; flex-direction: column; gap: 0.85rem; width: 320px; max-width: 320px; align-self: center; }
+.leg { display: grid; grid-template-columns: 14px 1fr auto; align-items: center; column-gap: 12px; }
+.leg-dot { width: 12px; height: 12px; border-radius: 4px; flex-shrink: 0; }
+.leg-name { font-size: 0.92rem; color: var(--text); font-weight: 800; line-height: 1.35; }
+.leg-val  { font-family: "Michroma", sans-serif; font-size: 0.9rem; color: var(--muted); white-space: nowrap; text-align: right; min-width: 72px; }
 
-/* legend — right side of donut */
-.legend {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  width: 320px;
-  max-width: 320px;
-  align-self: center;
-}
-.leg {
-  display: grid;
-  grid-template-columns: 14px 1fr auto;
-  align-items: center;
-  column-gap: 12px;
-}
-.leg-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 4px;
-  flex-shrink: 0;
-}
-.leg-name {
-  font-size: 0.92rem;
-  color: var(--text);
-  font-weight: 800;
-  line-height: 1.35;
-}
-.leg-val  {
-  font-family: "Michroma", sans-serif;
-  font-size: 0.9rem;
-  color: var(--muted);
-  white-space: nowrap;
-  text-align: right;
-  min-width: 72px;
-}
+.tl { display: flex; flex-direction: column; gap: 0.9rem; }
+.tl-item { display: grid; grid-template-columns: 116px minmax(0, 1fr); gap: 0.9rem; align-items: stretch; position: relative; }
+.tl-lead { display: flex; align-items: center; justify-content: center; min-height: 76px; border-radius: 14px; border: 1px solid rgba(20,184,166,0.18); background: rgba(20,184,166,0.045); }
+.tl-time { font-family: "Michroma", sans-serif; font-size: 0.68rem; color: var(--cyan); text-align: center; line-height: 1.45; letter-spacing: 1px; }
+.tl-card { background: linear-gradient(135deg, rgba(20,184,166,0.055), rgba(255,255,255,0.025)); border: 1px solid rgba(20,184,166,0.20); border-radius: 14px; padding: 1rem 1.1rem; display: flex; flex-direction: column; justify-content: center; }
+.tl-title { font-size: 1.02rem; font-weight: 900; line-height: 1.45; letter-spacing: 1px; color: #f2fbff; overflow-wrap: break-word; }
+.tl-sub { font-size: 0.76rem; color: rgba(236,254,255,0.62); margin-top: 0.35rem; line-height: 1.55; overflow-wrap: break-word; }
+.tl-item.active .tl-lead { border-color: rgba(20,184,166,0.65); background: rgba(20,184,166,0.10); box-shadow: 0 0 18px rgba(20,184,166,0.12); }
+.tl-item.active .tl-card { border-color: rgba(20,184,166,0.55); background: linear-gradient(135deg, rgba(20,184,166,0.13), rgba(255,255,255,0.035)); box-shadow: 0 0 24px rgba(20,184,166,0.10), inset 0 0 18px rgba(20,184,166,0.035); }
+.tl-now { flex-shrink: 0; font-size: 0.58rem; font-weight: 900; letter-spacing: 1px; padding: 0.22rem 0.62rem; border-radius: 999px; color: #061A18; background: linear-gradient(135deg, #14B8A6, #5EEAD4); box-shadow: 0 0 14px rgba(20,184,166,0.25); }
 
-.empty-msg { text-align: center; padding: 3rem 0; color: var(--muted); font-size: 0.85rem; line-height: 2; }
+.enterprise-panel { grid-column: 1 / -1; min-height: 360px; }
+.enterprise-list { display: grid; grid-template-columns: 1fr; gap: 0.9rem; }
+.enterprise-card { display: grid; grid-template-columns: 108px 1fr; gap: 1rem; align-items: center; padding: 1rem; border: 1px solid rgba(20,184,166,0.18); border-radius: 14px; background: linear-gradient(135deg, rgba(20,184,166,0.065), rgba(255,255,255,0.025)); }
+.enterprise-img { width: 108px; height: 78px; border-radius: 12px; border: 1px solid rgba(20,184,166,0.22); display: flex; align-items: center; justify-content: center; color: var(--cyan); font-size: 1.8rem; font-weight: 900; }
+.enterprise-name { font-size: 1.05rem; font-weight: 900; color: #f2fbff; letter-spacing: 1px; margin-bottom: 0.25rem; }
+.enterprise-industry { display: inline-flex; color: #061A18; background: linear-gradient(135deg, #14B8A6, #5EEAD4); border-radius: 999px; padding: 0.18rem 0.62rem; font-size: 0.68rem; font-weight: 900; }
 
-/* ── AGENDA (clean mission list) ── */
-.tl {
-  display: flex;
-  flex-direction: column;
-  gap: 0.9rem;
-  padding: 0.15rem 0;
-}
+.ftr { border-top: 1px solid var(--border); background: rgba(6,26,24,0.88); height: 38px; display: flex; align-items: center; justify-content: space-between; padding: 0 1.75rem; }
 
-.tl-item {
-  display: grid;
-  grid-template-columns: 116px minmax(0, 1fr);
-  gap: 0.9rem;
-  align-items: stretch;
-  position: relative;
-}
-
-.tl-lead {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 76px;
-  border-radius: 14px;
-  border: 1px solid rgba(0,229,255,0.18);
-  background: rgba(0,229,255,0.045);
-  overflow: hidden;
-}
-.tl-lead::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 12px;
-  bottom: 12px;
-  width: 3px;
-  border-radius: 10px;
-  background: rgba(0,229,255,0.5);
-  box-shadow: 0 0 14px rgba(0,229,255,0.35);
-}
-
-.tl-dot {
-  display: none;
-}
-
-.tl-time {
-  font-family: "Michroma", sans-serif;
-  font-size: 0.68rem;
-  color: var(--cyan);
-  text-align: center;
-  white-space: normal;
-  writing-mode: horizontal-tb;
-  transform: none;
-  line-height: 1.45;
-  letter-spacing: 1px;
-  padding: 0 0.55rem;
-}
-
-.tl-card {
-  min-width: 0;
-  min-height: 76px;
-  background: linear-gradient(135deg, rgba(0,229,255,0.055), rgba(255,255,255,0.025));
-  border: 1px solid rgba(0,229,255,0.20);
-  border-radius: 14px;
-  padding: 1rem 1.1rem;
-  transition: all 0.25s;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-.tl-item.active .tl-lead {
-  border-color: rgba(0,229,255,0.65);
-  background: rgba(0,229,255,0.10);
-  box-shadow: 0 0 18px rgba(0,229,255,0.12);
-}
-.tl-item.active .tl-card {
-  border-color: rgba(0,229,255,0.55);
-  background: linear-gradient(135deg, rgba(0,229,255,0.13), rgba(255,255,255,0.035));
-  box-shadow: 0 0 24px rgba(0,229,255,0.10), inset 0 0 18px rgba(0,229,255,0.035);
-}
-.tl-item.done .tl-lead,
-.tl-item.done .tl-card {
-  opacity: 0.55;
-}
-
-.tl-card-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.8rem;
-}
-.tl-title {
-  font-size: 1.02rem;
-  font-weight: 900;
-  line-height: 1.45;
-  letter-spacing: 1px;
-  color: #f2fbff;
-}
-.tl-now {
-  flex-shrink: 0;
-  font-size: 0.58rem;
-  font-weight: 900;
-  letter-spacing: 1px;
-  padding: 0.22rem 0.62rem;
-  border-radius: 999px;
-  color: #06111f;
-  background: linear-gradient(135deg, #00e5ff, #4ade80);
-  box-shadow: 0 0 14px rgba(0,229,255,0.25);
-}
-.tl-sub {
-  font-size: 0.76rem;
-  color: rgba(221,238,255,0.62);
-  margin-top: 0.35rem;
-  line-height: 1.55;
-}
-
-@media (max-width: 760px) {
-  .tl-item { grid-template-columns: 1fr; gap: 0.45rem; }
-  .tl-lead { min-height: 44px; justify-content: flex-start; padding-left: 1rem; }
-  .tl-card { min-height: 68px; }
-}
-
-/* ── ENTERPRISE DIRECTORY ── */
-.enterprise-panel {
-  grid-column: 1 / -1;
-  min-height: 360px;
-}
-.enterprise-list {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.9rem;
-}
-.enterprise-card {
-  display: grid;
-  grid-template-columns: 108px 1fr;
-  gap: 1rem;
-  align-items: center;
-  padding: 1rem;
-  border: 1px solid rgba(0,229,255,0.18);
-  border-radius: 14px;
-  background: linear-gradient(135deg, rgba(0,229,255,0.065), rgba(255,255,255,0.025));
-  box-shadow: inset 0 0 26px rgba(0,229,255,0.035);
-}
-.enterprise-img {
-  width: 108px;
-  height: 78px;
-  border-radius: 12px;
-  border: 1px solid rgba(0,229,255,0.22);
-  background: rgba(255,255,255,0.045);
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--cyan);
-  font-size: 1.8rem;
-  font-weight: 900;
-  box-shadow: 0 0 14px rgba(0,229,255,0.10);
-}
-.enterprise-img img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-.enterprise-meta { min-width: 0; }
-.enterprise-name {
-  font-size: 1.05rem;
-  font-weight: 900;
-  color: #f2fbff;
-  letter-spacing: 1px;
-  margin-bottom: 0.25rem;
-}
-.enterprise-industry {
-  display: inline-flex;
-  color: #06111f;
-  background: linear-gradient(135deg, #00e5ff, #4ade80);
-  border-radius: 999px;
-  padding: 0.18rem 0.62rem;
-  font-size: 0.68rem;
-  font-weight: 900;
-  letter-spacing: 1px;
-  margin-bottom: 0.45rem;
-}
-.enterprise-desc {
-  color: rgba(221,238,255,0.68);
-  font-size: 0.82rem;
-  line-height: 1.55;
-}
-@media (max-width: 760px) {
-  .enterprise-card { grid-template-columns: 80px 1fr; }
-  .enterprise-img { width: 80px; height: 64px; }
-}
-
-/* ── FOOTER ── */
-.ftr {
-  position: relative; z-index: 10;
-  border-top: 1px solid var(--border);
-  background: rgba(2,8,20,0.88);
-  height: 38px;
-  display: flex; align-items: center;
-  justify-content: space-between;
-  padding: 0 1.75rem;
-}
-.ftr-l { font-size: 0.60rem; color: var(--muted); letter-spacing: 1.5px; }
-.ftr-r { font-family: "Michroma", sans-serif; font-size: 0.62rem; letter-spacing: 1.5px; }
-
-/* ── RESPONSIVE ── */
 @media (max-width: 860px) {
-  .main {
-    grid-template-columns: 1fr;
-    min-height: unset;
-    padding: 1rem 1rem 1.5rem;
-  }
+  .main { grid-template-columns: 1fr; min-height: unset; padding: 1rem 1rem 1.5rem; }
   .donut-layout { flex-direction: column; gap: 1.5rem; }
   .legend { width: 100%; max-width: 340px; }
   .donut-wrap { width: 200px; height: 200px; }
@@ -484,170 +95,82 @@ body::after {
   .panel-body { padding: 1rem; }
   .donut-wrap { width: 170px; height: 170px; }
   .donut-num  { font-size: 1.9rem; }
+  .tl-item { grid-template-columns: 1fr; gap: 0.45rem; }
+  .tl-lead { min-height: 44px; justify-content: flex-start; padding-left: 1rem; }
+  .tl-card { min-height: 68px; }
 }
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <header class="hdr">
   <div class="hdr-inner">
     <div class="brand">
       <div class="brand-logo">⛵</div>
-      <div>
-        <div class="brand-name">SMART WISDOM ARK</div>
-        <div class="brand-sub">智匯方舟 · 大會投影看板</div>
-      </div>
+      <div><div class="brand-name">智匯方舟</div><div class="brand-sub">大會投影看板</div></div>
     </div>
     <div class="hdr-center">
-      <div id="hdr-event" class="hdr-event">2026 全球面對面</div>
-      <div id="hdr-en" class="hdr-en">GLOBAL FACE TO FACE</div>
-      <div id="hdr-zh" class="hdr-zh">世代共榮的數位聚合</div>
-      <div id="hdr-dates" class="hdr-dates">2026/06/01 ─ 2026/08/XX</div>
+      <div id="hdr-event" class="hdr-event"></div>
+      <div id="hdr-en" class="hdr-en"></div>
+      <div id="hdr-zh" class="hdr-zh"></div>
+      <div id="hdr-dates" class="hdr-dates"></div>
     </div>
-    <div class="hdr-right">
-      <div class="live-pill"><span class="live-dot"></span>LIVE</div>
-      <div id="clock" class="clock">--:--:--</div>
-    </div>
+    <div class="hdr-right"><div class="live-pill">LIVE</div><div id="clock" class="clock">--:--:--</div></div>
   </div>
 </header>
-
-<!-- BANNER -->
 <div class="banner">
   <div class="banner-inner">
-    <span class="b-tag">智匯方舟 | SMART WISDOM ARK</span>
-    <span id="b-mid" class="b-label">2026 全球面對面 · GLOBAL FACE TO FACE</span>
-    <span class="b-tag">智匯方舟 | SMART WISDOM ARK</span>
+    <span class="b-tag">智匯方舟</span><span id="b-mid" class="b-label"></span><span class="b-tag">智匯方舟</span>
   </div>
 </div>
-
-<!-- MAIN -->
 <div class="main">
-
-  <!-- LEFT: Donut -->
   <div class="panel">
-    <div class="panel-head">
-      <div class="panel-title">🌐 實時登艦產業生態分佈</div>
-      <span class="panel-en">INDUSTRY ECOSYSTEM</span>
-    </div>
+    <div class="panel-head"><div class="panel-title">🌐 實時登艦產業生態分佈</div></div>
     <div class="panel-body">
       <div class="donut-layout">
         <div class="donut-wrap">
-          <svg id="donut-svg" viewBox="0 0 240 240" width="240" height="240"
-               style="transform:rotate(-90deg);">
-            <circle cx="120" cy="120" r="85" fill="none"
-                    stroke="rgba(255,255,255,0.05)" stroke-width="32"/>
-          </svg>
-          <div class="donut-center">
-            <div class="donut-num" id="donut-num" style="font-size:1.4rem;line-height:1.2"></div>
-            <div class="donut-lbl" id="donut-lbl"></div>
-          </div>
+          <svg id="donut-svg" viewBox="0 0 240 240" width="240" height="240" style="transform:rotate(-90deg);"><circle cx="120" cy="120" r="85" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="32"/></svg>
+          <div class="donut-center"><div class="donut-num" id="donut-num"></div><div class="donut-lbl" id="donut-lbl"></div></div>
         </div>
-        <div class="legend" id="legend">
-          <div class="empty-msg" style="padding:.5rem 0">📡 連線中…</div>
-        </div>
+        <div class="legend" id="legend">連線中…</div>
       </div>
     </div>
   </div>
-
-  <!-- RIGHT: Agenda -->
   <div class="panel">
-    <div class="panel-head">
-      <div class="panel-title">🗓 大會時空座標 · 議程</div>
-      <span id="agenda-range" class="panel-en">CONFERENCE TIMELINE</span>
-    </div>
-    <div class="panel-body">
-      <div id="tl" class="tl">
-        <div class="empty-msg">📡 載入議程中…</div>
-      </div>
-    </div>
+    <div class="panel-head"><div class="panel-title">🗓 大會時空座標 · 議程</div><span id="agenda-range" class="panel-en">CONFERENCE TIMELINE</span></div>
+    <div class="panel-body"><div id="tl" class="tl">連線中…</div></div>
   </div>
-
-  <!-- BOTTOM: Enterprise Directory -->
   <div class="panel enterprise-panel">
-    <div class="panel-head">
-      <div class="panel-title">🏢 今日參與企業</div>
-      <span class="panel-en">PARTNER DIRECTORY</span>
-    </div>
-    <div class="panel-body">
-      <div id="enterprise-list" class="enterprise-list">
-        <div class="empty-msg">📡 載入參與企業中…</div>
-      </div>
-    </div>
+    <div class="panel-head"><div class="panel-title">🏢 今日參與企業</div></div>
+    <div class="panel-body"><div id="enterprise-list" class="enterprise-list">連線中…</div></div>
   </div>
-
 </div>
-
-<!-- FOOTER -->
-<footer class="ftr">
-  <span id="ftr-l" class="ftr-l">SMART ARK CONTROL TERMINAL © 2026 智匯方舟</span>
-  <span id="ftr-r" class="ftr-r" style="color:var(--muted)">● CONNECTING…</span>
-</footer>
+<footer class="ftr"><span id="ftr-l" class="ftr-l"></span></footer>
 
 <script>
-/* ── URL params ── */
-const UP    = new URLSearchParams(location.search);
-let   SHEET = UP.get('sheet') || '';
+const UP = new URLSearchParams(location.search);
+let SHEET = UP.get('sheet') || '';
 const ADMIN = UP.get('admin') || 'admin';
-const API   = '/api';
+const API = '/api';
+const PALETTE = ['#14B8A6', '#5EEAD4', '#40C4FF', '#7C4DFF', '#FF2D95', '#FFD600', '#FFAB40', '#FF5252'];
 
-const PALETTE = [
-  '#00E5FF', // 亮青
-  '#FF2D95', // 桃紅
-  '#FFD600', // 黃
-  '#00E676', // 綠
-  '#7C4DFF', // 紫
-  '#FF6D00', // 橘
-  '#40C4FF', // 藍
-  '#FF5252', // 紅
-  '#C6FF00', // 黃綠
-  '#B388FF', // 淺紫
-  '#69F0AE', // 淺綠
-  '#FFAB40'  // 淺橘
-];
+let cfg = null;
+let lastCheckCount = -1;
 
-/* ── state ── */
-let cfg            = null;
-let lastCheckCount = -1;   // only redraw donut when this changes
-let dashboardRefreshChannel = null;
-const DASHBOARD_TEMPLATE = {
-  brand_name: '智匯方舟',
-  event_title: '2026 全球面對面',
-  event_subtitle: '世代共榮的數位聚合',
-  projection_subtitle: 'GLOBAL FACE TO FACE'
-};
-
-/* ── boot ── */
 window.onload = async () => {
-  tick(); setInterval(tick, 1000);
-  setupDashboardRefreshListener();
-
+  setInterval(() => { const n=new Date(); document.getElementById('clock').textContent=n.toTimeString().slice(0,8); }, 1000);
   if (!SHEET) {
     try {
       const r = await get(`${API}/current_sheet?admin=${enc(ADMIN)}`);
       if (r.success && r.current_sheet) SHEET = r.current_sheet;
     } catch {}
   }
-
   await loadCfg();
   await poll();
   setInterval(poll, 12000);
   setInterval(loadCfg, 30000);
 };
 
-function setupDashboardRefreshListener() {
-  window.addEventListener('storage', (event) => {
-    if (event.key === 'dashboard_refresh_signal') loadCfg();
-  });
-  if ('BroadcastChannel' in window) {
-    dashboardRefreshChannel = new BroadcastChannel('smart-ark-dashboard');
-    dashboardRefreshChannel.onmessage = (event) => {
-      if (event.data && ['agenda-updated', 'navigator-config-updated'].includes(event.data.type)) loadCfg();
-    };
-  }
-}
-
-/* ── config ── */
 async function loadCfg() {
   try {
     const baseCfg = await get(`${API}/config?admin=${enc(ADMIN)}&sheet=${enc(SHEET)}`);
@@ -656,235 +179,111 @@ async function loadCfg() {
       const eventJson = await get(`${API}/event-config?admin=${enc(ADMIN)}&sheet=${enc(SHEET)}`);
       if (eventJson.success && eventJson.config) eventCfg = eventJson.config;
     } catch {}
+    try {
+      const agendaJson = await get(`${API}/schedule?admin=${enc(ADMIN)}&sheet=${enc(SHEET)}`);
+      if (agendaJson.success && agendaJson.schedule) eventCfg.agenda = agendaJson.schedule;
+    } catch {}
+    
     cfg = Object.assign({}, baseCfg || {}, eventCfg || {});
-    applyHeader();
+    const brand = cfg.brand_name || '智匯方舟';
+    document.querySelector('.brand-name').textContent = brand;
+    document.querySelectorAll('.b-tag').forEach(t => t.textContent = brand);
+    
+    document.getElementById('hdr-event').textContent = cfg.event_title || SHEET || '活動';
+    document.getElementById('hdr-en').textContent = cfg.projection_subtitle || 'GLOBAL FACE TO FACE';
+    document.getElementById('hdr-zh').textContent = cfg.projection_title || '世代共榮的數位聚合';
+    document.getElementById('ftr-l').textContent = `SMART ARK CONTROL TERMINAL © 2026 ${brand}`;
+    
     renderAgenda();
     renderEnterprises();
-  } catch (e) { console.warn('cfg', e); }
+  } catch (e) {}
 }
 
-function cleanEventTitle(value) {
-  const v = String(value || '').trim();
-  if (!v || v === '活動報到名單' || v === '活動報名表單') return DASHBOARD_TEMPLATE.event_title;
-  return v.replace(/活動報名表單/g, '').replace(/活動報到名單/g, '').trim() || DASHBOARD_TEMPLATE.event_title;
-}
-
-function applyHeader() {
-  if (!cfg) return;
-  const eventName = cleanEventTitle(cfg.event_title || cfg.exp_event_title || cfg.google_sheet_name);
-  const subtitle = cfg.projection_title || cfg.event_subtitle || cfg.exp_event_subtitle || DASHBOARD_TEMPLATE.event_subtitle;
-  const projectionSub = cfg.projection_subtitle || DASHBOARD_TEMPLATE.projection_subtitle;
-  setText('hdr-event', eventName);
-  setText('hdr-en', projectionSub);
-  setText('hdr-zh', subtitle);
-  const ds = cfg.date_start || cfg.event_date_start || cfg.exp_event_date_start || '';
-  const de = cfg.date_end || cfg.event_date_end || cfg.exp_event_date_end || '';
-  setText('hdr-dates', ds || de ? `${ds}${de ? ' ─ '+de : ''}` : '');
-  setText('b-mid', `${eventName} · ${projectionSub}`);
-  const brand = cfg.brand_name || cfg.exp_brand_name || DASHBOARD_TEMPLATE.brand_name;
-  const brandName = document.querySelector('.brand-name');
-  const bTags = document.querySelectorAll('.b-tag');
-  if (brandName) brandName.textContent = brand;
-  bTags.forEach(tag => tag.textContent = brand);
-  setText('ftr-l', `SMART ARK CONTROL TERMINAL © 2026 ${brand}`);
-}
-
-/* ── poll: only redraws donut when new check-ins occur ── */
 async function poll() {
   try {
     const d = await get(`${API}/dashboard_stats?admin=${enc(ADMIN)}&sheet=${enc(SHEET)}`);
     if (!d.success) return;
     const s = d.stats;
-
-    // fingerprint = total + checked_in
-    const fingerprint = (s.total ?? 0) * 100000 + (s.checked_in ?? 0);
-
-    
     const checked = s.checked_in ?? 0;
-    const tot = s.total ?? 0;
-    setText('donut-num', checked > 0 ? '100%' : '—');
-    setText('donut-lbl', checked > 0 ? '已報到' : '');
-
-    if (fingerprint !== lastCheckCount) {
-      lastCheckCount = fingerprint;
+    document.getElementById('donut-num').textContent = checked > 0 ? '100%' : '—';
+    document.getElementById('donut-lbl').textContent = checked > 0 ? '已報到' : '';
+    if (s.total * 100000 + checked !== lastCheckCount) {
+      lastCheckCount = s.total * 100000 + checked;
       buildDonut(s.logs || [], s.total ?? 0);
     }
-
-    // always refresh agenda active state
-    renderAgenda();
-    renderEnterprises();
-
-    setStatus('● LIVE', '#4ade80');
-  } catch {
-    setStatus('● OFFLINE', '#f87171');
-  }
+  } catch {}
 }
 
-/* ── donut ── */
 function buildDonut(logs, total) {
   const mappings = cfg?.industry_mappings || [];
-  const counter  = {};
-
+  const counter = {};
   for (const log of logs) {
-    const co  = String(log.company || '');
-    let   cat = '其他';
-    for (const m of mappings) {
-      if (m.keyword && co.includes(m.keyword.trim())) { cat = m.category.trim(); break; }
-    }
+    const co = String(log.company || '');
+    let cat = '其他';
+    for (const m of mappings) if (m.keyword && co.includes(m.keyword.trim())) { cat = m.category.trim(); break; }
     counter[cat] = (counter[cat] || 0) + 1;
   }
-
-
   const logTotal = Object.values(counter).reduce((a,b) => a+b, 0) || 1;
-  const segs = Object.entries(counter)
-    .sort((a,b) => b[1]-a[1])
-    .map(([name, count], i) => ({
-      name, count,
-      pct: +(count/logTotal*100).toFixed(1),
-      color: PALETTE[i % PALETTE.length],
-    }));
-
-  drawDonut(segs, total);
-  drawLegend(segs);
+  const segs = Object.entries(counter).sort((a,b) => b[1]-a[1]).map(([name, count], i) => ({
+      name, count, pct: +(count/logTotal*100).toFixed(1), color: PALETTE[i % PALETTE.length],
+  }));
+  drawDonut(segs);
+  const el = document.getElementById('legend');
+  el.innerHTML = segs.length ? segs.map(s => `<div class="leg"><div class="leg-dot" style="background:${s.color}"></div><span class="leg-name">${esc(s.name)}</span><span class="leg-val">${s.pct}%</span></div>`).join('') : '尚無資料';
 }
 
-function drawDonut(segs, total) {
+function drawDonut(segs) {
   const svg = document.getElementById('donut-svg');
   svg.querySelectorAll('.ds').forEach(n => n.remove());
-  const C = 2 * Math.PI * 85; // r=85
+  const C = 2 * Math.PI * 85;
   let off = 0;
   for (const s of segs) {
     const len = (s.pct / 100) * C;
     if (len <= 0) continue;
     const el = document.createElementNS('http://www.w3.org/2000/svg','circle');
-    el.setAttribute('class','ds');
-    el.setAttribute('cx','120'); el.setAttribute('cy','120'); el.setAttribute('r','85');
-    el.setAttribute('fill','none');
-    el.setAttribute('stroke', s.color);
-    el.setAttribute('stroke-width','32');
-    el.setAttribute('stroke-dasharray', `0 ${C}`);
-    el.setAttribute('stroke-dashoffset', String(-off));
+    el.setAttribute('class','ds'); el.setAttribute('cx','120'); el.setAttribute('cy','120'); el.setAttribute('r','85');
+    el.setAttribute('fill','none'); el.setAttribute('stroke', s.color); el.setAttribute('stroke-width','32');
+    el.setAttribute('stroke-dasharray', `${len} ${C-len}`); el.setAttribute('stroke-dashoffset', String(-off));
     svg.appendChild(el);
-    requestAnimationFrame(() => setTimeout(() => {
-      el.style.transition = 'stroke-dasharray 1s cubic-bezier(.4,0,.2,1)';
-      el.setAttribute('stroke-dasharray', `${len} ${C-len}`);
-    }, 60));
     off += len;
   }
 }
 
-function drawLegend(segs) {
-  const el = document.getElementById('legend');
-  if (!segs.length) {
-    el.innerHTML = '<div class="empty-msg" style="padding:.5rem 0">⚙️ 請至後台設定行業分類對照表</div>';
-    return;
-  }
-  el.innerHTML = segs.map(s => `
-    <div class="leg">
-      <div class="leg-dot" style="background:${s.color};box-shadow:0 0 10px ${s.color}aa, 0 0 18px ${s.color}55;"></div>
-      <span class="leg-name">${esc(s.name)}</span>
-      <span class="leg-val">${s.pct}%</span>
-    </div>
-  `).join('');
-}
-
-
-/* ── enterprise directory ── */
-let lastEnterpriseRenderAt = 0;
-async function renderEnterprises(force=false) {
-  const list = document.getElementById('enterprise-list');
-  if (!list) return;
-  const nowTs = Date.now();
-  if (!force && nowTs - lastEnterpriseRenderAt < 11000) return;
-  lastEnterpriseRenderAt = nowTs;
-  try {
-    const json = await get(`${API}/exhibitors?admin=${enc(ADMIN)}&sheet=${enc(SHEET)}`);
-    if (!json.success) throw new Error(json.message || '企業資料載入失敗');
-    const items = (json.exhibitors || [])
-      .filter(x => (x.name || x.company_name || '').trim())
-      .slice(0, 18);
-    if (!items.length) {
-      list.innerHTML = '<div class="empty-msg">後台尚未新增參與企業。請到後台「企業展示」手動新增，或按「帶入全部表單公司」後再儲存。</div>';
-      return;
-    }
-    list.innerHTML = items.map(item => {
-      const name = esc(item.name || item.company_name || '');
-      const industry = esc(item.industry || '未分類');
-      const desc = esc(item.description || '尚未設定公司簡介，可於後台「企業展示」補上介紹與圖片。');
-      const img = item.image_url || item.image || '';
-      return `
-        <div class="enterprise-card">
-          <div class="enterprise-img">${img ? `<img src="${esc(img)}" alt="${name}">` : `<span>${name.slice(0,1) || '企'}</span>`}</div>
-          <div class="enterprise-meta">
-            <div class="enterprise-name">${name}</div>
-            <div class="enterprise-industry">${industry}</div>
-            <div class="enterprise-desc">${desc}</div>
-          </div>
-        </div>`;
-    }).join('');
-  } catch (e) {
-    console.warn('enterprises', e);
-    list.innerHTML = '<div class="empty-msg">企業資料同步中…</div>';
-  }
-}
-
-/* ── agenda ── */
 function renderAgenda() {
   const agenda = cfg?.agenda || [];
   const tl = document.getElementById('tl');
   if (!agenda.length) {
-    tl.innerHTML = '<div class="empty-msg">📡 後台尚未設定議程</div>';
-    setText('agenda-range', 'CONFERENCE TIMELINE');
+    tl.innerHTML = '<div style="color:var(--muted); text-align:center; padding:2rem;">後台尚未設定議程</div>';
     return;
   }
-
-  const first = agenda[0].time || agenda[0].start_time || '';
-  const last  = agenda[agenda.length-1].time || agenda[agenda.length-1].start_time || '';
-  const rangeText = (first && last && first !== last) ? `${first} ─ ${last}` : (first || last || 'CONFERENCE TIMELINE');
-  setText('agenda-range', rangeText);
-
-  const nm = nowMins();
-  let act = -1;
+  const nm = new Date().getHours()*60 + new Date().getMinutes();
+  let act = 0;
   for (let i = 0; i < agenda.length; i++) {
-    const m = parseT(agenda[i].time || agenda[i].start_time || '');
-    if (m !== null && m <= nm) act = i;
+    const m = String(agenda[i].time).match(/(\d{1,2}):(\d{2})/);
+    if (m && (+m[1]*60+ +m[2]) <= nm) act = i;
   }
-  if (act < 0) act = 0;
-
-  tl.innerHTML = agenda.map((item,i) => {
-    const t   = esc(item.time || item.start_time || '時間待定');
-    const ttl = esc(item.title || item.name || item.event || '—');
-    const sub = esc(item.subtitle || item.description || '');
-    const cls = i===act ? 'active' : i<act ? 'done' : '';
-    return `
-    <div class="tl-item ${cls}">
-      <div class="tl-lead">
-        <div class="tl-time">${t}</div>
-      </div>
-      <div class="tl-card">
-        <div class="tl-card-top">
-          <div class="tl-title">${ttl}</div>
-          ${i===act ? '<div class="tl-now">▶ NOW</div>' : ''}
-        </div>
-        ${sub ? `<div class="tl-sub">${sub}</div>` : ''}
-      </div>
-    </div>`;
-  }).join('');
+  tl.innerHTML = agenda.map((item,i) => `
+    <div class="tl-item ${i===act ? 'active' : ''}">
+      <div class="tl-lead"><div class="tl-time">${esc(item.time)}</div></div>
+      <div class="tl-card"><div style="display:flex; justify-content:space-between;">
+        <div class="tl-title">${esc(item.title)}</div>${i===act ? '<div class="tl-now">▶ NOW</div>' : ''}
+      </div><div class="tl-sub">${esc(item.description)}</div></div>
+    </div>`).join('');
 }
 
-/* ── helpers ── */
-async function get(url) {
-  const r = await fetch(url + (url.includes('?')?'&':'?') + `_t=${Date.now()}`);
-  return r.json();
+async function renderEnterprises() {
+  try {
+    const json = await get(`${API}/exhibitors?admin=${enc(ADMIN)}&sheet=${enc(SHEET)}`);
+    const items = (json.exhibitors || []).filter(x => (x.name || x.company_name || '').trim()).slice(0, 18);
+    document.getElementById('enterprise-list').innerHTML = items.length ? items.map(item => `
+        <div class="enterprise-card">
+          <div class="enterprise-img">${item.image_url ? `<img src="${esc(item.image_url)}" style="width:100%;height:100%;object-fit:cover;">` : `<span>${esc(item.name || item.company_name).slice(0,1)}</span>`}</div>
+          <div><div class="enterprise-name">${esc(item.name || item.company_name)}</div><div class="enterprise-industry">${esc(item.industry || '未分類')}</div></div>
+        </div>`).join('') : '<div style="color:var(--muted); text-align:center;">尚無企業資料</div>';
+  } catch (e) {}
 }
-function setStatus(msg, color) {
-  const el = document.getElementById('ftr-r');
-  if (el) { el.textContent = msg; el.style.color = color; }
-}
-function tick()    { setText('clock', new Date().toTimeString().slice(0,8)); }
-function nowMins() { const n = new Date(); return n.getHours()*60+n.getMinutes(); }
-function parseT(s) { const m = String(s).match(/(\d{1,2}):(\d{2})/); return m ? +m[1]*60+ +m[2] : null; }
-function setText(id,v) { const e=document.getElementById(id); if(e) e.textContent=String(v??''); }
+
+async function get(url) { const r = await fetch(url + (url.includes('?')?'&':'?') + `_t=${Date.now()}`); return r.json(); }
 function esc(v) { return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
 function enc(v) { return encodeURIComponent(v); }
 </script>
