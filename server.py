@@ -316,14 +316,12 @@ def pick(row, keys):
 
 def normalize_registration(row):
     return {
-        'name': pick(row, ['姓名','name','Name','名字','貴賓姓名']),
-        'phone': pick(row, ['手機','電話','phone','Phone','行動電話','手機號碼']),
-        'email': pick(row, ['Email','email','E-mail','信箱','電子郵件']),
-        'company': pick(row, ['公司','公司名稱','服務單位','單位','company','Company']),
-        'job_title': pick(row, ['職稱','title','job_title','職位','position','Position']),
+        'name': pick(row, ['姓名','name','Name']),
+        'phone': pick(row, ['手機','電話','phone','Phone']),
+        'email': pick(row, ['Email','email','電子郵件']),
+        'company': pick(row, ['公司','company','Company']),
+        'job_title': pick(row, ['職稱','職位','title','job_title']),
         'seat': pick(row, ['桌號','座位','桌次','seat','Seat']),
-        'meal_choice': pick(row, ['餐飲','餐食','餐飲偏好','meal','meal_choice','meal_preference']),
-        'special_notes': pick(row, ['備註','特殊飲食','notes','note']),
         'raw_data': json.dumps(row, ensure_ascii=False)
     }
 
