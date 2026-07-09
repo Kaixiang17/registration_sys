@@ -900,4 +900,7 @@
     }
 
     function escapeHtml(value) { return String(value ?? '').replace(/[&<>"']/g, function(ch) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]; }); }
-function escapeJs(value) { return String(value ?? '').replace(/['"\\\/\b\f\n\r\t]/g, function(ch) { return '\\' + ch; }); }
+    function escapeJs(value) { return String(value ?? '').replace(/['"\\\/\b\f\n\r\t]/g, function(ch) { return '\\' + ch; }); }
+  </script>
+</body>
+</html>
