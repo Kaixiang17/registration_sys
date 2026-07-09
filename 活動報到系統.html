@@ -883,14 +883,14 @@
     <img id="event-banner" src="" style="width: 100%; border-radius: 0 0 15px 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);">
   </div>
 
-  <header>
-    <div class="header-container">
-      <div onclick="resetToHome()" style="cursor:pointer; display: flex; align-items: center; gap: 8px; min-width: 0; flex-shrink: 1;">
-        <span style="font-size: 1.3rem; flex-shrink: 0;">🏠</span>
-        <span id="header-title" class="header-title-text" style="font-size: 1.15rem; letter-spacing: 2px; white-space: nowrap; font-weight: bold; color: var(--ark-accent);">首 頁</span>
-      </div>
+ <header>
+  <div class="header-container">
+    <div onclick="resetToHome()" style="cursor:pointer; display: flex; align-items: center; gap: 8px; min-width: 0; flex-shrink: 1;">
+      <span style="font-size: 1.3rem; flex-shrink: 0;">🏠</span>
+      <span id="header-title" class="header-title-text" style="font-size: 1.15rem; letter-spacing: 2px; white-space: nowrap; font-weight: bold; color: var(--ark-accent);">首 頁</span>
     </div>
-  </header>
+  </div>
+</header>
 
   <main>
     <div id="methodSelectionState" class="state-hidden">
@@ -1230,8 +1230,11 @@
         renderArkTerminal(saved.user, saved.meal || saved.user.meal || '');
         const splash = document.getElementById('splash-screen');
         if (splash) splash.style.display = 'none';
-        document.querySelector('.header-action-buttons').style.display = 'flex';
-        document.getElementById('shopBtn').style.display = 'block';
+        const headerActions = document.querySelector('.header-action-buttons');
+if (headerActions) headerActions.style.display = 'flex';
+
+const shopBtn = document.getElementById('shopBtn');
+if (shopBtn) shopBtn.style.display = 'block';
         setAppState('success');
         return true;
       } catch(e) {
@@ -1260,8 +1263,11 @@
       splash.style.visibility = 'hidden';
       setTimeout(() => {
         splash.style.display = 'none';
-        document.querySelector('.header-action-buttons').style.display = 'flex';
-        document.getElementById('shopBtn').style.display = 'block';
+        const headerActions = document.querySelector('.header-action-buttons');
+if (headerActions) headerActions.style.display = 'flex';
+
+const shopBtn = document.getElementById('shopBtn');
+if (shopBtn) shopBtn.style.display = 'block';
         setAppState('methodSelection');
       }, 800);
     }
@@ -1290,8 +1296,11 @@
       clearCheckinState();
       const splash = document.getElementById('splash-screen');
       if (splash) splash.style.display = 'none';
-      document.querySelector('.header-action-buttons').style.display = 'flex';
-      document.getElementById('shopBtn').style.display = 'block';
+      const headerActions = document.querySelector('.header-action-buttons');
+if (headerActions) headerActions.style.display = 'flex';
+
+const shopBtn = document.getElementById('shopBtn');
+if (shopBtn) shopBtn.style.display = 'block';
       setAppState('methodSelection');
     }
 
