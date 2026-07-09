@@ -608,7 +608,7 @@ def save_config(conn, admin, sheet, payload):
         for k, v in payload.items():
             if k in ['products', 'industry_mappings', 'agenda', 'product_categories']:
                 direct[k] = json_dumps(v)
-            elif k in cols and k not in ['id', 'created_at', 'updated_at']:
+            elif k in cols and k not in ['id', 'created_at', 'updated_at', 'success_card_config', 'success_info_cards_config', 'dashboard_agenda_config']:
                 direct[k] = v
             else:
                 extra[k] = v
