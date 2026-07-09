@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>智匯方舟 - 航空登機系統</title>
-  <link rel="stylesheet" href="smart-ark-theme.css?v=10">
+  <link rel="stylesheet" href="/smart-ark-theme.css?v=11">
   <style>
     *, *::before, *::after {
       box-sizing: border-box;
@@ -837,6 +837,38 @@
         bottom: 5% !important;
         font-size: 18px !important;
       }
+    }
+
+
+    /* 手機版首頁背景圖：偵測手機後套用 smart-ark-mobile-bg.png */
+    body.is-mobile-view.circuit-background {
+      background-color: #061A18 !important;
+      background-image:
+        linear-gradient(rgba(6, 26, 24, 0.18), rgba(6, 26, 24, 0.72)),
+        url("/smart-ark-mobile-bg.png") !important;
+      background-size: cover !important;
+      background-position: center top !important;
+      background-repeat: no-repeat !important;
+      background-attachment: fixed !important;
+    }
+
+    body.is-mobile-view .ark-background {
+      background:
+        linear-gradient(rgba(6, 26, 24, 0.16), rgba(6, 26, 24, 0.74)),
+        url("/smart-ark-mobile-bg.png") center top / cover no-repeat !important;
+      opacity: 1 !important;
+    }
+
+    /* 首頁開始畫面也要吃手機背景 */
+    body.is-mobile-view #splash-screen {
+      background:
+        linear-gradient(rgba(6, 26, 24, 0.10), rgba(6, 26, 24, 0.70)),
+        url("/smart-ark-mobile-bg.png") center top / cover no-repeat !important;
+    }
+
+    /* 手機版把選擇報到方式稍微往下，避免壓到背景主視覺 */
+    body.is-mobile-view #methodSelectionState {
+      margin-top: 18vh;
     }
   </style>
 </head>
