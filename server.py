@@ -94,7 +94,6 @@ def try_sql(cur, sql, args=None):
 
 
 def ensure_core_tables(conn):
-    """Create/migrate tables. Meal columns are intentionally not created or used."""
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -168,7 +167,6 @@ def ensure_core_tables(conn):
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 KEY idx_event (admin_username, google_sheet_name),
-                KEY idx_event_legacy (admin_user, event_key),
                 KEY idx_status (status)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
             """
@@ -227,7 +225,6 @@ def ensure_core_tables(conn):
             """
         )
 
-        # Add missing columns on older Railway DBs. Meal columns are deliberately omitted.
         cfg_cols = {
             'admin_username': "VARCHAR(120) NOT NULL DEFAULT 'admin'",
             'google_sheet_name': "VARCHAR(255) NOT NULL DEFAULT '活動報到名單'",
@@ -235,35 +232,6 @@ def ensure_core_tables(conn):
             'event_subtitle': 'VARCHAR(255)',
             'event_date_start': 'VARCHAR(80)',
             'event_date_end': 'VARCHAR(80)',
-            'date_start': 'VARCHAR(80)',
-            'date_end': 'VARCHAR(80)',
-            'brand_name': 'VARCHAR(255)',
-            'logo_url': 'LONGTEXT',
-            'banner_image_url': 'LONGTEXT',
-            'map_title': 'VARCHAR(255)',
-            'map_subtitle': 'VARCHAR(255)',
-            'map_image_url': 'LONGTEXT',
-            'map_description': 'LONGTEXT',
-            'map_enabled': 'TINYINT(1) DEFAULT 1',
-            'gift_title': 'VARCHAR(255)',
-            'gift_image_url': 'LONGTEXT',
-            'gift_description': 'LONGTEXT',
-            'gift_enabled': 'TINYINT(1) DEFAULT 1',
-            'video_title': 'VARCHAR(255)',
-            'video_url': 'LONGTEXT',
-            'video_enabled': 'TINYINT(1) DEFAULT 1',
-            'video_embed_enabled': 'TINYINT(1) DEFAULT 1',
-            'flow_title': 'VARCHAR(255)',
-            'flow_image_url': 'LONGTEXT',
-            'flow_description': 'LONGTEXT',
-            'flow_enabled': 'TINYINT(1) DEFAULT 1',
-            'projection_title': 'VARCHAR(255)',
-            'projection_subtitle': 'VARCHAR(255)',
-            'success_title': 'VARCHAR(255)',
-            'success_subtitle': 'VARCHAR(255)',
-            'success_description': 'LONGTEXT',
-            'success_button_text': 'VARCHAR(255)',
-            'success_button_url': 'LONGTEXT',
             'card1_icon': 'VARCHAR(40)',
             'card1_title': 'VARCHAR(255)',
             'card1_subtitle': 'VARCHAR(255)',
@@ -289,77 +257,9 @@ def ensure_core_tables(conn):
             'industry_mappings': 'LONGTEXT',
             'agenda': 'LONGTEXT',
             'event_config': 'LONGTEXT',
-            'success_card_config': 'LONGTEXT',
-            'success_info_cards_config': 'LONGTEXT',
-            'dashboard_agenda_config': 'LONGTEXT',
-            'theme_background_color': "VARCHAR(20) DEFAULT '#061A18'",
-            'theme_primary_color': "VARCHAR(20) DEFAULT '#14B8A6'",
-            'theme_accent_color': "VARCHAR(20) DEFAULT '#5EEAD4'",
-            'theme_text_color': "VARCHAR(20) DEFAULT '#ECFEFF'",
         }
         for col, spec in cfg_cols.items():
             add_col(cur, 'event_configs', col, spec)
-
-        reg_cols = {
-            'admin_username': "VARCHAR(120) NOT NULL DEFAULT 'admin'",
-            'google_sheet_name': "VARCHAR(255) NOT NULL DEFAULT '活動報到名單'",
-            'admin_user': "VARCHAR(120) DEFAULT 'admin'",
-            'event_key': "VARCHAR(255) DEFAULT '活動報到名單'",
-            'name': 'VARCHAR(255)',
-            'phone': 'VARCHAR(100)',
-            'email': 'VARCHAR(255)',
-            'company': 'VARCHAR(255)',
-            'company_name': 'VARCHAR(255)',
-            'job_title': 'VARCHAR(255)',
-            'region': 'VARCHAR(255)',
-            'training_level': 'VARCHAR(255)',
-            'seat': 'VARCHAR(100)',
-            'seating_chart': 'VARCHAR(100)',
-            'status': "VARCHAR(40) DEFAULT 'pending'",
-            'is_original': 'TINYINT(1) DEFAULT 1',
-            'proxy_name': 'VARCHAR(255)',
-            'proxy_phone': 'VARCHAR(100)',
-            'checked_in_at': 'DATETIME NULL',
-            'checkin_time': 'DATETIME NULL',
-            'portrait_consent': 'TINYINT(1) NULL',
-            'portrait_consent_status': 'VARCHAR(40)',
-            'portrait_consent_time': 'DATETIME NULL',
-            'special_notes': 'LONGTEXT',
-            'note': 'LONGTEXT',
-            'raw_data': 'LONGTEXT',
-        }
-        for col, spec in reg_cols.items():
-            add_col(cur, 'event_registrations', col, spec)
-
-        for col, spec in {
-            'keyword': 'VARCHAR(255)',
-            'category': 'VARCHAR(255)',
-            'industry': 'VARCHAR(255)',
-            'company_name': 'VARCHAR(255)',
-            'sort_order': 'INT DEFAULT 0',
-        }.items():
-            add_col(cur, 'industry_mappings', col, spec)
-
-        for col, spec in {
-            'company_name': 'VARCHAR(255)',
-            'logo': 'LONGTEXT',
-            'image_url': 'LONGTEXT',
-            'website': 'LONGTEXT',
-            'contact': 'VARCHAR(255)',
-            'description': 'LONGTEXT',
-            'sort_order': 'INT DEFAULT 0',
-        }.items():
-            add_col(cur, 'exhibitors', col, spec)
-
-        # Backfill old column names into the current names and vice versa.
-        try_sql(cur, "UPDATE event_registrations SET admin_username=COALESCE(NULLIF(admin_username,''), admin_user, %s), google_sheet_name=COALESCE(NULLIF(google_sheet_name,''), event_key, %s)", (DEFAULT_ADMIN, DEFAULT_SHEET))
-        try_sql(cur, "UPDATE event_registrations SET admin_user=COALESCE(NULLIF(admin_user,''), admin_username, %s), event_key=COALESCE(NULLIF(event_key,''), google_sheet_name, %s)", (DEFAULT_ADMIN, DEFAULT_SHEET))
-        try_sql(cur, "UPDATE event_registrations SET company=COALESCE(NULLIF(company,''), company_name), company_name=COALESCE(NULLIF(company_name,''), company)")
-        try_sql(cur, "UPDATE event_registrations SET seat=COALESCE(NULLIF(seat,''), seating_chart), seating_chart=COALESCE(NULLIF(seating_chart,''), seat)")
-        try_sql(cur, "UPDATE event_registrations SET checked_in_at=COALESCE(checked_in_at, checkin_time), checkin_time=COALESCE(checkin_time, checked_in_at)")
-        try_sql(cur, "UPDATE event_registrations SET special_notes=COALESCE(NULLIF(special_notes,''), note), note=COALESCE(NULLIF(note,''), special_notes)")
-
-        try_sql(cur, "ALTER TABLE event_configs ADD UNIQUE KEY uq_event_config (admin_username, google_sheet_name)")
 
         cur.execute("SELECT id FROM admins WHERE username=%s", (DEFAULT_ADMIN,))
         if not cur.fetchone():
@@ -395,7 +295,6 @@ def event_args():
         or request.form.get('sheet')
         or data.get('sheet')
         or data.get('google_sheet_name')
-        or data.get('event_key')
         or session.get('current_admin_sheet')
         or DEFAULT_SHEET
     )
@@ -435,8 +334,6 @@ def clean_text(v):
 
 
 def search_norm(v):
-    # Normalize user/company text for fuzzy search.
-    # Remove spaces and common punctuation so "聯 聖" can match "聯聖".
     text = str(v or '').lower().strip()
     text = re.sub(r'[\s\-_/\.、，,。．·・:：;；\(\)（）\[\]【】{}「」『』\+]+', '', text)
     return text
@@ -549,8 +446,6 @@ def public_user(row):
         'special_notes': r.get('special_notes') or r.get('note') or '',
         'note': r.get('special_notes') or r.get('note') or '',
     }
-    for k in ['meal', 'meal_choice', 'meal_preference', 'original_meal_choice', 'food', 'diet']:
-        result.pop(k, None)
     return result
 
 
@@ -566,7 +461,7 @@ def ensure_config(conn, admin, sheet):
                 INSERT INTO event_configs (admin_username, google_sheet_name, event_title, event_subtitle, brand_name)
                 VALUES (%s,%s,%s,%s,%s)
                 """,
-                (admin, sheet, sheet, '世代共榮的數位聚合', '聯聖集團'),
+                (admin, sheet, sheet, '世代共榮的數位聚合', '智匯方舟'),
             )
     conn.commit()
 
@@ -704,8 +599,6 @@ def load_products_from_config(row):
 
 def save_config(conn, admin, sheet, payload):
     payload = dict(payload or {})
-    for k in ['meal', 'meal_choice', 'meal_preference', 'original_meal_choice', 'show_meal_options']:
-        payload.pop(k, None)
     ensure_config(conn, admin, sheet)
     cols = None
     with conn.cursor() as cur:
@@ -743,7 +636,7 @@ def serialize_config(row, conn=None, admin=None, sheet=None):
     cfg['event_subtitle'] = cfg.get('event_subtitle') or cfg.get('exp_event_subtitle') or '世代共榮的數位聚合'
     cfg['date_start'] = cfg.get('date_start') or cfg.get('event_date_start') or cfg.get('exp_event_date_start') or ''
     cfg['date_end'] = cfg.get('date_end') or cfg.get('event_date_end') or cfg.get('exp_event_date_end') or ''
-    cfg['brand_name'] = cfg.get('brand_name') or cfg.get('exp_brand_name') or '聯聖集團'
+    cfg['brand_name'] = cfg.get('brand_name') or cfg.get('exp_brand_name') or '智匯方舟'
     cfg['products'] = load_products_from_config(cfg)
     cfg['product_categories'] = json_loads(cfg.get('product_categories'), ['課程', '諮詢', '聯盟', '紀念品'])
     cfg['industry_mappings'] = json_loads(cfg.get('industry_mappings'), [])
@@ -760,7 +653,6 @@ def serialize_config(row, conn=None, admin=None, sheet=None):
     for k in list(cfg.keys()):
         if isinstance(cfg[k], datetime):
             cfg[k] = cfg[k].strftime('%Y-%m-%d %H:%M:%S')
-    cfg.pop('show_meal_options', None)
     return cfg
 
 
@@ -799,11 +691,6 @@ def dashboard_page():
     return send_from_directory('.', 'dashboard.html')
 
 
-@app.route('/projection')
-def projection_page():
-    return send_from_directory('.', 'dashboard.html')
-
-
 @app.route('/<path:path>')
 def static_files(path):
     return send_from_directory('.', path)
@@ -815,35 +702,6 @@ def static_files(path):
 @app.route('/api/health')
 def health():
     return jsonify(success=True, status='ok', time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-
-
-@app.route('/api/db_check')
-def db_check():
-    conn = None
-    try:
-        conn = get_db_connection()
-        ensure_core_tables(conn)
-        return jsonify(success=True, message='DB connected')
-    except Exception as e:
-        return jsonify(success=False, message=str(e)), 500
-    finally:
-        if conn:
-            conn.close()
-
-
-@app.route('/api/bootstrap_db')
-def bootstrap_db():
-    conn = None
-    try:
-        conn = get_db_connection()
-        ensure_core_tables(conn)
-        return jsonify(success=True, message='DB migration completed')
-    except Exception as e:
-        return jsonify(success=False, message=str(e)), 500
-    finally:
-        if conn:
-            conn.close()
-
 
 @app.route('/api/login', methods=['POST'])
 def api_login():
@@ -872,44 +730,10 @@ def api_login():
         if conn:
             conn.close()
 
-
 @app.route('/api/logout')
 def api_logout():
     session.clear()
     return jsonify(success=True)
-
-
-@app.route('/api/register', methods=['POST'])
-def api_register():
-    conn = None
-    try:
-        data = get_payload() or {}
-        username = clean_text(data.get('username'))
-        password = clean_text(data.get('password'))
-        allowed = clean_text(data.get('allowed_events')) or DEFAULT_SHEET
-        code = clean_text(data.get('invite_code'))
-        required = clean_text(os.getenv('REGISTER_INVITE_CODE'))
-        if required and code != required:
-            return jsonify(success=False, message='邀請碼錯誤'), 403
-        if len(username) < 3 or len(password) < 6:
-            return jsonify(success=False, message='帳號至少 3 字元、密碼至少 6 碼'), 400
-        conn = get_db_connection()
-        ensure_core_tables(conn)
-        first = allowed.split(',')[0].strip() or DEFAULT_SHEET
-        with conn.cursor() as cur:
-            cur.execute("INSERT INTO admins (username,password,allowed_events,current_event) VALUES (%s,%s,%s,%s)", (username, password, allowed, first))
-        conn.commit()
-        return jsonify(success=True, message='管理員建立成功')
-    except pymysql.err.IntegrityError:
-        return jsonify(success=False, message='帳號已存在'), 409
-    except Exception as e:
-        if conn:
-            conn.rollback()
-        return jsonify(success=False, message=str(e)), 500
-    finally:
-        if conn:
-            conn.close()
-
 
 # ============================================================
 # Sheets / event selection
@@ -997,15 +821,6 @@ def session_sheet():
         if conn:
             conn.close()
 
-
-@app.route('/api/sheets/create', methods=['POST'])
-def sheets_create():
-    data = get_payload() or {}
-    data.setdefault('sheet', data.get('name') or data.get('event_key'))
-    with app.test_request_context(json=data):
-        return session_sheet()
-
-
 # ============================================================
 # Config / Navigator
 # ============================================================
@@ -1087,7 +902,6 @@ def api_products():
         if conn:
             conn.close()
 
-
 # ============================================================
 # Agenda / schedule
 # ============================================================
@@ -1123,7 +937,6 @@ def api_admin_schedule():
 # Industry mappings / exhibitors / companies
 # ============================================================
 @app.route('/api/industry-mappings', methods=['GET', 'PUT', 'POST'])
-@app.route('/api/industry_mappings', methods=['GET', 'PUT', 'POST'])
 def api_industry_mappings():
     admin, sheet = q_event()
     conn = None
@@ -1193,7 +1006,6 @@ def api_companies():
         if conn:
             conn.close()
 
-
 # ============================================================
 # Registrations / search / check-in
 # ============================================================
@@ -1218,7 +1030,6 @@ def api_search(method):
         if not value:
             return jsonify(success=True, data=[], results=[])
 
-        # 公司搜尋支援「兩個字」、「三個關鍵字」、「空白分隔關鍵字」、全半形符號差異。
         if method in ['company', 'company_name', 'unit']:
             with conn.cursor() as cur:
                 cur.execute(
@@ -1302,7 +1113,7 @@ def api_registration_add():
                     now,
                     clean_text(data.get('special_notes') or data.get('note')),
                     clean_text(data.get('special_notes') or data.get('note')),
-                    json_dumps({k: v for k, v in data.items() if k not in ['meal', 'meal_choice', 'meal_preference']}),
+                    json_dumps({k: v for k, v in data.items()}),
                 ),
             )
             rid = cur.lastrowid
@@ -1382,7 +1193,6 @@ def api_checkin(rid):
 
 
 @app.route('/api/company-search')
-@app.route('/api/search_company')
 def api_company_search_alias():
     return api_search('company')
 
@@ -1397,7 +1207,6 @@ def api_search_query_alias():
 # CSV import / export
 # ============================================================
 @app.route('/api/sheets/import_csv', methods=['POST'])
-@app.route('/api/import_csv', methods=['POST'])
 def import_csv_api():
     admin, sheet = q_event()
     conn = None
@@ -1498,7 +1307,6 @@ def export_csv_api():
         if conn:
             conn.close()
 
-
 # ============================================================
 # Stats
 # ============================================================
@@ -1510,6 +1318,7 @@ def dashboard_stats():
         conn = get_db_connection()
         ensure_core_tables(conn)
         with conn.cursor() as cur:
+            # 統計應到與實到
             cur.execute(
                 """
                 SELECT
@@ -1523,28 +1332,8 @@ def dashboard_stats():
             s = cur.fetchone() or {}
             total = int(s.get('total') or 0)
             checked = int(s.get('checked') or 0)
-            cur.execute(
-                """
-                SELECT COALESCE(NULLIF(seat,''), seating_chart, '未分桌') AS seat,
-                       COALESCE(NULLIF(seat,''), seating_chart, '未分桌') AS `table`,
-                       COUNT(*) AS total,
-                       SUM(CASE WHEN status IN ('checked_in','已報到','替代','done') THEN 1 ELSE 0 END) AS checked,
-                       SUM(CASE WHEN status IN ('checked_in','已報到','替代','done') THEN 1 ELSE 0 END) AS checked_in
-                FROM event_registrations
-                WHERE admin_username=%s AND google_sheet_name=%s
-                GROUP BY COALESCE(NULLIF(seat,''), seating_chart, '未分桌')
-                """,
-                (admin, sheet),
-            )
-            table_stats = []
-            for r in cur.fetchall():
-                rr = dict(r)
-                rr['table'] = clean_text(rr.get('table') or rr.get('seat') or '未分桌')
-                rr['seat'] = rr['table']
-                rr['percent'] = round((float(rr.get('checked') or 0) / float(rr.get('total') or 1)) * 100, 1) if rr.get('total') else 0
-                table_stats.append(rr)
-            table_stats.sort(key=lambda x: table_sort_key(x.get('table')))
 
+            # 修復：在 Python 中將座位以減號切割，統一計算該桌的人數，避免 01-01 跟 01-02 變成分開的桌次
             cur.execute(
                 """
                 SELECT id, name, phone, email, company, company_name, job_title,
@@ -1559,18 +1348,35 @@ def dashboard_stats():
             table_detail_map = {}
             for raw_row in cur.fetchall():
                 row = public_user(raw_row)
-                key = clean_text(row.get('seat') or '未分桌') or '未分桌'
-                table_detail_map.setdefault(key, []).append(row)
-            table_details = [
-                {
-                    'table': key,
-                    'seat': key,
+                seat_val = clean_text(row.get('seat') or '未分桌')
+                if not seat_val:
+                    seat_val = '未分桌'
+                
+                # 取減號前面的桌號，例如 "01-01" -> "01"
+                table_val = seat_val.split('-')[0].strip() if '-' in seat_val else seat_val
+                
+                table_detail_map.setdefault(table_val, []).append(row)
+
+            table_stats = []
+            table_details = []
+            for table_val, members in sorted(table_detail_map.items(), key=lambda kv: table_sort_key(kv[0])):
+                checked_count = sum(1 for m in members if status_checked(m.get('status')))
+                total_count = len(members)
+                table_stats.append({
+                    'table': table_val,
+                    'seat': table_val,
+                    'total': total_count,
+                    'checked_in': checked_count,
+                    'percent': round((checked_count / total_count) * 100, 1) if total_count else 0
+                })
+                table_details.append({
+                    'table': table_val,
+                    'seat': table_val,
                     'members': members,
-                    'checked_in': sum(1 for m in members if status_checked(m.get('status'))),
-                    'total': len(members),
-                }
-                for key, members in sorted(table_detail_map.items(), key=lambda kv: table_sort_key(kv[0]))
-            ]
+                    'checked_in': checked_count,
+                    'total': total_count
+                })
+
         logs = get_logs(conn, admin, sheet, 25, checked_only=True)
         industry_logs = get_logs(conn, admin, sheet, None, checked_only=True)
         return jsonify(success=True, stats={
@@ -1587,81 +1393,6 @@ def dashboard_stats():
     finally:
         if conn:
             conn.close()
-
-
-@app.route('/api/stats/meals')
-def meal_stats_disabled():
-    """Compatibility endpoint. Meal statistics are intentionally disabled."""
-    admin, sheet = q_event()
-    conn = None
-    try:
-        conn = get_db_connection()
-        ensure_core_tables(conn)
-        rows = get_logs(conn, admin, sheet, None, checked_only=False)
-        portrait_notes = []
-        counts = {'同意肖像權': 0, '不同意肖像權': 0, '未填': 0}
-        for r in rows:
-            status = portrait_status_from_row(r)
-            if '不同意' in status:
-                note = '不同意肖像權'
-            elif '同意' in status:
-                note = '同意肖像權'
-            else:
-                note = '未填'
-            counts[note] = counts.get(note, 0) + 1
-            portrait_notes.append({'name': r.get('name'), 'company': r.get('company'), 'note': note, 'portrait_consent_status': status})
-        return jsonify(success=True, meals={}, meal_disabled=True, portrait_counts=counts, portrait_notes=portrait_notes, special_notes=portrait_notes)
-    except Exception as e:
-        return jsonify(success=False, message=str(e), meals={}, portrait_notes=[]), 500
-    finally:
-        if conn:
-            conn.close()
-
-
-# ============================================================
-# Debug / integration check
-# ============================================================
-@app.route('/api/debug_login')
-def debug_login():
-    conn = None
-    try:
-        conn = get_db_connection()
-        ensure_core_tables(conn)
-        with conn.cursor() as cur:
-            cur.execute("SELECT username, allowed_events, current_event FROM admins ORDER BY id")
-            rows = cur.fetchall()
-        return jsonify(success=True, admins=rows)
-    except Exception as e:
-        return jsonify(success=False, message=str(e)), 500
-    finally:
-        if conn:
-            conn.close()
-
-
-@app.route('/api/integration_check')
-def integration_check():
-    admin, sheet = q_event()
-    conn = None
-    try:
-        conn = get_db_connection()
-        ensure_core_tables(conn)
-        cfg = serialize_config(get_config_row(conn, admin, sheet), conn, admin, sheet)
-        stats_logs = get_logs(conn, admin, sheet, 1)
-        return jsonify(success=True, checks={
-            'config': True,
-            'agenda': isinstance(cfg.get('agenda'), list),
-            'products': isinstance(cfg.get('products'), list),
-            'industry_mappings': isinstance(cfg.get('industry_mappings'), list),
-            'exhibitors': isinstance(cfg.get('exhibitors'), list),
-            'registrations': stats_logs is not None,
-            'meal_disabled': True,
-        })
-    except Exception as e:
-        return jsonify(success=False, message=str(e)), 500
-    finally:
-        if conn:
-            conn.close()
-
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 10000))
