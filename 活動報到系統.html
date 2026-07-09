@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>智匯方舟 - 航空登機系統</title>
-  <link rel="stylesheet" href="/smart-ark-theme.css?v=11">
+  <link rel="stylesheet" href="/smart-ark-theme.css?v=13">
   <style>
     *, *::before, *::after {
       box-sizing: border-box;
@@ -334,18 +334,17 @@
       border-bottom: 1px solid var(--ark-border);
     }
 
-    #splash-screen {
-      position: fixed;
-      inset: 0;
-      background:
-        radial-gradient(circle at 18% 14%, rgba(20,184,166,0.32), transparent 34%),
-        radial-gradient(circle at 85% 82%, rgba(94,234,212,0.20), transparent 34%),
-        var(--ark-bg);
-      z-index: 9999;
-      display: block;
-      cursor: pointer;
-      transition: opacity 0.8s ease, visibility 0.8s ease;
-    }
+   #splash-screen {
+  position: fixed;
+  inset: 0;
+  background:
+    linear-gradient(rgba(6, 26, 24, 0.10), rgba(6, 26, 24, 0.72)),
+    url("/main-visual.jpg") center 10% / cover no-repeat !important;
+  z-index: 9999;
+  display: block;
+  cursor: pointer;
+  transition: opacity 0.8s ease, visibility 0.8s ease;
+}
 
     .click-hint {
       position: absolute;
