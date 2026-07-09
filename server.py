@@ -974,7 +974,7 @@ def api_exhibitors():
     except Exception as e:
         if conn:
             conn.rollback()
-        return jsonify(success=False, message=str(e), exhibitors=[]), 500
+        return jsonify(success=False, message=str(e)), 500
     finally:
         if conn:
             conn.close()
@@ -1091,10 +1091,11 @@ def api_registration_add():
         ensure_core_tables(conn)
         ensure_config(conn, admin, sheet)
         with conn.cursor() as cur:
+            # 具名排除 id，全面精準寫入
             cur.execute(
                 """
                 INSERT INTO event_registrations
-                (admin_username,google_sheet_name,admin_user,event_key,name,phone,email,company,company_name,job_title,seat,seating_chart,status,is_original,checked_in_at,checkin_time,portrait_consent,portrait_consent_status,portrait_consent_time,special_notes,note,raw_data)
+                (admin_username, google_sheet_name, admin_user, event_key, name, phone, email, company, company_name, job_title, seat, seating_chart, status, is_original, checked_in_at, checkin_time, portrait_consent, portrait_consent_status, portrait_consent_time, special_notes, note, raw_data)
                 VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                 """,
                 (
@@ -1204,7 +1205,7 @@ def api_search_query_alias():
 
 
 # ============================================================
-# CSV import / export
+# CSV import / export / delete
 # ============================================================
 @app.route('/api/sheets/import_csv', methods=['POST'])
 def import_csv_api():
@@ -1242,10 +1243,11 @@ def import_csv_api():
             for r in rows:
                 if not (r['name'] or r['phone'] or r['company']):
                     continue
+                # 完全避免在具名 INSERT 欄位中放入 id 欄位名，徹底解決 1054 錯誤
                 cur.execute(
                     """
                     INSERT INTO event_registrations
-                    (admin_username,google_sheet_name,admin_user,event_key,name,phone,email,company,company_name,job_title,region,training_level,seat,seating_chart,status,special_notes,note,raw_data)
+                    (admin_username, google_sheet_name, admin_user, event_key, name, phone, email, company, company_name, job_title, region, training_level, seat, seating_chart, status, special_notes, note, raw_data)
                     VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'pending',%s,%s,%s)
                     """,
                     (
@@ -1256,6 +1258,26 @@ def import_csv_api():
                 )
         conn.commit()
         return jsonify(success=True, message=f'CSV 匯入完成：{len(rows)} 筆', count=len(rows))
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        return jsonify(success=False, message=str(e)), 500
+    finally:
+        if conn:
+            conn.close()
+
+
+@app.route('/api/sheets/delete_data', methods=['DELETE', 'POST'])
+def delete_sheet_data_api():
+    admin, sheet = q_event()
+    conn = None
+    try:
+        conn = get_db_connection()
+        ensure_core_tables(conn)
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM event_registrations WHERE admin_username=%s AND google_sheet_name=%s", (admin, sheet))
+        conn.commit()
+        return jsonify(success=True, message=f'已成功清空場次「{sheet}」的所有旅客名單資料')
     except Exception as e:
         if conn:
             conn.rollback()
@@ -1318,7 +1340,6 @@ def dashboard_stats():
         conn = get_db_connection()
         ensure_core_tables(conn)
         with conn.cursor() as cur:
-            # 統計應到與實到
             cur.execute(
                 """
                 SELECT
@@ -1333,7 +1354,6 @@ def dashboard_stats():
             total = int(s.get('total') or 0)
             checked = int(s.get('checked') or 0)
 
-            # 修復：在 Python 中將座位以減號切割，統一計算該桌的人數，避免 01-01 跟 01-02 變成分開的桌次
             cur.execute(
                 """
                 SELECT id, name, phone, email, company, company_name, job_title,
@@ -1352,9 +1372,7 @@ def dashboard_stats():
                 if not seat_val:
                     seat_val = '未分桌'
                 
-                # 取減號前面的桌號，例如 "01-01" -> "01"
                 table_val = seat_val.split('-')[0].strip() if '-' in seat_val else seat_val
-                
                 table_detail_map.setdefault(table_val, []).append(row)
 
             table_stats = []
