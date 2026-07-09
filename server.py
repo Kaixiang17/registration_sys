@@ -332,10 +332,12 @@ def status_checked(status):
 
 def public_user(row):
     r = dict(row or {})
-    r['meal'] = r.get('meal_choice') or r.get('meal') or ''
-    r['meal_preference'] = r.get('meal_choice') or ''
+
+    for k in ('meal', 'meal_choice', 'meal_preference', 'original_meal_choice'):
+        r.pop(k, None)
+
     r['job_title'] = r.get('job_title') or ''
-    r['portrait_consent_status'] = r.get('portrait_consent_status') or ('同意' if r.get('portrait_consent') in [1, True, '1', 'true', '同意'] else ('不同意' if r.get('portrait_consent') in [0, False, '0', 'false'] else '未填'))
+    r['portrait_consent_status'] = r.get('portrait_consent_status') or ''
     return r
 
 # -----------------------------
