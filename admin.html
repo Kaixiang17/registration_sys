@@ -380,6 +380,39 @@ th {
     min-width:640px
   }
 }
+
+.qr-box {
+  display:flex;
+  gap:1rem;
+  align-items:center;
+  flex-wrap:wrap;
+  padding:1rem;
+  border:1px solid rgba(0,229,255,.2);
+  border-radius:.9rem;
+  background:rgba(255,255,255,.035)
+}
+.qr-box img {
+  width:160px;
+  height:160px;
+  object-fit:contain;
+  background:#fff;
+  border-radius:.7rem;
+  padding:.45rem
+}
+.qr-actions { min-width:240px; flex:1 }
+.table-card-btn { width:100%; text-align:left; cursor:pointer }
+.table-card-head { display:flex; justify-content:space-between; gap:.7rem; align-items:center }
+.table-detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem }
+.table-detail-list { overflow:auto; max-height:52vh; border:1px solid rgba(255,255,255,.08); border-radius:.75rem }
+.table-detail-list table { min-width:620px }
+.status-dot { display:inline-flex; padding:.2rem .5rem; border-radius:999px; font-size:.78rem; border:1px solid rgba(255,255,255,.16) }
+.status-ok { color:#86efac; border-color:rgba(74,222,128,.35); background:rgba(74,222,128,.08) }
+.status-wait { color:#fcd34d; border-color:rgba(250,204,21,.35); background:rgba(250,204,21,.08) }
+@media(max-width:780px) {
+  .table-detail-grid { grid-template-columns:1fr }
+  .qr-box img { width:132px; height:132px }
+}
+
   </style>
  </head>
  <body>
@@ -668,6 +701,21 @@ th {
        </button>
       </div>
      </div>
+     <div class="form-row">
+      <label>
+       專屬報到首頁 QR Code
+      </label>
+      <div class="qr-box">
+       <img id="frontQrImage" alt="目前場次報到 QR Code"/>
+       <div class="qr-actions">
+        <div class="msg">QR Code 依照目前切換的場次自動更新，掃描後會直接進入該場次報到首頁。</div>
+        <div class="actions">
+         <button class="btn" onclick="downloadQrCode()">⬇️ 下載 QR Code</button>
+         <button class="btn" onclick="copyById('frontLinkInput')">複製報到連結</button>
+        </div>
+       </div>
+      </div>
+     </div>
     </div>
     <div class="panel">
      <div class="panel-title">
@@ -754,6 +802,31 @@ th {
     </div>
    </section>
   </main>
+
+  <div class="modal" id="tableDetailModal">
+   <div class="modal-box" style="max-width:1100px">
+    <div class="actions">
+     <div class="panel-title" id="tableDetailTitle" style="margin:0">桌號詳情</div>
+     <button class="btn btn-ghost right" onclick="closeTableDetails()">✕ 關閉</button>
+    </div>
+    <p class="msg" id="tableDetailSummary" style="margin:.4rem 0 1rem"></p>
+    <div class="table-detail-grid">
+     <div>
+      <h3 style="color:#86efac;margin-bottom:.5rem">✅ 已報到</h3>
+      <div class="table-detail-list">
+       <table><thead><tr><th>姓名</th><th>公司</th><th>職稱</th><th>手機</th><th>狀態</th></tr></thead><tbody id="tableCheckedBody"></tbody></table>
+      </div>
+     </div>
+     <div>
+      <h3 style="color:#fcd34d;margin-bottom:.5rem">⏳ 未報到</h3>
+      <div class="table-detail-list">
+       <table><thead><tr><th>姓名</th><th>公司</th><th>職稱</th><th>手機</th><th>狀態</th></tr></thead><tbody id="tablePendingBody"></tbody></table>
+      </div>
+     </div>
+    </div>
+   </div>
+  </div>
+
   <div class="modal" id="productModal">
    <div class="modal-box">
     <div class="panel-title">
@@ -859,6 +932,7 @@ let currentConfig= {
 };
 let products=[];
 let companies=[];
+let tableDetailsByKey={};
 let dashboardTimer=null;
 const expFields=[['event_title', '活動名稱'], ['event_subtitle', '活動副標題'], ['event_date_start', '開始日期'], ['event_date_end', '結束日期'], ['brand_name', '品牌名稱'], ['logo_url', 'Logo URL'], ['banner_image_url', '首頁 Banner URL'], ['map_image_url', '地圖圖片 / 連結 URL'], ['gift_title', '紀念品標題'], ['gift_image_url', '紀念品圖片 URL'], ['gift_description', '紀念品文字說明', 'textarea'], ['video_title', '影片標題'], ['video_url', 'YouTube / Vimeo / 外部影片 URL'], ['flow_title', '議程卡片標題'], ['flow_image_url', '議程圖片 URL'], ['flow_description', '議程補充文字', 'textarea'], ['projection_title', '投影主標'], ['projection_subtitle', '投影副標'], ['success_title', '成功頁主標題'], ['success_subtitle', '成功頁副標題'], ['success_description', '成功頁說明文字', 'textarea'], ['success_button_text', '成功頁按鈕文字'], ['success_button_url', '成功頁按鈕連結']];
 function enc(v) {
@@ -911,7 +985,7 @@ async function fetchCurrentSheet() {
   const d=await get(`${API_BASE}/sheets/list?admin=${enc(currentAdmin)}`);
   if(d.success) {
     currentAdmin=d.username||currentAdmin;
-    currentSheet=urlParams.get('sheet')||d.current_sheet||currentSheet||'活動報到名單';
+    currentSheet=currentSheet||d.current_sheet||'活動報到名單';
     const sel=document.getElementById('sheetSelect');
     sel.innerHTML=(d.sheets||[currentSheet]).map(s=>`<option value="${esc(s)}" ${s===currentSheet?'selected':''}>${esc(s)}</option>`).join('');
     setText('adminHello', `歡迎，${currentAdmin}｜目前場次：${currentSheet}`);
@@ -933,8 +1007,26 @@ function updateLinks() {
   document.getElementById('exportLink').href=`${API_BASE}/sheets/export_csv${qs()}`;
   document.getElementById('frontLinkInput').value=front;
   document.getElementById('dashLinkInput').value=dash;
-  document.getElementById('mapQuick').href=(currentConfig.map_image_url||front)
+  document.getElementById('mapQuick').href=(currentConfig.map_image_url||front);
+  updateQrCode(front);
 }
+function updateQrCode(frontUrl) {
+  const img=document.getElementById('frontQrImage');
+  if(!img)return;
+  const url=frontUrl||document.getElementById('frontLinkInput')?.value||'';
+  img.src=`https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=12&data=${enc(url)}`;
+}
+function downloadQrCode() {
+  const img=document.getElementById('frontQrImage');
+  if(!img||!img.src)return alert('QR Code 尚未產生');
+  const a=document.createElement('a');
+  a.href=img.src;
+  a.download=`${(currentSheet||'registration').replace(/[\/:*?"<>|\s]+/g,'_')}_qrcode.png`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
 async function reloadAdminData() {
   await Promise.allSettled([loadExperienceConfig(), updateDashboard(), loadProducts(), loadAgenda(), loadIndustryMappings(), loadExhibitors(), loadCompanies()]);
   updateLinks();
@@ -962,25 +1054,70 @@ function renderExpForm() {
 async function loadExperienceConfig(){const d=await get(`${API_BASE}/event-config${qs()}&t=${Date.now()}`);currentConfig=d.config||d||{};expFields.forEach(([k])=>{const el=document.getElementById('exp_'+k);if(el)el.value=currentConfig[k]||''});document.getElementById('map_image_url').value=currentConfig.map_image_url||'';products=currentConfig.products||products||[];updateLinks()}
 async function saveExperienceConfig(){const p={};expFields.forEach(([k])=>{const el=document.getElementById('exp_'+k);if(el)p[k]=el.value.trim()});const d=await send(`${API_BASE}/admin/event-config${qs()}`,'PUT',p);if(!d.success)return alert('儲存失敗：'+(d.message||''));currentConfig=d.config||{};updateLinks();signalDashboard();toast('智匯方舟設定已儲存')}
 async function saveBasicConfig(){const d=await send(`${API_BASE}/admin/event-config${qs()}`,'PUT',{map_image_url:document.getElementById('map_image_url').value.trim()});if(!d.success)return alert('儲存失敗：'+(d.message||''));currentConfig=d.config||{};updateLinks();toast('地圖設定已儲存')}
-async function updateDashboard(){try{const d=await get(`${API_BASE}/dashboard_stats${qs()}&t=${Date.now()}`);if(!d.success)return;const s=d.stats||{};setText('stat-total',s.total||0);setText('stat-checked',s.checked_in||0);setText('stat-pending',s.not_checked_in||0);renderPortraitRows(s.industry_logs||s.logs||[]);renderLogs(s.logs||[]);renderTableStats(s.table_stats||[])}catch(e){console.error(e)}}
+async function updateDashboard(){try{const d=await get(`${API_BASE}/dashboard_stats${qs()}&t=${Date.now()}`);if(!d.success)return;const s=d.stats||{};setText('stat-total',s.total||0);setText('stat-checked',s.checked_in||0);setText('stat-pending',s.not_checked_in||0);tableDetailsByKey={};(s.table_details||[]).forEach(g=>{tableDetailsByKey[String(g.table||g.seat||'未分桌')]=g.members||[]});renderPortraitRows(s.industry_logs||s.logs||[]);renderLogs(s.logs||[]);renderTableStats(s.table_stats||[])}catch(e){console.error(e)}}
 function portraitLabel(x){const raw=String(x?.portrait_consent_status||'').trim();if(/不同意|拒絕|否|false|0/i.test(raw))return ['不同意肖像權','portrait-no'];if(/同意|yes|true|1/i.test(raw))return ['同意肖像權','portrait-ok'];return ['未填','portrait-empty']}
 function renderPortraitRows(logs){const body=document.getElementById('portrait-status-body');const rows=(logs||[]).map(x=>{const [t,c]=portraitLabel(x);return `<tr><td>${esc(x.name)}</td><td>${esc(x.company||x.company_name)}</td><td class="${c}">${t}</td></tr>`}).join('');body.innerHTML=rows||'<tr><td colspan="3" class="muted">尚無肖像權資料</td></tr>'}
 function renderLogs(logs){document.getElementById('logs-body').innerHTML=(logs||[]).map(x=>{const [t,c]=portraitLabel(x);return `<tr><td>${esc(x.checkedInAt||x.checked_in_at||'')}</td><td>${esc(x.name)}</td><td>${esc(x.company||x.company_name||'')}</td><td class="${c}">${t}</td></tr>`}).join('')||'<tr><td colspan="4" class="muted">尚無報到紀錄</td></tr>'}
-function renderTableStats(rows){const box=document.getElementById('table-stats-container');box.innerHTML=(rows||[]).map(r=>{const total=Number(r.total||0),checked=Number(r.checked_in??r.checked??0),pct=total?Math.round(checked/total*100):0;
-  return `<div class="panel" style="margin:0;padding:.8rem"><b>${esc(r.table||r.seat||'未分配')}</b><span class="right">${checked}/${total}｜${pct}%</span><div style="height:8px;background:rgba(255,255,255,.08);border-radius:999px;margin-top:.45rem"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#00e5ff,#4ade80);border-radius:999px"></div></div></div>`
-}).join('')||'<div class="muted">尚無桌次資料</div>'
+function zhNum(n){
+  n=Number(n);
+  const z=['零','一','二','三','四','五','六','七','八','九'];
+  if(!Number.isFinite(n)||n<=0)return '';
+  if(n<10)return z[n];
+  if(n===10)return '十';
+  if(n<20)return '十'+z[n%10];
+  if(n<100)return z[Math.floor(n/10)]+'十'+(n%10?z[n%10]:'');
+  return String(n);
 }
+function formatTableLabel(v){
+  const raw=String(v||'').trim();
+  if(!raw)return '未分桌';
+  if(/[桌區]/.test(raw))return raw;
+  const m=raw.match(/\d+/);
+  if(m && raw.replace(/\d+/g,'').trim()==='')return `第${zhNum(m[0])}桌`;
+  return raw;
+}
+function isCheckedStatus(v){return /checked_in|已報到|替代|done/i.test(String(v||''))}
+function renderTableStats(rows){
+  const box=document.getElementById('table-stats-container');
+  box.innerHTML=(rows||[]).map(r=>{
+    const key=String(r.table||r.seat||'未分桌');
+    const total=Number(r.total||0), checked=Number(r.checked_in??r.checked??0), pct=total?Math.round(checked/total*100):0;
+    return `<button class="panel table-card-btn" style="margin:0;padding:.8rem" onclick="openTableDetails('${encodeURIComponent(key)}')"><div class="table-card-head"><b>${esc(formatTableLabel(key))}</b><span>${checked}/${total}｜${pct}%</span></div><div class="msg">點我查看 ${esc(formatTableLabel(key))} 誰來了、誰還沒來</div><div style="height:8px;background:rgba(255,255,255,.08);border-radius:999px;margin-top:.45rem"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#00e5ff,#4ade80);border-radius:999px"></div></div></button>`
+  }).join('')||'<div class="muted">尚無桌次資料</div>'
+}
+function memberRow(x, checked){
+  return `<tr><td>${esc(x.name||'-')}</td><td>${esc(x.company||x.company_name||'-')}</td><td>${esc(x.job_title||'-')}</td><td>${esc(x.phone||'-')}</td><td><span class="status-dot ${checked?'status-ok':'status-wait'}">${checked?'已報到':'未報到'}</span></td></tr>`
+}
+function openTableDetails(encodedKey){
+  const key=decodeURIComponent(encodedKey||'');
+  const rows=tableDetailsByKey[key]||[];
+  const checked=rows.filter(x=>isCheckedStatus(x.status));
+  const pending=rows.filter(x=>!isCheckedStatus(x.status));
+  setText('tableDetailTitle', `${formatTableLabel(key)} 詳情`);
+  setText('tableDetailSummary', `共 ${rows.length} 人｜已報到 ${checked.length} 人｜未報到 ${pending.length} 人`);
+  document.getElementById('tableCheckedBody').innerHTML=checked.map(x=>memberRow(x,true)).join('')||'<tr><td colspan="5" class="muted">尚無已報到人員</td></tr>';
+  document.getElementById('tablePendingBody').innerHTML=pending.map(x=>memberRow(x,false)).join('')||'<tr><td colspan="5" class="muted">這桌目前都已報到</td></tr>';
+  document.getElementById('tableDetailModal').classList.add('active');
+}
+function closeTableDetails(){document.getElementById('tableDetailModal').classList.remove('active')}
+
 async function importCsv() {
-  const f=document.getElementById('csvFile').files[0];
+  const fileInput=document.getElementById('csvFile');
+  const f=fileInput.files[0];
   if(!f)return alert('請選擇 CSV');
   const fd=new FormData();
   fd.append('file', f);
-  const r=await fetch(`${API_BASE}/sheets/import_csv${qs()}`, {
-    method:'POST', body:fd
-  });
-  const d=await r.json();
-  alert(d.message|| (d.success?'匯入完成':'匯入失敗'));
-  await reloadAdminData()
+  try {
+    const r=await fetch(`${API_BASE}/sheets/import_csv${qs()}&t=${Date.now()}`, {method:'POST', body:fd});
+    const text=await r.text();
+    let d;
+    try { d=JSON.parse(text); } catch { d={success:false,message:text||'CSV 匯入回應格式錯誤'}; }
+    alert(d.message|| (d.success?'匯入完成':'匯入失敗'));
+    if(d.success){ fileInput.value=''; await reloadAdminData(); signalDashboard(); }
+  } catch(e) {
+    console.error(e);
+    alert('CSV 匯入失敗：'+e.message);
+  }
 }
 async function loadProducts() {
   const d=await get(`${API_BASE}/products${qs()}&t=${Date.now()}`);
