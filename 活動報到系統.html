@@ -909,7 +909,7 @@
         </h3>
 
         <div style="margin-bottom: 1.2rem;">
-          <label style="color: #fbbf24; display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: bold;">旅客姓名 *</label>
+          <label style="color: #fbbf24; display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: bold;">請輸入姓名 *</label>
           <input type="text" id="addName" class="cyber-input" placeholder="請輸入姓名" style="margin-bottom: 0;">
         </div>
 
@@ -921,11 +921,6 @@
         <div style="margin-bottom: 1.2rem;">
           <label style="color: rgba(236,254,255,0.64); display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">服務單位 / 公司名稱</label>
           <input type="text" id="addCompany" class="cyber-input" placeholder="請輸入公司名稱" style="margin-bottom: 0;">
-        </div>
-
-        <div style="margin-bottom: 1.5rem;">
-          <label style="color: rgba(236,254,255,0.64); display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">桌號 / 座位安排</label>
-          <input type="text" id="addSeat" class="cyber-input" placeholder="例如: 08桌 (留空則現場安排)" style="margin-bottom: 0;">
         </div>
 
         <div style="margin-bottom: 1.5rem;">
@@ -1305,7 +1300,7 @@
         name: document.getElementById('addName').value.trim(),
         phone: document.getElementById('addPhone').value.trim(),
         company: document.getElementById('addCompany').value.trim(),
-        seat: document.getElementById('addSeat').value.trim() || '現場安排',
+        seat: '工作人員現場安排',
         meal: window.selectedTempMealChoice,
         meal_preference: window.selectedTempMealChoice,
         portrait_consent: portraitConsent,
