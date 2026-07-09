@@ -1852,10 +1852,10 @@ if (shopBtn) shopBtn.style.display = 'block';
       }
 
       document.getElementById('arkTerminalInfo').innerHTML = `
-        <div class="ark-meta-chip"><div class="ark-meta-label">MISSION</div><div class="ark-meta-value">${eventName}</div></div>
+        <div class="ark-meta-chip"><div class="ark-meta-label">Activity</div><div class="ark-meta-value">${eventName}</div></div>
         <div class="ark-meta-chip"><div class="ark-meta-label">DATE</div><div class="ark-meta-value">${endDate ? `${startDate} ~ ${endDate}` : startDate}</div></div>
         <div class="ark-meta-chip"><div class="ark-meta-label">COMPANY</div><div class="ark-meta-value">${company}${jobTitle ? `｜${jobTitle}` : ''}</div></div>
-        <div class="ark-meta-chip"><div class="ark-meta-label">SEAT / MEAL</div><div class="ark-meta-value">${seat}｜${mealText}</div></div>
+        <div class="ark-meta-chip"><div class="ark-meta-label">SEAT</div><div class="ark-meta-value">${seat}｜${mealText}</div></div>
       `;
 
       applyArkBrandFromConfig();
