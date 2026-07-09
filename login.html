@@ -111,18 +111,15 @@ input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:foc
 
   <!-- 註冊表單 -->
   <div id="registerForm" class="auth-form">
-    <form autocomplete="off" onsubmit="return false;">
-      <input type="text" id="ru" class="cyber-input" placeholder="建立管理員帳號" autocomplete="off">
-      <input type="password" id="rp" class="cyber-input" placeholder="建立密碼，至少 6 碼" autocomplete="off">
-      <input type="password" id="rp2" class="cyber-input" placeholder="再次輸入密碼" autocomplete="off">
-      <input type="text" id="revent" class="cyber-input" placeholder="預設活動名稱，例如：活動報到名單" autocomplete="off" value="">
-      <input type="text" id="rinvite" class="cyber-input" placeholder="註冊邀請碼，可留空" autocomplete="off">
-      <button class="cyber-button secondary" id="registerBtn" type="button" onclick="doRegister()">
-        <span>建立管理員帳號 REGISTER</span>
-      </button>
-      <div class="hint-text">建立後會自動設定可管理活動。若伺服器有設定 REGISTER_INVITE_CODE，這裡就必須輸入正確邀請碼。</div>
-    </form>
-  </div>
+  <form autocomplete="off" onsubmit="return false;">
+    <input type="text" id="ru" class="cyber-input" placeholder="建立管理員帳號" autocomplete="off">
+    <input type="password" id="rp" class="cyber-input" placeholder="建立密碼，至少 6 碼" autocomplete="off">
+    <input type="password" id="rp2" class="cyber-input" placeholder="再次輸入密碼" autocomplete="off">
+
+    <button class="cyber-button secondary" id="registerBtn" type="button" onclick="doRegister()">
+      <span>建立管理員帳號 REGISTER</span>
+    </button>
+  </form>
 </div>
 
 <script>
